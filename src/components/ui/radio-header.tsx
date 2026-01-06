@@ -116,6 +116,7 @@ export function RadioHeader() {
                 {/* Song info */}
                 <div className="flex-1 min-w-0 overflow-hidden">
                   <p className="text-xs text-secondary-foreground font-medium truncate">
+                    <span className="text-secondary-foreground/60">Du hörst: </span>
                     {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : 'Lädt...'}
                   </p>
                 </div>
