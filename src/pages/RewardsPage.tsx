@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRewards, Reward } from '@/lib/api';
-import { RewardCard } from '@/components/ui/reward-card';
-import { PageLoader } from '@/components/ui/loading-spinner';
+import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
@@ -40,23 +39,23 @@ export default function RewardsPage() {
   }, [activeCategory]);
   
   return (
-    <div className="animate-fade-in">
+    <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
-          <h1 className="text-xl font-bold mb-4">Rewards</h1>
+          <h1 className="text-display-sm mb-4">Rewards</h1>
           
           {/* Category Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
             {categories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
+                  'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200',
                   activeCategory === cat.id
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 )}
               >
                 {cat.label}
@@ -67,9 +66,13 @@ export default function RewardsPage() {
       </header>
       
       {/* Content */}
-      <div className="container py-4">
+      <div className="container py-6">
         {isLoading ? (
-          <PageLoader />
+          <div className="space-y-3 stagger-children">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <RewardCardSkeleton key={i} />
+            ))}
+          </div>
         ) : error ? (
           <ErrorState 
             title="Rewards konnten nicht geladen werden"
@@ -82,7 +85,7 @@ export default function RewardsPage() {
             description="In dieser Kategorie sind aktuell keine Rewards verfügbar."
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 stagger-children">
             {rewards.map(reward => (
               <RewardCard key={reward.id} reward={reward} />
             ))}

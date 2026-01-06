@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getRewardById, redeemReward, Reward } from '@/lib/api';
 import { useSession, useBrowseMode } from '@/lib/session';
-import { TalerBadge } from '@/components/ui/taler-badge';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2, XCircle, Coffee, Ticket, Gift, Star, MapPin } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, Coffee, Ticket, Gift, Star, MapPin, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const categoryIcons = {
@@ -89,15 +87,18 @@ export default function RewardDetailPage() {
   
   if (error || !reward) {
     return (
-      <div className="container py-8">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück
-        </Button>
-        <ErrorState 
-          title="Reward nicht gefunden"
-          onRetry={loadReward}
-        />
+      <div className="min-h-screen pb-24">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
+          <div className="container py-4 flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="btn-ghost p-2">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-lg font-semibold">Reward</h1>
+          </div>
+        </header>
+        <div className="container py-8">
+          <ErrorState title="Reward nicht gefunden" onRetry={loadReward} />
+        </div>
       </div>
     );
   }
@@ -106,13 +107,13 @@ export default function RewardDetailPage() {
   const canAfford = balance && balance.current >= reward.cost;
   
   return (
-    <div className="animate-fade-in">
+    <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
             <ArrowLeft className="h-5 w-5" />
-          </Button>
+          </button>
           <h1 className="text-lg font-semibold truncate">Reward Details</h1>
         </div>
       </header>
@@ -122,7 +123,7 @@ export default function RewardDetailPage() {
         {/* Redemption Result Overlay */}
         {redemptionResult && (
           <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="card-elevated max-w-sm w-full text-center animate-slide-up">
+            <div className="card-base p-6 max-w-sm w-full text-center animate-in shadow-strong">
               <div className={cn(
                 'flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4',
                 redemptionResult.success ? 'bg-success/10' : 'bg-destructive/10'
@@ -143,9 +144,9 @@ export default function RewardDetailPage() {
               </p>
               
               {redemptionResult.code && (
-                <div className="bg-muted rounded-xl p-4 mb-4">
+                <div className="bg-muted rounded-2xl p-4 mb-4">
                   <p className="text-sm text-muted-foreground mb-1">Dein Code:</p>
-                  <p className="text-2xl font-mono font-bold text-accent">
+                  <p className="text-2xl font-mono font-bold text-accent tracking-widest">
                     {redemptionResult.code}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
@@ -154,8 +155,8 @@ export default function RewardDetailPage() {
                 </div>
               )}
               
-              <Button 
-                className="w-full" 
+              <button 
+                className="btn-primary w-full"
                 onClick={() => {
                   setRedemptionResult(null);
                   if (redemptionResult.success) {
@@ -164,75 +165,81 @@ export default function RewardDetailPage() {
                 }}
               >
                 {redemptionResult.success ? 'Fertig' : 'Schliessen'}
-              </Button>
+              </button>
             </div>
           </div>
         )}
         
-        {/* Reward Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-accent/10">
-            <Icon className="h-12 w-12 text-accent" />
-          </div>
-        </div>
-        
-        {/* Title & Cost */}
-        <div className="text-center mb-6">
-          <span className="inline-block px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mb-3">
-            {categoryLabels[reward.category]}
-          </span>
-          <h2 className="text-2xl font-bold mb-2">{reward.title}</h2>
-          <TalerBadge amount={reward.cost} size="lg" />
-        </div>
-        
-        {/* Description */}
-        <div className="card-elevated mb-6">
-          <h3 className="font-semibold mb-2">Beschreibung</h3>
-          <p className="text-muted-foreground">{reward.description}</p>
-        </div>
-        
-        {/* Partner Info */}
-        <div className="card-elevated mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary">
-              <MapPin className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Einlösbar bei</p>
-              <p className="font-semibold">{reward.partnerName}</p>
+        {/* Reward Content */}
+        <div className="animate-in">
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-accent/10">
+              <Icon className="h-12 w-12 text-accent" />
             </div>
           </div>
-        </div>
-        
-        {/* Action Button */}
-        {isBrowseMode ? (
-          <div className="text-center p-4 rounded-2xl bg-secondary/50">
-            <p className="text-muted-foreground text-sm mb-3">
-              Öffne deine Taler-Karte, um Rewards einzulösen.
-            </p>
-            <Button 
-              className="btn-gold w-full"
-              onClick={() => window.location.href = '/?token=demo'}
-            >
-              Karte öffnen
-            </Button>
+          
+          {/* Title & Cost */}
+          <div className="text-center mb-6">
+            <span className="badge-muted mb-3 inline-block">
+              {categoryLabels[reward.category]}
+            </span>
+            <h2 className="text-display-sm mb-3">{reward.title}</h2>
+            <span className="badge-accent text-base px-4 py-2">
+              {reward.cost.toLocaleString('de-CH')} Taler
+            </span>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {!canAfford && (
-              <p className="text-center text-sm text-muted-foreground">
-                Du brauchst noch {reward.cost - (balance?.current || 0)} Taler für diesen Reward.
+          
+          {/* Description */}
+          <div className="card-base p-4 mb-4">
+            <h3 className="font-semibold mb-2">Beschreibung</h3>
+            <p className="text-muted-foreground">{reward.description}</p>
+          </div>
+          
+          {/* Partner Info */}
+          <div className="card-base p-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <MapPin className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Einlösbar bei</p>
+                <p className="font-semibold">{reward.partnerName}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Action Button */}
+          {isBrowseMode ? (
+            <div className="text-center p-6 rounded-2xl bg-muted/50">
+              <p className="text-muted-foreground text-sm mb-4">
+                Öffne deine Taler-Karte, um Rewards einzulösen.
               </p>
-            )}
-            <Button 
-              className="btn-gold w-full"
-              disabled={!canAfford || isRedeeming}
-              onClick={handleRedeem}
-            >
-              {isRedeeming ? 'Wird eingelöst...' : `Für ${reward.cost} Taler einlösen`}
-            </Button>
-          </div>
-        )}
+              <button 
+                className="btn-primary"
+                onClick={() => window.location.href = '/?token=demo'}
+              >
+                <Wallet className="h-5 w-5" />
+                Karte öffnen
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {!canAfford && (
+                <p className="text-center text-sm text-muted-foreground">
+                  Du brauchst noch {reward.cost - (balance?.current || 0)} Taler für diesen Reward.
+                </p>
+              )}
+              <button 
+                className="btn-primary w-full"
+                disabled={!canAfford || isRedeeming}
+                onClick={handleRedeem}
+              >
+                {isRedeeming ? 'Wird eingelöst...' : `Für ${reward.cost} Taler einlösen`}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

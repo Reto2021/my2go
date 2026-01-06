@@ -1,14 +1,11 @@
 import { useState, useRef } from 'react';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { redeemCode } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { CheckCircle2, XCircle, Radio, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, Radio, Sparkles, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Rate limiting (max 5 attempts per day stored in session)
 const MAX_ATTEMPTS = 5;
-const COOLDOWN_MS = 30000; // 30 seconds between attempts
+const COOLDOWN_MS = 30000;
 
 export default function CodePage() {
   const { token, refreshBalance } = useSession();
@@ -52,7 +49,6 @@ export default function CodePage() {
         refreshBalance();
       }
       
-      // Update rate limiting
       setAttempts(prev => prev + 1);
       setCooldownEnd(Date.now() + COOLDOWN_MS);
       
@@ -72,42 +68,43 @@ export default function CodePage() {
   };
   
   return (
-    <div className="animate-fade-in">
+    <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
-          <h1 className="text-xl font-bold">Code einlösen</h1>
+          <h1 className="text-display-sm">Code einlösen</h1>
         </div>
       </header>
       
-      <div className="container py-6">
+      <div className="container py-8">
         {/* Hero */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 animate-in">
           <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-accent/10 mx-auto mb-4">
             <Radio className="h-10 w-10 text-accent" />
           </div>
           <h2 className="text-lg font-semibold mb-2">On-Air Code eingeben</h2>
-          <p className="text-muted-foreground text-sm">
-            Hörst du Radio 2Go? Gib den Code ein, der on Air genannt wird, und erhalte Bonus-Taler!
+          <p className="text-muted-foreground">
+            Hörst du Radio 2Go? Gib den Code ein und erhalte Bonus-Taler!
           </p>
         </div>
         
         {/* Browse Mode */}
         {isBrowseMode ? (
-          <div className="text-center p-6 rounded-2xl bg-secondary/50">
+          <div className="text-center p-6 rounded-2xl bg-muted/50 animate-in-delayed">
             <p className="text-muted-foreground mb-4">
               Öffne deine Taler-Karte, um Codes einzulösen.
             </p>
-            <Button 
-              className="btn-gold"
+            <button 
+              className="btn-primary"
               onClick={() => window.location.href = '/?token=demo'}
             >
+              <Wallet className="h-5 w-5" />
               Karte öffnen
-            </Button>
+            </button>
           </div>
         ) : result ? (
           /* Result State */
-          <div className="card-elevated text-center animate-slide-up">
+          <div className="card-base p-6 text-center animate-in">
             <div className={cn(
               'flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4',
               result.success ? 'bg-success/10' : 'bg-destructive/10'
@@ -135,25 +132,30 @@ export default function CodePage() {
               {result.message}
             </p>
             
-            <Button 
-              variant={result.success ? 'default' : 'outline'}
-              className="w-full"
+            <button 
+              className={result.success ? 'btn-primary w-full' : 'btn-secondary w-full'}
               onClick={resetResult}
             >
               {result.success ? 'Weiteren Code eingeben' : 'Erneut versuchen'}
-            </Button>
+            </button>
           </div>
         ) : (
           /* Input Form */
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6 animate-in-delayed">
             <div className="relative">
-              <Input
+              <input
                 ref={inputRef}
                 type="text"
-                placeholder="Code eingeben..."
+                placeholder="CODE"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className="text-center text-xl font-mono uppercase h-14 tracking-widest"
+                className={cn(
+                  'w-full h-16 text-center text-2xl font-mono uppercase tracking-[0.3em]',
+                  'bg-muted border-2 border-transparent rounded-2xl',
+                  'placeholder:text-muted-foreground/50 placeholder:tracking-[0.3em]',
+                  'focus:outline-none focus:border-primary focus:bg-background',
+                  'transition-all duration-200'
+                )}
                 maxLength={12}
                 disabled={hasExceededLimit}
               />
@@ -169,16 +171,16 @@ export default function CodePage() {
               </p>
             ) : null}
             
-            <Button 
+            <button 
               type="submit"
-              className="btn-gold w-full"
+              className="btn-primary w-full"
               disabled={!code.trim() || isSubmitting || isOnCooldown || hasExceededLimit}
             >
               {isSubmitting ? 'Wird geprüft...' : 'Code einlösen'}
-            </Button>
+            </button>
             
             <p className="text-xs text-muted-foreground text-center">
-              Codes sind 24 Stunden gültig und können nur einmal eingelöst werden.
+              Codes sind 24h gültig und können nur einmal eingelöst werden.
             </p>
           </form>
         )}

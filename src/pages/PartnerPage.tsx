@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getPartners, Partner } from '@/lib/api';
-import { PartnerCard } from '@/components/ui/partner-card';
-import { PageLoader } from '@/components/ui/loading-spinner';
+import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
-import { MapPin, List, Map } from 'lucide-react';
+import { MapPin, LayoutList, Map } from 'lucide-react';
 
 export default function PartnerPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -32,33 +31,33 @@ export default function PartnerPage() {
   }, []);
   
   return (
-    <div className="animate-fade-in">
+    <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Partner</h1>
+            <h1 className="text-display-sm">Partner</h1>
             
             {/* View Toggle */}
-            <div className="flex bg-secondary rounded-lg p-1">
+            <div className="flex bg-muted rounded-full p-1">
               <button
                 onClick={() => setViewMode('list')}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
                   viewMode === 'list'
-                    ? 'bg-card shadow-sm text-foreground'
+                    ? 'bg-background shadow-soft text-foreground'
                     : 'text-muted-foreground'
                 )}
               >
-                <List className="h-4 w-4" />
+                <LayoutList className="h-4 w-4" />
                 Liste
               </button>
               <button
                 onClick={() => setViewMode('map')}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
                   viewMode === 'map'
-                    ? 'bg-card shadow-sm text-foreground'
+                    ? 'bg-background shadow-soft text-foreground'
                     : 'text-muted-foreground'
                 )}
               >
@@ -72,16 +71,20 @@ export default function PartnerPage() {
       
       {/* Content */}
       {isLoading ? (
-        <PageLoader />
+        <div className="container py-6 space-y-3 stagger-children">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <PartnerCardSkeleton key={i} />
+          ))}
+        </div>
       ) : error ? (
-        <div className="container py-4">
+        <div className="container py-6">
           <ErrorState 
             title="Partner konnten nicht geladen werden"
             onRetry={loadPartners}
           />
         </div>
       ) : partners.length === 0 ? (
-        <div className="container py-4">
+        <div className="container py-6">
           <EmptyState
             icon={MapPin}
             title="Keine Partner gefunden"
@@ -89,9 +92,9 @@ export default function PartnerPage() {
           />
         </div>
       ) : viewMode === 'list' ? (
-        <div className="container py-4 space-y-3">
+        <div className="container py-6 space-y-3 stagger-children">
           {partners.map(partner => (
-            <PartnerCard key={partner.id} partner={partner} />
+            <PartnerCard key={partner.id} partner={partner} showArrow />
           ))}
         </div>
       ) : (
@@ -109,12 +112,12 @@ function PartnerMapView({ partners }: PartnerMapViewProps) {
   return (
     <div className="relative h-[calc(100vh-180px)]">
       {/* Placeholder Map */}
-      <div className="absolute inset-0 bg-secondary flex items-center justify-center">
+      <div className="absolute inset-0 bg-muted/50 flex items-center justify-center">
         <div className="text-center p-6">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mx-auto mb-4">
             <Map className="h-8 w-8 text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground mb-2">
+          <p className="text-muted-foreground mb-2 font-medium">
             Kartenansicht
           </p>
           <p className="text-sm text-muted-foreground">
@@ -124,12 +127,12 @@ function PartnerMapView({ partners }: PartnerMapViewProps) {
       </div>
       
       {/* Partner Pills */}
-      <div className="absolute bottom-4 left-4 right-4 overflow-x-auto">
-        <div className="flex gap-3 pb-2">
+      <div className="absolute bottom-4 left-0 right-0 overflow-x-auto px-4">
+        <div className="flex gap-3 scrollbar-none">
           {partners.map(partner => (
             <div 
               key={partner.id}
-              className="shrink-0 card-elevated p-3 min-w-[200px]"
+              className="shrink-0 card-base p-4 min-w-[200px] shadow-medium"
             >
               <p className="font-semibold text-sm truncate">{partner.name}</p>
               <p className="text-xs text-muted-foreground">{partner.category}</p>
