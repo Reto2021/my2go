@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation as useRouterLocation } from 'react-router-dom';
 import { useSession, useBrowseMode } from '@/lib/session';
-import { getRewards, getPartners, Reward, Partner } from '@/lib/api';
+import { useLocation } from '@/lib/location';
+import { getRewards, getRewardsNearLocation, getPartners, Reward, Partner } from '@/lib/api';
 import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
@@ -16,30 +17,60 @@ import {
   Sparkles,
   ArrowRight,
   LogOut,
-  Settings
+  Settings,
+  Navigation,
+  X
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const { initSession, session, balance, isLoading } = useSession();
   const isBrowseMode = useBrowseMode();
+  const { 
+    userLocation, 
+    isRequestingLocation, 
+    locationError,
+    locationPermissionAsked,
+    requestLocation, 
+    clearLocation,
+    setLocationPermissionAsked 
+  } = useLocation();
   
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(true);
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
   // Initialize session on mount (handles URL token + cookie)
   useEffect(() => {
     initSession();
   }, [initSession]);
   
+  // Show location prompt if not asked yet (after session is loaded)
+  useEffect(() => {
+    if (!isLoading && !isBrowseMode && !locationPermissionAsked) {
+      // Small delay to let the page load first
+      const timer = setTimeout(() => setShowLocationPrompt(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isBrowseMode, locationPermissionAsked]);
+  
+  // Load content - with or without location
   useEffect(() => {
     async function loadContent() {
       setIsLoadingContent(true);
       try {
-        const [rewardsData, partnersData] = await Promise.all([
-          getRewards(),
-          getPartners(),
-        ]);
+        let rewardsData: Reward[];
+        
+        if (userLocation) {
+          // Load rewards near user's location
+          rewardsData = await getRewardsNearLocation(userLocation.lat, userLocation.lng);
+        } else {
+          // Load all rewards
+          rewardsData = await getRewards();
+        }
+        
+        const partnersData = await getPartners();
         setRewards(rewardsData.slice(0, 4));
         setPartners(partnersData.slice(0, 3));
       } catch (error) {
@@ -49,7 +80,17 @@ export default function HomePage() {
       }
     }
     loadContent();
-  }, []);
+  }, [userLocation]);
+  
+  const handleAllowLocation = async () => {
+    setShowLocationPrompt(false);
+    await requestLocation();
+  };
+  
+  const handleDenyLocation = () => {
+    setShowLocationPrompt(false);
+    setLocationPermissionAsked();
+  };
   
   if (isLoading) {
     return <PageLoader />;
@@ -60,13 +101,49 @@ export default function HomePage() {
   }
   
   return (
-    <SessionModeHome 
-      displayName={session?.displayName} 
-      balance={balance!}
-      rewards={rewards}
-      isLoading={isLoadingContent}
-      passLink={session?.passLink}
-    />
+    <>
+      {/* Location Permission Prompt */}
+      {showLocationPrompt && (
+        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="card-base p-6 max-w-sm w-full text-center shadow-strong animate-in">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-accent/10">
+              <Navigation className="h-8 w-8 text-accent" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Rewards in deiner Nähe</h2>
+            <p className="text-muted-foreground mb-6">
+              Erlaube Standortzugriff, um nur Rewards von Partnern in deiner Region zu sehen.
+            </p>
+            <div className="space-y-3">
+              <button 
+                className="btn-primary w-full"
+                onClick={handleAllowLocation}
+                disabled={isRequestingLocation}
+              >
+                {isRequestingLocation ? 'Wird ermittelt...' : 'Standort erlauben'}
+              </button>
+              <button 
+                className="btn-ghost w-full text-muted-foreground"
+                onClick={handleDenyLocation}
+              >
+                Später
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <SessionModeHome 
+        displayName={session?.displayName} 
+        balance={balance!}
+        rewards={rewards}
+        isLoading={isLoadingContent}
+        passLink={session?.passLink}
+        userLocation={userLocation}
+        onClearLocation={clearLocation}
+        onRequestLocation={requestLocation}
+        isRequestingLocation={isRequestingLocation}
+      />
+    </>
   );
 }
 
@@ -212,17 +289,31 @@ interface SessionModeHomeProps {
   rewards: Reward[];
   isLoading: boolean;
   passLink?: string;
+  userLocation: { lat: number; lng: number } | null;
+  onClearLocation: () => void;
+  onRequestLocation: () => Promise<void>;
+  isRequestingLocation: boolean;
 }
 
-function SessionModeHome({ displayName, balance, rewards, isLoading, passLink }: SessionModeHomeProps) {
+function SessionModeHome({ 
+  displayName, 
+  balance, 
+  rewards, 
+  isLoading, 
+  passLink,
+  userLocation,
+  onClearLocation,
+  onRequestLocation,
+  isRequestingLocation
+}: SessionModeHomeProps) {
   const { logout, isLoggingOut } = useSession();
   const [showMenu, setShowMenu] = useState(false);
-  const location = useLocation();
+  const routerLocation = useRouterLocation();
   
   // Close menu on route change
   useEffect(() => {
     setShowMenu(false);
-  }, [location.pathname]);
+  }, [routerLocation.pathname]);
   
   const handleLogout = async () => {
     await logout();
@@ -315,17 +406,50 @@ function SessionModeHome({ displayName, balance, rewards, isLoading, passLink }:
       {/* Rewards */}
       <section className="container section">
         <div className="section-header">
-          <h2 className="section-title">Für dich</h2>
+          <h2 className="section-title">
+            {userLocation ? 'In deiner Nähe' : 'Für dich'}
+          </h2>
           <Link to="/rewards" className="section-link">
             Alle <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
+        
+        {/* Location Status Chip */}
+        {userLocation ? (
+          <button
+            onClick={onClearLocation}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent/10 text-accent mb-4"
+          >
+            <Navigation className="h-3.5 w-3.5" />
+            Standort aktiv
+            <X className="h-3 w-3 ml-1" />
+          </button>
+        ) : (
+          <button
+            onClick={onRequestLocation}
+            disabled={isRequestingLocation}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground mb-4 hover:bg-muted/80 transition-colors"
+          >
+            <Navigation className={cn("h-3.5 w-3.5", isRequestingLocation && "animate-pulse")} />
+            {isRequestingLocation ? 'Suche...' : 'Standort aktivieren'}
+          </button>
+        )}
         
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
             ))
+          ) : rewards.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Keine Rewards in deiner Nähe gefunden.</p>
+              <button 
+                onClick={onClearLocation}
+                className="text-accent font-semibold mt-2"
+              >
+                Alle Rewards anzeigen
+              </button>
+            </div>
           ) : (
             rewards.map(reward => (
               <RewardCard key={reward.id} reward={reward} />

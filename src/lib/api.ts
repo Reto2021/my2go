@@ -1159,3 +1159,94 @@ export const FAQ_ITEMS = MOCK_FAQ.map(item => ({
   answer: item.a,
   category: item.category,
 }));
+
+// ============================================================================
+// API CLIENT - REGIONS (extracted from partner data)
+// ============================================================================
+
+export interface Region {
+  id: string;
+  name: string;
+  partnerCount: number;
+}
+
+/**
+ * Get available regions based on partner locations
+ * In production: This would come from Boomerangme API
+ */
+export async function getRegions(): Promise<Region[]> {
+  if (USE_MOCK) {
+    await delay(100);
+    // Extract unique cities from partners and count
+    const cityCount: Record<string, number> = {};
+    MOCK_PARTNERS.forEach(p => {
+      if (p.city) {
+        cityCount[p.city] = (cityCount[p.city] || 0) + 1;
+      }
+    });
+    
+    return Object.entries(cityCount)
+      .map(([city, count]) => ({
+        id: city.toLowerCase().replace(/\s+/g, '-'),
+        name: city,
+        partnerCount: count,
+      }))
+      .sort((a, b) => b.partnerCount - a.partnerCount);
+  }
+  
+  const response = await fetch(`${API_BASE}/regions`);
+  return response.json();
+}
+
+/**
+ * Get rewards near a location
+ * In production: This would filter by geo-coordinates from Boomerangme
+ */
+export async function getRewardsNearLocation(lat: number, lng: number, radiusKm: number = 50): Promise<Reward[]> {
+  if (USE_MOCK) {
+    await delay(200);
+    
+    // For mock, we'll associate rewards with partner locations
+    // and filter by partners that are "nearby"
+    // Since we don't have real coords, we'll use a simulated approach
+    const nearbyPartnerIds = MOCK_PARTNERS
+      .filter(p => {
+        // Simulate proximity - in real implementation would use Haversine
+        // For now, just return Aargau region partners for Swiss coords
+        const isAargau = ['Brugg', 'Windisch', 'Aarau', 'Baden', 'Wettingen', 'Habsburg', 'Bad Zurzach', 'Leuggern'].includes(p.city || '');
+        const isLiechtenstein = ['Vaduz', 'Schaan', 'Balzers', 'Malbun'].includes(p.city || '');
+        
+        // If lat is around 47° (Switzerland/Liechtenstein)
+        if (lat > 46.5 && lat < 47.8) {
+          // If lng is around 8° (Aargau area)
+          if (lng > 7.5 && lng < 9) return isAargau;
+          // If lng is around 9.5° (Liechtenstein area)
+          if (lng >= 9 && lng < 10) return isLiechtenstein;
+        }
+        return true; // Fallback: show all
+      })
+      .map(p => p.id);
+    
+    const nearbyRewards = MOCK_REWARDS.filter(r => {
+      const detail = MOCK_REWARD_DETAILS[r.id];
+      return detail && nearbyPartnerIds.includes(detail.partner.id);
+    });
+    
+    return nearbyRewards.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.summary,
+      cost: item.cost,
+      category: item.category,
+      partnerId: MOCK_REWARD_DETAILS[item.id]?.partner.id || '',
+      partnerName: item.partnerName,
+      imageUrl: item.imageUrl,
+      available: true,
+      expiresAt: MOCK_REWARD_DETAILS[item.id]?.validUntil,
+    }));
+  }
+  
+  const response = await fetch(`${API_BASE}/rewards?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`);
+  const data = await response.json();
+  return data.items;
+}
