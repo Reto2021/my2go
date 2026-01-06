@@ -1,8 +1,19 @@
 import { useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Radio, Music2 } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import logo from '@/assets/logo-radio2go.png';
+
+function Equalizer({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex items-end gap-[2px] h-4", className)}>
+      <div className="w-[3px] bg-accent rounded-full animate-equalizer-1" />
+      <div className="w-[3px] bg-accent rounded-full animate-equalizer-2" />
+      <div className="w-[3px] bg-accent rounded-full animate-equalizer-3" />
+      <div className="w-[3px] bg-accent rounded-full animate-equalizer-4" />
+    </div>
+  );
+}
 
 export function RadioHeader() {
   const { 
@@ -73,11 +84,8 @@ export function RadioHeader() {
           <div className="flex-1 min-w-0">
             {isPlaying ? (
               <div className="flex items-center gap-2">
-                {/* Live indicator */}
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-                  <span className="text-[10px] font-bold text-accent uppercase tracking-wide">Live</span>
-                </div>
+                {/* Equalizer */}
+                <Equalizer className="flex-shrink-0" />
                 {/* Song info */}
                 <div className="flex-1 min-w-0 overflow-hidden">
                   <p className="text-xs text-secondary-foreground font-medium truncate">
