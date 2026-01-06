@@ -10,6 +10,7 @@ import {
   RedemptionStatus 
 } from '@/lib/api';
 import { useSession, useBrowseMode } from '@/lib/session';
+import { useSettings } from '@/lib/settings';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { 
@@ -50,6 +51,7 @@ export default function RewardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { session, balance, refreshBalance } = useSession();
+  const { soundEnabled, vibrationEnabled } = useSettings();
   const isBrowseMode = useBrowseMode();
   
   const [reward, setReward] = useState<Reward | null>(null);
@@ -156,8 +158,8 @@ export default function RewardDetailPage() {
   };
   
   // Haptic feedback helper using Web Vibration API
-  const triggerHapticFeedback = (type: 'success' | 'error' | 'light') => {
-    if (!navigator.vibrate) return;
+  const triggerHapticFeedback = useCallback((type: 'success' | 'error' | 'light') => {
+    if (!vibrationEnabled || !navigator.vibrate) return;
     
     switch (type) {
       case 'success':
@@ -173,10 +175,12 @@ export default function RewardDetailPage() {
         navigator.vibrate(10);
         break;
     }
-  };
+  }, [vibrationEnabled]);
   
   // Sound feedback using Web Audio API (works on iOS)
   const playFeedbackSound = useCallback((type: 'success' | 'error') => {
+    if (!soundEnabled) return;
+    
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -207,7 +211,7 @@ export default function RewardDetailPage() {
       // Web Audio API not supported, silently fail
       console.log('Web Audio API not available');
     }
-  }, []);
+  }, [soundEnabled]);
   
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);

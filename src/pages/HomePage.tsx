@@ -15,7 +15,8 @@ import {
   Wallet,
   Sparkles,
   ArrowRight,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -265,6 +266,14 @@ function SessionModeHome({ displayName, balance, rewards, isLoading, passLink }:
                       Wallet öffnen
                     </a>
                   )}
+                  <Link 
+                    to="/settings"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <Settings className="h-4 w-4 text-muted-foreground" />
+                    Einstellungen
+                  </Link>
                   <button 
                     onClick={handleLogout}
                     disabled={isLoggingOut}
