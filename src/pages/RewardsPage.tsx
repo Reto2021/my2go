@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getRewards, Reward } from '@/lib/api';
+import { getRewards, getRewardsNearLocation, Reward } from '@/lib/api';
 import { useBrowseMode } from '@/lib/session';
+import { useLocation } from '@/lib/location';
 import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
-import { Gift, Wallet, Info, SlidersHorizontal, ChevronDown, X } from 'lucide-react';
+import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucide-react';
 
 const categories = [
   { id: 'all', label: 'Alle' },
@@ -39,11 +40,23 @@ export default function RewardsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const isBrowseMode = useBrowseMode();
   
+  const { 
+    userLocation, 
+    isRequestingLocation, 
+    requestLocation, 
+    clearLocation 
+  } = useLocation();
+  
   const loadRewards = async () => {
     setIsLoading(true);
     setError(false);
     try {
-      const data = await getRewards(activeCategory);
+      let data: Reward[];
+      if (userLocation) {
+        data = await getRewardsNearLocation(userLocation.lat, userLocation.lng, 25);
+      } else {
+        data = await getRewards(activeCategory);
+      }
       setRewards(data);
     } catch (err) {
       console.error('Failed to load rewards:', err);
@@ -55,11 +68,16 @@ export default function RewardsPage() {
   
   useEffect(() => {
     loadRewards();
-  }, [activeCategory]);
+  }, [activeCategory, userLocation]);
   
   // Client-side filtering and sorting (API would do this in production)
   const filteredAndSortedRewards = useMemo(() => {
     let result = [...rewards];
+    
+    // Filter by category (only if not using location - API handles it otherwise)
+    if (!userLocation && activeCategory !== 'all') {
+      result = result.filter(r => r.category === activeCategory);
+    }
     
     // Filter by max cost
     if (maxCost > 0) {
@@ -85,13 +103,21 @@ export default function RewardsPage() {
     }
     
     return result;
-  }, [rewards, maxCost, sortBy]);
+  }, [rewards, maxCost, sortBy, userLocation, activeCategory]);
   
   const hasActiveFilters = maxCost > 0 || sortBy !== 'popular';
   
   const clearFilters = () => {
     setMaxCost(0);
     setSortBy('popular');
+  };
+  
+  const handleLocationToggle = () => {
+    if (userLocation) {
+      clearLocation();
+    } else {
+      requestLocation();
+    }
   };
   
   return (
@@ -122,8 +148,27 @@ export default function RewardsPage() {
             </button>
           </div>
           
-          {/* Category Filter */}
+          {/* Location + Category Filter */}
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
+            {/* Location Toggle */}
+            <button
+              onClick={handleLocationToggle}
+              disabled={isRequestingLocation}
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                userLocation
+                  ? 'bg-accent text-accent-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              )}
+            >
+              {isRequestingLocation ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MapPin className="h-4 w-4" />
+              )}
+              {userLocation ? 'In der Nähe' : 'Standort'}
+            </button>
+            
             {categories.map(cat => (
               <button
                 key={cat.id}
