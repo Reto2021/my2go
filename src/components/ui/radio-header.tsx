@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
-import talerCoin from '@/assets/taler-coin.png';
 
 function Equalizer({ className }: { className?: string }) {
   return (
@@ -14,6 +13,73 @@ function Equalizer({ className }: { className?: string }) {
       <div className="w-[3px] bg-accent rounded-full animate-equalizer-3" />
       <div className="w-[3px] bg-accent rounded-full animate-equalizer-4" />
     </div>
+  );
+}
+
+function TalerCoin({ className, spinning }: { className?: string; spinning?: boolean }) {
+  return (
+    <svg 
+      viewBox="0 0 40 40" 
+      className={cn("w-full h-full", spinning && "animate-spin-slow", className)}
+    >
+      {/* Outer ring with metallic gradient */}
+      <defs>
+        <linearGradient id="coinGold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FFD54F" />
+          <stop offset="25%" stopColor="#FCB900" />
+          <stop offset="50%" stopColor="#FFE082" />
+          <stop offset="75%" stopColor="#FCB900" />
+          <stop offset="100%" stopColor="#F9A825" />
+        </linearGradient>
+        <linearGradient id="coinEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#F9A825" />
+          <stop offset="50%" stopColor="#FFD54F" />
+          <stop offset="100%" stopColor="#E65100" />
+        </linearGradient>
+        <radialGradient id="coinShine" cx="30%" cy="30%" r="50%">
+          <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      
+      {/* Coin base with edge */}
+      <circle cx="20" cy="20" r="19" fill="url(#coinEdge)" />
+      <circle cx="20" cy="20" r="17" fill="url(#coinGold)" />
+      
+      {/* Inner decorative ring */}
+      <circle cx="20" cy="20" r="14" fill="none" stroke="#E65100" strokeWidth="0.5" opacity="0.4" />
+      <circle cx="20" cy="20" r="12" fill="none" stroke="#E65100" strokeWidth="0.3" opacity="0.3" />
+      
+      {/* 2Go Text */}
+      <text 
+        x="20" 
+        y="23" 
+        textAnchor="middle" 
+        fontSize="10" 
+        fontWeight="bold" 
+        fill="#8D6E00"
+        fontFamily="system-ui, sans-serif"
+      >
+        2Go
+      </text>
+      
+      {/* Shine overlay */}
+      <circle cx="20" cy="20" r="17" fill="url(#coinShine)" />
+      
+      {/* Edge notches for realism */}
+      {[...Array(16)].map((_, i) => (
+        <line 
+          key={i}
+          x1={20 + 18 * Math.cos((i * 22.5 * Math.PI) / 180)}
+          y1={20 + 18 * Math.sin((i * 22.5 * Math.PI) / 180)}
+          x2={20 + 19 * Math.cos((i * 22.5 * Math.PI) / 180)}
+          y2={20 + 19 * Math.sin((i * 22.5 * Math.PI) / 180)}
+          stroke="#B8860B"
+          strokeWidth="1"
+          opacity="0.5"
+        />
+      ))}
+    </svg>
   );
 }
 
@@ -123,28 +189,22 @@ export function RadioHeader() {
             onClick={togglePlay}
             disabled={isLoading}
             className={cn(
-              "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all relative overflow-hidden",
+              "h-11 w-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all relative",
               isLoading && "opacity-60"
             )}
             aria-label={isPlaying ? 'Pause' : 'Abspielen'}
           >
-            {/* Taler coin background */}
-            <img 
-              src={talerCoin} 
-              alt="" 
-              className={cn(
-                "absolute inset-0 w-full h-full object-cover",
-                isPlaying && "animate-spin-slow"
-              )}
-            />
+            {/* Taler coin SVG */}
+            <TalerCoin spinning={isPlaying} />
+            
             {/* Icon overlay */}
-            <div className="relative z-10 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
               {isLoading ? (
-                <div className="h-4 w-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                <div className="h-4 w-4 border-2 border-amber-900/50 border-t-amber-900 rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="h-4 w-4 text-white drop-shadow-md" />
+                <Pause className="h-4 w-4 text-amber-900/80" strokeWidth={2.5} />
               ) : (
-                <Play className="h-4 w-4 ml-0.5 text-white drop-shadow-md" />
+                <Play className="h-4 w-4 ml-0.5 text-amber-900/80" strokeWidth={2.5} />
               )}
             </div>
           </button>
