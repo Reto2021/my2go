@@ -7,8 +7,7 @@ import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
-import logo from '@/assets/logo-radio2go.png';
-import { 
+import {
   Radio, 
   Gift, 
   MapPin, 
@@ -179,13 +178,6 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
         
         <div className="container relative z-10 pt-6 pb-32">
           <div className="animate-in">
-            {/* Original Logo - larger */}
-            <img 
-              src={logo} 
-              alt="Radio 2Go" 
-              className="h-20 md:h-24 mb-8"
-            />
-            
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
               Hör 2Go.<br />
               Sammle Taler.<br />
@@ -338,12 +330,7 @@ function SessionModeHome({
     <div className="min-h-screen pb-28 bg-background">
       {/* Header */}
       <header className="container pt-6 pb-4">
-        <div className="flex items-center justify-between animate-in">
-          <img 
-            src={logo} 
-            alt="Radio 2Go" 
-            className="h-14 md:h-16"
-          />
+        <div className="flex items-center justify-end animate-in">
           {displayName && (
             <div className="relative">
               <button 
