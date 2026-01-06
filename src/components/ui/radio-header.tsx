@@ -104,19 +104,16 @@ export function RadioHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Background blur */}
-      <div className="absolute inset-0 bg-secondary/95 backdrop-blur-xl" />
+      {/* Background - dark blue */}
+      <div className="absolute inset-0 bg-[hsl(210,50%,15%)] backdrop-blur-xl" />
       
       <div className="relative container flex items-center gap-3 py-2">
-        {/* Logo */}
+        {/* Logo - larger */}
         <img 
           src={logo} 
           alt="Radio 2Go" 
-          className="h-8 flex-shrink-0"
+          className="h-10 flex-shrink-0"
         />
-        
-        {/* Divider */}
-        <div className="h-6 w-px bg-secondary-foreground/20 flex-shrink-0" />
         
         {/* Player area */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
