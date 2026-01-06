@@ -223,7 +223,7 @@ export function RadioHeader() {
               </div>
             ) : (
               <p className="text-xs text-secondary-foreground/70 font-medium">
-                Radio 2Go streamen
+                Radio 2Go streamen und Taler sammeln.
               </p>
             )}
           </div>
