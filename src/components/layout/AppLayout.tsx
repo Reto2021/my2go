@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { BottomNav } from './BottomNav';
-import { GlobalRadioPlayer } from '@/components/ui/global-radio-player';
+import { RadioHeader } from '@/components/ui/radio-header';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -9,10 +9,10 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <main className="pb-24">
+      <RadioHeader />
+      <main className="pt-14 pb-24">
         {children}
       </main>
-      <GlobalRadioPlayer />
       <BottomNav />
     </div>
   );
