@@ -114,6 +114,25 @@ export default {
           from: { backgroundPosition: "200% 0" },
           to: { backgroundPosition: "-200% 0" },
         },
+        "equalizer-1": {
+          "0%, 100%": { height: "4px" },
+          "50%": { height: "16px" },
+        },
+        "equalizer-2": {
+          "0%, 100%": { height: "12px" },
+          "25%": { height: "4px" },
+          "75%": { height: "16px" },
+        },
+        "equalizer-3": {
+          "0%, 100%": { height: "8px" },
+          "33%": { height: "16px" },
+          "66%": { height: "4px" },
+        },
+        "equalizer-4": {
+          "0%, 100%": { height: "14px" },
+          "40%": { height: "6px" },
+          "80%": { height: "12px" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -123,6 +142,10 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "equalizer-1": "equalizer-1 0.8s ease-in-out infinite",
+        "equalizer-2": "equalizer-2 0.6s ease-in-out infinite",
+        "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
+        "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
