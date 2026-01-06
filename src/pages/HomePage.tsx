@@ -154,9 +154,9 @@ interface BrowseModeHomeProps {
 
 function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section with Skyline */}
-      <section className="hero-section text-secondary">
+      <section className="hero-section text-secondary pt-20">
         {/* City Skyline */}
         <div className="skyline-container">
           <div className="skyline-distant" />
