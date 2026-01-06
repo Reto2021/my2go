@@ -159,8 +159,15 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
     <div className="min-h-screen bg-background">
       {/* Hero Section with Skyline */}
       <section className="hero-section text-secondary">
-        {/* Clouds */}
-        <div className="clouds-bg" />
+        {/* Individual Clouds */}
+        <div className="clouds-bg">
+          <div className="cloud cloud-1" />
+          <div className="cloud cloud-2" />
+          <div className="cloud cloud-3" />
+          <div className="cloud cloud-4" />
+          <div className="cloud cloud-5" />
+          <div className="cloud cloud-6" />
+        </div>
         
         {/* Skyline */}
         <div className="skyline-bg" />

@@ -176,54 +176,88 @@
     background-position: center bottom;
   }
 
-  /* Multiple cloud layers with natural movement */
+  /* Individual clouds container */
   .clouds-bg {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 60%;
     pointer-events: none;
     overflow: hidden;
   }
 
-  .clouds-bg::before,
-  .clouds-bg::after {
-    content: '';
+  /* Individual cloud animations - right to left */
+  @keyframes cloud1 { from { transform: translateX(100vw); } to { transform: translateX(-180px); } }
+  @keyframes cloud2 { from { transform: translateX(100vw); } to { transform: translateX(-150px); } }
+  @keyframes cloud3 { from { transform: translateX(100vw); } to { transform: translateX(-120px); } }
+  @keyframes cloud4 { from { transform: translateX(100vw); } to { transform: translateX(-200px); } }
+  @keyframes cloud5 { from { transform: translateX(100vw); } to { transform: translateX(-140px); } }
+  @keyframes cloud6 { from { transform: translateX(100vw); } to { transform: translateX(-160px); } }
+
+  .cloud {
     position: absolute;
-    width: 200%;
-    height: 80px;
-    background-repeat: repeat-x;
+    background-repeat: no-repeat;
+    background-size: contain;
   }
 
-  /* Cloud layer 1 - larger, slower, higher */
-  .clouds-bg::before {
+  .cloud-1 {
+    top: 5%;
+    width: 140px;
+    height: 50px;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 50'%3E%3Cellipse cx='70' cy='28' rx='55' ry='22' fill='white'/%3E%3Cellipse cx='45' cy='32' rx='35' ry='18' fill='white'/%3E%3Cellipse cx='100' cy='30' rx='30' ry='16' fill='white'/%3E%3C/svg%3E");
+    animation: cloud1 45s linear infinite;
+  }
+
+  .cloud-2 {
+    top: 18%;
+    width: 100px;
+    height: 40px;
+    opacity: 0.3;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'%3E%3Cellipse cx='50' cy='22' rx='40' ry='16' fill='white'/%3E%3Cellipse cx='30' cy='25' rx='25' ry='12' fill='white'/%3E%3Cellipse cx='75' cy='24' rx='22' ry='11' fill='white'/%3E%3C/svg%3E");
+    animation: cloud2 62s linear infinite;
+    animation-delay: -20s;
+  }
+
+  .cloud-3 {
     top: 8%;
-    left: 0;
+    width: 180px;
+    height: 60px;
     opacity: 0.35;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 80'%3E%3Cellipse cx='120' cy='45' rx='60' ry='28' fill='white'/%3E%3Cellipse cx='160' cy='38' rx='45' ry='24' fill='white'/%3E%3Cellipse cx='85' cy='52' rx='40' ry='20' fill='white'/%3E%3Cellipse cx='480' cy='50' rx='55' ry='26' fill='white'/%3E%3Cellipse cx='520' cy='42' rx='42' ry='22' fill='white'/%3E%3Cellipse cx='445' cy='55' rx='38' ry='18' fill='white'/%3E%3Cellipse cx='720' cy='40' rx='50' ry='25' fill='white'/%3E%3Cellipse cx='755' cy='48' rx='38' ry='20' fill='white'/%3E%3C/svg%3E");
-    background-size: 800px 80px;
-    animation: floatClouds1 90s linear infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 60'%3E%3Cellipse cx='90' cy='32' rx='70' ry='26' fill='white'/%3E%3Cellipse cx='55' cy='38' rx='45' ry='20' fill='white'/%3E%3Cellipse cx='130' cy='35' rx='40' ry='18' fill='white'/%3E%3C/svg%3E");
+    animation: cloud3 78s linear infinite;
+    animation-delay: -35s;
   }
 
-  /* Cloud layer 2 - smaller, faster, lower */
-  .clouds-bg::after {
-    top: 22%;
-    left: -100px;
+  .cloud-4 {
+    top: 25%;
+    width: 90px;
+    height: 35px;
     opacity: 0.25;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 60'%3E%3Cellipse cx='80' cy='32' rx='35' ry='18' fill='white'/%3E%3Cellipse cx='105' cy='27' rx='28' ry='15' fill='white'/%3E%3Cellipse cx='55' cy='36' rx='25' ry='14' fill='white'/%3E%3Cellipse cx='320' cy='35' rx='40' ry='20' fill='white'/%3E%3Cellipse cx='355' cy='28' rx='30' ry='16' fill='white'/%3E%3Cellipse cx='520' cy='30' rx='32' ry='17' fill='white'/%3E%3Cellipse cx='545' cy='36' rx='25' ry='13' fill='white'/%3E%3C/svg%3E");
-    background-size: 600px 60px;
-    animation: floatClouds2 55s linear infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 35'%3E%3Cellipse cx='45' cy='18' rx='35' ry='14' fill='white'/%3E%3Cellipse cx='28' cy='20' rx='22' ry='11' fill='white'/%3E%3Cellipse cx='65' cy='19' rx='20' ry='10' fill='white'/%3E%3C/svg%3E");
+    animation: cloud4 55s linear infinite;
+    animation-delay: -10s;
   }
 
-  @keyframes floatClouds1 {
-    from { transform: translateX(0); }
-    to { transform: translateX(-800px); }
+  .cloud-5 {
+    top: 12%;
+    width: 120px;
+    height: 45px;
+    opacity: 0.32;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 45'%3E%3Cellipse cx='60' cy='25' rx='48' ry='18' fill='white'/%3E%3Cellipse cx='38' cy='28' rx='30' ry='14' fill='white'/%3E%3Cellipse cx='88' cy='26' rx='26' ry='13' fill='white'/%3E%3C/svg%3E");
+    animation: cloud5 88s linear infinite;
+    animation-delay: -50s;
   }
 
-  @keyframes floatClouds2 {
-    from { transform: translateX(0); }
-    to { transform: translateX(-600px); }
+  .cloud-6 {
+    top: 22%;
+    width: 110px;
+    height: 42px;
+    opacity: 0.28;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 42'%3E%3Cellipse cx='55' cy='22' rx='44' ry='17' fill='white'/%3E%3Cellipse cx='35' cy='25' rx='28' ry='13' fill='white'/%3E%3Cellipse cx='80' cy='23' rx='24' ry='12' fill='white'/%3E%3C/svg%3E");
+    animation: cloud6 70s linear infinite;
+    animation-delay: -28s;
   }
 
   /* Safe area padding for bottom nav */
