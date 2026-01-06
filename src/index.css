@@ -164,35 +164,66 @@
       hsl(200 60% 85%) 100%);
   }
 
-  /* Skyline SVG background */
+  /* Realistic Skyline - city silhouette */
   .skyline-bg {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 120px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath fill='%23ffffff' fill-opacity='0.15' d='M0 120V80h40V60h20v20h40V40h20v40h60V60h20v20h100V40h20v40h40V60h20v20h60V20h20v60h100V40h20v40h40V60h20v20h100V30h20v50h60V60h20v20h100V40h20v40h40V60h20v20h100V50h20v30h40V60h20v20h60V40h20v80H0z'/%3E%3Cpath fill='%23ffffff' fill-opacity='0.3' d='M0 120V90h60v-20h20v20h80V70h20v20h40V60h20v30h100V70h20v20h60V80h20v10h80V70h20v20h100V60h20v30h60V80h20v10h80V70h20v20h100V80h20v10h60V70h20v50H0z'/%3E%3Cpath fill='%23ffffff' d='M0 120v-10h80v-10h20v10h100v-20h20v20h60v-10h20v10h100v-15h20v15h80v-10h20v10h100v-20h20v20h60v-10h20v10h100v-15h20v15h80v-10h20v20H0z'/%3E%3C/svg%3E");
+    height: 140px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 140' preserveAspectRatio='xMidYMax slice'%3E%3Cdefs%3E%3ClinearGradient id='skyline1' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23023F5A' stop-opacity='0.7'/%3E%3Cstop offset='100%25' stop-color='%23023F5A' stop-opacity='0.9'/%3E%3C/linearGradient%3E%3ClinearGradient id='skyline2' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23023F5A' stop-opacity='0.4'/%3E%3Cstop offset='100%25' stop-color='%23023F5A' stop-opacity='0.6'/%3E%3C/linearGradient%3E%3C/defs%3E%3C!-- Background layer - distant buildings --%3E%3Cpath fill='url(%23skyline2)' d='M0 140V85h20v-5h5v-15h10v15h5v5h25V70h8v-20h6v20h8v15h30V75h6v-10h4v10h6v10h40V60h5V45h8v15h5v25h35V70h10v-25h8v25h10v15h45V55h6v-15h5v15h6v30h30V65h8v-20h6v20h8v20h40V50h5v-10h6v10h5v35h50V45h8v-15h6v15h8v40h35V55h6v-10h5v10h6v30h30V70h10v-30h8v30h10v15h50V55h6v-15h5v15h6v30h25V60h8v-20h6v20h8v25h35V65h6v-10h5v10h6v20h30V60h10v-25h8v25h10v25h45V55h6v-15h5v15h6v30h40v55H0z'/%3E%3C!-- Foreground layer - nearby buildings --%3E%3Cpath fill='url(%23skyline1)' d='M0 140v-30h15v-20h8v20h15v10h20v-45h6v-25h4v-10h6v10h4v25h6v45h25v-35h5v-15h8v-10h4v10h8v15h5v35h30v-25h4v-10h6v10h4v25h35v-55h8v-30h6v-8h4v8h6v30h8v55h20v-40h5v-20h8v20h5v40h35v-30h6v-15h4v15h6v30h25v-45h8v-25h4v-8h6v8h4v25h8v45h30v-35h5v-15h8v15h5v35h40v-50h6v-20h4v-10h6v10h4v20h6v50h25v-30h8v-15h4v15h8v30h35v-40h5v-20h8v-10h4v10h8v20h5v40h30v-25h6v-10h4v10h6v25h40v-45h8v-20h4v-10h6v10h4v20h8v45h25v-35h5v-15h8v15h5v35h35v-30h6v-12h4v12h6v30h40v60H0z'/%3E%3C!-- Windows/lights on buildings --%3E%3Crect x='42' y='95' width='3' height='4' fill='%23FCB900' opacity='0.6'/%3E%3Crect x='52' y='88' width='3' height='4' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='115' y='75' width='3' height='4' fill='%23FCB900' opacity='0.7'/%3E%3Crect x='123' y='85' width='3' height='4' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='245' y='70' width='3' height='4' fill='%23FCB900' opacity='0.6'/%3E%3Crect x='255' y='80' width='3' height='4' fill='%23FCB900' opacity='0.4'/%3E%3Crect x='385' y='55' width='3' height='4' fill='%23FCB900' opacity='0.7'/%3E%3Crect x='395' y='65' width='3' height='4' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='510' y='75' width='3' height='4' fill='%23FCB900' opacity='0.6'/%3E%3Crect x='620' y='60' width='3' height='4' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='730' y='70' width='3' height='4' fill='%23FCB900' opacity='0.7'/%3E%3Crect x='850' y='55' width='3' height='4' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='960' y='65' width='3' height='4' fill='%23FCB900' opacity='0.6'/%3E%3Crect x='1080' y='75' width='3' height='4' fill='%23FCB900' opacity='0.4'/%3E%3Crect x='1200' y='60' width='3' height='4' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='1310' y='70' width='3' height='4' fill='%23FCB900' opacity='0.7'/%3E%3C/svg%3E");
     background-size: cover;
     background-position: center bottom;
   }
 
-  /* Floating clouds animation */
+  /* Multiple cloud layers with natural movement */
   .clouds-bg {
     position: absolute;
-    top: 20%;
+    top: 0;
     left: 0;
     right: 0;
-    height: 60px;
-    opacity: 0.4;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 60'%3E%3Cellipse cx='50' cy='30' rx='40' ry='20' fill='white'/%3E%3Cellipse cx='80' cy='25' rx='30' ry='18' fill='white'/%3E%3Cellipse cx='30' cy='35' rx='25' ry='15' fill='white'/%3E%3Cellipse cx='250' cy='35' rx='35' ry='18' fill='white'/%3E%3Cellipse cx='280' cy='30' rx='28' ry='16' fill='white'/%3E%3C/svg%3E");
-    background-repeat: repeat-x;
-    background-size: 400px 60px;
-    animation: floatClouds 60s linear infinite;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
   }
 
-  @keyframes floatClouds {
-    from { background-position-x: 0; }
-    to { background-position-x: 400px; }
+  .clouds-bg::before,
+  .clouds-bg::after {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 80px;
+    background-repeat: repeat-x;
+  }
+
+  /* Cloud layer 1 - larger, slower, higher */
+  .clouds-bg::before {
+    top: 8%;
+    left: 0;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 80'%3E%3Cellipse cx='120' cy='45' rx='60' ry='28' fill='white'/%3E%3Cellipse cx='160' cy='38' rx='45' ry='24' fill='white'/%3E%3Cellipse cx='85' cy='52' rx='40' ry='20' fill='white'/%3E%3Cellipse cx='480' cy='50' rx='55' ry='26' fill='white'/%3E%3Cellipse cx='520' cy='42' rx='42' ry='22' fill='white'/%3E%3Cellipse cx='445' cy='55' rx='38' ry='18' fill='white'/%3E%3Cellipse cx='720' cy='40' rx='50' ry='25' fill='white'/%3E%3Cellipse cx='755' cy='48' rx='38' ry='20' fill='white'/%3E%3C/svg%3E");
+    background-size: 800px 80px;
+    animation: floatClouds1 90s linear infinite;
+  }
+
+  /* Cloud layer 2 - smaller, faster, lower */
+  .clouds-bg::after {
+    top: 22%;
+    left: -100px;
+    opacity: 0.25;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 60'%3E%3Cellipse cx='80' cy='32' rx='35' ry='18' fill='white'/%3E%3Cellipse cx='105' cy='27' rx='28' ry='15' fill='white'/%3E%3Cellipse cx='55' cy='36' rx='25' ry='14' fill='white'/%3E%3Cellipse cx='320' cy='35' rx='40' ry='20' fill='white'/%3E%3Cellipse cx='355' cy='28' rx='30' ry='16' fill='white'/%3E%3Cellipse cx='520' cy='30' rx='32' ry='17' fill='white'/%3E%3Cellipse cx='545' cy='36' rx='25' ry='13' fill='white'/%3E%3C/svg%3E");
+    background-size: 600px 60px;
+    animation: floatClouds2 55s linear infinite;
+  }
+
+  @keyframes floatClouds1 {
+    from { transform: translateX(0); }
+    to { transform: translateX(-800px); }
+  }
+
+  @keyframes floatClouds2 {
+    from { transform: translateX(0); }
+    to { transform: translateX(-600px); }
   }
 
   /* Safe area padding for bottom nav */
