@@ -1,11 +1,12 @@
 import { Reward } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Coffee, Ticket, Star, Gift, Coins, ChevronRight } from 'lucide-react';
+import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface RewardCardProps {
   reward: Reward;
   className?: string;
+  distance?: number; // Distance in km
 }
 
 const categoryIcons = {
@@ -22,10 +23,17 @@ const categoryColors = {
   exclusive: 'bg-secondary/10 text-secondary',
 };
 
-export function RewardCard({ reward, className }: RewardCardProps) {
+export function RewardCard({ reward, className, distance }: RewardCardProps) {
   const Icon = categoryIcons[reward.category] || Gift;
   const colorClass = categoryColors[reward.category] || categoryColors.product;
   const canAfford = reward.cost <= 500; // Mock: assume user has 500 points
+  
+  const formatDistance = (km: number) => {
+    if (km < 1) {
+      return `${Math.round(km * 1000)} m`;
+    }
+    return `${km.toFixed(1)} km`;
+  };
   
   return (
     <Link
@@ -42,9 +50,17 @@ export function RewardCard({ reward, className }: RewardCardProps) {
       
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
-          {reward.title}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+            {reward.title}
+          </h3>
+          {distance !== undefined && (
+            <span className="flex items-center gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
+              <MapPin className="h-3 w-3" />
+              {formatDistance(distance)}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground line-clamp-1">
           {reward.partnerName}
         </p>

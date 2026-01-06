@@ -310,7 +310,11 @@ export default function RewardsPage() {
         ) : (
           <div className="space-y-3 stagger-children">
             {filteredAndSortedRewards.map(reward => (
-              <RewardCard key={reward.id} reward={reward} />
+              <RewardCard 
+                key={reward.id} 
+                reward={reward} 
+                distance={userLocation ? reward.distanceKm : undefined}
+              />
             ))}
           </div>
         )}
