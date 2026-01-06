@@ -1,14 +1,159 @@
 /**
- * 2Go Taler Hub - Mock Gateway API
+ * 2Go Taler Hub - Gateway API Client
  * 
- * This file contains all API contracts and mock data.
- * In production, these calls will be routed through a real gateway
- * that communicates with Boomerangme (loyalty) and GoHighLevel (CRM).
+ * This file implements the Gateway API contract that connects to:
+ * - Boomerangme (loyalty backend: points, rewards, redemptions)
+ * - GoHighLevel (CRM: partners, communications)
  * 
- * IMPORTANT: Lovable stores NO data. All data comes from the gateway.
+ * ARCHITECTURE:
+ * Frontend (Lovable) → Gateway API → Boomerangme/GHL
+ * 
+ * Currently using MOCK implementation.
+ * Replace BASE_URL with real gateway endpoint when ready.
+ * 
+ * Boomerangme API Reference: https://docs.boomerangme.cards/api/api-docs
+ * Card Types: Stamp(0), Cashback(1), Multipass(2), Coupon(3), 
+ *             Discount(4), Gift(5), Membership(6), Reward(7)
  */
 
-// Types
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+const API_BASE = '/api'; // Will be replaced with real gateway URL
+const USE_MOCK = true;   // Set to false when gateway is ready
+
+// ============================================================================
+// TYPE DEFINITIONS (matching Gateway API Contract)
+// ============================================================================
+
+// Session & Auth
+export interface SessionStartRequest {
+  passIdOrPhoneOrEmail?: string;
+}
+
+export interface SessionStartResponse {
+  token: string;
+  expiresAt: string;
+}
+
+export interface MemberProfile {
+  memberId: string;
+  firstName?: string;
+  balance: number;
+  tier?: string;
+  passLink?: string;
+}
+
+// Rewards
+export interface RewardListItem {
+  id: string;
+  title: string;
+  partnerName: string;
+  category: 'experience' | 'discount' | 'product' | 'exclusive';
+  cost: number;
+  summary: string;
+  badges: string[];
+  imageUrl?: string;
+  distanceKm?: number;
+}
+
+export interface RewardDetail {
+  id: string;
+  title: string;
+  description: string;
+  terms: string[];
+  cost: number;
+  partner: {
+    id: string;
+    name: string;
+    address: string;
+    openingHours?: string;
+  };
+  limits?: {
+    perDay?: number;
+    perUser?: number;
+  };
+  validUntil?: string;
+}
+
+export interface RewardRedemptionResult {
+  redemptionId: string;
+  redemptionCode: string;
+  qrPayload: string;
+  expiresAt: string;
+  newBalance?: number;
+}
+
+export interface RedemptionStatus {
+  status: 'created' | 'used' | 'expired' | 'cancelled';
+  usedAt?: string;
+  partnerName?: string;
+  cost: number;
+  balanceAfter?: number;
+}
+
+// Codes
+export interface CodeRedeemRequest {
+  code: string;
+}
+
+export interface CodeRedeemResponse {
+  status: 'ok' | 'invalid' | 'expired' | 'used' | 'rate_limited';
+  pointsAwarded?: number;
+  newBalance?: number;
+  message: string;
+}
+
+// Partners
+export interface PartnerListItem {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  openNow?: boolean;
+  distanceKm?: number;
+  hasRewards: boolean;
+}
+
+export interface PartnerDetail {
+  id: string;
+  name: string;
+  category: string;
+  address: string;
+  openingHours?: string;
+  phone?: string;
+  website?: string;
+  mapLink?: string;
+}
+
+export interface PartnerRewardItem {
+  id: string;
+  title: string;
+  cost: number;
+  summary: string;
+}
+
+// FAQ
+export interface FAQItem {
+  q: string;
+  a: string;
+  category: string;
+}
+
+// Support
+export interface SupportTicketRequest {
+  topic: string;
+  message: string;
+  emailOrPhone?: string;
+}
+
+export interface SupportTicketResponse {
+  ticketId: string;
+  status: string;
+}
+
+// Legacy compatibility types
 export interface TalerBalance {
   current: number;
   pending: number;
@@ -61,313 +206,688 @@ export interface CodeRedeemResult {
   newBalance?: number;
 }
 
-// Mock Data
-const MOCK_REWARDS: Reward[] = [
+// ============================================================================
+// MOCK DATA (Boomerangme-style)
+// ============================================================================
+
+const MOCK_REWARDS: RewardListItem[] = [
   {
     id: 'r1',
     title: 'Kaffee-Upgrade',
-    description: 'Gratis Upgrade auf die nächste Grösse bei jedem Kaffee.',
-    cost: 50,
-    category: 'discount',
-    partnerId: 'p1',
     partnerName: 'Café Sonnenschein',
-    available: true,
+    category: 'discount',
+    cost: 50,
+    summary: 'Gratis Upgrade auf die nächste Grösse',
+    badges: ['Beliebt'],
+    imageUrl: undefined,
   },
   {
     id: 'r2',
     title: 'Gratis Dessert',
-    description: 'Ein Dessert deiner Wahl kostenlos zu deiner Bestellung.',
-    cost: 100,
-    category: 'product',
-    partnerId: 'p2',
     partnerName: 'Restaurant Seeblick',
-    available: true,
+    category: 'product',
+    cost: 100,
+    summary: 'Ein Dessert deiner Wahl kostenlos',
+    badges: ['Neu'],
+    imageUrl: undefined,
   },
   {
     id: 'r3',
     title: '2-für-1 Museum',
-    description: 'Zweite Person gratis ins Kunstmuseum.',
-    cost: 75,
-    category: 'discount',
-    partnerId: 'p3',
     partnerName: 'Kunstmuseum Bern',
-    available: true,
+    category: 'discount',
+    cost: 75,
+    summary: 'Zweite Person gratis ins Kunstmuseum',
+    badges: ['Kultur'],
+    imageUrl: undefined,
   },
   {
     id: 'r4',
     title: 'Studio-Besuch',
-    description: 'Exklusiver Blick hinter die Kulissen von Radio 2Go.',
-    cost: 200,
-    category: 'exclusive',
-    partnerId: 'radio2go',
     partnerName: 'Radio 2Go',
-    available: true,
+    category: 'exclusive',
+    cost: 200,
+    summary: 'Exklusiver Blick hinter die Kulissen',
+    badges: ['Exklusiv', 'Radio 2Go'],
+    imageUrl: undefined,
   },
   {
     id: 'r5',
     title: 'Song-Wunsch-Tag',
-    description: 'Wähle einen Song, der live auf Radio 2Go gespielt wird.',
-    cost: 150,
-    category: 'experience',
-    partnerId: 'radio2go',
     partnerName: 'Radio 2Go',
-    available: true,
+    category: 'experience',
+    cost: 150,
+    summary: 'Wähle einen Song für die Sendung',
+    badges: ['Radio 2Go'],
+    imageUrl: undefined,
   },
   {
     id: 'r6',
     title: 'Probetraining',
-    description: 'Gratis Probetraining im Fitnessstudio.',
-    cost: 80,
-    category: 'experience',
-    partnerId: 'p4',
     partnerName: 'FitLife Studio',
-    available: true,
+    category: 'experience',
+    cost: 80,
+    summary: 'Gratis Probetraining im Fitnessstudio',
+    badges: ['Sport'],
+    imageUrl: undefined,
   },
   {
     id: 'r7',
     title: 'Geburtstagswunsch on Air',
-    description: 'Dein persönlicher Geburtstagsgruss wird live gesendet.',
-    cost: 100,
-    category: 'exclusive',
-    partnerId: 'radio2go',
     partnerName: 'Radio 2Go',
-    available: true,
+    category: 'exclusive',
+    cost: 100,
+    summary: 'Dein Gruss wird live gesendet',
+    badges: ['Radio 2Go', 'Beliebt'],
+    imageUrl: undefined,
   },
   {
     id: 'r8',
     title: 'Kinder-Menü gratis',
-    description: 'Ein Kinder-Menü kostenlos bei jedem Erwachsenen-Menü.',
-    cost: 60,
-    category: 'product',
-    partnerId: 'p2',
     partnerName: 'Restaurant Seeblick',
-    available: true,
+    category: 'product',
+    cost: 60,
+    summary: 'Ein Kinder-Menü kostenlos',
+    badges: ['Familie'],
+    imageUrl: undefined,
   },
 ];
 
-const MOCK_PARTNERS: Partner[] = [
-  {
-    id: 'p1',
-    name: 'Café Sonnenschein',
-    category: 'Gastronomie',
-    description: 'Gemütliches Café mit hausgemachten Kuchen und Spezialitäten.',
-    address: 'Hauptstrasse 12, 3000 Bern',
-    lat: 46.9480,
-    lng: 7.4474,
-    rewardCount: 2,
+const MOCK_REWARD_DETAILS: Record<string, RewardDetail> = {
+  r1: {
+    id: 'r1',
+    title: 'Kaffee-Upgrade',
+    description: 'Erhalte ein kostenloses Upgrade auf die nächste Grösse bei jedem Kaffee. Gilt für alle Heissgetränke auf der Karte.',
+    terms: ['Gültig für 1 Getränk pro Einlösung', 'Nicht kombinierbar mit anderen Aktionen', 'Zeige den Code an der Kasse'],
+    cost: 50,
+    partner: {
+      id: 'p1',
+      name: 'Café Sonnenschein',
+      address: 'Hauptstrasse 12, 3000 Bern',
+      openingHours: 'Mo-Fr 7:00-18:00, Sa 8:00-16:00',
+    },
+    limits: { perDay: 1, perUser: 5 },
+    validUntil: '2026-12-31',
   },
-  {
-    id: 'p2',
-    name: 'Restaurant Seeblick',
-    category: 'Gastronomie',
-    description: 'Regionale Küche mit Blick auf den See.',
-    address: 'Seeweg 45, 3600 Thun',
-    lat: 46.7580,
-    lng: 7.6280,
-    rewardCount: 3,
+  r2: {
+    id: 'r2',
+    title: 'Gratis Dessert',
+    description: 'Geniesse ein Dessert deiner Wahl kostenlos zu deiner Bestellung. Wähle aus unserer Dessertkarte.',
+    terms: ['Mindestbestellwert CHF 25', 'Dessert nach Verfügbarkeit', 'Nicht für Take-away'],
+    cost: 100,
+    partner: {
+      id: 'p2',
+      name: 'Restaurant Seeblick',
+      address: 'Seeweg 45, 3600 Thun',
+      openingHours: 'Di-So 11:30-22:00',
+    },
+    limits: { perUser: 3 },
   },
-  {
-    id: 'p3',
-    name: 'Kunstmuseum Bern',
-    category: 'Kultur',
-    description: 'Eines der wichtigsten Kunstmuseen der Schweiz.',
-    address: 'Hodlerstrasse 8, 3011 Bern',
-    lat: 46.9441,
-    lng: 7.4513,
-    rewardCount: 1,
+  r3: {
+    id: 'r3',
+    title: '2-für-1 Museum',
+    description: 'Besuche das Kunstmuseum Bern zu zweit – die zweite Person kommt gratis rein!',
+    terms: ['Gültig für regulären Eintritt', 'Nicht für Sonderausstellungen', 'Vorlage an der Kasse'],
+    cost: 75,
+    partner: {
+      id: 'p3',
+      name: 'Kunstmuseum Bern',
+      address: 'Hodlerstrasse 8, 3011 Bern',
+      openingHours: 'Di-So 10:00-17:00',
+    },
   },
-  {
-    id: 'p4',
-    name: 'FitLife Studio',
-    category: 'Sport & Fitness',
-    description: 'Modernes Fitnessstudio mit persönlicher Betreuung.',
-    address: 'Sportweg 5, 3008 Bern',
-    lat: 46.9550,
-    lng: 7.4380,
-    rewardCount: 2,
+  r4: {
+    id: 'r4',
+    title: 'Studio-Besuch',
+    description: 'Erlebe Radio 2Go hautnah! Besuche unser Studio während einer Live-Sendung und lerne das Team kennen.',
+    terms: ['Nach Terminvereinbarung', 'Max. 2 Personen', 'Dauer ca. 45 Minuten'],
+    cost: 200,
+    partner: {
+      id: 'radio2go',
+      name: 'Radio 2Go',
+      address: 'Radiostrasse 1, 3000 Bern',
+      openingHours: 'Termine nach Absprache',
+    },
+    limits: { perUser: 1 },
   },
-  {
-    id: 'radio2go',
-    name: 'Radio 2Go',
-    category: 'Erlebnis',
-    description: 'Dein Schweizer Lieblingsradio.',
-    address: 'Radiostrasse 1, 3000 Bern',
-    lat: 46.9510,
-    lng: 7.4400,
-    rewardCount: 3,
+  r5: {
+    id: 'r5',
+    title: 'Song-Wunsch-Tag',
+    description: 'Wähle deinen Lieblingssong und wir spielen ihn live auf Radio 2Go. Mit persönlicher Ansage!',
+    terms: ['Song muss lizenziert sein', 'Ausstrahlung innerhalb von 7 Tagen', 'Persönliche Widmung möglich'],
+    cost: 150,
+    partner: {
+      id: 'radio2go',
+      name: 'Radio 2Go',
+      address: 'Radiostrasse 1, 3000 Bern',
+    },
   },
+  r6: {
+    id: 'r6',
+    title: 'Probetraining',
+    description: 'Teste unser Fitnessstudio mit einem kostenlosen Probetraining inkl. Einführung durch einen Trainer.',
+    terms: ['Einmalig pro Person', 'Termin nach Verfügbarkeit', 'Sportkleider mitbringen'],
+    cost: 80,
+    partner: {
+      id: 'p4',
+      name: 'FitLife Studio',
+      address: 'Sportweg 5, 3008 Bern',
+      openingHours: 'Mo-Fr 6:00-22:00, Sa-So 8:00-20:00',
+    },
+    limits: { perUser: 1 },
+  },
+  r7: {
+    id: 'r7',
+    title: 'Geburtstagswunsch on Air',
+    description: 'Lass deinen persönlichen Geburtstagsgruss live auf Radio 2Go senden. Perfekt für Freunde und Familie!',
+    terms: ['Text max. 50 Wörter', 'Ausstrahlung am Geburtstag oder +/- 1 Tag', '3 Tage im Voraus anmelden'],
+    cost: 100,
+    partner: {
+      id: 'radio2go',
+      name: 'Radio 2Go',
+      address: 'Radiostrasse 1, 3000 Bern',
+    },
+  },
+  r8: {
+    id: 'r8',
+    title: 'Kinder-Menü gratis',
+    description: 'Ein Kinder-Menü kostenlos zu jedem Erwachsenen-Hauptgericht. Für Kinder bis 12 Jahre.',
+    terms: ['1 Kinder-Menü pro Erwachsenen-Menü', 'Nur vor Ort', 'Getränke nicht inbegriffen'],
+    cost: 60,
+    partner: {
+      id: 'p2',
+      name: 'Restaurant Seeblick',
+      address: 'Seeweg 45, 3600 Thun',
+      openingHours: 'Di-So 11:30-22:00',
+    },
+  },
+};
+
+const MOCK_PARTNERS: PartnerListItem[] = [
+  { id: 'p1', name: 'Café Sonnenschein', category: 'Gastronomie', city: 'Bern', openNow: true, hasRewards: true },
+  { id: 'p2', name: 'Restaurant Seeblick', category: 'Gastronomie', city: 'Thun', openNow: true, hasRewards: true },
+  { id: 'p3', name: 'Kunstmuseum Bern', category: 'Kultur', city: 'Bern', openNow: false, hasRewards: true },
+  { id: 'p4', name: 'FitLife Studio', category: 'Sport & Fitness', city: 'Bern', openNow: true, hasRewards: true },
+  { id: 'radio2go', name: 'Radio 2Go', category: 'Erlebnis', city: 'Bern', openNow: true, hasRewards: true },
 ];
 
-// Simulate network delay
+const MOCK_PARTNER_DETAILS: Record<string, PartnerDetail> = {
+  p1: { id: 'p1', name: 'Café Sonnenschein', category: 'Gastronomie', address: 'Hauptstrasse 12, 3000 Bern', openingHours: 'Mo-Fr 7:00-18:00, Sa 8:00-16:00', phone: '+41 31 123 45 67' },
+  p2: { id: 'p2', name: 'Restaurant Seeblick', category: 'Gastronomie', address: 'Seeweg 45, 3600 Thun', openingHours: 'Di-So 11:30-22:00', phone: '+41 33 987 65 43', website: 'https://seeblick-thun.ch' },
+  p3: { id: 'p3', name: 'Kunstmuseum Bern', category: 'Kultur', address: 'Hodlerstrasse 8, 3011 Bern', openingHours: 'Di-So 10:00-17:00', website: 'https://kunstmuseumbern.ch' },
+  p4: { id: 'p4', name: 'FitLife Studio', category: 'Sport & Fitness', address: 'Sportweg 5, 3008 Bern', openingHours: 'Mo-Fr 6:00-22:00, Sa-So 8:00-20:00', phone: '+41 31 555 44 33' },
+  radio2go: { id: 'radio2go', name: 'Radio 2Go', category: 'Erlebnis', address: 'Radiostrasse 1, 3000 Bern', website: 'https://radio2go.fm', mapLink: 'https://maps.google.com/?q=Radio+2Go+Bern' },
+};
+
+const MOCK_FAQ: FAQItem[] = [
+  { q: 'Was sind 2Go Taler?', a: '2Go Taler sind Bonuspunkte, die du bei Radio 2Go Partnerunternehmen sammeln und gegen exklusive Prämien einlösen kannst. Sie sind nicht gegen Bargeld eintauschbar.', category: 'Allgemein' },
+  { q: 'Wie sammle ich 2Go Taler?', a: 'Zeige bei jedem Einkauf bei einem Partner deine digitale Karte vor. Du erhältst automatisch Taler gutgeschrieben. Zusätzlich kannst du On-Air Codes aus dem Radio einlösen.', category: 'Sammeln' },
+  { q: 'Wo finde ich meine Taler-Karte?', a: 'Deine digitale Taler-Karte erhältst du per Link in deiner Wallet-App oder per E-Mail. Klicke einfach auf den Link, um deinen Kontostand zu sehen.', category: 'Karte' },
+  { q: 'Was ist ein On-Air Code?', a: 'On-Air Codes werden während der Sendung auf Radio 2Go genannt. Gib den Code in der App ein und erhalte Bonus-Taler!', category: 'Codes' },
+  { q: 'Wie löse ich einen Reward ein?', a: 'Wähle einen Reward aus, klicke auf "Einlösen" und zeige den erhaltenen Code beim Partner vor. Deine Taler werden sofort abgezogen.', category: 'Rewards' },
+  { q: 'Verfallen meine Taler?', a: 'Taler verfallen nach 24 Monaten Inaktivität. Solange du regelmässig sammelst oder einlöst, bleiben sie gültig.', category: 'Allgemein' },
+  { q: 'Kann ich Taler an andere übertragen?', a: 'Nein, Taler sind an dein Konto gebunden und nicht übertragbar.', category: 'Allgemein' },
+  { q: 'Kann ich Taler in Bargeld umtauschen?', a: 'Nein, 2Go Taler sind Bonuspunkte und können nur gegen Rewards bei Partnern eingelöst werden. Eine Barauszahlung ist nicht möglich.', category: 'Allgemein' },
+  { q: 'Wie werde ich Partner?', a: 'Kontaktiere uns unter partner@radio2go.ch und werde Teil des 2Go Taler Netzwerks.', category: 'Partner' },
+  { q: 'Mein Code funktioniert nicht – was tun?', a: 'Überprüfe die Gross-/Kleinschreibung. Codes sind 24 Stunden gültig und können nur einmal eingelöst werden.', category: 'Codes' },
+  { q: 'Wie kann ich meinen Account löschen?', a: 'Sende eine E-Mail an datenschutz@radio2go.ch mit dem Betreff "Konto löschen".', category: 'Konto' },
+  { q: 'Wo finde ich die Datenschutzerklärung?', a: 'Die vollständige Datenschutzerklärung findest du auf radio2go.ch/datenschutz.', category: 'Datenschutz' },
+];
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// API Functions (Mock Implementation)
+function generateRedemptionCode(): string {
+  return 'RDM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
-export async function validateSession(token: string | null): Promise<Session> {
-  await delay(300);
-  
-  if (!token) {
-    return { valid: false };
-  }
-  
-  // Mock: Any token starting with 'valid-' is valid
-  if (token.startsWith('valid-') || token === 'demo') {
+function generateQRPayload(redemptionId: string, code: string): string {
+  // In production, this would be a signed JWT or encrypted payload
+  return btoa(JSON.stringify({ rid: redemptionId, code, ts: Date.now() }));
+}
+
+// ============================================================================
+// API CLIENT - SESSION
+// ============================================================================
+
+export async function startSession(request?: SessionStartRequest): Promise<SessionStartResponse> {
+  if (USE_MOCK) {
+    await delay(300);
+    const token = 'mock-session-' + Math.random().toString(36).substring(2, 10);
     return {
-      valid: true,
-      userId: 'user-123',
-      displayName: 'Max',
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     };
   }
   
-  return { valid: false };
+  const response = await fetch(`${API_BASE}/session/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request || {}),
+  });
+  return response.json();
+}
+
+export async function getMe(token: string): Promise<MemberProfile> {
+  if (USE_MOCK) {
+    await delay(200);
+    return {
+      memberId: 'member-123',
+      firstName: 'Max',
+      balance: 245,
+      tier: 'Gold',
+      passLink: 'https://boomerangme.biz/pass/abc123',
+    };
+  }
+  
+  const response = await fetch(`${API_BASE}/me`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  return response.json();
+}
+
+// ============================================================================
+// API CLIENT - REWARDS
+// ============================================================================
+
+export interface RewardQueryParams {
+  query?: string;
+  category?: string;
+  partnerId?: string;
+  maxCost?: number;
+  sort?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export async function fetchRewards(params?: RewardQueryParams): Promise<{ items: RewardListItem[] }> {
+  if (USE_MOCK) {
+    await delay(300);
+    let items = [...MOCK_REWARDS];
+    
+    if (params?.category && params.category !== 'all') {
+      items = items.filter(r => r.category === params.category);
+    }
+    if (params?.partnerId) {
+      items = items.filter(r => {
+        const detail = MOCK_REWARD_DETAILS[r.id];
+        return detail?.partner.id === params.partnerId;
+      });
+    }
+    if (params?.maxCost) {
+      items = items.filter(r => r.cost <= params.maxCost!);
+    }
+    if (params?.query) {
+      const q = params.query.toLowerCase();
+      items = items.filter(r => 
+        r.title.toLowerCase().includes(q) || 
+        r.partnerName.toLowerCase().includes(q)
+      );
+    }
+    
+    return { items };
+  }
+  
+  const searchParams = new URLSearchParams();
+  if (params?.query) searchParams.set('query', params.query);
+  if (params?.category) searchParams.set('category', params.category);
+  if (params?.partnerId) searchParams.set('partnerId', params.partnerId);
+  if (params?.maxCost) searchParams.set('maxCost', params.maxCost.toString());
+  if (params?.sort) searchParams.set('sort', params.sort);
+  if (params?.lat) searchParams.set('lat', params.lat.toString());
+  if (params?.lng) searchParams.set('lng', params.lng.toString());
+  
+  const response = await fetch(`${API_BASE}/rewards?${searchParams}`);
+  return response.json();
+}
+
+export async function fetchRewardById(id: string): Promise<RewardDetail | null> {
+  if (USE_MOCK) {
+    await delay(200);
+    return MOCK_REWARD_DETAILS[id] || null;
+  }
+  
+  const response = await fetch(`${API_BASE}/rewards/${id}`);
+  if (!response.ok) return null;
+  return response.json();
+}
+
+export async function redeemRewardById(token: string, rewardId: string): Promise<RewardRedemptionResult> {
+  if (USE_MOCK) {
+    await delay(800);
+    const redemptionId = 'rdm-' + Math.random().toString(36).substring(2, 10);
+    const code = generateRedemptionCode();
+    return {
+      redemptionId,
+      redemptionCode: code,
+      qrPayload: generateQRPayload(redemptionId, code),
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min
+      newBalance: 195,
+    };
+  }
+  
+  const response = await fetch(`${API_BASE}/rewards/${rewardId}/redeem`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  return response.json();
+}
+
+export async function getRedemptionStatus(token: string, redemptionId: string): Promise<RedemptionStatus> {
+  if (USE_MOCK) {
+    await delay(200);
+    return {
+      status: 'created',
+      partnerName: 'Café Sonnenschein',
+      cost: 50,
+      balanceAfter: 195,
+    };
+  }
+  
+  const response = await fetch(`${API_BASE}/redemptions/${redemptionId}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  return response.json();
+}
+
+// ============================================================================
+// API CLIENT - CODES
+// ============================================================================
+
+export async function redeemOnAirCode(token: string, code: string): Promise<CodeRedeemResponse> {
+  if (USE_MOCK) {
+    await delay(1000);
+    
+    if (code.length < 4) {
+      return { status: 'invalid', message: 'Code ist zu kurz. Bitte überprüfe deine Eingabe.' };
+    }
+    if (code.toUpperCase() === 'INVALID') {
+      return { status: 'invalid', message: 'Dieser Code ist ungültig.' };
+    }
+    if (code.toUpperCase() === 'EXPIRED') {
+      return { status: 'expired', message: 'Dieser Code ist leider abgelaufen.' };
+    }
+    if (code.toUpperCase() === 'USED') {
+      return { status: 'used', message: 'Du hast diesen Code bereits eingelöst.' };
+    }
+    if (code.toUpperCase() === 'LIMIT') {
+      return { status: 'rate_limited', message: 'Du hast heute zu viele Codes eingelöst. Versuch es morgen wieder.' };
+    }
+    
+    const pointsAwarded = Math.floor(Math.random() * 50) + 10;
+    return {
+      status: 'ok',
+      pointsAwarded,
+      newBalance: 245 + pointsAwarded,
+      message: `Super! Du hast ${pointsAwarded} 2Go Taler erhalten!`,
+    };
+  }
+  
+  const response = await fetch(`${API_BASE}/codes/redeem`, {
+    method: 'POST',
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ code }),
+  });
+  return response.json();
+}
+
+// ============================================================================
+// API CLIENT - PARTNERS
+// ============================================================================
+
+export interface PartnerQueryParams {
+  category?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  query?: string;
+}
+
+export async function fetchPartners(params?: PartnerQueryParams): Promise<{ items: PartnerListItem[] }> {
+  if (USE_MOCK) {
+    await delay(300);
+    let items = [...MOCK_PARTNERS];
+    
+    if (params?.category) {
+      items = items.filter(p => p.category === params.category);
+    }
+    if (params?.query) {
+      const q = params.query.toLowerCase();
+      items = items.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.category.toLowerCase().includes(q)
+      );
+    }
+    
+    return { items };
+  }
+  
+  const searchParams = new URLSearchParams();
+  if (params?.category) searchParams.set('category', params.category);
+  if (params?.lat) searchParams.set('lat', params.lat.toString());
+  if (params?.lng) searchParams.set('lng', params.lng.toString());
+  if (params?.radiusKm) searchParams.set('radiusKm', params.radiusKm.toString());
+  if (params?.query) searchParams.set('query', params.query);
+  
+  const response = await fetch(`${API_BASE}/partners?${searchParams}`);
+  return response.json();
+}
+
+export async function fetchPartnerById(id: string): Promise<PartnerDetail | null> {
+  if (USE_MOCK) {
+    await delay(200);
+    return MOCK_PARTNER_DETAILS[id] || null;
+  }
+  
+  const response = await fetch(`${API_BASE}/partners/${id}`);
+  if (!response.ok) return null;
+  return response.json();
+}
+
+export async function fetchPartnerRewards(partnerId: string): Promise<{ items: PartnerRewardItem[] }> {
+  if (USE_MOCK) {
+    await delay(200);
+    const items = MOCK_REWARDS
+      .filter(r => MOCK_REWARD_DETAILS[r.id]?.partner.id === partnerId)
+      .map(r => ({
+        id: r.id,
+        title: r.title,
+        cost: r.cost,
+        summary: r.summary,
+      }));
+    return { items };
+  }
+  
+  const response = await fetch(`${API_BASE}/partners/${partnerId}/rewards`);
+  return response.json();
+}
+
+// ============================================================================
+// API CLIENT - FAQ
+// ============================================================================
+
+export async function fetchFAQ(): Promise<{ items: FAQItem[] }> {
+  if (USE_MOCK) {
+    await delay(200);
+    return { items: MOCK_FAQ };
+  }
+  
+  const response = await fetch(`${API_BASE}/faq`);
+  return response.json();
+}
+
+// ============================================================================
+// API CLIENT - SUPPORT
+// ============================================================================
+
+export async function createSupportTicket(request: SupportTicketRequest): Promise<SupportTicketResponse> {
+  if (USE_MOCK) {
+    await delay(500);
+    return {
+      ticketId: 'TKT-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      status: 'created',
+    };
+  }
+  
+  const response = await fetch(`${API_BASE}/support/ticket`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  return response.json();
+}
+
+// ============================================================================
+// LEGACY COMPATIBILITY LAYER
+// These functions maintain backward compatibility with existing components
+// ============================================================================
+
+export async function validateSession(token: string | null): Promise<Session> {
+  if (!token) return { valid: false };
+  
+  if (USE_MOCK) {
+    await delay(300);
+    if (token.startsWith('valid-') || token === 'demo' || token.startsWith('mock-session-')) {
+      const profile = await getMe(token);
+      return {
+        valid: true,
+        userId: profile.memberId,
+        displayName: profile.firstName,
+      };
+    }
+    return { valid: false };
+  }
+  
+  try {
+    const profile = await getMe(token);
+    return {
+      valid: true,
+      userId: profile.memberId,
+      displayName: profile.firstName,
+    };
+  } catch {
+    return { valid: false };
+  }
 }
 
 export async function getBalance(token: string): Promise<TalerBalance> {
-  await delay(400);
-  
-  // Mock balance
+  const profile = await getMe(token);
   return {
-    current: 245,
-    pending: 30,
-    lifetime: 1250,
+    current: profile.balance,
+    pending: 30, // Mock pending
+    lifetime: 1250, // Mock lifetime
   };
 }
 
 export async function getRewards(category?: string): Promise<Reward[]> {
-  await delay(300);
-  
-  if (category && category !== 'all') {
-    return MOCK_REWARDS.filter(r => r.category === category);
-  }
-  
-  return MOCK_REWARDS;
+  const result = await fetchRewards({ category });
+  return result.items.map(item => ({
+    id: item.id,
+    title: item.title,
+    description: item.summary,
+    cost: item.cost,
+    category: item.category,
+    partnerId: MOCK_REWARD_DETAILS[item.id]?.partner.id || '',
+    partnerName: item.partnerName,
+    imageUrl: item.imageUrl,
+    available: true,
+    expiresAt: MOCK_REWARD_DETAILS[item.id]?.validUntil,
+  }));
 }
 
 export async function getRewardById(id: string): Promise<Reward | null> {
-  await delay(200);
-  return MOCK_REWARDS.find(r => r.id === id) || null;
+  const detail = await fetchRewardById(id);
+  if (!detail) return null;
+  
+  return {
+    id: detail.id,
+    title: detail.title,
+    description: detail.description,
+    cost: detail.cost,
+    category: MOCK_REWARDS.find(r => r.id === id)?.category || 'product',
+    partnerId: detail.partner.id,
+    partnerName: detail.partner.name,
+    available: true,
+    expiresAt: detail.validUntil,
+  };
 }
 
 export async function getPartners(): Promise<Partner[]> {
-  await delay(300);
-  return MOCK_PARTNERS;
+  const result = await fetchPartners();
+  return result.items.map(item => {
+    const detail = MOCK_PARTNER_DETAILS[item.id];
+    return {
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      description: detail?.address || '',
+      address: detail?.address || '',
+      city: item.city,
+      lat: 46.9480,
+      lng: 7.4474,
+      rewardCount: MOCK_REWARDS.filter(r => MOCK_REWARD_DETAILS[r.id]?.partner.id === item.id).length,
+    };
+  });
 }
 
 export async function getPartnerById(id: string): Promise<Partner | null> {
-  await delay(200);
-  return MOCK_PARTNERS.find(p => p.id === id) || null;
+  const detail = await fetchPartnerById(id);
+  if (!detail) return null;
+  
+  return {
+    id: detail.id,
+    name: detail.name,
+    category: detail.category,
+    description: detail.openingHours || '',
+    address: detail.address,
+    lat: 46.9480,
+    lng: 7.4474,
+    rewardCount: MOCK_REWARDS.filter(r => MOCK_REWARD_DETAILS[r.id]?.partner.id === id).length,
+  };
 }
 
 export async function getPartnerRewards(partnerId: string): Promise<Reward[]> {
-  await delay(200);
-  return MOCK_REWARDS.filter(r => r.partnerId === partnerId);
+  const result = await fetchPartnerRewards(partnerId);
+  return result.items.map(item => ({
+    id: item.id,
+    title: item.title,
+    description: item.summary,
+    cost: item.cost,
+    category: MOCK_REWARDS.find(r => r.id === item.id)?.category || 'product',
+    partnerId,
+    partnerName: MOCK_PARTNER_DETAILS[partnerId]?.name || '',
+    available: true,
+  }));
 }
 
 export async function redeemReward(token: string, rewardId: string): Promise<RedemptionResult> {
-  await delay(800);
-  
-  const reward = MOCK_REWARDS.find(r => r.id === rewardId);
-  
-  if (!reward) {
-    return {
-      success: false,
-      message: 'Reward nicht gefunden.',
-    };
-  }
-  
-  // Mock: Always succeed
+  const result = await redeemRewardById(token, rewardId);
   return {
     success: true,
     message: 'Reward erfolgreich eingelöst!',
-    newBalance: 195, // Mock new balance
-    redemptionCode: 'RDM-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+    newBalance: result.newBalance,
+    redemptionCode: result.redemptionCode,
   };
 }
 
 export async function redeemCode(token: string, code: string): Promise<CodeRedeemResult> {
-  await delay(1000);
-  
-  // Mock validation
-  if (code.length < 4) {
-    return {
-      success: false,
-      message: 'Code ist zu kurz. Bitte überprüfe deine Eingabe.',
-    };
-  }
-  
-  if (code.toUpperCase() === 'INVALID') {
-    return {
-      success: false,
-      message: 'Dieser Code ist ungültig oder bereits eingelöst.',
-    };
-  }
-  
-  if (code.toUpperCase() === 'EXPIRED') {
-    return {
-      success: false,
-      message: 'Dieser Code ist leider abgelaufen.',
-    };
-  }
-  
-  // Mock success
-  const pointsEarned = Math.floor(Math.random() * 50) + 10;
-  
+  const result = await redeemOnAirCode(token, code);
   return {
-    success: true,
-    message: `Super! Du hast ${pointsEarned} 2Go Taler erhalten!`,
-    pointsEarned,
-    newBalance: 245 + pointsEarned,
+    success: result.status === 'ok',
+    message: result.message,
+    pointsEarned: result.pointsAwarded,
+    newBalance: result.newBalance,
   };
 }
 
-// FAQ Content
-export const FAQ_ITEMS = [
-  {
-    question: 'Was sind 2Go Taler?',
-    answer: '2Go Taler sind Bonuspunkte, die du bei Radio 2Go Partnerunternehmen sammeln und gegen exklusive Prämien einlösen kannst. Sie sind nicht gegen Bargeld eintauschbar.',
-  },
-  {
-    question: 'Wie sammle ich 2Go Taler?',
-    answer: 'Zeige bei jedem Einkauf bei einem Partner deine digitale Karte vor. Du erhältst automatisch Taler gutgeschrieben. Zusätzlich kannst du On-Air Codes aus dem Radio einlösen.',
-  },
-  {
-    question: 'Wo finde ich meine Taler-Karte?',
-    answer: 'Deine digitale Taler-Karte erhältst du per Link in deiner Wallet-App oder per E-Mail. Klicke einfach auf den Link, um deinen Kontostand zu sehen.',
-  },
-  {
-    question: 'Was ist ein On-Air Code?',
-    answer: 'On-Air Codes werden während der Sendung auf Radio 2Go genannt. Gib den Code in der App ein und erhalte Bonus-Taler!',
-  },
-  {
-    question: 'Wie löse ich einen Reward ein?',
-    answer: 'Wähle einen Reward aus, klicke auf "Einlösen" und zeige den erhaltenen Code beim Partner vor. Deine Taler werden sofort abgezogen.',
-  },
-  {
-    question: 'Verfallen meine Taler?',
-    answer: 'Taler verfallen nach 24 Monaten Inaktivität. Solange du regelmässig sammelst oder einlöst, bleiben sie gültig.',
-  },
-  {
-    question: 'Kann ich Taler an andere übertragen?',
-    answer: 'Nein, Taler sind an dein Konto gebunden und nicht übertragbar.',
-  },
-  {
-    question: 'Kann ich Taler in Bargeld umtauschen?',
-    answer: 'Nein, 2Go Taler sind Bonuspunkte und können nur gegen Rewards bei Partnern eingelöst werden. Eine Barauszahlung ist nicht möglich.',
-  },
-  {
-    question: 'Wie werde ich Partner?',
-    answer: 'Kontaktiere uns unter partner@radio2go.ch und werde Teil des 2Go Taler Netzwerks.',
-  },
-  {
-    question: 'Mein Code funktioniert nicht – was tun?',
-    answer: 'Überprüfe die Gross-/Kleinschreibung. Codes sind 24 Stunden gültig und können nur einmal eingelöst werden.',
-  },
-  {
-    question: 'Wie kann ich meinen Account löschen?',
-    answer: 'Sende eine E-Mail an datenschutz@radio2go.ch mit dem Betreff "Konto löschen".',
-  },
-  {
-    question: 'Wo finde ich die Datenschutzerklärung?',
-    answer: 'Die vollständige Datenschutzerklärung findest du auf radio2go.ch/datenschutz.',
-  },
-];
+// Legacy FAQ export
+export const FAQ_ITEMS = MOCK_FAQ.map(item => ({
+  question: item.q,
+  answer: item.a,
+}));
