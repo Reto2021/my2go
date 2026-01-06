@@ -1,11 +1,11 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Gift, Radio, Store, HelpCircle } from 'lucide-react';
+import { Home, Gift, Music, Store, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/rewards', label: 'Rewards', icon: Gift },
-  { path: '/code', label: 'Code', icon: Radio },
+  { path: '/code', label: 'Code', icon: Music },
   { path: '/partner', label: 'Partner', icon: Store },
   { path: '/faq', label: 'FAQ', icon: HelpCircle },
 ];
