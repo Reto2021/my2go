@@ -34,6 +34,7 @@ export interface Partner {
   category: string;
   description: string;
   address: string;
+  city?: string;
   lat: number;
   lng: number;
   imageUrl?: string;

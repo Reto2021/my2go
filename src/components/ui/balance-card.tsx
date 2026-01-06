@@ -10,44 +10,55 @@ interface BalanceCardProps {
 export function BalanceCard({ balance, className }: BalanceCardProps) {
   return (
     <div className={cn(
-      'relative overflow-hidden rounded-3xl p-6',
-      'hero-gradient text-primary-foreground',
+      'balance-display shine',
       className
     )}>
-      {/* Subtle pattern overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}
-      />
-      
-      <div className="relative">
-        {/* Balance Display */}
-        <div className="flex items-start gap-4 mb-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent shadow-glow-accent">
-            <Coins className="h-7 w-7 text-accent-foreground" />
+      {/* Main Balance */}
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-8 w-8 rounded-xl bg-accent flex items-center justify-center">
+            <Coins className="h-4 w-4 text-accent-foreground" />
           </div>
-          <div>
-            <p className="text-sm text-primary-foreground/70 mb-1">Dein Guthaben</p>
-            <p className="text-display tabular-nums">
-              {balance.current.toLocaleString('de-CH')}
-              <span className="text-lg font-normal opacity-80 ml-2">Taler</span>
-            </p>
-          </div>
+          <span className="text-sm font-medium text-secondary-foreground/70">
+            Dein Guthaben
+          </span>
+        </div>
+        
+        <div className="flex items-baseline gap-2 mb-6">
+          <span className="text-5xl font-extrabold tabular-nums tracking-tight">
+            {balance.current.toLocaleString('de-CH')}
+          </span>
+          <span className="text-xl font-semibold text-secondary-foreground/70">
+            Taler
+          </span>
         </div>
         
         {/* Stats Row */}
-        <div className="flex gap-6 text-sm">
+        <div className="flex gap-6">
           {balance.pending > 0 && (
-            <div className="flex items-center gap-2 text-primary-foreground/70">
-              <Clock className="h-4 w-4" />
-              <span>+{balance.pending} ausstehend</span>
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs text-secondary-foreground/60">Ausstehend</p>
+                <p className="text-sm font-bold tabular-nums">
+                  +{balance.pending.toLocaleString('de-CH')}
+                </p>
+              </div>
             </div>
           )}
-          <div className="flex items-center gap-2 text-primary-foreground/70">
-            <TrendingUp className="h-4 w-4" />
-            <span>{balance.lifetime.toLocaleString('de-CH')} gesamt</span>
+          
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs text-secondary-foreground/60">Gesammelt</p>
+              <p className="text-sm font-bold tabular-nums">
+                {balance.lifetime.toLocaleString('de-CH')}
+              </p>
+            </div>
           </div>
         </div>
       </div>
