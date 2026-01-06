@@ -48,7 +48,7 @@ const REDEMPTION_EXPIRY_MINUTES = 10;
 export default function RewardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { token, balance, refreshBalance } = useSession();
+  const { session, balance, refreshBalance } = useSession();
   const isBrowseMode = useBrowseMode();
   
   const [reward, setReward] = useState<Reward | null>(null);
@@ -104,11 +104,12 @@ export default function RewardDetailPage() {
   
   // RAILGUARD: Poll redemption status from server (only source of truth)
   const pollRedemptionStatus = useCallback(async () => {
-    if (!token || !redemption?.redemptionId) return;
+    if (!session?.hasSession || !redemption?.redemptionId) return;
     
     setIsPolling(true);
     try {
-      const status = await getRedemptionStatus(token, redemption.redemptionId);
+      // No token needed - auth via httpOnly cookie
+      const status = await getRedemptionStatus(redemption.redemptionId);
       setRedemptionStatus(status);
       
       // Refresh balance after status check (server is source of truth)
@@ -120,19 +121,20 @@ export default function RewardDetailPage() {
     } finally {
       setIsPolling(false);
     }
-  }, [token, redemption?.redemptionId, refreshBalance]);
+  }, [session?.hasSession, redemption?.redemptionId, refreshBalance]);
   
   // RAILGUARD: Points deduction NEVER in client
   // Only call server endpoint which handles all balance changes
   const handleRedeem = async () => {
-    if (!token || !reward) return;
+    if (!session?.hasSession || !reward) return;
     
     setIsRedeeming(true);
     setRedemptionError(null);
     
     try {
       // Server handles: validation, points deduction, code generation
-      const result = await redeemRewardById(token, reward.id);
+      // No token needed - auth via httpOnly cookie
+      const result = await redeemRewardById(reward.id);
       setRedemption(result);
       
       // Refresh balance from server (source of truth)

@@ -27,14 +27,25 @@ const USE_MOCK = true;   // Set to false when gateway is ready
 // TYPE DEFINITIONS (matching Gateway API Contract)
 // ============================================================================
 
-// Session & Auth
+// Session & Auth (Cookie-based)
+export interface SessionResponse {
+  hasSession: boolean;
+  memberId?: string;
+  displayName?: string;
+  balance?: number;
+  pendingBalance?: number;
+  lifetimeBalance?: number;
+  tier?: string;
+  passLink?: string;
+}
+
 export interface SessionStartRequest {
-  passIdOrPhoneOrEmail?: string;
+  token: string; // URL token to exchange for cookie session
 }
 
 export interface SessionStartResponse {
-  token: string;
-  expiresAt: string;
+  success: boolean;
+  message?: string;
 }
 
 export interface MemberProfile {
@@ -605,27 +616,115 @@ function generateQRPayload(redemptionId: string, code: string): string {
 }
 
 // ============================================================================
-// API CLIENT - SESSION
+// API CLIENT - SESSION (Cookie-based)
 // ============================================================================
 
-export async function startSession(request?: SessionStartRequest): Promise<SessionStartResponse> {
+// Mock session state (simulates httpOnly cookie in mock mode)
+let mockSessionActive = false;
+let mockSessionData: SessionResponse | null = null;
+
+/**
+ * Exchange URL token for cookie session
+ * In production: Gateway validates token with Boomerangme, sets httpOnly cookie
+ * In mock: Just activates the session
+ */
+export async function exchangeTokenForSession(token: string): Promise<SessionStartResponse> {
   if (USE_MOCK) {
     await delay(300);
-    const token = 'mock-session-' + Math.random().toString(36).substring(2, 10);
-    return {
-      token,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    };
+    // Simulate valid tokens
+    if (token === 'demo' || token.startsWith('valid-') || token.length >= 4) {
+      mockSessionActive = true;
+      mockSessionData = {
+        hasSession: true,
+        memberId: 'member-123',
+        displayName: 'Max',
+        balance: 245,
+        pendingBalance: 30,
+        lifetimeBalance: 1250,
+        tier: 'Gold',
+        passLink: 'https://boomerangme.biz/pass/abc123',
+      };
+      return { success: true };
+    }
+    return { success: false, message: 'Invalid token' };
   }
   
   const response = await fetch(`${API_BASE}/session/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request || {}),
+    credentials: 'include', // Accept cookies from Gateway
+    body: JSON.stringify({ token }),
   });
   return response.json();
 }
 
+/**
+ * Get current session from cookie
+ * In production: Gateway reads httpOnly cookie, returns session data
+ * In mock: Returns mock session state
+ */
+export async function getCurrentSession(): Promise<SessionResponse> {
+  if (USE_MOCK) {
+    await delay(200);
+    if (mockSessionActive && mockSessionData) {
+      return mockSessionData;
+    }
+    return { hasSession: false };
+  }
+  
+  const response = await fetch(`${API_BASE}/me`, {
+    credentials: 'include', // Send cookies to Gateway
+  });
+  
+  if (!response.ok) {
+    return { hasSession: false };
+  }
+  
+  return response.json();
+}
+
+/**
+ * Refresh balance from server
+ */
+export async function refreshSessionBalance(): Promise<TalerBalance> {
+  if (USE_MOCK) {
+    await delay(200);
+    if (mockSessionActive && mockSessionData) {
+      return {
+        current: mockSessionData.balance || 245,
+        pending: mockSessionData.pendingBalance || 30,
+        lifetime: mockSessionData.lifetimeBalance || 1250,
+      };
+    }
+    throw new Error('No active session');
+  }
+  
+  const response = await fetch(`${API_BASE}/me/balance`, {
+    credentials: 'include',
+  });
+  return response.json();
+}
+
+/**
+ * Logout and clear session
+ * In production: Gateway clears httpOnly cookie
+ * In mock: Clears mock session state
+ */
+export async function logoutSession(): Promise<void> {
+  if (USE_MOCK) {
+    await delay(200);
+    mockSessionActive = false;
+    mockSessionData = null;
+    return;
+  }
+  
+  await fetch(`${API_BASE}/session/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+}
+
+// Legacy function for backward compatibility
 export async function getMe(token: string): Promise<MemberProfile> {
   if (USE_MOCK) {
     await delay(200);
@@ -710,40 +809,44 @@ export async function fetchRewardById(id: string): Promise<RewardDetail | null> 
   return response.json();
 }
 
-export async function redeemRewardById(token: string, rewardId: string): Promise<RewardRedemptionResult> {
+export async function redeemRewardById(rewardId: string): Promise<RewardRedemptionResult> {
   if (USE_MOCK) {
     await delay(800);
     const redemptionId = 'rdm-' + Math.random().toString(36).substring(2, 10);
     const code = generateRedemptionCode();
+    // Update mock session balance
+    if (mockSessionData) {
+      mockSessionData.balance = (mockSessionData.balance || 245) - 50;
+    }
     return {
       redemptionId,
       redemptionCode: code,
       qrPayload: generateQRPayload(redemptionId, code),
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 min
-      newBalance: 195,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 min
+      newBalance: mockSessionData?.balance || 195,
     };
   }
   
   const response = await fetch(`${API_BASE}/rewards/${rewardId}/redeem`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include', // Cookie-based auth
   });
   return response.json();
 }
 
-export async function getRedemptionStatus(token: string, redemptionId: string): Promise<RedemptionStatus> {
+export async function getRedemptionStatus(redemptionId: string): Promise<RedemptionStatus> {
   if (USE_MOCK) {
     await delay(200);
     return {
       status: 'created',
       partnerName: 'Café Sonnenschein',
       cost: 50,
-      balanceAfter: 195,
+      balanceAfter: mockSessionData?.balance || 195,
     };
   }
   
   const response = await fetch(`${API_BASE}/redemptions/${redemptionId}`, {
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include', // Cookie-based auth
   });
   return response.json();
 }
@@ -752,9 +855,14 @@ export async function getRedemptionStatus(token: string, redemptionId: string): 
 // API CLIENT - CODES
 // ============================================================================
 
-export async function redeemOnAirCode(token: string, code: string): Promise<CodeRedeemResponse> {
+export async function redeemOnAirCode(code: string): Promise<CodeRedeemResponse> {
   if (USE_MOCK) {
     await delay(1000);
+    
+    // Check if session is active
+    if (!mockSessionActive) {
+      return { status: 'invalid', message: 'Bitte öffne zuerst deine 2Go Taler Karte.' };
+    }
     
     if (code.length < 4) {
       return { status: 'invalid', message: 'Code ist zu kurz. Bitte überprüfe deine Eingabe.' };
@@ -773,20 +881,22 @@ export async function redeemOnAirCode(token: string, code: string): Promise<Code
     }
     
     const pointsAwarded = Math.floor(Math.random() * 50) + 10;
+    // Update mock session balance
+    if (mockSessionData) {
+      mockSessionData.balance = (mockSessionData.balance || 245) + pointsAwarded;
+    }
     return {
       status: 'ok',
       pointsAwarded,
-      newBalance: 245 + pointsAwarded,
+      newBalance: mockSessionData?.balance || 245 + pointsAwarded,
       message: `Super! Du hast ${pointsAwarded} 2Go Taler erhalten!`,
     };
   }
   
   const response = await fetch(`${API_BASE}/codes/redeem`, {
     method: 'POST',
-    headers: { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include', // Cookie-based auth
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code }),
   });
   return response.json();
@@ -1023,8 +1133,8 @@ export async function getPartnerRewards(partnerId: string): Promise<Reward[]> {
   }));
 }
 
-export async function redeemReward(token: string, rewardId: string): Promise<RedemptionResult> {
-  const result = await redeemRewardById(token, rewardId);
+export async function redeemReward(rewardId: string): Promise<RedemptionResult> {
+  const result = await redeemRewardById(rewardId);
   return {
     success: true,
     message: 'Reward erfolgreich eingelöst!',
@@ -1033,8 +1143,8 @@ export async function redeemReward(token: string, rewardId: string): Promise<Red
   };
 }
 
-export async function redeemCode(token: string, code: string): Promise<CodeRedeemResult> {
-  const result = await redeemOnAirCode(token, code);
+export async function redeemCode(code: string): Promise<CodeRedeemResult> {
+  const result = await redeemOnAirCode(code);
   return {
     success: result.status === 'ok',
     message: result.message,
