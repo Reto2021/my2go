@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { getRewards, getPartners, Reward, Partner } from '@/lib/api';
 import { BalanceCard } from '@/components/ui/balance-card';
@@ -215,6 +215,12 @@ interface SessionModeHomeProps {
 function SessionModeHome({ displayName, balance, rewards, isLoading, passLink }: SessionModeHomeProps) {
   const { logout, isLoggingOut } = useSession();
   const [showMenu, setShowMenu] = useState(false);
+  const location = useLocation();
+  
+  // Close menu on route change
+  useEffect(() => {
+    setShowMenu(false);
+  }, [location.pathname]);
   
   const handleLogout = async () => {
     await logout();
