@@ -42,8 +42,8 @@ function Marquee({ children, className }: { children: React.ReactNode; className
   }
 
   return (
-    <div ref={containerRef} className={cn("overflow-hidden", className)}>
-      <div className="animate-marquee inline-flex">
+    <div ref={containerRef} className={cn("overflow-hidden group", className)}>
+      <div className="animate-marquee group-hover:[animation-play-state:paused] inline-flex">
         <span ref={textRef} className="whitespace-nowrap pr-8">{children}</span>
         <span className="whitespace-nowrap pr-8">{children}</span>
       </div>
