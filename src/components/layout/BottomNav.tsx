@@ -1,17 +1,29 @@
-import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Gift, QrCode, Store, HelpCircle } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Gift, Radio, Store, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/rewards', label: 'Rewards', icon: Gift },
-  { path: '/code', label: 'Code', icon: QrCode },
+  { path: '/code', label: 'Code', icon: Radio },
   { path: '/partner', label: 'Partner', icon: Store },
   { path: '/faq', label: 'FAQ', icon: HelpCircle },
 ];
 
 export function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  const handleNavClick = (e: React.MouseEvent, path: string) => {
+    e.preventDefault();
+    // Force navigation to home even if already on home (closes balance card etc.)
+    if (path === '/') {
+      navigate('/', { replace: true });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate(path);
+    }
+  };
   
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
@@ -25,9 +37,9 @@ export function BottomNav() {
             (item.path !== '/' && location.pathname.startsWith(item.path));
           
           return (
-            <NavLink
+            <button
               key={item.path}
-              to={item.path}
+              onClick={(e) => handleNavClick(e, item.path)}
               className={cn(
                 'flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200',
                 isActive
@@ -50,7 +62,7 @@ export function BottomNav() {
               )}>
                 {item.label}
               </span>
-            </NavLink>
+            </button>
           );
         })}
       </div>

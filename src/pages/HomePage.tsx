@@ -7,9 +7,10 @@ import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
+import { RadioPlayer } from '@/components/ui/radio-player';
 import logo from '@/assets/logo-radio2go.png';
 import { 
-  QrCode, 
+  Radio, 
   Gift, 
   MapPin, 
   ChevronRight, 
@@ -166,20 +167,21 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
         
         <div className="container relative z-10 pt-6 pb-32">
           <div className="animate-in">
-            {/* Original Logo */}
+            {/* Original Logo - larger */}
             <img 
               src={logo} 
               alt="Radio 2Go" 
-              className="h-12 mb-10"
+              className="h-20 md:h-24 mb-8"
             />
             
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
+              Hör 2Go.<br />
               Sammle Taler.<br />
               <span className="text-accent">Hol dir Rewards.</span>
             </h1>
             
             <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
-              Das Bonusprogramm von Radio 2Go. Bei Partnern sammeln, exklusive Prämien einlösen.
+              Das Bonusprogramm von Radio 2Go. Bei lokalen Partnern sammeln, exklusive Prämien einlösen.
             </p>
             
             <button 
@@ -227,8 +229,11 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       
       {/* Partners Preview */}
       <section className="container section">
+        {/* Radio Player */}
+        <RadioPlayer className="mb-8" />
+
         <div className="section-header">
-          <h2 className="section-title">Partner entdecken</h2>
+          <h2 className="section-title">Lokale Partner entdecken</h2>
           <Link to="/partner" className="section-link">
             Alle anzeigen <ChevronRight className="h-4 w-4" />
           </Link>
@@ -328,7 +333,7 @@ function SessionModeHome({
           <img 
             src={logo} 
             alt="Radio 2Go" 
-            className="h-10"
+            className="h-14 md:h-16"
           />
           {displayName && (
             <div className="relative">
@@ -386,6 +391,11 @@ function SessionModeHome({
         )}
       </header>
       
+      {/* Radio Player */}
+      <section className="container py-4">
+        <RadioPlayer className="animate-in" />
+      </section>
+      
       {/* Balance Card */}
       <section className="container py-4">
         <div className="animate-in">
@@ -397,7 +407,7 @@ function SessionModeHome({
       <section className="container section">
         <h2 className="section-title mb-5">Schnellzugriff</h2>
         <div className="grid grid-cols-3 gap-3 stagger-children">
-          <QuickAction to="/code" icon={QrCode} label="Code einlösen" color="accent" />
+          <QuickAction to="/code" icon={Radio} label="Code einlösen" color="accent" />
           <QuickAction to="/rewards" icon={Gift} label="Rewards" color="primary" />
           <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
         </div>
