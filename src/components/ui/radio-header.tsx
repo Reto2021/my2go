@@ -112,7 +112,7 @@ export function RadioHeader() {
         <img 
           src={logo} 
           alt="Radio 2Go" 
-          className="h-10 flex-shrink-0"
+          className="h-14 flex-shrink-0"
         />
         
         {/* Player area */}
