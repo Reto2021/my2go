@@ -133,6 +133,10 @@ export default {
           "40%": { height: "6px" },
           "80%": { height: "12px" },
         },
+        "marquee": {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -146,6 +150,7 @@ export default {
         "equalizer-2": "equalizer-2 0.6s ease-in-out infinite",
         "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
         "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
+        "marquee": "marquee 12s linear infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",

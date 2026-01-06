@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Play, Pause, Volume2, VolumeX, Volume1 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
@@ -12,6 +12,41 @@ function Equalizer({ className }: { className?: string }) {
       <div className="w-[3px] bg-accent rounded-full animate-equalizer-2" />
       <div className="w-[3px] bg-accent rounded-full animate-equalizer-3" />
       <div className="w-[3px] bg-accent rounded-full animate-equalizer-4" />
+    </div>
+  );
+}
+
+function Marquee({ children, className }: { children: React.ReactNode; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (containerRef.current && textRef.current) {
+        setShouldScroll(textRef.current.scrollWidth > containerRef.current.clientWidth);
+      }
+    };
+    
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [children]);
+
+  if (!shouldScroll) {
+    return (
+      <div ref={containerRef} className={cn("overflow-hidden", className)}>
+        <span ref={textRef} className="whitespace-nowrap">{children}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className={cn("overflow-hidden", className)}>
+      <div className="animate-marquee inline-flex">
+        <span ref={textRef} className="whitespace-nowrap pr-8">{children}</span>
+        <span className="whitespace-nowrap pr-8">{children}</span>
+      </div>
     </div>
   );
 }
@@ -113,13 +148,11 @@ export function RadioHeader() {
               <div className="flex items-center gap-2">
                 {/* Equalizer */}
                 <Equalizer className="flex-shrink-0" />
-                {/* Song info */}
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="text-xs text-secondary-foreground font-medium truncate">
-                    <span className="text-secondary-foreground/60">Du hörst: </span>
-                    {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : 'Lädt...'}
-                  </p>
-                </div>
+                {/* Song info with marquee */}
+                <Marquee className="flex-1 min-w-0 text-xs text-secondary-foreground font-medium">
+                  <span className="text-secondary-foreground/60">Du hörst: </span>
+                  {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
+                </Marquee>
               </div>
             ) : (
               <p className="text-xs text-secondary-foreground/70 font-medium">
