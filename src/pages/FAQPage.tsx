@@ -1,19 +1,47 @@
 import { useState, useMemo } from 'react';
-import { FAQ_ITEMS } from '@/lib/api';
+import { FAQ_ITEMS, createSupportTicket } from '@/lib/api';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { HelpCircle, Mail, Shield, Search, X } from 'lucide-react';
+import { 
+  HelpCircle, 
+  Mail, 
+  Shield, 
+  Search, 
+  X, 
+  Send, 
+  CheckCircle2,
+  MessageSquare,
+  ChevronDown
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Category order for grouping
 const CATEGORY_ORDER = ['Grundlagen', 'Rewards', 'Codes', 'Taler', 'Konto'];
 
+// Support topics
+const SUPPORT_TOPICS = [
+  { value: 'code', label: 'Code funktioniert nicht' },
+  { value: 'reward', label: 'Problem beim Einlösen' },
+  { value: 'balance', label: 'Punkte stimmen nicht' },
+  { value: 'partner', label: 'Partner-Problem' },
+  { value: 'account', label: 'Konto & Zugang' },
+  { value: 'other', label: 'Sonstiges' },
+];
+
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSupportForm, setShowSupportForm] = useState(false);
+  
+  // Support form state
+  const [topic, setTopic] = useState('');
+  const [message, setMessage] = useState('');
+  const [contact, setContact] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ticketId, setTicketId] = useState<string | null>(null);
   
   // Filter FAQ by search
   const filteredFAQ = useMemo(() => {
@@ -42,6 +70,33 @@ export default function FAQPage() {
       .filter(cat => groups[cat]?.length > 0)
       .map(cat => ({ category: cat, items: groups[cat] }));
   }, [filteredFAQ, searchQuery]);
+  
+  const handleSubmitTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topic || !message.trim()) return;
+    
+    setIsSubmitting(true);
+    try {
+      const result = await createSupportTicket({
+        topic,
+        message: message.trim(),
+        emailOrPhone: contact.trim() || undefined,
+      });
+      setTicketId(result.ticketId);
+    } catch (error) {
+      console.error('Failed to create ticket:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const resetForm = () => {
+    setTopic('');
+    setMessage('');
+    setContact('');
+    setTicketId(null);
+    setShowSupportForm(false);
+  };
   
   return (
     <div className="min-h-screen pb-24">
@@ -147,15 +202,156 @@ export default function FAQPage() {
           </Accordion>
         )}
         
-        {/* Contact & Privacy */}
-        <div className="mt-8 space-y-3">
+        {/* Support Section */}
+        <div className="mt-8 space-y-4">
+          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+            Support
+          </h2>
+          
+          {/* Support Form Toggle */}
+          {!showSupportForm && !ticketId && (
+            <button 
+              onClick={() => setShowSupportForm(true)}
+              className="card-interactive w-full p-4"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/15 shrink-0">
+                  <MessageSquare className="h-6 w-6 text-accent" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold">Problem melden</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Schreib uns dein Anliegen
+                  </p>
+                </div>
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </button>
+          )}
+          
+          {/* Support Form */}
+          {showSupportForm && !ticketId && (
+            <form onSubmit={handleSubmitTicket} className="card-base p-5 space-y-4 animate-in">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold">Problem melden</h3>
+                <button 
+                  type="button"
+                  onClick={() => setShowSupportForm(false)}
+                  className="p-1 rounded-full hover:bg-muted"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              
+              {/* Topic Select */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Thema *</label>
+                <div className="relative">
+                  <select
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    required
+                    className={cn(
+                      'w-full h-12 px-4 rounded-xl appearance-none',
+                      'bg-muted border-2 border-transparent',
+                      'focus:outline-none focus:border-primary/30 focus:bg-background',
+                      'transition-all duration-200',
+                      !topic && 'text-muted-foreground'
+                    )}
+                  >
+                    <option value="">Thema wählen...</option>
+                    {SUPPORT_TOPICS.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+              
+              {/* Message */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nachricht *</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  required
+                  rows={4}
+                  placeholder="Beschreibe dein Problem..."
+                  className={cn(
+                    'w-full px-4 py-3 rounded-xl resize-none',
+                    'bg-muted border-2 border-transparent',
+                    'placeholder:text-muted-foreground/60',
+                    'focus:outline-none focus:border-primary/30 focus:bg-background',
+                    'transition-all duration-200'
+                  )}
+                />
+              </div>
+              
+              {/* Contact (optional) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  E-Mail oder Telefon <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                  placeholder="Für Rückfragen"
+                  className={cn(
+                    'w-full h-12 px-4 rounded-xl',
+                    'bg-muted border-2 border-transparent',
+                    'placeholder:text-muted-foreground/60',
+                    'focus:outline-none focus:border-primary/30 focus:bg-background',
+                    'transition-all duration-200'
+                  )}
+                />
+              </div>
+              
+              {/* Submit */}
+              <button 
+                type="submit" 
+                className="btn-primary w-full"
+                disabled={isSubmitting || !topic || !message.trim()}
+              >
+                {isSubmitting ? (
+                  'Wird gesendet...'
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Absenden
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+          
+          {/* Ticket Success */}
+          {ticketId && (
+            <div className="card-base p-6 text-center animate-in">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-success/10">
+                <CheckCircle2 className="h-8 w-8 text-success" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Ticket erstellt!</h3>
+              <p className="text-muted-foreground mb-4">
+                Wir melden uns so schnell wie möglich.
+              </p>
+              <p className="text-sm font-mono bg-muted rounded-lg py-2 px-4 inline-block mb-4">
+                Ticket: {ticketId}
+              </p>
+              <button onClick={resetForm} className="btn-secondary w-full">
+                Schliessen
+              </button>
+            </div>
+          )}
+          
+          {/* Contact Email */}
           <div className="card-base p-4">
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 shrink-0">
                 <Mail className="h-5 w-5 text-secondary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-sm">Noch Fragen?</h3>
+                <h3 className="font-semibold text-sm">Direkt schreiben</h3>
                 <p className="text-sm text-muted-foreground">
                   <a href="mailto:support@radio2go.ch" className="text-secondary font-medium hover:underline">
                     support@radio2go.ch
@@ -165,6 +361,7 @@ export default function FAQPage() {
             </div>
           </div>
           
+          {/* Privacy */}
           <div className="card-base p-4">
             <div className="flex items-center gap-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted shrink-0">

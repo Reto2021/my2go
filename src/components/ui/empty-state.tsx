@@ -1,18 +1,23 @@
 import { cn } from '@/lib/utils';
-import { LucideIcon, Search, Gift, MapPin } from 'lucide-react';
+import { LucideIcon, Search } from 'lucide-react';
 
-interface EmptyStateProps {
+export interface EmptyStateProps {
   icon?: LucideIcon;
   title: string;
   description?: string;
   className?: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export function EmptyState({ 
   icon: Icon = Search, 
   title, 
   description, 
-  className 
+  className,
+  action
 }: EmptyStateProps) {
   return (
     <div className={cn(
@@ -26,9 +31,17 @@ export function EmptyState({
         {title}
       </h3>
       {description && (
-        <p className="text-sm text-muted-foreground max-w-xs">
+        <p className="text-sm text-muted-foreground max-w-xs mb-4">
           {description}
         </p>
+      )}
+      {action && (
+        <button 
+          onClick={action.onClick}
+          className="text-sm font-medium text-secondary hover:underline"
+        >
+          {action.label}
+        </button>
       )}
     </div>
   );
