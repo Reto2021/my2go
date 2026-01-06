@@ -111,7 +111,7 @@ export default function PartnerPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
+      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4 space-y-3">
           <h1 className="text-display-sm">Partner entdecken</h1>
           

@@ -10,7 +10,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <RadioHeader />
-      <main className="pt-14 pb-24">
+      <main className="pt-20 pb-24">
         {children}
       </main>
       <BottomNav />
