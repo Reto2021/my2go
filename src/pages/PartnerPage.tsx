@@ -1,21 +1,15 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getPartners, Partner } from '@/lib/api';
+import { getPartners, getRegions, Partner, Region } from '@/lib/api';
+import { useLocation, calculateDistance } from '@/lib/location';
 import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
 import { MapPin, Search, Navigation, X, Store, ChevronRight } from 'lucide-react';
 
-// Swiss regions for grouping
-const REGIONS = [
-  { id: 'bern', name: 'Bern', cities: ['Bern', 'Thun', 'Biel'] },
-  { id: 'zurich', name: 'Zürich', cities: ['Zürich', 'Winterthur'] },
-  { id: 'basel', name: 'Basel', cities: ['Basel'] },
-  { id: 'luzern', name: 'Luzern', cities: ['Luzern'] },
-];
-
 export default function PartnerPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   
@@ -23,19 +17,27 @@ export default function PartnerPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   
-  // Location (opt-in, not stored)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  // Location from global store
+  const { 
+    userLocation, 
+    isRequestingLocation, 
+    locationError,
+    requestLocation, 
+    clearLocation 
+  } = useLocation();
   
-  const loadPartners = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     setError(false);
     try {
-      const data = await getPartners();
-      setPartners(data);
+      const [partnersData, regionsData] = await Promise.all([
+        getPartners(),
+        getRegions(),
+      ]);
+      setPartners(partnersData);
+      setRegions(regionsData);
     } catch (err) {
-      console.error('Failed to load partners:', err);
+      console.error('Failed to load data:', err);
       setError(true);
     } finally {
       setIsLoading(false);
@@ -43,54 +45,21 @@ export default function PartnerPage() {
   };
   
   useEffect(() => {
-    loadPartners();
+    loadData();
   }, []);
   
-  // RAILGUARD: Location is opt-in, not stored in history
-  const requestLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError('Standortdienste nicht verfügbar.');
-      return;
+  const handleLocationToggle = () => {
+    if (userLocation) {
+      clearLocation();
+    } else {
+      requestLocation();
+      setSelectedRegion(null);
     }
-    
-    setIsRequestingLocation(true);
-    setLocationError(null);
-    
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        // Only use current position, never store history
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        });
-        setIsRequestingLocation(false);
-        setSelectedRegion(null); // Clear region filter when using location
-      },
-      (err) => {
-        console.error('Location error:', err);
-        setLocationError('Standort konnte nicht ermittelt werden.');
-        setIsRequestingLocation(false);
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-    );
   };
   
-  const clearLocation = () => {
-    setUserLocation(null);
-    setLocationError(null);
-  };
-  
-  // Calculate distance (Haversine formula)
-  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+  const handleRegionSelect = (regionId: string) => {
+    setSelectedRegion(selectedRegion === regionId ? null : regionId);
+    clearLocation();
   };
   
   // Filter and sort partners
@@ -107,13 +76,11 @@ export default function PartnerPage() {
       );
     }
     
-    // Region filter
+    // Region filter (by city name)
     if (selectedRegion) {
-      const region = REGIONS.find(r => r.id === selectedRegion);
+      const region = regions.find(r => r.id === selectedRegion);
       if (region) {
-        result = result.filter(p => 
-          region.cities.some(city => p.city?.includes(city))
-        );
+        result = result.filter(p => p.city === region.name);
       }
     }
     
@@ -126,7 +93,7 @@ export default function PartnerPage() {
     }
     
     return result;
-  }, [partners, searchQuery, selectedRegion, userLocation]);
+  }, [partners, regions, searchQuery, selectedRegion, userLocation]);
   
   // Group partners by city (when no location)
   const groupedPartners = useMemo(() => {
@@ -178,7 +145,7 @@ export default function PartnerPage() {
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
             {/* Location Chip */}
             <button
-              onClick={userLocation ? clearLocation : requestLocation}
+              onClick={handleLocationToggle}
               disabled={isRequestingLocation}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
@@ -195,14 +162,11 @@ export default function PartnerPage() {
               {userLocation && <X className="h-3 w-3 ml-1" />}
             </button>
             
-            {/* Region Chips */}
-            {REGIONS.map(region => (
+            {/* Dynamic Region Chips from API */}
+            {regions.slice(0, 6).map(region => (
               <button
                 key={region.id}
-                onClick={() => {
-                  setSelectedRegion(selectedRegion === region.id ? null : region.id);
-                  clearLocation();
-                }}
+                onClick={() => handleRegionSelect(region.id)}
                 className={cn(
                   'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
                   selectedRegion === region.id
@@ -237,7 +201,7 @@ export default function PartnerPage() {
         ) : error ? (
           <ErrorState 
             title="Partner konnten nicht geladen werden"
-            onRetry={loadPartners}
+            onRetry={loadData}
           />
         ) : filteredPartners.length === 0 ? (
           <EmptyState
