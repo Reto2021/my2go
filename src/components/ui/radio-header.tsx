@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
-import talerCoin from '@/assets/taler-coin.png';
 
 function Equalizer({ className }: { className?: string }) {
   return (
@@ -105,8 +104,8 @@ export function RadioHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Background - matching skyline color #023F5A */}
-      <div className="absolute inset-0 bg-[#023F5A]" />
+      {/* Background - dark blue */}
+      <div className="absolute inset-0 bg-[hsl(210,50%,15%)] backdrop-blur-xl" />
       
       <div className="relative container flex items-center gap-3 py-2">
         {/* Logo - larger */}
@@ -118,35 +117,26 @@ export function RadioHeader() {
         
         {/* Player area */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          {/* Play button - Taler coin */}
+          {/* Play button */}
           <button
             onClick={togglePlay}
             disabled={isLoading}
             className={cn(
-              "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all relative overflow-hidden",
+              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
+              isPlaying 
+                ? "bg-accent text-accent-foreground" 
+                : "bg-secondary-foreground/20 text-secondary-foreground hover:bg-secondary-foreground/30",
               isLoading && "opacity-60"
             )}
             aria-label={isPlaying ? 'Pause' : 'Abspielen'}
           >
-            {/* Taler coin background */}
-            <img 
-              src={talerCoin} 
-              alt="" 
-              className={cn(
-                "absolute inset-0 w-full h-full object-cover",
-                isPlaying && "animate-spin-slow"
-              )}
-            />
-            {/* Icon overlay */}
-            <div className="relative z-10 flex items-center justify-center">
-              {isLoading ? (
-                <div className="h-4 w-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-              ) : isPlaying ? (
-                <Pause className="h-4 w-4 text-white drop-shadow-md" />
-              ) : (
-                <Play className="h-4 w-4 ml-0.5 text-white drop-shadow-md" />
-              )}
-            </div>
+            {isLoading ? (
+              <div className="h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+            ) : isPlaying ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4 ml-0.5" />
+            )}
           </button>
           
           {/* Now playing info */}
