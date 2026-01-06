@@ -204,7 +204,7 @@ export default function RewardDetailPage() {
       <div className="container py-6">
         {/* Redemption Overlay */}
         {(redemption || redemptionError) && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="card-base p-6 max-w-sm w-full text-center animate-in shadow-strong">
               
               {/* Error State */}
