@@ -138,13 +138,38 @@ export default function RewardDetailPage() {
       const result = await redeemRewardById(reward.id);
       setRedemption(result);
       
+      // Haptic feedback on success (mobile devices)
+      triggerHapticFeedback('success');
+      
       // Refresh balance from server (source of truth)
       refreshBalance();
     } catch (err) {
       console.error('Redemption failed:', err);
+      // Haptic feedback on error
+      triggerHapticFeedback('error');
       setRedemptionError('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
     } finally {
       setIsRedeeming(false);
+    }
+  };
+  
+  // Haptic feedback helper using Web Vibration API
+  const triggerHapticFeedback = (type: 'success' | 'error' | 'light') => {
+    if (!navigator.vibrate) return;
+    
+    switch (type) {
+      case 'success':
+        // Double vibration pattern for success
+        navigator.vibrate([50, 50, 100]);
+        break;
+      case 'error':
+        // Longer single vibration for error
+        navigator.vibrate(200);
+        break;
+      case 'light':
+        // Short tap
+        navigator.vibrate(10);
+        break;
     }
   };
   
