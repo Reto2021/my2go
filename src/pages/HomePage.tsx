@@ -252,7 +252,7 @@ function SessionModeHome({ displayName, balance, rewards, isLoading, passLink }:
               
               {/* Dropdown Menu */}
               {showMenu && (
-                <div className="absolute right-0 top-12 w-48 rounded-2xl bg-card border border-border shadow-strong p-2 z-50 animate-in">
+                <div className="absolute right-0 top-12 w-48 rounded-2xl bg-card border border-border shadow-strong p-2 z-[100] animate-in">
                   {passLink && (
                     <a 
                       href={passLink}
