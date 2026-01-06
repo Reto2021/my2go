@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   getRewardById, 
   redeemRewardById, 
@@ -203,121 +204,257 @@ export default function RewardDetailPage() {
       {/* Content */}
       <div className="container py-6">
         {/* Redemption Overlay */}
-        {(redemption || redemptionError) && (
-          <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="card-base p-6 max-w-sm w-full text-center animate-in shadow-strong">
-              
-              {/* Error State */}
-              {redemptionError && (
-                <>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-destructive/10">
-                    <XCircle className="h-8 w-8 text-destructive" />
-                  </div>
-                  <h2 className="text-xl font-bold mb-2">Fehler</h2>
-                  <p className="text-muted-foreground mb-4">{redemptionError}</p>
-                  <button className="btn-secondary w-full" onClick={() => setRedemptionError(null)}>
-                    Schliessen
-                  </button>
-                </>
-              )}
-              
-              {/* Success: Active Redemption */}
-              {redemption && !isExpired && !statusUsed && (
-                <>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-success/10">
-                    <CheckCircle2 className="h-8 w-8 text-success" />
-                  </div>
-                  
-                  <h2 className="text-xl font-bold mb-2">Erfolgreich eingelöst!</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Zeige diesen Code beim Partner vor.
-                  </p>
-                  
-                  {/* QR Code Placeholder - would use qrPayload */}
-                  <div className="bg-white rounded-2xl p-4 mb-4 border border-border">
-                    <div className="flex items-center justify-center h-32 w-32 mx-auto bg-muted rounded-xl mb-3">
-                      <QrCode className="h-16 w-16 text-muted-foreground" />
-                    </div>
+        <AnimatePresence>
+          {(redemption || redemptionError) && (
+            <motion.div 
+              className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.div 
+                className="card-base p-6 max-w-sm w-full text-center shadow-strong"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              >
+                
+                {/* Error State */}
+                {redemptionError && (
+                  <>
+                    <motion.div 
+                      className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-destructive/10"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", damping: 15, stiffness: 400, delay: 0.1 }}
+                    >
+                      <XCircle className="h-8 w-8 text-destructive" />
+                    </motion.div>
+                    <motion.h2 
+                      className="text-xl font-bold mb-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      Fehler
+                    </motion.h2>
+                    <motion.p 
+                      className="text-muted-foreground mb-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {redemptionError}
+                    </motion.p>
+                    <motion.button 
+                      className="btn-secondary w-full" 
+                      onClick={() => setRedemptionError(null)}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Schliessen
+                    </motion.button>
+                  </>
+                )}
+                
+                {/* Success: Active Redemption */}
+                {redemption && !isExpired && !statusUsed && (
+                  <>
+                    <motion.div 
+                      className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-success/10"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.1 }}
+                    >
+                      <CheckCircle2 className="h-8 w-8 text-success" />
+                    </motion.div>
                     
-                    {/* Redemption Code */}
-                    <p className="text-2xl font-mono font-bold text-secondary tracking-widest">
-                      {redemption.redemptionCode}
-                    </p>
-                  </div>
-                  
-                  {/* RAILGUARD: Expiry Timer */}
-                  {timeRemaining !== null && (
-                    <div className={cn(
-                      'flex items-center justify-center gap-2 p-3 rounded-xl mb-4',
-                      timeRemaining < 60 ? 'bg-destructive/10 text-destructive' : 'bg-accent/10 text-accent-foreground'
-                    )}>
-                      <Clock className="h-4 w-4" />
-                      <span className="font-semibold tabular-nums">
-                        Gültig für {formatTime(timeRemaining)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Refresh Status Button */}
-                  <button 
-                    className="btn-ghost w-full mb-3 text-muted-foreground"
-                    onClick={pollRedemptionStatus}
-                    disabled={isPolling}
-                  >
-                    <RefreshCw className={cn("h-4 w-4", isPolling && "animate-spin")} />
-                    Status aktualisieren
-                  </button>
-                  
-                  <button className="btn-primary w-full" onClick={handleClose}>
-                    Fertig
-                  </button>
-                </>
-              )}
-              
-              {/* Expired Redemption */}
-              {redemption && isExpired && !statusUsed && (
-                <>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-destructive/10">
-                    <AlertCircle className="h-8 w-8 text-destructive" />
-                  </div>
-                  
-                  <h2 className="text-xl font-bold mb-2">Code abgelaufen</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Dieser Einlösecode ist abgelaufen. Deine Taler wurden nicht abgezogen.
-                  </p>
-                  
-                  <button className="btn-primary w-full" onClick={handleClose}>
-                    Schliessen
-                  </button>
-                </>
-              )}
-              
-              {/* Used Redemption */}
-              {statusUsed && (
-                <>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-success/10">
-                    <CheckCircle2 className="h-8 w-8 text-success" />
-                  </div>
-                  
-                  <h2 className="text-xl font-bold mb-2">Eingelöst!</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Dieser Reward wurde erfolgreich beim Partner eingelöst.
-                  </p>
-                  
-                  {redemptionStatus?.usedAt && (
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Eingelöst am {new Date(redemptionStatus.usedAt).toLocaleDateString('de-CH')}
-                    </p>
-                  )}
-                  
-                  <button className="btn-primary w-full" onClick={handleClose}>
-                    Fertig
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+                    <motion.h2 
+                      className="text-xl font-bold mb-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      Erfolgreich eingelöst!
+                    </motion.h2>
+                    <motion.p 
+                      className="text-muted-foreground mb-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.25 }}
+                    >
+                      Zeige diesen Code beim Partner vor.
+                    </motion.p>
+                    
+                    {/* QR Code Placeholder - would use qrPayload */}
+                    <motion.div 
+                      className="bg-white rounded-2xl p-4 mb-4 border border-border"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.3 }}
+                    >
+                      <div className="flex items-center justify-center h-32 w-32 mx-auto bg-muted rounded-xl mb-3">
+                        <QrCode className="h-16 w-16 text-muted-foreground" />
+                      </div>
+                      
+                      {/* Redemption Code */}
+                      <motion.p 
+                        className="text-2xl font-mono font-bold text-secondary tracking-widest"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        {redemption.redemptionCode}
+                      </motion.p>
+                    </motion.div>
+                    
+                    {/* RAILGUARD: Expiry Timer */}
+                    {timeRemaining !== null && (
+                      <motion.div 
+                        className={cn(
+                          'flex items-center justify-center gap-2 p-3 rounded-xl mb-4',
+                          timeRemaining < 60 ? 'bg-destructive/10 text-destructive' : 'bg-accent/10 text-accent-foreground'
+                        )}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.45 }}
+                      >
+                        <Clock className="h-4 w-4" />
+                        <span className="font-semibold tabular-nums">
+                          Gültig für {formatTime(timeRemaining)}
+                        </span>
+                      </motion.div>
+                    )}
+                    
+                    {/* Refresh Status Button */}
+                    <motion.button 
+                      className="btn-ghost w-full mb-3 text-muted-foreground"
+                      onClick={pollRedemptionStatus}
+                      disabled={isPolling}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <RefreshCw className={cn("h-4 w-4", isPolling && "animate-spin")} />
+                      Status aktualisieren
+                    </motion.button>
+                    
+                    <motion.button 
+                      className="btn-primary w-full" 
+                      onClick={handleClose}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.55 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Fertig
+                    </motion.button>
+                  </>
+                )}
+                
+                {/* Expired Redemption */}
+                {redemption && isExpired && !statusUsed && (
+                  <>
+                    <motion.div 
+                      className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-destructive/10"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [0, 1.2, 1] }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <AlertCircle className="h-8 w-8 text-destructive" />
+                    </motion.div>
+                    
+                    <motion.h2 
+                      className="text-xl font-bold mb-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      Code abgelaufen
+                    </motion.h2>
+                    <motion.p 
+                      className="text-muted-foreground mb-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      Dieser Einlösecode ist abgelaufen. Deine Taler wurden nicht abgezogen.
+                    </motion.p>
+                    
+                    <motion.button 
+                      className="btn-primary w-full" 
+                      onClick={handleClose}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Schliessen
+                    </motion.button>
+                  </>
+                )}
+                
+                {/* Used Redemption */}
+                {statusUsed && (
+                  <>
+                    <motion.div 
+                      className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-success/10"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", damping: 12, stiffness: 200 }}
+                    >
+                      <CheckCircle2 className="h-8 w-8 text-success" />
+                    </motion.div>
+                    
+                    <motion.h2 
+                      className="text-xl font-bold mb-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      Eingelöst!
+                    </motion.h2>
+                    <motion.p 
+                      className="text-muted-foreground mb-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      Dieser Reward wurde erfolgreich beim Partner eingelöst.
+                    </motion.p>
+                    
+                    {redemptionStatus?.usedAt && (
+                      <motion.p 
+                        className="text-sm text-muted-foreground mb-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.25 }}
+                      >
+                        Eingelöst am {new Date(redemptionStatus.usedAt).toLocaleDateString('de-CH')}
+                      </motion.p>
+                    )}
+                    
+                    <motion.button 
+                      className="btn-primary w-full" 
+                      onClick={handleClose}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Fertig
+                    </motion.button>
+                  </>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {/* Reward Content */}
         <div className="animate-in">
