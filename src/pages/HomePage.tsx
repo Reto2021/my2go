@@ -13,7 +13,8 @@ import {
   MapPin, 
   ChevronRight, 
   Wallet,
-  Sparkles
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -75,43 +76,51 @@ interface BrowseModeHomeProps {
 
 function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="hero-gradient text-primary-foreground">
-        <div className="container pt-8 pb-12">
+    <div className="min-h-screen bg-background">
+      {/* Hero Section with Skyline */}
+      <section className="hero-section text-secondary">
+        {/* Clouds */}
+        <div className="clouds-bg" />
+        
+        {/* Skyline */}
+        <div className="skyline-bg" />
+        
+        <div className="container relative z-10 pt-6 pb-32">
           <div className="animate-in">
+            {/* Original Logo */}
             <img 
               src={logo} 
               alt="Radio 2Go" 
-              className="h-10 mb-8 brightness-0 invert"
+              className="h-12 mb-10"
             />
             
-            <h1 className="text-display text-balance mb-4">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
               Sammle Taler.<br />
-              Hol dir Rewards.
+              <span className="text-accent">Hol dir Rewards.</span>
             </h1>
             
-            <p className="text-primary-foreground/80 text-lg mb-8 max-w-sm">
-              Das Bonusprogramm von Radio 2Go. Bei unseren Partnern sammeln, exklusive Prämien einlösen.
+            <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
+              Das Bonusprogramm von Radio 2Go. Bei Partnern sammeln, exklusive Prämien einlösen.
             </p>
             
             <button 
               onClick={() => window.location.href = '?token=demo'}
-              className="btn-primary w-full sm:w-auto text-base"
+              className="btn-primary group"
             >
               <Wallet className="h-5 w-5" />
               Taler Karte öffnen
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
         </div>
       </section>
       
       {/* Features */}
-      <section className="container section">
+      <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-3 animate-in-delayed">
-          <FeatureChip icon={Sparkles} label="Punkte sammeln" />
-          <FeatureChip icon={Gift} label="Rewards holen" />
-          <FeatureChip icon={MapPin} label="Partner finden" />
+          <FeatureChip icon={Sparkles} label="Punkte sammeln" color="accent" />
+          <FeatureChip icon={Gift} label="Rewards holen" color="primary" />
+          <FeatureChip icon={MapPin} label="Partner finden" color="secondary" />
         </div>
       </section>
       
@@ -119,15 +128,15 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       <section className="container section">
         <div className="section-header">
           <h2 className="section-title">Beliebte Rewards</h2>
-          <Link to="/rewards" className="section-link flex items-center gap-1">
-            Alle <ChevronRight className="h-4 w-4" />
+          <Link to="/rewards" className="section-link">
+            Alle anzeigen <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
         
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse-soft" />
+              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
             ))
           ) : (
             rewards.slice(0, 3).map(reward => (
@@ -141,15 +150,15 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       <section className="container section">
         <div className="section-header">
           <h2 className="section-title">Partner entdecken</h2>
-          <Link to="/partner" className="section-link flex items-center gap-1">
-            Alle <ChevronRight className="h-4 w-4" />
+          <Link to="/partner" className="section-link">
+            Alle anzeigen <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
         
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse-soft" />
+              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
             ))
           ) : (
             partners.slice(0, 2).map(partner => (
@@ -160,9 +169,9 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       </section>
       
       {/* Info */}
-      <section className="container section pb-24">
-        <div className="p-4 rounded-2xl bg-muted/50 text-center">
-          <p className="text-sm text-muted-foreground">
+      <section className="container pb-28">
+        <div className="p-5 rounded-2xl bg-secondary/5 border border-secondary/10">
+          <p className="text-sm text-muted-foreground text-center">
             2Go Taler sind Bonuspunkte und nicht auszahlbar.
           </p>
         </div>
@@ -171,13 +180,25 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
   );
 }
 
-function FeatureChip({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+interface FeatureChipProps {
+  icon: React.ElementType;
+  label: string;
+  color: 'accent' | 'primary' | 'secondary';
+}
+
+function FeatureChip({ icon: Icon, label, color }: FeatureChipProps) {
+  const colorClasses = {
+    accent: 'bg-accent/15 text-accent',
+    primary: 'bg-primary/20 text-secondary',
+    secondary: 'bg-secondary/10 text-secondary',
+  };
+  
   return (
-    <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-secondary/50">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-        <Icon className="h-5 w-5 text-primary" />
+    <div className="card-glass p-4 flex flex-col items-center gap-3">
+      <div className={`icon-container-md rounded-2xl ${colorClasses[color]}`}>
+        <Icon className="h-5 w-5" />
       </div>
-      <span className="text-xs font-medium text-center text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold text-center text-foreground">{label}</span>
     </div>
   );
 }
@@ -191,21 +212,30 @@ interface SessionModeHomeProps {
 
 function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionModeHomeProps) {
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-28 bg-background">
       {/* Header */}
-      <header className="container pt-6 pb-2">
+      <header className="container pt-6 pb-4">
         <div className="flex items-center justify-between animate-in">
           <img 
             src={logo} 
             alt="Radio 2Go" 
-            className="h-9"
+            className="h-10"
           />
           {displayName && (
-            <span className="text-sm font-medium text-muted-foreground">
-              Hallo, {displayName}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-sm font-bold text-secondary">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            </div>
           )}
         </div>
+        {displayName && (
+          <p className="text-muted-foreground mt-4 animate-in-delayed">
+            Hallo, <span className="font-semibold text-foreground">{displayName}</span> 👋
+          </p>
+        )}
       </header>
       
       {/* Balance Card */}
@@ -217,11 +247,11 @@ function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionMo
       
       {/* Quick Actions */}
       <section className="container section">
-        <h2 className="section-title mb-4">Schnellzugriff</h2>
+        <h2 className="section-title mb-5">Schnellzugriff</h2>
         <div className="grid grid-cols-3 gap-3 stagger-children">
-          <QuickAction to="/code" icon={QrCode} label="Code einlösen" />
-          <QuickAction to="/rewards" icon={Gift} label="Rewards" />
-          <QuickAction to="/partner" icon={MapPin} label="Partner" />
+          <QuickAction to="/code" icon={QrCode} label="Code einlösen" color="accent" />
+          <QuickAction to="/rewards" icon={Gift} label="Rewards" color="primary" />
+          <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
         </div>
       </section>
       
@@ -229,7 +259,7 @@ function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionMo
       <section className="container section">
         <div className="section-header">
           <h2 className="section-title">Für dich</h2>
-          <Link to="/rewards" className="section-link flex items-center gap-1">
+          <Link to="/rewards" className="section-link">
             Alle <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -237,7 +267,7 @@ function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionMo
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse-soft" />
+              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
             ))
           ) : (
             rewards.map(reward => (
@@ -250,16 +280,26 @@ function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionMo
   );
 }
 
-function QuickAction({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) {
+interface QuickActionProps {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  color: 'accent' | 'primary' | 'secondary';
+}
+
+function QuickAction({ to, icon: Icon, label, color }: QuickActionProps) {
+  const colorClasses = {
+    accent: 'bg-accent/15 text-accent',
+    primary: 'bg-primary/30 text-secondary',
+    secondary: 'bg-secondary/10 text-secondary',
+  };
+  
   return (
-    <Link
-      to={to}
-      className="card-interactive p-4 flex flex-col items-center gap-3"
-    >
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
-        <Icon className="h-6 w-6 text-accent" />
+    <Link to={to} className="quick-action">
+      <div className={`icon-container-lg rounded-2xl ${colorClasses[color]}`}>
+        <Icon className="h-6 w-6" />
       </div>
-      <span className="text-xs font-medium text-center">{label}</span>
+      <span className="text-sm font-semibold text-center">{label}</span>
     </Link>
   );
 }
