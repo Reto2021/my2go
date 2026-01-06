@@ -1,70 +1,88 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSession, useBrowseMode } from '@/lib/session';
-import { redeemCode } from '@/lib/api';
-import { CheckCircle2, XCircle, Radio, Sparkles, Wallet } from 'lucide-react';
+import { redeemOnAirCode } from '@/lib/api';
+import { CheckCircle2, XCircle, Radio, Sparkles, Wallet, Coins, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const MAX_ATTEMPTS = 5;
-const COOLDOWN_MS = 30000;
-
 export default function CodePage() {
-  const { token, refreshBalance } = useSession();
+  const { token, balance, refreshBalance } = useSession();
   const isBrowseMode = useBrowseMode();
   
   const [code, setCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{
-    success: boolean;
+    status: 'ok' | 'invalid' | 'expired' | 'used' | 'rate_limited';
     message: string;
-    pointsEarned?: number;
+    pointsAwarded?: number;
+    newBalance?: number;
   } | null>(null);
   
-  const [attempts, setAttempts] = useState(0);
-  const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const isOnCooldown = cooldownEnd && Date.now() < cooldownEnd;
-  const hasExceededLimit = attempts >= MAX_ATTEMPTS;
+  // Auto-focus input on mount
+  useEffect(() => {
+    if (!isBrowseMode) {
+      inputRef.current?.focus();
+    }
+  }, [isBrowseMode]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!token || !code.trim() || isSubmitting || isOnCooldown || hasExceededLimit) {
-      return;
-    }
+    const trimmedCode = code.trim();
+    if (!token || !trimmedCode || isSubmitting) return;
     
     setIsSubmitting(true);
     setResult(null);
     
     try {
-      const response = await redeemCode(token, code.trim());
+      // RAILGUARD: Server handles rate limits, cooldowns, validation
+      const response = await redeemOnAirCode(token, trimmedCode);
+      
       setResult({
-        success: response.success,
+        status: response.status,
         message: response.message,
-        pointsEarned: response.pointsEarned,
+        pointsAwarded: response.pointsAwarded,
+        newBalance: response.newBalance,
       });
       
-      if (response.success) {
+      if (response.status === 'ok') {
         setCode('');
         refreshBalance();
       }
-      
-      setAttempts(prev => prev + 1);
-      setCooldownEnd(Date.now() + COOLDOWN_MS);
-      
     } catch (err) {
       setResult({
-        success: false,
-        message: 'Ein Fehler ist aufgetreten. Bitte versuche es später erneut.',
+        status: 'invalid',
+        message: 'Verbindungsfehler. Prüfe deine Internetverbindung.',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  const resetResult = () => {
+  const handleReset = () => {
     setResult(null);
-    inputRef.current?.focus();
+    setCode('');
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+  
+  const isSuccess = result?.status === 'ok';
+  const isRateLimited = result?.status === 'rate_limited';
+  
+  // Helper for next step hints
+  const getNextStepHint = (status: string): string => {
+    switch (status) {
+      case 'invalid':
+        return 'Überprüfe die Schreibweise und versuche es erneut.';
+      case 'expired':
+        return 'Höre Radio 2Go für neue Codes!';
+      case 'used':
+        return 'Warte auf den nächsten Code in der Sendung.';
+      case 'rate_limited':
+        return 'Versuch es später nochmal.';
+      default:
+        return '';
+    }
   };
   
   return (
@@ -76,23 +94,25 @@ export default function CodePage() {
         </div>
       </header>
       
-      <div className="container py-8">
-        {/* Hero */}
-        <div className="text-center mb-8 animate-in">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-accent/10 mx-auto mb-4">
-            <Radio className="h-10 w-10 text-accent" />
+      <div className="container py-6">
+        {/* Hero - compact */}
+        <div className="text-center mb-6 animate-in">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 mx-auto mb-3">
+            <Radio className="h-8 w-8 text-accent" />
           </div>
-          <h2 className="text-lg font-semibold mb-2">On-Air Code eingeben</h2>
-          <p className="text-muted-foreground">
-            Hörst du Radio 2Go? Gib den Code ein und erhalte Bonus-Taler!
+          <p className="text-muted-foreground text-sm">
+            Hörst du Radio 2Go? Gib den Code ein!
           </p>
         </div>
         
         {/* Browse Mode */}
         {isBrowseMode ? (
-          <div className="text-center p-6 rounded-2xl bg-muted/50 animate-in-delayed">
-            <p className="text-muted-foreground mb-4">
-              Öffne deine Taler-Karte, um Codes einzulösen.
+          <div className="text-center p-6 rounded-2xl bg-primary/10 border border-primary/20 animate-in">
+            <p className="text-foreground font-medium mb-2">
+              Zum Einlösen Karte öffnen
+            </p>
+            <p className="text-muted-foreground text-sm mb-4">
+              Öffne deine 2Go Taler Karte, um Codes einzulösen.
             </p>
             <button 
               className="btn-primary"
@@ -103,45 +123,77 @@ export default function CodePage() {
             </button>
           </div>
         ) : result ? (
-          /* Result State */
-          <div className="card-base p-6 text-center animate-in">
-            <div className={cn(
-              'flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4',
-              result.success ? 'bg-success/10' : 'bg-destructive/10'
-            )}>
-              {result.success ? (
-                <CheckCircle2 className="h-8 w-8 text-success" />
-              ) : (
-                <XCircle className="h-8 w-8 text-destructive" />
-              )}
-            </div>
-            
-            {result.success && result.pointsEarned && (
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Sparkles className="h-5 w-5 text-accent" />
-                <span className="text-2xl font-bold text-accent">
-                  +{result.pointsEarned} Taler
-                </span>
-              </div>
+          /* Result State - Fast feedback */
+          <div className={cn(
+            'rounded-3xl p-6 text-center animate-in',
+            isSuccess ? 'bg-success/5 border-2 border-success/20' : 'bg-muted'
+          )}>
+            {/* Success State */}
+            {isSuccess && (
+              <>
+                <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-success/10">
+                  <CheckCircle2 className="h-8 w-8 text-success" />
+                </div>
+                
+                {/* Points earned - big and bold */}
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Sparkles className="h-6 w-6 text-accent" />
+                  <span className="text-3xl font-extrabold text-accent tabular-nums">
+                    +{result.pointsAwarded}
+                  </span>
+                  <span className="text-lg font-semibold text-accent">Taler</span>
+                </div>
+                
+                <p className="text-foreground font-medium mb-4">
+                  {result.message}
+                </p>
+                
+                {/* New balance */}
+                {result.newBalance && (
+                  <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-secondary/10 mb-6">
+                    <Coins className="h-4 w-4 text-secondary" />
+                    <span className="text-sm font-semibold text-secondary">
+                      Neues Guthaben: {result.newBalance.toLocaleString('de-CH')} Taler
+                    </span>
+                  </div>
+                )}
+                
+                <button className="btn-primary w-full" onClick={handleReset}>
+                  Weiteren Code eingeben
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </>
             )}
             
-            <p className={cn(
-              'mb-6',
-              result.success ? 'text-foreground' : 'text-muted-foreground'
-            )}>
-              {result.message}
-            </p>
-            
-            <button 
-              className={result.success ? 'btn-primary w-full' : 'btn-secondary w-full'}
-              onClick={resetResult}
-            >
-              {result.success ? 'Weiteren Code eingeben' : 'Erneut versuchen'}
-            </button>
+            {/* Error State - Friendly with next step */}
+            {!isSuccess && (
+              <>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full mx-auto mb-4 bg-muted-foreground/10">
+                  <XCircle className="h-7 w-7 text-muted-foreground" />
+                </div>
+                
+                <p className="text-foreground font-medium mb-2">
+                  {result.message}
+                </p>
+                
+                {/* Next step hint */}
+                <p className="text-sm text-muted-foreground mb-6">
+                  {getNextStepHint(result.status)}
+                </p>
+                
+                <button 
+                  className="btn-secondary w-full"
+                  onClick={handleReset}
+                  disabled={isRateLimited}
+                >
+                  {isRateLimited ? 'Später versuchen' : 'Erneut versuchen'}
+                </button>
+              </>
+            )}
           </div>
         ) : (
-          /* Input Form */
-          <form onSubmit={handleSubmit} className="space-y-6 animate-in-delayed">
+          /* Input Form - Ultra fast flow */
+          <form onSubmit={handleSubmit} className="space-y-4 animate-in">
             <div className="relative">
               <input
                 ref={inputRef}
@@ -150,39 +202,48 @@ export default function CodePage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 className={cn(
-                  'w-full h-16 text-center text-2xl font-mono uppercase tracking-[0.3em]',
-                  'bg-muted border-2 border-transparent rounded-2xl',
-                  'placeholder:text-muted-foreground/50 placeholder:tracking-[0.3em]',
-                  'focus:outline-none focus:border-primary focus:bg-background',
-                  'transition-all duration-200'
+                  'w-full h-16 text-center text-2xl font-mono font-bold uppercase tracking-[0.25em]',
+                  'bg-card border-2 border-border rounded-2xl',
+                  'placeholder:text-muted-foreground/40 placeholder:font-normal',
+                  'focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent/10',
+                  'transition-all duration-150'
                 )}
                 maxLength={12}
-                disabled={hasExceededLimit}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
               />
             </div>
             
-            {hasExceededLimit ? (
-              <p className="text-sm text-destructive text-center">
-                Du hast das Tageslimit erreicht. Versuche es morgen wieder.
-              </p>
-            ) : isOnCooldown ? (
-              <p className="text-sm text-muted-foreground text-center">
-                Bitte warte einen Moment vor dem nächsten Versuch.
-              </p>
-            ) : null}
-            
             <button 
               type="submit"
-              className="btn-primary w-full"
-              disabled={!code.trim() || isSubmitting || isOnCooldown || hasExceededLimit}
+              className="btn-primary w-full h-14 text-base"
+              disabled={!code.trim() || isSubmitting}
             >
-              {isSubmitting ? 'Wird geprüft...' : 'Code einlösen'}
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
+                  Prüfe...
+                </span>
+              ) : (
+                'Einlösen'
+              )}
             </button>
             
             <p className="text-xs text-muted-foreground text-center">
-              Codes sind 24h gültig und können nur einmal eingelöst werden.
+              Codes sind 24h gültig · 1x pro Code
             </p>
           </form>
+        )}
+        
+        {/* Current balance indicator (session mode) */}
+        {!isBrowseMode && !result && balance && (
+          <div className="flex items-center justify-center gap-2 mt-8 p-3 rounded-xl bg-muted/50">
+            <Coins className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Aktuell: <span className="font-semibold text-foreground">{balance.current.toLocaleString('de-CH')} Taler</span>
+            </span>
+          </div>
         )}
       </div>
     </div>
