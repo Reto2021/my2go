@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { getRewards, getPartners, Reward, Partner } from '@/lib/api';
 import { BalanceCard } from '@/components/ui/balance-card';
@@ -14,11 +14,11 @@ import {
   ChevronRight, 
   Wallet,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  LogOut
 } from 'lucide-react';
 
 export default function HomePage() {
-  const [searchParams] = useSearchParams();
   const { initSession, session, balance, isLoading } = useSession();
   const isBrowseMode = useBrowseMode();
   
@@ -26,10 +26,10 @@ export default function HomePage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   
+  // Initialize session on mount (handles URL token + cookie)
   useEffect(() => {
-    const token = searchParams.get('token');
-    initSession(token);
-  }, [searchParams, initSession]);
+    initSession();
+  }, [initSession]);
   
   useEffect(() => {
     async function loadContent() {
@@ -64,6 +64,7 @@ export default function HomePage() {
       balance={balance!}
       rewards={rewards}
       isLoading={isLoadingContent}
+      passLink={session?.passLink}
     />
   );
 }
@@ -208,9 +209,18 @@ interface SessionModeHomeProps {
   balance: { current: number; pending: number; lifetime: number };
   rewards: Reward[];
   isLoading: boolean;
+  passLink?: string;
 }
 
-function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionModeHomeProps) {
+function SessionModeHome({ displayName, balance, rewards, isLoading, passLink }: SessionModeHomeProps) {
+  const { logout, isLoggingOut } = useSession();
+  const [showMenu, setShowMenu] = useState(false);
+  
+  const handleLogout = async () => {
+    await logout();
+    setShowMenu(false);
+  };
+  
   return (
     <div className="min-h-screen pb-28 bg-background">
       {/* Header */}
@@ -222,12 +232,43 @@ function SessionModeHome({ displayName, balance, rewards, isLoading }: SessionMo
             className="h-10"
           />
           {displayName && (
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-sm font-bold text-secondary">
-                  {displayName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+            <div className="relative">
+              <button 
+                onClick={() => setShowMenu(!showMenu)}
+                className="flex items-center gap-2 p-1 rounded-full hover:bg-muted transition-colors"
+              >
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-sm font-bold text-secondary">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {showMenu && (
+                <div className="absolute right-0 top-12 w-48 rounded-2xl bg-card border border-border shadow-strong p-2 z-50 animate-in">
+                  {passLink && (
+                    <a 
+                      href={passLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <Wallet className="h-4 w-4 text-muted-foreground" />
+                      Wallet öffnen
+                    </a>
+                  )}
+                  <button 
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {isLoggingOut ? 'Wird getrennt...' : 'Karte trennen'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

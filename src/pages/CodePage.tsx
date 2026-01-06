@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, Radio, Sparkles, Wallet, Coins, ArrowRight } fro
 import { cn } from '@/lib/utils';
 
 export default function CodePage() {
-  const { token, balance, refreshBalance } = useSession();
+  const { session, balance, refreshBalance } = useSession();
   const isBrowseMode = useBrowseMode();
   
   const [code, setCode] = useState('');
@@ -30,14 +30,15 @@ export default function CodePage() {
     e.preventDefault();
     
     const trimmedCode = code.trim();
-    if (!token || !trimmedCode || isSubmitting) return;
+    if (!session?.hasSession || !trimmedCode || isSubmitting) return;
     
     setIsSubmitting(true);
     setResult(null);
     
     try {
       // RAILGUARD: Server handles rate limits, cooldowns, validation
-      const response = await redeemOnAirCode(token, trimmedCode);
+      // No token needed - auth via httpOnly cookie
+      const response = await redeemOnAirCode(trimmedCode);
       
       setResult({
         status: response.status,

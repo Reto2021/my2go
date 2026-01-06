@@ -1,68 +1,117 @@
 /**
- * Session Management
+ * Session Management - Cookie-based Persistence
  * 
- * IMPORTANT: This is a thin wrapper for session handling.
- * - Token comes from URL (?token=...)
- * - Session is stored in memory only (not persistent)
- * - No PII is stored in Lovable
+ * ARCHITECTURE:
+ * - First visit: Token via URL (?token=...) → Gateway sets httpOnly cookie
+ * - Subsequent visits: /api/me reads cookie → returns session data
+ * - No tokens stored in localStorage/memory
+ * - Logout: POST /api/session/logout → Gateway clears cookie
+ * 
+ * RAILGUARDS:
+ * - No PII stored in Lovable
+ * - No tokens in client storage
+ * - Cookie is httpOnly, Secure, SameSite=Strict (set by Gateway)
  */
 
 import { create } from 'zustand';
-import { Session, validateSession, getBalance, TalerBalance } from './api';
+import { 
+  exchangeTokenForSession, 
+  getCurrentSession, 
+  logoutSession,
+  refreshSessionBalance,
+  SessionResponse,
+  TalerBalance 
+} from './api';
 
 interface SessionState {
-  // Session data
-  token: string | null;
-  session: Session | null;
+  // Session data (from /api/me)
+  session: SessionResponse | null;
   balance: TalerBalance | null;
   
   // Loading states
   isLoading: boolean;
   isLoadingBalance: boolean;
+  isLoggingOut: boolean;
   
   // Actions
-  initSession: (token: string | null) => Promise<void>;
+  initSession: () => Promise<void>;
   refreshBalance: () => Promise<void>;
-  clearSession: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useSession = create<SessionState>((set, get) => ({
-  token: null,
   session: null,
   balance: null,
   isLoading: false,
   isLoadingBalance: false,
+  isLoggingOut: false,
   
-  initSession: async (token: string | null) => {
-    set({ isLoading: true, token });
+  /**
+   * Initialize session on app load
+   * 1. Check for URL token → exchange for cookie session
+   * 2. Call /api/me to check current session (via cookie)
+   */
+  initSession: async () => {
+    set({ isLoading: true });
     
     try {
-      const session = await validateSession(token);
-      set({ session });
+      // Step 1: Check for token in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token') || urlParams.get('t');
       
-      if (session.valid && token) {
-        set({ isLoadingBalance: true });
-        const balance = await getBalance(token);
-        set({ balance });
+      if (urlToken) {
+        // Exchange token for session (Gateway sets httpOnly cookie)
+        await exchangeTokenForSession(urlToken);
+        
+        // Clean URL (remove token parameter)
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('token');
+        cleanUrl.searchParams.delete('t');
+        window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
       }
+      
+      // Step 2: Get current session (Gateway reads cookie)
+      const sessionData = await getCurrentSession();
+      
+      set({ 
+        session: sessionData,
+        balance: sessionData.hasSession ? {
+          current: sessionData.balance || 0,
+          pending: sessionData.pendingBalance || 0,
+          lifetime: sessionData.lifetimeBalance || 0,
+        } : null
+      });
+      
     } catch (error) {
       console.error('Session init failed:', error);
-      set({ session: { valid: false } });
+      set({ 
+        session: { hasSession: false },
+        balance: null 
+      });
     } finally {
-      set({ isLoading: false, isLoadingBalance: false });
+      set({ isLoading: false });
     }
   },
   
+  /**
+   * Refresh balance from server
+   * Used after redemptions or code submissions
+   */
   refreshBalance: async () => {
-    const { token, session } = get();
-    
-    if (!token || !session?.valid) return;
+    const { session } = get();
+    if (!session?.hasSession) return;
     
     set({ isLoadingBalance: true });
     
     try {
-      const balance = await getBalance(token);
-      set({ balance });
+      const balance = await refreshSessionBalance();
+      set({ 
+        balance: {
+          current: balance.current,
+          pending: balance.pending,
+          lifetime: balance.lifetime,
+        }
+      });
     } catch (error) {
       console.error('Balance refresh failed:', error);
     } finally {
@@ -70,17 +119,41 @@ export const useSession = create<SessionState>((set, get) => ({
     }
   },
   
-  clearSession: () => {
-    set({
-      token: null,
-      session: null,
-      balance: null,
-    });
+  /**
+   * Logout and clear session
+   * POST /api/session/logout → Gateway clears cookie
+   */
+  logout: async () => {
+    set({ isLoggingOut: true });
+    
+    try {
+      await logoutSession();
+      set({
+        session: { hasSession: false },
+        balance: null,
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      set({ isLoggingOut: false });
+    }
   },
 }));
 
 // Helper to check if user is in browse mode (no valid session)
 export const useBrowseMode = () => {
   const session = useSession(state => state.session);
-  return !session?.valid;
+  return !session?.hasSession;
+};
+
+// Helper to get display name
+export const useDisplayName = () => {
+  const session = useSession(state => state.session);
+  return session?.displayName;
+};
+
+// Helper to get pass link for wallet
+export const usePassLink = () => {
+  const session = useSession(state => state.session);
+  return session?.passLink;
 };
