@@ -420,18 +420,30 @@ const MOCK_PARTNER_DETAILS: Record<string, PartnerDetail> = {
 };
 
 const MOCK_FAQ: FAQItem[] = [
-  { q: 'Was sind 2Go Taler?', a: '2Go Taler sind Bonuspunkte, die du bei Radio 2Go Partnerunternehmen sammeln und gegen exklusive Prämien einlösen kannst. Sie sind nicht gegen Bargeld eintauschbar.', category: 'Allgemein' },
-  { q: 'Wie sammle ich 2Go Taler?', a: 'Zeige bei jedem Einkauf bei einem Partner deine digitale Karte vor. Du erhältst automatisch Taler gutgeschrieben. Zusätzlich kannst du On-Air Codes aus dem Radio einlösen.', category: 'Sammeln' },
-  { q: 'Wo finde ich meine Taler-Karte?', a: 'Deine digitale Taler-Karte erhältst du per Link in deiner Wallet-App oder per E-Mail. Klicke einfach auf den Link, um deinen Kontostand zu sehen.', category: 'Karte' },
-  { q: 'Was ist ein On-Air Code?', a: 'On-Air Codes werden während der Sendung auf Radio 2Go genannt. Gib den Code in der App ein und erhalte Bonus-Taler!', category: 'Codes' },
-  { q: 'Wie löse ich einen Reward ein?', a: 'Wähle einen Reward aus, klicke auf "Einlösen" und zeige den erhaltenen Code beim Partner vor. Deine Taler werden sofort abgezogen.', category: 'Rewards' },
-  { q: 'Verfallen meine Taler?', a: 'Taler verfallen nach 24 Monaten Inaktivität. Solange du regelmässig sammelst oder einlöst, bleiben sie gültig.', category: 'Allgemein' },
-  { q: 'Kann ich Taler an andere übertragen?', a: 'Nein, Taler sind an dein Konto gebunden und nicht übertragbar.', category: 'Allgemein' },
-  { q: 'Kann ich Taler in Bargeld umtauschen?', a: 'Nein, 2Go Taler sind Bonuspunkte und können nur gegen Rewards bei Partnern eingelöst werden. Eine Barauszahlung ist nicht möglich.', category: 'Allgemein' },
-  { q: 'Wie werde ich Partner?', a: 'Kontaktiere uns unter partner@radio2go.ch und werde Teil des 2Go Taler Netzwerks.', category: 'Partner' },
-  { q: 'Mein Code funktioniert nicht – was tun?', a: 'Überprüfe die Gross-/Kleinschreibung. Codes sind 24 Stunden gültig und können nur einmal eingelöst werden.', category: 'Codes' },
-  { q: 'Wie kann ich meinen Account löschen?', a: 'Sende eine E-Mail an datenschutz@radio2go.ch mit dem Betreff "Konto löschen".', category: 'Konto' },
-  { q: 'Wo finde ich die Datenschutzerklärung?', a: 'Die vollständige Datenschutzerklärung findest du auf radio2go.ch/datenschutz.', category: 'Datenschutz' },
+  // Grundlagen (3)
+  { q: 'Was sind 2Go Taler?', a: 'Bonuspunkte von Radio 2Go. Sammeln bei Partnern, einlösen für Rewards. Nicht auszahlbar.', category: 'Grundlagen' },
+  { q: 'Wie sammle ich Taler?', a: 'Karte beim Partner vorzeigen oder On-Air Codes aus dem Radio eingeben.', category: 'Grundlagen' },
+  { q: 'Wo ist meine Karte?', a: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine Karte.', category: 'Grundlagen' },
+  
+  // Rewards (4)
+  { q: 'Wie löse ich einen Reward ein?', a: 'Reward wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig.', category: 'Rewards' },
+  { q: 'Wie lange ist der Einlösecode gültig?', a: '10 Minuten. Danach verfällt er, deine Taler bleiben erhalten.', category: 'Rewards' },
+  { q: 'Kann ich Rewards zurückgeben?', a: 'Nein. Einmal eingelöst, kein Rücktausch möglich.', category: 'Rewards' },
+  { q: 'Gibt es ein Limit pro Tag?', a: 'Ja, manche Rewards haben ein Tageslimit. Steht beim jeweiligen Reward.', category: 'Rewards' },
+  
+  // Codes (3)
+  { q: 'Was ist ein On-Air Code?', a: 'Codes, die live im Radio genannt werden. Eingeben und Taler kassieren!', category: 'Codes' },
+  { q: 'Mein Code funktioniert nicht?', a: 'Schreibweise prüfen. Codes sind 24h gültig und nur 1x einlösbar.', category: 'Codes' },
+  { q: 'Wie viele Codes kann ich pro Tag einlösen?', a: 'Max. 5 Codes pro Tag. Bei Missbrauch wird das Konto gesperrt.', category: 'Codes' },
+  
+  // Taler & Gültigkeit (3)
+  { q: 'Verfallen meine Taler?', a: 'Nach 24 Monaten Inaktivität. Regelmässig nutzen hält sie aktiv.', category: 'Taler' },
+  { q: 'Kann ich Taler auszahlen?', a: 'Nein. 2Go Taler sind Bonuspunkte, keine Währung. Keine Barauszahlung.', category: 'Taler' },
+  { q: 'Kann ich Taler übertragen?', a: 'Nein. Taler sind an dein Konto gebunden und nicht übertragbar.', category: 'Taler' },
+  
+  // Konto & Support (2)
+  { q: 'Wie lösche ich mein Konto?', a: 'E-Mail an datenschutz@radio2go.ch mit Betreff "Konto löschen".', category: 'Konto' },
+  { q: 'Ich brauche Hilfe!', a: 'Schreib an support@radio2go.ch. Antwort innerhalb 24h.', category: 'Konto' },
 ];
 
 // ============================================================================
@@ -888,8 +900,9 @@ export async function redeemCode(token: string, code: string): Promise<CodeRedee
   };
 }
 
-// Legacy FAQ export
+// Legacy FAQ export with category
 export const FAQ_ITEMS = MOCK_FAQ.map(item => ({
   question: item.q,
   answer: item.a,
+  category: item.category,
 }));
