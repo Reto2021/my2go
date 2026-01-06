@@ -182,6 +182,7 @@ export interface Reward {
   imageUrl?: string;
   available: boolean;
   expiresAt?: string;
+  distanceKm?: number; // Distance from user in km
 }
 
 export interface Partner {
@@ -1199,51 +1200,69 @@ export async function getRegions(): Promise<Region[]> {
 }
 
 /**
- * Get rewards near a location
+ * Get rewards near a location with distance information
  * In production: This would filter by geo-coordinates from Boomerangme
  */
 export async function getRewardsNearLocation(lat: number, lng: number, radiusKm: number = 50): Promise<Reward[]> {
   if (USE_MOCK) {
     await delay(200);
     
-    // For mock, we'll associate rewards with partner locations
-    // and filter by partners that are "nearby"
-    // Since we don't have real coords, we'll use a simulated approach
-    const nearbyPartnerIds = MOCK_PARTNERS
-      .filter(p => {
-        // Simulate proximity - in real implementation would use Haversine
-        // For now, just return Aargau region partners for Swiss coords
-        const isAargau = ['Brugg', 'Windisch', 'Aarau', 'Baden', 'Wettingen', 'Habsburg', 'Bad Zurzach', 'Leuggern'].includes(p.city || '');
-        const isLiechtenstein = ['Vaduz', 'Schaan', 'Balzers', 'Malbun'].includes(p.city || '');
-        
-        // If lat is around 47° (Switzerland/Liechtenstein)
-        if (lat > 46.5 && lat < 47.8) {
-          // If lng is around 8° (Aargau area)
-          if (lng > 7.5 && lng < 9) return isAargau;
-          // If lng is around 9.5° (Liechtenstein area)
-          if (lng >= 9 && lng < 10) return isLiechtenstein;
-        }
-        return true; // Fallback: show all
-      })
-      .map(p => p.id);
+    // Mock partner coordinates (would come from API in production)
+    const partnerCoords: Record<string, { lat: number; lng: number }> = {
+      'p1': { lat: 47.4843, lng: 8.2073 }, // Brugg
+      'p2': { lat: 47.4703, lng: 8.3166 }, // Wettingen
+      'p3': { lat: 47.3896, lng: 8.0450 }, // Aarau
+      'p4': { lat: 47.4843, lng: 8.2073 }, // Brugg
+      'p5': { lat: 47.4625, lng: 8.1813 }, // Habsburg
+      'p6': { lat: 47.5875, lng: 8.2917 }, // Bad Zurzach
+      'p7': { lat: 47.4727, lng: 8.3063 }, // Baden
+      'p8': { lat: 47.4800, lng: 8.2200 }, // Windisch
+      'p9': { lat: 47.5833, lng: 8.2333 }, // Leuggern
+      'radio2go': { lat: 47.4843, lng: 8.2073 }, // Brugg
+      'p10': { lat: 47.1389, lng: 9.5208 }, // Vaduz
+      'p11': { lat: 47.1613, lng: 9.5099 }, // Schaan
+      'p12': { lat: 47.0733, lng: 9.5000 }, // Balzers
+      'p13': { lat: 47.1000, lng: 9.6000 }, // Malbun
+    };
     
-    const nearbyRewards = MOCK_REWARDS.filter(r => {
-      const detail = MOCK_REWARD_DETAILS[r.id];
-      return detail && nearbyPartnerIds.includes(detail.partner.id);
+    // Calculate distances and filter
+    const rewardsWithDistance = MOCK_REWARDS.map(item => {
+      const detail = MOCK_REWARD_DETAILS[item.id];
+      const partnerId = detail?.partner.id;
+      const coords = partnerId ? partnerCoords[partnerId] : null;
+      
+      let distance = 999;
+      if (coords) {
+        // Haversine formula
+        const R = 6371;
+        const dLat = (coords.lat - lat) * Math.PI / 180;
+        const dLon = (coords.lng - lng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat * Math.PI / 180) * Math.cos(coords.lat * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        distance = R * c;
+      }
+      
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.summary,
+        cost: item.cost,
+        category: item.category,
+        partnerId: detail?.partner.id || '',
+        partnerName: item.partnerName,
+        imageUrl: item.imageUrl,
+        available: true,
+        expiresAt: detail?.validUntil,
+        distanceKm: Math.round(distance * 10) / 10,
+      };
     });
     
-    return nearbyRewards.map(item => ({
-      id: item.id,
-      title: item.title,
-      description: item.summary,
-      cost: item.cost,
-      category: item.category,
-      partnerId: MOCK_REWARD_DETAILS[item.id]?.partner.id || '',
-      partnerName: item.partnerName,
-      imageUrl: item.imageUrl,
-      available: true,
-      expiresAt: MOCK_REWARD_DETAILS[item.id]?.validUntil,
-    }));
+    // Filter by radius and sort by distance
+    return rewardsWithDistance
+      .filter(r => r.distanceKm <= radiusKm)
+      .sort((a, b) => (a.distanceKm || 999) - (b.distanceKm || 999));
   }
   
   const response = await fetch(`${API_BASE}/rewards?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`);
