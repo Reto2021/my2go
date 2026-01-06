@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Play, Pause, Volume2, VolumeX, Volume1 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
+import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 
 function Equalizer({ className }: { className?: string }) {
@@ -15,16 +16,30 @@ function Equalizer({ className }: { className?: string }) {
   );
 }
 
+function VolumeIcon({ volume, isMuted }: { volume: number; isMuted: boolean }) {
+  if (isMuted || volume === 0) {
+    return <VolumeX className="h-4 w-4 text-secondary-foreground/70" />;
+  }
+  if (volume < 0.5) {
+    return <Volume1 className="h-4 w-4 text-secondary-foreground/70" />;
+  }
+  return <Volume2 className="h-4 w-4 text-secondary-foreground/70" />;
+}
+
 export function RadioHeader() {
   const { 
     isPlaying, 
     isMuted, 
     isLoading, 
+    volume,
     nowPlaying, 
     togglePlay, 
-    toggleMute, 
+    toggleMute,
+    setVolume,
     fetchNowPlaying 
   } = useRadioStore();
+  
+  const [showVolume, setShowVolume] = useState(false);
 
   // Fetch now playing on mount and periodically
   useEffect(() => {
@@ -39,6 +54,18 @@ export function RadioHeader() {
       fetchNowPlaying();
     }
   }, [isPlaying, fetchNowPlaying]);
+  
+  // Auto-hide volume slider
+  useEffect(() => {
+    if (showVolume) {
+      const timer = setTimeout(() => setShowVolume(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showVolume, volume]);
+
+  const handleVolumeChange = (values: number[]) => {
+    setVolume(values[0]);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -100,19 +127,38 @@ export function RadioHeader() {
             )}
           </div>
           
-          {/* Mute button - only when playing */}
+          {/* Volume control - only when playing */}
           {isPlaying && (
-            <button
-              onClick={toggleMute}
-              className="h-8 w-8 rounded-full bg-secondary-foreground/10 flex items-center justify-center flex-shrink-0 hover:bg-secondary-foreground/20 transition-colors"
-              aria-label={isMuted ? 'Ton an' : 'Ton aus'}
-            >
-              {isMuted ? (
-                <VolumeX className="h-4 w-4 text-secondary-foreground/70" />
-              ) : (
-                <Volume2 className="h-4 w-4 text-secondary-foreground/70" />
-              )}
-            </button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Volume slider - expandable */}
+              <div className={cn(
+                "overflow-hidden transition-all duration-300 ease-out",
+                showVolume ? "w-20 opacity-100" : "w-0 opacity-0"
+              )}>
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  max={1}
+                  step={0.05}
+                  onValueChange={handleVolumeChange}
+                  className="w-20"
+                />
+              </div>
+              
+              {/* Volume button */}
+              <button
+                onClick={() => {
+                  if (showVolume) {
+                    toggleMute();
+                  } else {
+                    setShowVolume(true);
+                  }
+                }}
+                className="h-8 w-8 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-secondary-foreground/20 transition-colors"
+                aria-label={isMuted ? 'Ton an' : 'Lautstärke'}
+              >
+                <VolumeIcon volume={volume} isMuted={isMuted} />
+              </button>
+            </div>
           )}
         </div>
       </div>

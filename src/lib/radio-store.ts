@@ -14,6 +14,7 @@ interface RadioStore {
   isPlaying: boolean;
   isMuted: boolean;
   isLoading: boolean;
+  volume: number;
   nowPlaying: NowPlayingData | null;
   audio: HTMLAudioElement | null;
   
@@ -27,6 +28,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   isPlaying: false,
   isMuted: false,
   isLoading: false,
+  volume: 1,
   nowPlaying: null,
   audio: null,
 
@@ -90,7 +92,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     const { audio } = get();
     if (audio) {
       audio.volume = volume;
-      set({ isMuted: volume === 0 });
     }
+    set({ volume, isMuted: volume === 0 });
   },
 }));
