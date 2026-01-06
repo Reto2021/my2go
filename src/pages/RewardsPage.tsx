@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getRewards, Reward } from '@/lib/api';
+import { useBrowseMode } from '@/lib/session';
 import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
-import { Gift } from 'lucide-react';
+import { Gift, Wallet, Info } from 'lucide-react';
 
 const categories = [
   { id: 'all', label: 'Alle' },
@@ -19,6 +20,7 @@ export default function RewardsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
+  const isBrowseMode = useBrowseMode();
   
   const loadRewards = async () => {
     setIsLoading(true);
@@ -52,9 +54,9 @@ export default function RewardsPage() {
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
                 className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200',
+                  'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
                   activeCategory === cat.id
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-secondary text-secondary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 )}
               >
@@ -64,6 +66,32 @@ export default function RewardsPage() {
           </div>
         </div>
       </header>
+      
+      {/* Browse Mode Banner */}
+      {isBrowseMode && (
+        <div className="container pt-4">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
+              <Info className="h-5 w-5 text-secondary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Zum Einlösen Karte öffnen
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Öffne deine 2Go Taler Karte, um Rewards einzulösen.
+              </p>
+            </div>
+            <button 
+              className="btn-primary py-2 px-4 text-sm flex-shrink-0"
+              onClick={() => window.location.href = '/?token=demo'}
+            >
+              <Wallet className="h-4 w-4" />
+              Öffnen
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Content */}
       <div className="container py-6">
