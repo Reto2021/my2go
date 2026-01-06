@@ -13,7 +13,7 @@ import {
   MapPin, 
   ChevronRight, 
   Wallet,
-  Sparkles,
+  Music,
   ArrowRight,
   LogOut,
   Settings,
@@ -203,7 +203,7 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       {/* Features */}
       <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-3 animate-in-delayed">
-          <FeatureChip icon={Sparkles} label="Punkte sammeln" color="accent" to="/partner" />
+          <FeatureChip icon={Music} label="Radio-Taler sammeln" color="accent" to="/code" />
           <FeatureChip icon={Gift} label="Rewards holen" color="primary" to="/rewards" />
           <FeatureChip icon={MapPin} label="Partner finden" color="secondary" to="/partner" />
         </div>
