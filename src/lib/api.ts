@@ -838,6 +838,7 @@ export async function getPartners(): Promise<Partner[]> {
 
 export async function getPartnerById(id: string): Promise<Partner | null> {
   const detail = await fetchPartnerById(id);
+  const listItem = MOCK_PARTNERS.find(p => p.id === id);
   if (!detail) return null;
   
   return {
@@ -846,6 +847,7 @@ export async function getPartnerById(id: string): Promise<Partner | null> {
     category: detail.category,
     description: detail.openingHours || '',
     address: detail.address,
+    city: listItem?.city,
     lat: 46.9480,
     lng: 7.4474,
     rewardCount: MOCK_REWARDS.filter(r => MOCK_REWARD_DETAILS[r.id]?.partner.id === id).length,
