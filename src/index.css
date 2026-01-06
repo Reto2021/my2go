@@ -164,62 +164,52 @@
       hsl(200 60% 85%) 100%);
   }
 
-  /* Layered Hills - inspired by mountain silhouettes */
-  .hills-bg {
+  /* Shop Front Silhouette */
+  .shopfront-bg {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 180px;
+    height: 140px;
     pointer-events: none;
   }
 
-  /* Back layer - distant mountains, lightest */
-  .hills-bg::before {
+  /* Background buildings - taller, lighter */
+  .shopfront-bg::before {
     content: '';
     position: absolute;
-    bottom: 40px;
-    left: 0;
-    right: 0;
-    height: 100px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 100' preserveAspectRatio='none'%3E%3Cpath fill='%23023F5A' fill-opacity='0.25' d='M0 100V65c30-5 60-15 100-25s80-15 130-10 100 20 160 30 120 15 180 10 110-20 160-30 100-15 150-10 100 15 150 25 100 15 150 10 90-20 120-25V100H0z'/%3E%3C/svg%3E");
-    background-size: cover;
-    background-position: center bottom;
-  }
-
-  /* Middle layer */
-  .hills-layer-mid {
-    position: absolute;
-    bottom: 25px;
-    left: 0;
-    right: 0;
-    height: 110px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 110' preserveAspectRatio='none'%3E%3Cpath fill='%23023F5A' fill-opacity='0.45' d='M0 110V70c40-10 80-25 140-35s130-10 200 5 140 35 210 40 140-5 200-20 110-30 160-35 110 5 170 20 130 30 200 35 120-10 120-15V110H0z'/%3E%3C/svg%3E");
-    background-size: cover;
-    background-position: center bottom;
-  }
-
-  /* Front layer - closest hills, darkest */
-  .hills-layer-front {
-    position: absolute;
-    bottom: 0;
+    bottom: 50px;
     left: 0;
     right: 0;
     height: 90px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 90' preserveAspectRatio='none'%3E%3Cpath fill='%23023F5A' fill-opacity='0.8' d='M0 90V55c50-8 100-20 170-25s160 5 250 15 180 20 270 18 170-15 240-25 130-15 190-10 120 15 180 22 100 8 100 5V90H0z'/%3E%3C/svg%3E");
-    background-size: cover;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 90' preserveAspectRatio='none'%3E%3Cpath fill='%23023F5A' fill-opacity='0.2' d='M0 90V45h30V30h10v15h20V25h8V15h4v10h8v20h25V35h15V25h10v10h15v10h30V30h20V20h10v10h20v15h25V35h15V20h10v15h15v10h40V30h25V15h10v15h25v15h20V40h15V25h10v15h15v5h30V35h20V20h10v15h20v10h25V35h15V25h10v10h15v10h30V35h20V25h10v10h20v10h35V40h15V30h10v10h15v15h30V45h20V35h10v10h20v35H0z'/%3E%3C/svg%3E");
+    background-size: 800px 90px;
+    background-repeat: repeat-x;
     background-position: center bottom;
   }
 
-  /* Ground/base layer */
-  .hills-bg::after {
+  /* Foreground shop fronts - detailed silhouette */
+  .shopfront-layer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 100' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='shopGrad' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23023F5A' stop-opacity='0.6'/%3E%3Cstop offset='100%25' stop-color='%23023F5A' stop-opacity='0.85'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23shopGrad)' d='M0 100V55h8V40h4V30l12-8 12 8v10h4v15h12V45h6V35h3V25l8-5 8 5v10h3v10h6v10h18V40h5V28l10-6 10 6v12h5v15h15V48h8V35h4V22l14-8 14 8v13h4v13h8v7h20V42h6V30h3V18l10-6 10 6v12h3v12h6v13h16V45h5V32h3V20l8-5 8 5v12h3v13h5v10h22V38h8V25h4V12l12-7 12 7v13h4v13h8v17h18V40h6V28h3V16l10-6 10 6v12h3v12h6v15h14V48h5V35h3V22l8-5 8 5v13h3v13h5v7h20V42h8V28h4V15l14-8 14 8v13h4v14h8v13h16V38h6V25h3V12l10-6 10 6v13h3v13h6v17h18V42h5V30h3V18l8-5 8 5v12h3v12h5v13h22V40h8V28h4V16l12-6 12 6v12h4v12h8v15h14V48h6V35h3V22l10-6 10 6v13h3v13h6v7h20V38h5V25h3V12l8-5 8 5v13h3v13h5v17h16V42h8V28h4V15l14-8 14 8v13h4v14h8v18H0z'/%3E%3C!-- Awnings --%3E%3Cpath fill='%23023F5A' fill-opacity='0.5' d='M12 55h24l-2 8H14zM82 48h20l-2 6H84zM142 50h28l-2 7H144zM218 42h24l-2 8H220zM288 45h20l-2 6H290zM350 48h24l-2 7H352zM430 40h28l-2 8H432zM500 45h20l-2 6H502zM560 48h24l-2 7H562zM638 38h28l-2 8H640zM710 42h20l-2 6H712zM770 45h24l-2 7H772zM850 40h28l-2 8H852zM920 42h20l-2 6H922zM970 45h24l-2 7H972z'/%3E%3C!-- Windows --%3E%3Crect x='16' y='35' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='26' y='35' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='88' y='30' width='5' height='6' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='152' y='28' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='163' y='28' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='224' y='22' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='234' y='22' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='356' y='26' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='366' y='26' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='440' y='18' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='451' y='18' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='568' y='26' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='646' y='18' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='657' y='18' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='778' y='24' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='788' y='24' width='6' height='8' rx='1' fill='%2380B8D0' opacity='0.4'/%3E%3Crect x='858' y='18' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3Crect x='869' y='18' width='7' height='9' rx='1' fill='%2380B8D0' opacity='0.35'/%3E%3C!-- Lit windows (accent) --%3E%3Crect x='96' y='30' width='5' height='6' rx='1' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='296' y='30' width='5' height='6' rx='1' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='506' y='30' width='5' height='6' rx='1' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='716' y='26' width='5' height='6' rx='1' fill='%23FCB900' opacity='0.5'/%3E%3Crect x='926' y='26' width='5' height='6' rx='1' fill='%23FCB900' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: 1000px 100px;
+    background-repeat: repeat-x;
+    background-position: center bottom;
+  }
+
+  /* Ground fade to white */
+  .shopfront-bg::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 30px;
-    background: linear-gradient(to top, hsl(0 0% 100%) 0%, hsl(0 0% 100% / 0.95) 60%, transparent 100%);
+    height: 20px;
+    background: linear-gradient(to top, hsl(0 0% 100%) 0%, hsl(0 0% 100% / 0.9) 50%, transparent 100%);
   }
 
   /* Individual clouds container */
