@@ -7,7 +7,6 @@ import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
-import { RadioPlayer } from '@/components/ui/radio-player';
 import logo from '@/assets/logo-radio2go.png';
 import { 
   Radio, 
@@ -242,9 +241,6 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       
       {/* Partners Preview */}
       <section className="container section">
-        {/* Radio Player */}
-        <RadioPlayer className="mb-8" />
-
         <div className="section-header">
           <h2 className="section-title">Lokale Partner entdecken</h2>
           <Link to="/partner" className="section-link">
@@ -403,11 +399,6 @@ function SessionModeHome({
           </p>
         )}
       </header>
-      
-      {/* Radio Player */}
-      <section className="container py-4">
-        <RadioPlayer className="animate-in" />
-      </section>
       
       {/* Balance Card */}
       <section className="container py-4">
