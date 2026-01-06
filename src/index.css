@@ -2,95 +2,96 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* 2Go Taler Hub Design System
+   Primary: Deep Navy #023F5A
+   Secondary: Soft Blue #C0D6E7
+   Accent: Gold #FCB900
+   All colors in HSL
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core brand colors */
+    --background: 200 10% 98%;
+    --foreground: 197 92% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 197 92% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 197 92% 18%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary: Deep Navy #023F5A */
+    --primary: 197 96% 18%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Soft Blue #C0D6E7 */
+    --secondary: 206 47% 83%;
+    --secondary-foreground: 197 96% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted */
+    --muted: 206 30% 92%;
+    --muted-foreground: 197 30% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Gold #FCB900 */
+    --accent: 44 98% 49%;
+    --accent-foreground: 197 96% 18%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Success */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --border: 206 30% 88%;
+    --input: 206 30% 88%;
+    --ring: 44 98% 49%;
 
-    --sidebar-background: 0 0% 98%;
+    --radius: 1rem;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Custom gradients */
+    --gradient-gold: linear-gradient(135deg, hsl(44, 98%, 49%) 0%, hsl(35, 90%, 45%) 100%);
+    --gradient-navy: linear-gradient(135deg, hsl(197, 96%, 18%) 0%, hsl(197, 80%, 25%) 100%);
+    --gradient-coin: linear-gradient(145deg, hsl(35, 60%, 70%) 0%, hsl(30, 50%, 55%) 50%, hsl(25, 40%, 45%) 100%);
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Shadows */
+    --shadow-card: 0 4px 20px -4px hsl(197 96% 18% / 0.1);
+    --shadow-button: 0 4px 14px -2px hsl(44 98% 49% / 0.4);
+    --shadow-coin: 0 8px 30px -8px hsl(30 50% 30% / 0.3);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 197 92% 8%;
+    --foreground: 206 47% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 197 80% 12%;
+    --card-foreground: 206 47% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 197 80% 12%;
+    --popover-foreground: 206 47% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 44 98% 49%;
+    --primary-foreground: 197 96% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 197 60% 20%;
+    --secondary-foreground: 206 47% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 197 50% 18%;
+    --muted-foreground: 206 30% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 44 98% 49%;
+    --accent-foreground: 197 96% 10%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 197 50% 20%;
+    --input: 197 50% 20%;
+    --ring: 44 98% 49%;
   }
 }
 
@@ -99,7 +100,95 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-accent text-accent-foreground font-semibold rounded-xl px-6 py-4 
+           transition-all duration-200 active:scale-[0.98];
+    box-shadow: var(--shadow-button);
+  }
+
+  .btn-gold:hover {
+    @apply brightness-105;
+  }
+
+  .btn-navy {
+    @apply bg-primary text-primary-foreground font-semibold rounded-xl px-6 py-4 
+           transition-all duration-200 active:scale-[0.98];
+  }
+
+  .card-elevated {
+    @apply bg-card rounded-2xl p-4;
+    box-shadow: var(--shadow-card);
+  }
+
+  .coin-glow {
+    box-shadow: var(--shadow-coin);
+  }
+
+  .bottom-nav-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  .gradient-gold {
+    background: var(--gradient-gold);
+  }
+
+  .gradient-navy {
+    background: var(--gradient-navy);
+  }
+
+  .taler-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
+           bg-accent/10 text-accent font-semibold text-sm;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-coin-spin {
+    animation: coinSpin 1s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes coinSpin {
+    0% { transform: rotateY(0deg) scale(0.8); opacity: 0; }
+    50% { transform: rotateY(180deg) scale(1.1); }
+    100% { transform: rotateY(360deg) scale(1); opacity: 1; }
   }
 }
