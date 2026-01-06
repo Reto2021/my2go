@@ -120,9 +120,9 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
       {/* Features */}
       <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-3 animate-in-delayed">
-          <FeatureChip icon={Sparkles} label="Punkte sammeln" color="accent" />
-          <FeatureChip icon={Gift} label="Rewards holen" color="primary" />
-          <FeatureChip icon={MapPin} label="Partner finden" color="secondary" />
+          <FeatureChip icon={Sparkles} label="Punkte sammeln" color="accent" to="/partner" />
+          <FeatureChip icon={Gift} label="Rewards holen" color="primary" to="/rewards" />
+          <FeatureChip icon={MapPin} label="Partner finden" color="secondary" to="/partner" />
         </div>
       </section>
       
@@ -186,9 +186,10 @@ interface FeatureChipProps {
   icon: React.ElementType;
   label: string;
   color: 'accent' | 'primary' | 'secondary';
+  to: string;
 }
 
-function FeatureChip({ icon: Icon, label, color }: FeatureChipProps) {
+function FeatureChip({ icon: Icon, label, color, to }: FeatureChipProps) {
   const colorClasses = {
     accent: 'bg-accent/15 text-accent',
     primary: 'bg-primary/20 text-secondary',
@@ -196,12 +197,12 @@ function FeatureChip({ icon: Icon, label, color }: FeatureChipProps) {
   };
   
   return (
-    <div className="card-glass p-4 flex flex-col items-center gap-3">
+    <Link to={to} className="card-glass p-4 flex flex-col items-center gap-3 hover:scale-105 transition-transform">
       <div className={`icon-container-md rounded-2xl ${colorClasses[color]}`}>
         <Icon className="h-5 w-5" />
       </div>
       <span className="text-xs font-semibold text-center text-foreground">{label}</span>
-    </div>
+    </Link>
   );
 }
 
