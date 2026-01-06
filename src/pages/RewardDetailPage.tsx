@@ -138,15 +138,17 @@ export default function RewardDetailPage() {
       const result = await redeemRewardById(reward.id);
       setRedemption(result);
       
-      // Haptic feedback on success (mobile devices)
+      // Haptic + Sound feedback on success (mobile devices)
       triggerHapticFeedback('success');
+      playFeedbackSound('success');
       
       // Refresh balance from server (source of truth)
       refreshBalance();
     } catch (err) {
       console.error('Redemption failed:', err);
-      // Haptic feedback on error
+      // Haptic + Sound feedback on error
       triggerHapticFeedback('error');
+      playFeedbackSound('error');
       setRedemptionError('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
     } finally {
       setIsRedeeming(false);
@@ -172,6 +174,40 @@ export default function RewardDetailPage() {
         break;
     }
   };
+  
+  // Sound feedback using Web Audio API (works on iOS)
+  const playFeedbackSound = useCallback((type: 'success' | 'error') => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      if (type === 'success') {
+        // Pleasant rising chord for success
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.4);
+      } else {
+        // Lower descending tone for error
+        oscillator.frequency.setValueAtTime(349.23, audioContext.currentTime); // F4
+        oscillator.frequency.setValueAtTime(261.63, audioContext.currentTime + 0.15); // C4
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      }
+    } catch (e) {
+      // Web Audio API not supported, silently fail
+      console.log('Web Audio API not available');
+    }
+  }, []);
   
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
