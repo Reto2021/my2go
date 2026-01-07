@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { redeemOnAirCode } from '@/lib/api';
-import { CheckCircle2, XCircle, Radio, Sparkles, Wallet, Coins, ArrowRight } from 'lucide-react';
+import { CheckCircle2, XCircle, Music, Sparkles, Wallet, Coins, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CodePage() {
@@ -91,7 +91,7 @@ export default function CodePage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
-          <h1 className="text-display-sm">Code einlösen</h1>
+          <h1 className="text-display-sm">Radio 2Go Taler-Codewort einlösen</h1>
         </div>
       </header>
       
@@ -99,7 +99,7 @@ export default function CodePage() {
         {/* Hero - compact */}
         <div className="text-center mb-6 animate-in">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10 mx-auto mb-3">
-            <Radio className="h-8 w-8 text-accent" />
+            <Music className="h-8 w-8 text-accent" />
           </div>
           <p className="text-muted-foreground text-sm">
             Hörst du Radio 2Go? Gib den Code ein!
