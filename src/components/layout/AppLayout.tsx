@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from 'react';
 import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
+import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { useSession } from '@/lib/session';
 
 interface AppLayoutProps {
@@ -22,6 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {children}
       </main>
       <BottomNav />
+      <WhatsAppButton />
     </div>
   );
 }
