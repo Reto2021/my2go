@@ -11,6 +11,7 @@ import {
 } from '@/lib/api';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { useSettings } from '@/lib/settings';
+import { useRadioStore } from '@/lib/radio-store';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { 
@@ -52,6 +53,7 @@ export default function RewardDetailPage() {
   const navigate = useNavigate();
   const { session, balance, refreshBalance, loginWithToken } = useSession();
   const { soundEnabled, vibrationEnabled } = useSettings();
+  const { isPlaying: isRadioPlaying } = useRadioStore();
   const isBrowseMode = useBrowseMode();
   
   const [reward, setReward] = useState<Reward | null>(null);
@@ -178,8 +180,9 @@ export default function RewardDetailPage() {
   }, [vibrationEnabled]);
   
   // Sound feedback using Web Audio API (works on iOS)
+  // IMPORTANT: Skip if radio is playing to avoid interrupting the stream
   const playFeedbackSound = useCallback((type: 'success' | 'error') => {
-    if (!soundEnabled) return;
+    if (!soundEnabled || isRadioPlaying) return;
     
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -211,7 +214,7 @@ export default function RewardDetailPage() {
       // Web Audio API not supported, silently fail
       console.log('Web Audio API not available');
     }
-  }, [soundEnabled]);
+  }, [soundEnabled, isRadioPlaying]);
   
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
