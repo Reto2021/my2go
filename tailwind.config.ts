@@ -155,7 +155,7 @@ export default {
         "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
         "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
         "marquee": "marquee 12s linear infinite",
-        "gradient-shift": "gradient-shift 8s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 20s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
