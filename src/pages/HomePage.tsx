@@ -102,9 +102,9 @@ export default function HomePage() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-accent/10">
               <Navigation className="h-8 w-8 text-accent" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Rewards in deiner Nähe</h2>
+            <h2 className="text-xl font-bold mb-2">Gutscheine in deiner Nähe</h2>
             <p className="text-muted-foreground mb-6">
-              Erlaube Standortzugriff, um nur Rewards von Partnern in deiner Region zu sehen.
+              Erlaube Standortzugriff, um nur Gutscheine von Partnern in deiner Region zu sehen.
             </p>
             <div className="space-y-3">
               <button 
@@ -175,7 +175,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
               Hör 2Go.<br />
               Sammle Taler.<br />
-              <span className="text-accent">Hol dir Rewards.</span>
+              <span className="text-accent">Hol dir Gutscheine.</span>
             </h1>
             
             <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
@@ -198,7 +198,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-3 animate-in-delayed">
           <FeatureChip icon={Music} label="Radio-Taler sammeln" color="accent" to="/code" />
-          <FeatureChip icon={Gift} label="Rewards holen" color="primary" to="/rewards" />
+          <FeatureChip icon={Gift} label="Gutscheine holen" color="primary" to="/rewards" />
           <FeatureChip icon={MapPin} label="Partner finden" color="secondary" to="/partner" />
         </div>
       </section>
@@ -206,7 +206,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       {/* Rewards Preview */}
       <section className="container section">
         <div className="section-header">
-          <h2 className="section-title">Beliebte Rewards</h2>
+          <h2 className="section-title">Beliebte Gutscheine</h2>
           <Link to="/rewards" className="section-link">
             Alle anzeigen <ChevronRight className="h-4 w-4" />
           </Link>
@@ -327,7 +327,7 @@ function SessionModeHome({
         <h2 className="section-title mb-5">Schnellzugriff</h2>
         <div className="grid grid-cols-3 gap-3 stagger-children">
           <QuickAction to="/code" icon={Music} label="Radio-Taler sammeln" color="accent" />
-          <QuickAction to="/rewards" icon={Gift} label="Rewards" color="primary" />
+          <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="primary" />
           <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
         </div>
       </section>
@@ -371,12 +371,12 @@ function SessionModeHome({
             ))
           ) : rewards.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Keine Rewards in deiner Nähe gefunden.</p>
+            <p>Keine Gutscheine in deiner Nähe gefunden.</p>
               <button 
                 onClick={onClearLocation}
                 className="text-accent font-semibold mt-2"
               >
-                Alle Rewards anzeigen
+                Alle Gutscheine anzeigen
               </button>
             </div>
           ) : (

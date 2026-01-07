@@ -127,7 +127,7 @@ export default function RewardsPage() {
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-display-sm">Rewards</h1>
+            <h1 className="text-display-sm">Gutscheine</h1>
             
             {/* Filter Toggle */}
             <button
@@ -258,7 +258,7 @@ export default function RewardsPage() {
                 Zum Einlösen Karte öffnen
               </p>
               <p className="text-xs text-muted-foreground">
-                Öffne deine 2Go Taler Karte, um Rewards einzulösen.
+                Öffne deine 2Go Taler Karte, um Gutscheine einzulösen.
               </p>
             </div>
             <button 
@@ -276,7 +276,7 @@ export default function RewardsPage() {
       {!isLoading && !error && (
         <div className="container pt-4">
           <p className="text-sm text-muted-foreground">
-            {filteredAndSortedRewards.length} {filteredAndSortedRewards.length === 1 ? 'Reward' : 'Rewards'}
+            {filteredAndSortedRewards.length} {filteredAndSortedRewards.length === 1 ? 'Gutschein' : 'Gutscheine'}
             {hasActiveFilters && ' (gefiltert)'}
           </p>
         </div>
@@ -292,16 +292,16 @@ export default function RewardsPage() {
           </div>
         ) : error ? (
           <ErrorState 
-            title="Rewards konnten nicht geladen werden"
+            title="Gutscheine konnten nicht geladen werden"
             onRetry={loadRewards}
           />
         ) : filteredAndSortedRewards.length === 0 ? (
           <EmptyState
             icon={Gift}
-            title="Keine Rewards gefunden"
+            title="Keine Gutscheine gefunden"
             description={hasActiveFilters 
-              ? "Passe die Filter an, um mehr Rewards zu sehen."
-              : "In dieser Kategorie sind aktuell keine Rewards verfügbar."
+              ? "Passe die Filter an, um mehr Gutscheine zu sehen."
+              : "In dieser Kategorie sind aktuell keine Gutscheine verfügbar."
             }
             action={hasActiveFilters ? {
               label: "Filter zurücksetzen",

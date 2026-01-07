@@ -580,11 +580,11 @@ const MOCK_FAQ: FAQItem[] = [
   { q: 'Wie sammle ich Taler?', a: 'Karte beim Partner vorzeigen oder On-Air Codes aus dem Radio eingeben.', category: 'Grundlagen' },
   { q: 'Wo ist meine Karte?', a: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine Karte.', category: 'Grundlagen' },
   
-  // Rewards (4)
-  { q: 'Wie löse ich einen Reward ein?', a: 'Reward wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig.', category: 'Rewards' },
-  { q: 'Wie lange ist der Einlösecode gültig?', a: '10 Minuten. Danach verfällt er, deine Taler bleiben erhalten.', category: 'Rewards' },
-  { q: 'Kann ich Rewards zurückgeben?', a: 'Nein. Einmal eingelöst, kein Rücktausch möglich.', category: 'Rewards' },
-  { q: 'Gibt es ein Limit pro Tag?', a: 'Ja, manche Rewards haben ein Tageslimit. Steht beim jeweiligen Reward.', category: 'Rewards' },
+  // Gutscheine (4)
+  { q: 'Wie löse ich einen Gutschein ein?', a: 'Gutschein wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig.', category: 'Gutscheine' },
+  { q: 'Wie lange ist der Einlösecode gültig?', a: '10 Minuten. Danach verfällt er, deine Taler bleiben erhalten.', category: 'Gutscheine' },
+  { q: 'Kann ich Gutscheine zurückgeben?', a: 'Nein. Einmal eingelöst, kein Rücktausch möglich.', category: 'Gutscheine' },
+  { q: 'Gibt es ein Limit pro Tag?', a: 'Ja, manche Gutscheine haben ein Tageslimit. Steht beim jeweiligen Gutschein.', category: 'Gutscheine' },
   
   // Codes (3)
   { q: 'Was ist ein On-Air Code?', a: 'Codes, die live im Radio genannt werden. Eingeben und Taler kassieren!', category: 'Codes' },
