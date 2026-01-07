@@ -138,11 +138,10 @@ export default {
           "100%": { transform: "translateX(-50%)" },
         },
         "gradient-shift": {
-          "0%": { backgroundPosition: "0% 50%" },
-          "25%": { backgroundPosition: "100% 25%" },
-          "50%": { backgroundPosition: "50% 75%" },
-          "75%": { backgroundPosition: "100% 50%" },
-          "100%": { backgroundPosition: "0% 50%" },
+          "0%": { transform: "translate(-30%, -30%) rotate(0deg)" },
+          "33%": { transform: "translate(-20%, -40%) rotate(120deg)" },
+          "66%": { transform: "translate(-40%, -20%) rotate(240deg)" },
+          "100%": { transform: "translate(-30%, -30%) rotate(360deg)" },
         },
       },
       animation: {
