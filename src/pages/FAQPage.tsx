@@ -370,8 +370,8 @@ export default function FAQPage() {
               <div className="flex-1">
                 <h3 className="font-semibold text-sm">Datenschutz</h3>
                 <p className="text-sm text-muted-foreground">
-                  <a 
-                    href="https://radio2go.ch/datenschutz" 
+                <a 
+                    href="https://radio2go.fm/datenschutz" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-secondary font-medium hover:underline"
