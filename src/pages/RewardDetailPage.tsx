@@ -50,7 +50,7 @@ const REDEMPTION_EXPIRY_MINUTES = 10;
 export default function RewardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { session, balance, refreshBalance } = useSession();
+  const { session, balance, refreshBalance, loginWithToken } = useSession();
   const { soundEnabled, vibrationEnabled } = useSettings();
   const isBrowseMode = useBrowseMode();
   
@@ -571,7 +571,7 @@ export default function RewardDetailPage() {
               </p>
               <button 
                 className="btn-primary"
-                onClick={() => window.location.href = '/?token=demo'}
+                onClick={() => loginWithToken('demo')}
               >
                 <Wallet className="h-5 w-5" />
                 Karte öffnen
