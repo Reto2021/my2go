@@ -13,17 +13,18 @@ export function WhatsAppButton({ className }: { className?: string }) {
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        'fixed z-50 flex items-center justify-center',
-        'h-14 w-14 rounded-full',
+        'fixed z-50 flex items-center gap-2',
+        'pl-4 pr-5 py-3 rounded-full',
         'bg-[#25D366] hover:bg-[#20BD5A] active:scale-95',
         'shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40',
         'transition-all duration-300',
         'bottom-24 right-4', // Above bottom nav
         className
       )}
-      aria-label="WhatsApp kontaktieren"
+      aria-label="WhatsApp Studio kontaktieren"
     >
-      <MessageCircle className="h-7 w-7 text-white" fill="white" />
+      <MessageCircle className="h-5 w-5 text-white" fill="white" />
+      <span className="text-sm font-bold text-white">Studio</span>
     </a>
   );
 }
