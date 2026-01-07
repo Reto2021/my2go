@@ -8,7 +8,6 @@ import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import {
-  Radio, 
   Gift, 
   MapPin, 
   ChevronRight, 
@@ -396,7 +395,7 @@ function SessionModeHome({
       <section className="container section">
         <h2 className="section-title mb-5">Schnellzugriff</h2>
         <div className="grid grid-cols-3 gap-3 stagger-children">
-          <QuickAction to="/code" icon={Radio} label="Code einlösen" color="accent" />
+          <QuickAction to="/code" icon={Music} label="Radio-Taler sammeln" color="accent" />
           <QuickAction to="/rewards" icon={Gift} label="Rewards" color="primary" />
           <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
         </div>
