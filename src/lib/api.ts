@@ -599,6 +599,13 @@ const MOCK_FAQ: FAQItem[] = [
   // Konto & Support (2)
   { q: 'Wie lösche ich mein Konto?', a: 'E-Mail an datenschutz@radio2go.ch mit Betreff "Konto löschen".', category: 'Konto' },
   { q: 'Ich brauche Hilfe!', a: 'Schreib an support@radio2go.ch. Antwort innerhalb 24h.', category: 'Konto' },
+  
+  // Streaming / Geräte (5)
+  { q: 'Wie höre ich Radio 2Go auf Chromecast?', a: 'Stream starten, Cast-Symbol antippen, Chromecast auswählen. Läuft direkt auf dem TV/Lautsprecher.', category: 'Streaming' },
+  { q: 'Wie höre ich Radio 2Go über AirPlay?', a: 'iPhone/iPad: Kontrollzentrum öffnen (wischen), AirPlay-Symbol tippen, Gerät wählen. Mac: Menüleiste → AirPlay.', category: 'Streaming' },
+  { q: 'Kann ich Radio 2Go auf Sonos hören?', a: 'Ja! Sonos App → Durchsuchen → Radio by TuneIn → "Radio 2Go" suchen. Oder: radio2go.fm/stream als Favorit hinzufügen.', category: 'Streaming' },
+  { q: 'Wie höre ich Radio 2Go auf Alexa?', a: '"Alexa, spiele Radio 2Go" oder via TuneIn Skill. Einmal einrichten, dann per Sprachbefehl starten.', category: 'Streaming' },
+  { q: 'Kann ich auf mehreren Geräten gleichzeitig hören?', a: 'Ja, aber jedes Gerät braucht eine eigene Verbindung. Bluetooth-Kopfhörer: Nur eines gleichzeitig möglich (Geräte-Limit).', category: 'Streaming' },
 ];
 
 // ============================================================================

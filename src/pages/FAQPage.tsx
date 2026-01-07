@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 
 // Category order for grouping
-const CATEGORY_ORDER = ['Grundlagen', 'Gutscheine', 'Codes', 'Taler', 'Konto'];
+const CATEGORY_ORDER = ['Grundlagen', 'Gutscheine', 'Codes', 'Taler', 'Streaming', 'Konto'];
 
 // Support topics
 const SUPPORT_TOPICS = [
