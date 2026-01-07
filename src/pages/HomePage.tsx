@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function HomePage() {
-  const { initSession, session, balance, isLoading } = useSession();
+  const { session, balance, isLoading } = useSession();
   const isBrowseMode = useBrowseMode();
   const { 
     userLocation, 
@@ -40,10 +40,7 @@ export default function HomePage() {
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
-  // Initialize session on mount (handles URL token + cookie)
-  useEffect(() => {
-    initSession();
-  }, [initSession]);
+  // Session is now initialized in AppLayout
   
   // Show location prompt if not asked yet (after session is loaded)
   useEffect(() => {
