@@ -155,6 +155,7 @@ export default {
         "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
         "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
         "marquee": "marquee 12s linear infinite",
+        "marquee-slow": "marquee 25s linear infinite",
         "gradient-shift": "gradient-shift 30s linear infinite",
       },
       transitionTimingFunction: {
