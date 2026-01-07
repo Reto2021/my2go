@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
@@ -81,8 +82,21 @@ export function RadioHeader() {
   
   const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [prevBalance, setPrevBalance] = useState<number | null>(null);
+  const [balanceChanged, setBalanceChanged] = useState(false);
+  
+  // Track balance changes for animation
+  useEffect(() => {
+    if (balance && prevBalance !== null && balance.current !== prevBalance) {
+      setBalanceChanged(true);
+      const timer = setTimeout(() => setBalanceChanged(false), 600);
+      return () => clearTimeout(timer);
+    }
+    if (balance) {
+      setPrevBalance(balance.current);
+    }
+  }, [balance, prevBalance]);
 
-  // Fetch now playing on mount and periodically
   useEffect(() => {
     fetchNowPlaying();
     const interval = setInterval(fetchNowPlaying, 30000);
@@ -209,12 +223,35 @@ export function RadioHeader() {
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Taler Balance */}
             {balance && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/20">
-                <Coins className="h-3.5 w-3.5 text-accent" />
-                <span className="text-xs font-bold text-accent tabular-nums">
-                  {balance.current.toLocaleString('de-CH')}
-                </span>
-              </div>
+              <motion.div 
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/20"
+                animate={balanceChanged ? {
+                  scale: [1, 1.15, 1],
+                  boxShadow: [
+                    '0 0 0 0 hsla(44, 98%, 49%, 0)',
+                    '0 0 0 8px hsla(44, 98%, 49%, 0.3)',
+                    '0 0 0 0 hsla(44, 98%, 49%, 0)'
+                  ]
+                } : {}}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <Coins className={cn(
+                  "h-3.5 w-3.5 text-accent transition-transform",
+                  balanceChanged && "animate-spin"
+                )} />
+                <AnimatePresence mode="wait">
+                  <motion.span 
+                    key={balance.current}
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 10, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs font-bold text-accent tabular-nums"
+                  >
+                    {balance.current.toLocaleString('de-CH')}
+                  </motion.span>
+                </AnimatePresence>
+              </motion.div>
             )}
             
             {/* User Avatar */}
