@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useSession, useBrowseMode } from '@/lib/session';
@@ -76,7 +76,7 @@ export function RadioHeader() {
     fetchNowPlaying 
   } = useRadioStore();
   
-  const { session, logout, isLoggingOut } = useSession();
+  const { session, balance, logout, isLoggingOut } = useSession();
   const isBrowseMode = useBrowseMode();
   
   const [showVolume, setShowVolume] = useState(false);
@@ -204,19 +204,31 @@ export function RadioHeader() {
           )}
         </div>
         
-        {/* User Menu - only when logged in */}
+        {/* Taler Balance + User Menu - only when logged in */}
         {!isBrowseMode && session?.displayName && (
-          <div className="relative flex-shrink-0">
-            <button 
-              onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-secondary-foreground/10 transition-colors"
-            >
-              <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
-                <span className="text-sm font-bold text-secondary-foreground">
-                  {session.displayName.charAt(0).toUpperCase()}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Taler Balance */}
+            {balance && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/20">
+                <Coins className="h-3.5 w-3.5 text-accent" />
+                <span className="text-xs font-bold text-accent tabular-nums">
+                  {balance.current.toLocaleString('de-CH')}
                 </span>
               </div>
-            </button>
+            )}
+            
+            {/* User Avatar */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowMenu(!showMenu)}
+                className="flex items-center gap-2 p-1 rounded-full hover:bg-secondary-foreground/10 transition-colors"
+              >
+                <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
+                  <span className="text-sm font-bold text-secondary-foreground">
+                    {session.displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              </button>
             
             {/* Dropdown Menu */}
             {showMenu && (
@@ -251,6 +263,7 @@ export function RadioHeader() {
                 </button>
               </div>
             )}
+            </div>
           </div>
         )}
       </div>
