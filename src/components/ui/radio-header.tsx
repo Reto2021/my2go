@@ -130,7 +130,10 @@ export function RadioHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       {/* Animated meandering gradient background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.6),transparent_50%),radial-gradient(ellipse_at_bottom_right,hsl(var(--accent)/0.3),transparent_50%),hsl(var(--secondary))] bg-[length:200%_200%] animate-gradient-shift backdrop-blur-xl" />
+      <div className="absolute inset-0 backdrop-blur-xl overflow-hidden">
+        <div className="absolute inset-0 bg-secondary" />
+        <div className="absolute -inset-1/2 w-[200%] h-[200%] bg-gradient-to-br from-primary/40 via-transparent to-accent/20 animate-gradient-shift" />
+      </div>
       
       <div className="relative container flex items-center gap-3 py-2">
         {/* Logo - larger, links to home */}
