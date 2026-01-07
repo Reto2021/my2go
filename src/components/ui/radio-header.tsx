@@ -129,8 +129,8 @@ export function RadioHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Background - dark blue */}
-      <div className="absolute inset-0 bg-[hsl(210,50%,15%)] backdrop-blur-xl" />
+      {/* Background - secondary with glass effect */}
+      <div className="absolute inset-0 bg-secondary/95 backdrop-blur-xl" />
       
       <div className="relative container flex items-center gap-3 py-2">
         {/* Logo - larger */}
