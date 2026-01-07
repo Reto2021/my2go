@@ -138,8 +138,11 @@ export default {
           "100%": { transform: "translateX(-50%)" },
         },
         "gradient-shift": {
-          "0%, 100%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
+          "0%": { backgroundPosition: "0% 50%" },
+          "25%": { backgroundPosition: "100% 25%" },
+          "50%": { backgroundPosition: "50% 75%" },
+          "75%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
         },
       },
       animation: {
