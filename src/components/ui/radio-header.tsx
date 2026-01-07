@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Volume1 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
+import { useSession, useBrowseMode } from '@/lib/session';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 
@@ -74,7 +76,11 @@ export function RadioHeader() {
     fetchNowPlaying 
   } = useRadioStore();
   
+  const { session, logout, isLoggingOut } = useSession();
+  const isBrowseMode = useBrowseMode();
+  
   const [showVolume, setShowVolume] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Fetch now playing on mount and periodically
   useEffect(() => {
@@ -100,6 +106,11 @@ export function RadioHeader() {
 
   const handleVolumeChange = (values: number[]) => {
     setVolume(values[0]);
+  };
+  
+  const handleLogout = async () => {
+    await logout();
+    setShowMenu(false);
   };
 
   return (
@@ -192,6 +203,56 @@ export function RadioHeader() {
             </div>
           )}
         </div>
+        
+        {/* User Menu - only when logged in */}
+        {!isBrowseMode && session?.displayName && (
+          <div className="relative flex-shrink-0">
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-secondary-foreground/10 transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-sm font-bold text-secondary-foreground">
+                  {session.displayName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            </button>
+            
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <div className="absolute right-0 top-12 w-48 rounded-2xl bg-card border border-border shadow-strong p-2 z-[200] animate-in">
+                {session.passLink && (
+                  <a 
+                    href={session.passLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                    Wallet öffnen
+                  </a>
+                )}
+                <Link 
+                  to="/settings"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                  onClick={() => setShowMenu(false)}
+                >
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Einstellungen
+                </Link>
+                <button 
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {isLoggingOut ? 'Wird getrennt...' : 'Karte trennen'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

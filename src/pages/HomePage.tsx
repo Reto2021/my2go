@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation as useRouterLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { useLocation } from '@/lib/location';
 import { getRewards, getRewardsNearLocation, getPartners, Reward, Partner } from '@/lib/api';
@@ -14,8 +14,6 @@ import {
   Wallet,
   Music,
   ArrowRight,
-  LogOut,
-  Settings,
   Navigation,
   X
 } from 'lucide-react';
@@ -132,7 +130,6 @@ export default function HomePage() {
         balance={balance!}
         rewards={rewards}
         isLoading={isLoadingContent}
-        passLink={session?.passLink}
         userLocation={userLocation}
         onClearLocation={clearLocation}
         onRequestLocation={requestLocation}
@@ -291,7 +288,6 @@ interface SessionModeHomeProps {
   balance: { current: number; pending: number; lifetime: number };
   rewards: Reward[];
   isLoading: boolean;
-  passLink?: string;
   userLocation: { lat: number; lng: number } | null;
   onClearLocation: () => void;
   onRequestLocation: () => Promise<void>;
@@ -303,86 +299,21 @@ function SessionModeHome({
   balance, 
   rewards, 
   isLoading, 
-  passLink,
   userLocation,
   onClearLocation,
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
-  const { logout, isLoggingOut } = useSession();
-  const [showMenu, setShowMenu] = useState(false);
-  const routerLocation = useRouterLocation();
-  
-  // Close menu on route change
-  useEffect(() => {
-    setShowMenu(false);
-  }, [routerLocation.pathname]);
-  
-  const handleLogout = async () => {
-    await logout();
-    setShowMenu(false);
-  };
-  
   return (
     <div className="min-h-screen pb-28 bg-background">
-      {/* Header */}
-      <header className="container pt-6 pb-4">
-        <div className="flex items-center justify-end animate-in">
-          {displayName && (
-            <div className="relative">
-              <button 
-                onClick={() => setShowMenu(!showMenu)}
-                className="flex items-center gap-2 p-1 rounded-full hover:bg-muted transition-colors"
-              >
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-sm font-bold text-secondary">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </button>
-              
-              {/* Dropdown Menu */}
-              {showMenu && (
-                <div className="absolute right-0 top-12 w-48 rounded-2xl bg-card border border-border shadow-strong p-2 z-[100] animate-in">
-                  {passLink && (
-                    <a 
-                      href={passLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
-                      onClick={() => setShowMenu(false)}
-                    >
-                      <Wallet className="h-4 w-4 text-muted-foreground" />
-                      Wallet öffnen
-                    </a>
-                  )}
-                  <Link 
-                    to="/settings"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <Settings className="h-4 w-4 text-muted-foreground" />
-                    Einstellungen
-                  </Link>
-                  <button 
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {isLoggingOut ? 'Wird getrennt...' : 'Karte trennen'}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-        {displayName && (
-          <p className="text-muted-foreground mt-4 animate-in-delayed">
+      {/* Header - greeting only, menu is in RadioHeader */}
+      {displayName && (
+        <header className="container pt-6 pb-4">
+          <p className="text-muted-foreground animate-in">
             Hallo, <span className="font-semibold text-foreground">{displayName}</span> 👋
           </p>
-        )}
-      </header>
+        </header>
+      )}
       
       {/* Balance Card */}
       <section className="container py-4">
