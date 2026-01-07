@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
+import { useCastStore } from '@/lib/cast-store';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
@@ -79,13 +80,30 @@ export function RadioHeader() {
     fetchNowPlaying 
   } = useRadioStore();
   
+  const {
+    isCastAvailable,
+    isCasting,
+    isAirPlayAvailable,
+    initializeCast,
+    startCasting,
+    stopCasting,
+    checkAirPlayAvailability,
+  } = useCastStore();
+  
   const { session, balance, logout, isLoggingOut } = useSession();
   const isBrowseMode = useBrowseMode();
   
   const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showCastMenu, setShowCastMenu] = useState(false);
   const [prevBalance, setPrevBalance] = useState<number | null>(null);
   const [balanceChanged, setBalanceChanged] = useState(false);
+  
+  // Initialize Cast SDK
+  useEffect(() => {
+    initializeCast();
+    checkAirPlayAvailability();
+  }, [initializeCast, checkAirPlayAvailability]);
   
   // Track balance changes for animation
   useEffect(() => {
@@ -199,9 +217,64 @@ export function RadioHeader() {
             )}
           </div>
           
-          {/* Volume control - only when playing */}
+          {/* Volume and Cast controls - only when playing */}
           {isPlaying && (
             <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Cast button */}
+              {(isCastAvailable || isAirPlayAvailable) && (
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      if (isCasting) {
+                        stopCasting();
+                      } else if (isCastAvailable && !isAirPlayAvailable) {
+                        startCasting();
+                      } else {
+                        setShowCastMenu(!showCastMenu);
+                      }
+                    }}
+                    className={cn(
+                      "h-8 w-8 rounded-full flex items-center justify-center transition-colors",
+                      isCasting 
+                        ? "bg-accent text-accent-foreground" 
+                        : "bg-secondary-foreground/10 hover:bg-secondary-foreground/20"
+                    )}
+                    aria-label="Stream übertragen"
+                  >
+                    <Cast className={cn("h-4 w-4", isCasting ? "text-accent-foreground" : "text-secondary-foreground/70")} />
+                  </button>
+                  
+                  {/* Cast Menu */}
+                  {showCastMenu && (
+                    <div className="absolute right-0 top-10 w-48 rounded-2xl bg-white/95 dark:bg-secondary/95 backdrop-blur-xl border border-white/20 shadow-xl p-2 z-[200] animate-scale-in">
+                      {isCastAvailable && (
+                        <button
+                          onClick={() => {
+                            startCasting();
+                            setShowCastMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
+                        >
+                          <Cast className="h-4 w-4 text-muted-foreground" />
+                          Chromecast
+                        </button>
+                      )}
+                      {isAirPlayAvailable && (
+                        <div className="px-3 py-2.5 rounded-xl text-sm">
+                          <div className="flex items-center gap-3 font-medium text-foreground">
+                            <Airplay className="h-4 w-4 text-muted-foreground" />
+                            AirPlay
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 ml-7">
+                            Öffne das Kontrollzentrum und wähle ein AirPlay-Gerät
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {/* Volume slider - expandable */}
               <div className={cn(
                 "overflow-hidden transition-all duration-300 ease-out",
