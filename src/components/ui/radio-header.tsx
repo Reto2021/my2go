@@ -21,35 +21,37 @@ function Equalizer({ className }: { className?: string }) {
 
 function Marquee({ children, className }: { children: React.ReactNode; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const [shouldScroll, setShouldScroll] = useState(false);
 
   useEffect(() => {
     const checkOverflow = () => {
       if (containerRef.current && textRef.current) {
-        setShouldScroll(textRef.current.scrollWidth > containerRef.current.clientWidth);
+        const isOverflowing = textRef.current.scrollWidth > containerRef.current.clientWidth;
+        setShouldScroll(isOverflowing);
       }
     };
     
+    // Check after a small delay to ensure proper rendering
+    const timer = setTimeout(checkOverflow, 100);
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+      clearTimeout(timer);
+    };
   }, [children]);
 
-  if (!shouldScroll) {
-    return (
-      <div ref={containerRef} className={cn("overflow-hidden", className)}>
-        <span ref={textRef} className="whitespace-nowrap">{children}</span>
-      </div>
-    );
-  }
-
   return (
-    <div ref={containerRef} className={cn("overflow-hidden group", className)}>
-      <div className="animate-marquee group-hover:[animation-play-state:paused] inline-flex">
-        <span ref={textRef} className="whitespace-nowrap pr-8">{children}</span>
-        <span className="whitespace-nowrap pr-8">{children}</span>
-      </div>
+    <div ref={containerRef} className={cn("overflow-hidden", className)}>
+      {shouldScroll ? (
+        <div className="animate-marquee inline-flex">
+          <div ref={textRef} className="whitespace-nowrap pr-12">{children}</div>
+          <div className="whitespace-nowrap pr-12">{children}</div>
+        </div>
+      ) : (
+        <div ref={textRef} className="whitespace-nowrap truncate">{children}</div>
+      )}
     </div>
   );
 }
