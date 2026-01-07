@@ -35,6 +35,7 @@ interface SessionState {
   
   // Actions
   initSession: () => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   refreshBalance: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -88,6 +89,36 @@ export const useSession = create<SessionState>((set, get) => ({
         session: { hasSession: false },
         balance: null 
       });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  /**
+   * Login with token without page reload
+   * Used by "Karte öffnen" buttons to preserve audio stream
+   */
+  loginWithToken: async (token: string) => {
+    set({ isLoading: true });
+    
+    try {
+      // Exchange token for session (Gateway sets httpOnly cookie)
+      await exchangeTokenForSession(token);
+      
+      // Get current session (Gateway reads cookie)
+      const sessionData = await getCurrentSession();
+      
+      set({ 
+        session: sessionData,
+        balance: sessionData.hasSession ? {
+          current: sessionData.balance || 0,
+          pending: sessionData.pendingBalance || 0,
+          lifetime: sessionData.lifetimeBalance || 0,
+        } : null
+      });
+      
+    } catch (error) {
+      console.error('Login with token failed:', error);
     } finally {
       set({ isLoading: false });
     }

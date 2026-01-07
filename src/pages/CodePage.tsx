@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, Music, Sparkles, Wallet, Coins, ArrowRight } fro
 import { cn } from '@/lib/utils';
 
 export default function CodePage() {
-  const { session, balance, refreshBalance } = useSession();
+  const { session, balance, refreshBalance, loginWithToken } = useSession();
   const isBrowseMode = useBrowseMode();
   
   const [code, setCode] = useState('');
@@ -117,7 +117,7 @@ export default function CodePage() {
             </p>
             <button 
               className="btn-primary"
-              onClick={() => window.location.href = '/?token=demo'}
+              onClick={() => loginWithToken('demo')}
             >
               <Wallet className="h-5 w-5" />
               Karte öffnen

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { getRewards, getRewardsNearLocation, Reward } from '@/lib/api';
-import { useBrowseMode } from '@/lib/session';
+import { useBrowseMode, useSession } from '@/lib/session';
 import { useLocation } from '@/lib/location';
 import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -39,6 +39,7 @@ export default function RewardsPage() {
   const [maxCost, setMaxCost] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const isBrowseMode = useBrowseMode();
+  const { loginWithToken } = useSession();
   
   const { 
     userLocation, 
@@ -262,7 +263,7 @@ export default function RewardsPage() {
             </div>
             <button 
               className="btn-primary py-2 px-4 text-sm flex-shrink-0"
-              onClick={() => window.location.href = '/?token=demo'}
+              onClick={() => loginWithToken('demo')}
             >
               <Wallet className="h-4 w-4" />
               Öffnen

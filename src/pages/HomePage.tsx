@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function HomePage() {
-  const { session, balance, isLoading } = useSession();
+  const { session, balance, isLoading, loginWithToken } = useSession();
   const isBrowseMode = useBrowseMode();
   const { 
     userLocation, 
@@ -93,7 +93,7 @@ export default function HomePage() {
   }
   
   if (isBrowseMode) {
-    return <BrowseModeHome rewards={rewards} partners={partners} isLoading={isLoadingContent} />;
+    return <BrowseModeHome rewards={rewards} partners={partners} isLoading={isLoadingContent} onLogin={() => loginWithToken('demo')} />;
   }
   
   return (
@@ -147,9 +147,10 @@ interface BrowseModeHomeProps {
   rewards: Reward[];
   partners: Partner[];
   isLoading: boolean;
+  onLogin: () => void;
 }
 
-function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
+function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   return (
     <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section with Skyline */}
@@ -186,7 +187,7 @@ function BrowseModeHome({ rewards, partners, isLoading }: BrowseModeHomeProps) {
             </p>
             
             <button 
-              onClick={() => window.location.href = '?token=demo'}
+              onClick={onLogin}
               className="btn-primary group"
             >
               <Wallet className="h-5 w-5" />
