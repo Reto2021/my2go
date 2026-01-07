@@ -198,7 +198,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-3 animate-in-delayed">
           <FeatureChip icon={Music} label="Radio-Taler sammeln" color="accent" to="/code" />
-          <FeatureChip icon={Gift} label="Gutscheine holen" color="primary" to="/rewards" />
+          <FeatureChip icon={Gift} label="Gutscheine einlösen" color="primary" to="/rewards" />
           <FeatureChip icon={MapPin} label="Partner finden" color="secondary" to="/partner" />
         </div>
       </section>
