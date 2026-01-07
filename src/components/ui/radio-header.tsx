@@ -269,7 +269,7 @@ export function RadioHeader() {
             
             {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 top-12 w-48 rounded-2xl bg-card border border-border shadow-strong p-2 z-[200] animate-in">
+              <div className="absolute right-0 top-12 w-48 rounded-2xl bg-white/95 dark:bg-secondary/95 backdrop-blur-xl border border-white/20 shadow-xl p-2 z-[200] animate-in">
                 {session.passLink && (
                   <a 
                     href={session.passLink}
