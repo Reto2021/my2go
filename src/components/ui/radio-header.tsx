@@ -129,10 +129,19 @@ export function RadioHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      {/* Animated meandering gradient background */}
-      <div className="absolute inset-0 backdrop-blur-xl overflow-hidden">
-        <div className="absolute inset-0 bg-secondary" />
-        <div className="absolute -inset-full w-[300%] h-[300%] bg-[conic-gradient(from_0deg,hsl(var(--primary))_0%,hsl(var(--accent))_25%,hsl(160_84%_39%)_50%,hsl(var(--primary))_75%,hsl(var(--secondary))_100%)] opacity-40 animate-gradient-shift blur-2xl" />
+      {/* Animated gradient background */}
+      <div className="absolute inset-0 bg-secondary overflow-hidden">
+        <div 
+          className="absolute inset-0 opacity-50 animate-gradient-shift"
+          style={{
+            background: 'conic-gradient(from 0deg, hsl(200 50% 66%), hsl(44 98% 49%), hsl(160 84% 39%), hsl(200 50% 66%), hsl(197 96% 18%))',
+            width: '300%',
+            height: '300%',
+            top: '-100%',
+            left: '-100%',
+            filter: 'blur(60px)',
+          }}
+        />
       </div>
       
       <div className="relative container flex items-center gap-3 py-2">
