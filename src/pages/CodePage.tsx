@@ -91,7 +91,7 @@ export default function CodePage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
-          <h1 className="text-display-sm">Radio 2Go Taler-Codewort einlösen</h1>
+          <h1 className="text-display-sm">Radio 2Go Taler-Code einlösen</h1>
         </div>
       </header>
       
