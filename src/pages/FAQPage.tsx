@@ -15,7 +15,9 @@ import {
   Send, 
   CheckCircle2,
   MessageSquare,
-  ChevronDown
+  ChevronDown,
+  Phone,
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -343,6 +345,31 @@ export default function FAQPage() {
               </button>
             </div>
           )}
+          
+          {/* Studio Phone & WhatsApp */}
+          <div className="card-base p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/15 shrink-0">
+                <Phone className="h-5 w-5 text-success" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm">Studio & WhatsApp</h3>
+                <p className="text-sm text-muted-foreground">
+                  <a href="tel:+41765864070" className="text-secondary font-medium hover:underline">
+                    076 586 40 70
+                  </a>
+                </p>
+              </div>
+              <a 
+                href="https://wa.me/41765864070" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 transition-colors"
+              >
+                <MessageCircle className="h-5 w-5 text-[#25D366]" />
+              </a>
+            </div>
+          </div>
           
           {/* Contact Email */}
           <div className="card-base p-4">
