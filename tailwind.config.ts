@@ -137,6 +137,10 @@ export default {
           "0%": { transform: "translateX(0%)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -151,6 +155,7 @@ export default {
         "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
         "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
         "marquee": "marquee 12s linear infinite",
+        "gradient-shift": "gradient-shift 8s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
