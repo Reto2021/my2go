@@ -133,12 +133,14 @@ export function RadioHeader() {
       <div className="absolute inset-0 bg-secondary/95 backdrop-blur-xl" />
       
       <div className="relative container flex items-center gap-3 py-2">
-        {/* Logo - larger */}
-        <img 
-          src={logo} 
-          alt="Radio 2Go" 
-          className="h-14 flex-shrink-0"
-        />
+        {/* Logo - larger, links to home */}
+        <Link to="/">
+          <img 
+            src={logo} 
+            alt="Radio 2Go" 
+            className="h-14 flex-shrink-0 hover:opacity-80 transition-opacity"
+          />
+        </Link>
         
         {/* Player area */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
