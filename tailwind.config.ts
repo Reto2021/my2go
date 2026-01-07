@@ -139,8 +139,6 @@ export default {
         },
         "gradient-shift": {
           "0%": { transform: "translate(-30%, -30%) rotate(0deg)" },
-          "33%": { transform: "translate(-20%, -40%) rotate(120deg)" },
-          "66%": { transform: "translate(-40%, -20%) rotate(240deg)" },
           "100%": { transform: "translate(-30%, -30%) rotate(360deg)" },
         },
       },
@@ -157,7 +155,7 @@ export default {
         "equalizer-3": "equalizer-3 0.7s ease-in-out infinite",
         "equalizer-4": "equalizer-4 0.5s ease-in-out infinite",
         "marquee": "marquee 12s linear infinite",
-        "gradient-shift": "gradient-shift 20s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 30s linear infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
