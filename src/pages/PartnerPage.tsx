@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { getPartners, getRegions, Partner, Region } from '@/lib/api';
 import { useLocation, calculateDistance } from '@/lib/location';
 import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
@@ -266,7 +267,7 @@ interface PartnerCardWithDistanceProps {
 
 function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceProps) {
   return (
-    <div className="list-item group cursor-pointer" onClick={() => window.location.href = `/partner/${partner.id}`}>
+    <Link to={`/partner/${partner.id}`} className="list-item group">
       {/* Logo */}
       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
         <Store className="h-7 w-7 text-secondary" />
@@ -296,6 +297,6 @@ function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceP
       
       {/* Arrow */}
       <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-    </div>
+    </Link>
   );
 }
