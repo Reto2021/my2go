@@ -13,7 +13,7 @@ export function PartnerCard({ partner, className, showArrow = true }: PartnerCar
   return (
     <Link
       to={`/partner/${partner.id}`}
-      className={cn('list-item group', className)}
+      className={cn('card-base p-4 flex items-center gap-4 group', className)}
     >
       {/* Logo */}
       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
