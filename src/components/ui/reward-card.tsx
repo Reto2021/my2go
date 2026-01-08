@@ -38,7 +38,7 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
   return (
     <Link
       to={`/rewards/${reward.id}`}
-      className={cn('list-item group', className)}
+      className={cn('card-base p-4 flex items-center gap-4 group', className)}
     >
       {/* Icon */}
       <div className={cn(
