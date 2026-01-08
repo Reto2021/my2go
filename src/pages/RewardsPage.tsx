@@ -309,15 +309,16 @@ export default function RewardsPage() {
             } : undefined}
           />
         ) : (
-          <div className="space-y-3 stagger-children">
+          <ul className="space-y-3 stagger-children list-none p-0 m-0">
             {filteredAndSortedRewards.map(reward => (
-              <RewardCard 
-                key={reward.id} 
-                reward={reward} 
-                distance={userLocation ? reward.distanceKm : undefined}
-              />
+              <li key={reward.id}>
+                <RewardCard 
+                  reward={reward} 
+                  distance={userLocation ? reward.distanceKm : undefined}
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </div>
