@@ -17,8 +17,11 @@ import {
   Calendar,
   MapPin,
   Phone,
-  ExternalLink
+  ExternalLink,
+  Share2,
+  MessageCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -206,6 +209,49 @@ export default function RedemptionDetailPage() {
   ].filter(Boolean).join(' ');
 
   const qrValue = redemption.qr_payload || redemption.redemption_code;
+
+  // Share functionality
+  const getShareText = () => {
+    const partnerName = redemption.partner?.name || 'einem Partner';
+    const rewardTitle = redemption.reward?.title || 'Gutschein';
+    
+    if (redemption.status === 'used') {
+      return `🎉 Ich habe gerade "${rewardTitle}" bei ${partnerName} eingelöst! Mit Radio 2Go Talern spare ich richtig Geld. 💰`;
+    }
+    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Sammle auch du Radio 2Go Taler und hol dir tolle Gutscheine! 🎧`;
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(getShareText() + `\n\nJetzt anmelden: ${window.location.origin}/auth`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  };
+
+  const handleShareNative = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Radio 2Go Taler',
+          text: getShareText(),
+          url: `${window.location.origin}/auth`,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          handleCopyLink();
+        }
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareText() + `\n\n${window.location.origin}/auth`);
+      toast.success('Text kopiert!');
+    } catch {
+      toast.error('Kopieren fehlgeschlagen');
+    }
+  };
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -424,6 +470,40 @@ export default function RedemptionDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Share Section */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <Share2 className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-semibold">Teilen & Freunde einladen</h3>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4">
+              Teile deine Ersparnis mit Freunden und lade sie zu Radio 2Go ein!
+            </p>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 bg-[#25D366]/10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/20"
+                onClick={handleShareWhatsApp}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                WhatsApp
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleShareNative}
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Teilen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Back Button */}
         <Button
