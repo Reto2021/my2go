@@ -209,7 +209,7 @@ export default function MyRedemptionsPage() {
                   'card-interactive overflow-hidden',
                   isPending && 'border-accent/30'
                 )}
-                onClick={() => navigate(`/rewards/${redemption.reward?.id}`)}
+                onClick={() => navigate(`/my-redemptions/${redemption.id}`)}
               >
                 <CardContent className="p-4">
                   <div className="flex gap-4">
