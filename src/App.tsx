@@ -18,6 +18,7 @@ import PartnerDetailPage from "./pages/PartnerDetailPage";
 import FAQPage from "./pages/FAQPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
+import MyRedemptionsPage from "./pages/MyRedemptionsPage";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPartners from "./pages/admin/AdminPartners";
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="/partner/:id" element={<PartnerDetailPage />} />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
             </Route>
             
             {/* Catch-all */}
