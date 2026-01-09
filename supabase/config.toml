@@ -1,1 +1,13 @@
 project_id = "xrgaddtlrbhjmkdwmipp"
+
+[functions.get-mapbox-token]
+verify_jwt = false
+
+[functions.push-subscribe]
+verify_jwt = false
+
+[functions.send-expiry-notifications]
+verify_jwt = false
+
+[functions.get-vapid-public-key]
+verify_jwt = false

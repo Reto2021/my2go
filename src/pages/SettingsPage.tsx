@@ -1,8 +1,17 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  isPushSupported, 
+  getPushSubscriptionStatus, 
+  subscribeToPush, 
+  unsubscribeFromPush,
+  getNotificationPermission 
+} from '@/lib/push-notifications';
+import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -13,6 +22,65 @@ export default function SettingsPage() {
     setSoundEnabled, 
     setVibrationEnabled 
   } = useSettings();
+  
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  
+  useEffect(() => {
+    const checkPushStatus = async () => {
+      const supported = isPushSupported();
+      setPushSupported(supported);
+      
+      if (supported) {
+        const permission = await getNotificationPermission();
+        setPermissionDenied(permission === 'denied');
+        
+        const isSubscribed = await getPushSubscriptionStatus();
+        setPushEnabled(isSubscribed);
+      }
+    };
+    
+    checkPushStatus();
+  }, []);
+  
+  const handlePushToggle = async (enabled: boolean) => {
+    if (!user) {
+      toast.error('Bitte melde dich an, um Benachrichtigungen zu aktivieren');
+      return;
+    }
+    
+    setPushLoading(true);
+    try {
+      if (enabled) {
+        const success = await subscribeToPush();
+        if (success) {
+          setPushEnabled(true);
+          toast.success('Push-Benachrichtigungen aktiviert');
+        } else {
+          const permission = await getNotificationPermission();
+          if (permission === 'denied') {
+            setPermissionDenied(true);
+            toast.error('Benachrichtigungen wurden im Browser blockiert. Bitte ändere die Einstellungen in deinem Browser.');
+          } else {
+            toast.error('Konnte Benachrichtigungen nicht aktivieren');
+          }
+        }
+      } else {
+        const success = await unsubscribeFromPush();
+        if (success) {
+          setPushEnabled(false);
+          toast.success('Push-Benachrichtigungen deaktiviert');
+        }
+      }
+    } catch (error) {
+      console.error('Push toggle error:', error);
+      toast.error('Fehler bei der Einstellung');
+    } finally {
+      setPushLoading(false);
+    }
+  };
   
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -57,6 +125,48 @@ export default function SettingsPage() {
             </div>
           </section>
         )}
+        
+        {/* Notifications Section */}
+        {pushSupported && user && (
+          <section className="animate-in">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+              <BellRing className="h-4 w-4" />
+              Benachrichtigungen
+            </h2>
+            
+            <div className="card-base divide-y divide-border">
+              {/* Push Notifications Toggle */}
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+                    <BellRing className="h-5 w-5 text-secondary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Push-Benachrichtigungen</p>
+                    <p className="text-sm text-muted-foreground">
+                      Erhalte eine Erinnerung, wenn Gutscheine bald ablaufen
+                    </p>
+                    {permissionDenied && (
+                      <p className="text-xs text-destructive mt-1">
+                        Im Browser blockiert - bitte in den Browser-Einstellungen erlauben
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {pushLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                ) : (
+                  <Switch 
+                    checked={pushEnabled} 
+                    onCheckedChange={handlePushToggle}
+                    disabled={permissionDenied}
+                  />
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+        
         {/* Feedback Section */}
         <section className="animate-in">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
