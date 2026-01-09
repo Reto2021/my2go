@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getPartners, getRegions, Partner, Region } from '@/lib/api';
+import { getPartners, Partner, Region } from '@/lib/supabase-helpers';
 import { useLocation, calculateDistance } from '@/lib/location';
 import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
 import { MapPin, Search, Navigation, X, Store, ChevronRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function PartnerPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -31,12 +32,17 @@ export default function PartnerPage() {
     setIsLoading(true);
     setError(false);
     try {
-      const [partnersData, regionsData] = await Promise.all([
-        getPartners(),
-        getRegions(),
-      ]);
+      // Load partners from Supabase
+      const partnersData = await getPartners();
+      
+      // Load regions from Supabase
+      const { data: regionsData } = await supabase
+        .from('regions')
+        .select('*')
+        .order('name');
+      
       setPartners(partnersData);
-      setRegions(regionsData);
+      setRegions((regionsData || []) as Region[]);
     } catch (err) {
       console.error('Failed to load data:', err);
       setError(true);
@@ -72,7 +78,7 @@ export default function PartnerPage() {
       const query = searchQuery.toLowerCase();
       result = result.filter(p => 
         p.name.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
+        p.category?.toLowerCase().includes(query) ||
         p.city?.toLowerCase().includes(query)
       );
     }
@@ -89,8 +95,8 @@ export default function PartnerPage() {
     if (userLocation) {
       result = result.map(p => ({
         ...p,
-        distance: calculateDistance(userLocation.lat, userLocation.lng, p.lat, p.lng),
-      })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+        distance: p.lat && p.lng ? calculateDistance(userLocation.lat, userLocation.lng, p.lat, p.lng) : undefined,
+      })).sort((a, b) => ((a as any).distance || 9999) - ((b as any).distance || 9999));
     }
     
     return result;
@@ -267,10 +273,14 @@ interface PartnerCardWithDistanceProps {
 
 function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceProps) {
   return (
-    <Link to={`/partner/${partner.id}`} className="list-item group">
+    <Link to={`/partner/${partner.slug}`} className="list-item group">
       {/* Logo */}
       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
-        <Store className="h-7 w-7 text-secondary" />
+        {partner.logo_url ? (
+          <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover" />
+        ) : (
+          <Store className="h-7 w-7 text-secondary" />
+        )}
       </div>
       
       {/* Content */}
@@ -279,7 +289,7 @@ function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceP
           {partner.name}
         </h3>
         <p className="text-sm text-muted-foreground line-clamp-1">
-          {partner.category}
+          {partner.category || 'Partner'}
         </p>
         
         {/* Distance */}

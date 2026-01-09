@@ -1,19 +1,22 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getRewards, getRewardsNearLocation, Reward } from '@/lib/api';
-import { useBrowseMode, useSession } from '@/lib/session';
-import { useLocation } from '@/lib/location';
+import { useNavigate } from 'react-router-dom';
+import { getRewards, Reward } from '@/lib/supabase-helpers';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLocation, calculateDistance } from '@/lib/location';
 import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
 import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucide-react';
 
+// Map reward_type to category labels
 const categories = [
   { id: 'all', label: 'Alle' },
-  { id: 'discount', label: 'Rabatte' },
-  { id: 'product', label: 'Produkte' },
+  { id: 'fixed_discount', label: 'Rabatte' },
+  { id: 'percent_discount', label: '% Rabatte' },
+  { id: 'free_item', label: 'Produkte' },
   { id: 'experience', label: 'Erlebnisse' },
-  { id: 'exclusive', label: 'Exklusiv' },
+  { id: 'topup_bonus', label: 'Bonus' },
 ];
 
 const sortOptions = [
@@ -38,8 +41,10 @@ export default function RewardsPage() {
   const [sortBy, setSortBy] = useState('popular');
   const [maxCost, setMaxCost] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
-  const isBrowseMode = useBrowseMode();
-  const { loginWithToken } = useSession();
+  
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const isAuthenticated = !!user;
   
   const { 
     userLocation, 
@@ -52,13 +57,27 @@ export default function RewardsPage() {
     setIsLoading(true);
     setError(false);
     try {
-      let data: Reward[];
+      const data = await getRewards();
+      
+      // Add distance if user location is available
+      let processedData = data;
       if (userLocation) {
-        data = await getRewardsNearLocation(userLocation.lat, userLocation.lng, 25);
-      } else {
-        data = await getRewards(activeCategory);
+        processedData = data.map(reward => {
+          const partner = reward.partner;
+          if (partner?.lat && partner?.lng) {
+            const distance = calculateDistance(
+              userLocation.lat,
+              userLocation.lng,
+              partner.lat,
+              partner.lng
+            );
+            return { ...reward, distanceKm: distance };
+          }
+          return { ...reward, distanceKm: 9999 };
+        }).sort((a, b) => (a.distanceKm || 9999) - (b.distanceKm || 9999));
       }
-      setRewards(data);
+      
+      setRewards(processedData);
     } catch (err) {
       console.error('Failed to load rewards:', err);
       setError(true);
@@ -69,37 +88,40 @@ export default function RewardsPage() {
   
   useEffect(() => {
     loadRewards();
-  }, [activeCategory, userLocation]);
+  }, [userLocation]);
   
-  // Client-side filtering and sorting (API would do this in production)
+  // Client-side filtering and sorting
   const filteredAndSortedRewards = useMemo(() => {
     let result = [...rewards];
     
-    // Filter by category (only if not using location - API handles it otherwise)
-    if (!userLocation && activeCategory !== 'all') {
-      result = result.filter(r => r.category === activeCategory);
+    // Filter by category
+    if (activeCategory !== 'all') {
+      result = result.filter(r => r.reward_type === activeCategory);
     }
     
     // Filter by max cost
     if (maxCost > 0) {
-      result = result.filter(r => r.cost <= maxCost);
+      result = result.filter(r => r.taler_cost <= maxCost);
     }
     
     // Sort
     switch (sortBy) {
       case 'cheapest':
-        result.sort((a, b) => a.cost - b.cost);
+        result.sort((a, b) => a.taler_cost - b.taler_cost);
         break;
       case 'expensive':
-        result.sort((a, b) => b.cost - a.cost);
+        result.sort((a, b) => b.taler_cost - a.taler_cost);
         break;
       case 'newest':
-        // Mock: reverse order for newest
+        // Sort by created_at if available, otherwise reverse
         result.reverse();
         break;
       case 'popular':
       default:
-        // Keep original order for popular
+        // Keep original order for popular (or sort by distance if available)
+        if (userLocation) {
+          result.sort((a, b) => ((a as any).distanceKm || 9999) - ((b as any).distanceKm || 9999));
+        }
         break;
     }
     
@@ -119,6 +141,10 @@ export default function RewardsPage() {
     } else {
       requestLocation();
     }
+  };
+  
+  const handleLogin = () => {
+    navigate('/auth');
   };
   
   return (
@@ -247,7 +273,7 @@ export default function RewardsPage() {
       </header>
       
       {/* Browse Mode Banner */}
-      {isBrowseMode && (
+      {!isAuthenticated && (
         <div className="container pt-4">
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
@@ -255,18 +281,18 @@ export default function RewardsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                Zum Einlösen Karte öffnen
+                Zum Einlösen anmelden
               </p>
               <p className="text-xs text-muted-foreground">
-                Öffne deine 2Go Taler Karte, um Gutscheine einzulösen.
+                Melde dich an, um Gutscheine einzulösen.
               </p>
             </div>
             <button 
               className="btn-primary py-2 px-4 text-sm flex-shrink-0"
-              onClick={() => loginWithToken('demo')}
+              onClick={handleLogin}
             >
               <Wallet className="h-4 w-4" />
-              Öffnen
+              Anmelden
             </button>
           </div>
         </div>
@@ -314,7 +340,7 @@ export default function RewardsPage() {
               <li key={reward.id}>
                 <RewardCard 
                   reward={reward} 
-                  distance={userLocation ? reward.distanceKm : undefined}
+                  distance={userLocation ? (reward as any).distanceKm : undefined}
                 />
               </li>
             ))}

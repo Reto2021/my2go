@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getPartnerById, getPartnerRewards, Partner, Reward } from '@/lib/api';
+import { getPartnerBySlug, getPartnerById, getRewardsByPartner, Partner, Reward } from '@/lib/supabase-helpers';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
@@ -32,12 +32,19 @@ export default function PartnerDetailPage() {
     setIsLoading(true);
     setError(false);
     try {
-      const [partnerData, rewardsData] = await Promise.all([
-        getPartnerById(id),
-        getPartnerRewards(id),
-      ]);
-      setPartner(partnerData);
-      setRewards(rewardsData);
+      // Try to load by slug first, then by id
+      let partnerData = await getPartnerBySlug(id);
+      if (!partnerData) {
+        partnerData = await getPartnerById(id);
+      }
+      
+      if (partnerData) {
+        const rewardsData = await getRewardsByPartner(partnerData.id);
+        setPartner(partnerData);
+        setRewards(rewardsData);
+      } else {
+        setError(true);
+      }
     } catch (err) {
       console.error('Failed to load partner:', err);
       setError(true);
@@ -50,10 +57,20 @@ export default function PartnerDetailPage() {
     loadPartner();
   }, [id]);
   
+  // Build address string from components
+  const getAddress = () => {
+    if (!partner) return '';
+    const parts = [
+      [partner.address_street, partner.address_number].filter(Boolean).join(' '),
+      [partner.postal_code, partner.city].filter(Boolean).join(' '),
+    ].filter(Boolean);
+    return parts.join(', ');
+  };
+  
   // Open in maps app
   const openInMaps = () => {
     if (!partner) return;
-    const query = encodeURIComponent(partner.address);
+    const query = encodeURIComponent(getAddress());
     // Try Google Maps first, falls back to Apple Maps on iOS
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
   };
@@ -80,6 +97,8 @@ export default function PartnerDetailPage() {
     );
   }
   
+  const address = getAddress();
+  
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
@@ -96,13 +115,20 @@ export default function PartnerDetailPage() {
       <div className="container py-6 animate-in">
         {/* Partner Header */}
         <div className="text-center mb-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/20 mx-auto mb-4">
-            <Store className="h-10 w-10 text-secondary" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/20 mx-auto mb-4 overflow-hidden">
+            {partner.logo_url ? (
+              <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover" />
+            ) : (
+              <Store className="h-10 w-10 text-secondary" />
+            )}
           </div>
           <h2 className="text-xl font-bold mb-2">{partner.name}</h2>
           <span className="badge-primary">
-            {partner.category}
+            {partner.category || 'Partner'}
           </span>
+          {partner.is_featured && (
+            <span className="ml-2 badge-accent">Featured</span>
+          )}
         </div>
         
         {/* Quick Actions */}
@@ -135,25 +161,27 @@ export default function PartnerDetailPage() {
         </div>
         
         {/* Address */}
-        <div className="card-base p-4 mb-4">
-          <button 
-            onClick={openInMaps}
-            className="flex items-start gap-4 w-full text-left group"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
-              <MapPin className="h-6 w-6 text-secondary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground mb-1">Adresse</p>
-              <p className="font-semibold group-hover:text-secondary transition-colors">
-                {partner.address}
-              </p>
-            </div>
-            <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-          </button>
-        </div>
+        {address && (
+          <div className="card-base p-4 mb-4">
+            <button 
+              onClick={openInMaps}
+              className="flex items-start gap-4 w-full text-left group"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
+                <MapPin className="h-6 w-6 text-secondary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-muted-foreground mb-1">Adresse</p>
+                <p className="font-semibold group-hover:text-secondary transition-colors">
+                  {address}
+                </p>
+              </div>
+              <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+            </button>
+          </div>
+        )}
         
-        {/* Opening Hours (if available in description) */}
+        {/* Description */}
         {partner.description && (
           <div className="card-base p-4 mb-4">
             <div className="flex items-start gap-4">
@@ -161,7 +189,7 @@ export default function PartnerDetailPage() {
                 <Clock className="h-6 w-6 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Öffnungszeiten</p>
+                <p className="text-sm text-muted-foreground mb-1">Beschreibung</p>
                 <p className="font-medium">{partner.description}</p>
               </div>
             </div>
