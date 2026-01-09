@@ -6,7 +6,7 @@ import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { cn } from '@/lib/utils';
-import { MapPin, Search, Navigation, X, Store, ChevronRight } from 'lucide-react';
+import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PartnerPage() {
@@ -18,6 +18,7 @@ export default function PartnerPage() {
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // Location from global store
   const { 
@@ -55,6 +56,24 @@ export default function PartnerPage() {
     loadData();
   }, []);
   
+  // Extract unique categories from partners
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    partners.forEach(p => {
+      if (p.category) cats.add(p.category);
+    });
+    return Array.from(cats).sort();
+  }, [partners]);
+  
+  // Extract unique cities from partners
+  const cities = useMemo(() => {
+    const citySet = new Set<string>();
+    partners.forEach(p => {
+      if (p.city) citySet.add(p.city);
+    });
+    return Array.from(citySet).sort();
+  }, [partners]);
+  
   const handleLocationToggle = () => {
     if (userLocation) {
       clearLocation();
@@ -64,10 +83,23 @@ export default function PartnerPage() {
     }
   };
   
-  const handleRegionSelect = (regionId: string) => {
-    setSelectedRegion(selectedRegion === regionId ? null : regionId);
+  const handleRegionSelect = (regionName: string) => {
+    setSelectedRegion(selectedRegion === regionName ? null : regionName);
     clearLocation();
   };
+  
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(selectedCategory === category ? null : category);
+  };
+  
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedRegion(null);
+    setSelectedCategory(null);
+    clearLocation();
+  };
+  
+  const hasActiveFilters = searchQuery || selectedRegion || selectedCategory || userLocation;
   
   // Filter and sort partners
   const filteredPartners = useMemo(() => {
@@ -79,16 +111,19 @@ export default function PartnerPage() {
       result = result.filter(p => 
         p.name.toLowerCase().includes(query) ||
         p.category?.toLowerCase().includes(query) ||
-        p.city?.toLowerCase().includes(query)
+        p.city?.toLowerCase().includes(query) ||
+        p.short_description?.toLowerCase().includes(query)
       );
     }
     
-    // Region filter (by city name)
+    // Region/City filter
     if (selectedRegion) {
-      const region = regions.find(r => r.id === selectedRegion);
-      if (region) {
-        result = result.filter(p => p.city === region.name);
-      }
+      result = result.filter(p => p.city === selectedRegion);
+    }
+    
+    // Category filter
+    if (selectedCategory) {
+      result = result.filter(p => p.category === selectedCategory);
     }
     
     // Add distance and sort if location available
@@ -100,11 +135,11 @@ export default function PartnerPage() {
     }
     
     return result;
-  }, [partners, regions, searchQuery, selectedRegion, userLocation]);
+  }, [partners, searchQuery, selectedRegion, selectedCategory, userLocation]);
   
-  // Group partners by city (when no location)
+  // Group partners by city (when no location and no category filter)
   const groupedPartners = useMemo(() => {
-    if (userLocation || searchQuery.trim()) return null;
+    if (userLocation || searchQuery.trim() || selectedCategory) return null;
     
     const groups: Record<string, Partner[]> = {};
     filteredPartners.forEach(p => {
@@ -113,21 +148,32 @@ export default function PartnerPage() {
       groups[city].push(p);
     });
     return groups;
-  }, [filteredPartners, userLocation, searchQuery]);
+  }, [filteredPartners, userLocation, searchQuery, selectedCategory]);
   
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4 space-y-3">
-          <h1 className="text-display-sm">Partner entdecken</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-display-sm">Partner entdecken</h1>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <X className="h-4 w-4" />
+                Filter löschen
+              </button>
+            )}
+          </div>
           
           {/* Search */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Partner oder Ort suchen..."
+              placeholder="Partner, Kategorie oder Ort suchen..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={cn(
@@ -148,42 +194,72 @@ export default function PartnerPage() {
             )}
           </div>
           
-          {/* Location & Region Chips */}
-          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
-            {/* Location Chip */}
-            <button
-              onClick={handleLocationToggle}
-              disabled={isRequestingLocation}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
-                userLocation
-                  ? 'bg-accent text-accent-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              )}
-            >
-              <Navigation className={cn(
-                'h-4 w-4',
-                isRequestingLocation && 'animate-pulse'
-              )} />
-              {isRequestingLocation ? 'Suche...' : userLocation ? 'In der Nähe' : 'Standort'}
-              {userLocation && <X className="h-3 w-3 ml-1" />}
-            </button>
-            
-            {/* Dynamic Region Chips from API */}
-            {regions.slice(0, 6).map(region => (
+          {/* Category Filter */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span>Kategorie</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
+              {categories.map(category => (
+                <button
+                  key={category}
+                  onClick={() => handleCategorySelect(category)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                    selectedCategory === category
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  )}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Location & City Chips */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>Ort</span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
+              {/* Location Chip */}
               <button
-                key={region.id}
-                onClick={() => handleRegionSelect(region.id)}
+                onClick={handleLocationToggle}
+                disabled={isRequestingLocation}
                 className={cn(
-                  'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
-                  selectedRegion === region.id
-                    ? 'bg-secondary text-secondary-foreground'
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                  userLocation
+                    ? 'bg-accent text-accent-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 )}
               >
-                {region.name}
+                <Navigation className={cn(
+                  'h-4 w-4',
+                  isRequestingLocation && 'animate-pulse'
+                )} />
+                {isRequestingLocation ? 'Suche...' : userLocation ? 'In der Nähe' : 'Standort'}
+                {userLocation && <X className="h-3 w-3 ml-1" />}
               </button>
-            ))}
+              
+              {/* Dynamic City Chips from Partners */}
+              {cities.map(city => (
+                <button
+                  key={city}
+                  onClick={() => handleRegionSelect(city)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                    selectedRegion === city
+                      ? 'bg-secondary text-secondary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  )}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>
