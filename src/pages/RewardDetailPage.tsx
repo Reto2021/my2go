@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import { 
   getRewardById, 
-  redeemRewardById, 
-  getRedemptionStatus,
+  redeemReward,
   Reward,
-  RewardRedemptionResult,
-  RedemptionStatus 
-} from '@/lib/api';
-import { useSession, useBrowseMode } from '@/lib/session';
+  Redemption 
+} from '@/lib/supabase-helpers';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth, useBalance } from '@/contexts/AuthContext';
 import { useSettings } from '@/lib/settings';
 import { useRadioStore } from '@/lib/radio-store';
 import { PageLoader } from '@/components/ui/loading-spinner';
@@ -25,24 +25,28 @@ import {
   MapPin, 
   Wallet,
   Clock,
-  QrCode,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Percent,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const categoryIcons = {
+// Map reward_type to icons and labels
+const rewardTypeIcons = {
   experience: Star,
-  discount: Ticket,
-  product: Gift,
-  exclusive: Coffee,
+  fixed_discount: Ticket,
+  percent_discount: Percent,
+  free_item: Gift,
+  topup_bonus: Sparkles,
 };
 
-const categoryLabels = {
+const rewardTypeLabels = {
   experience: 'Erlebnis',
-  discount: 'Rabatt',
-  product: 'Produkt',
-  exclusive: 'Exklusiv',
+  fixed_discount: 'Rabatt',
+  percent_discount: 'Prozent-Rabatt',
+  free_item: 'Gratis-Produkt',
+  topup_bonus: 'Bonus',
 };
 
 // RAILGUARD: Redemption expires after 10 minutes
@@ -51,21 +55,21 @@ const REDEMPTION_EXPIRY_MINUTES = 10;
 export default function RewardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { session, balance, refreshBalance, loginWithToken } = useSession();
+  const { user, isLoading: authLoading } = useAuth();
+  const { balance, refreshBalance } = useBalance();
   const { soundEnabled, vibrationEnabled } = useSettings();
   const { isPlaying: isRadioPlaying } = useRadioStore();
-  const isBrowseMode = useBrowseMode();
   
   const [reward, setReward] = useState<Reward | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   
   const [isRedeeming, setIsRedeeming] = useState(false);
-  const [redemption, setRedemption] = useState<RewardRedemptionResult | null>(null);
-  const [redemptionStatus, setRedemptionStatus] = useState<RedemptionStatus | null>(null);
+  const [redemption, setRedemption] = useState<Redemption | null>(null);
   const [redemptionError, setRedemptionError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [redemptionStatus, setRedemptionStatus] = useState<'pending' | 'used' | 'expired' | 'cancelled' | null>(null);
   
   const loadReward = async () => {
     if (!id) return;
@@ -88,69 +92,83 @@ export default function RewardDetailPage() {
   
   // RAILGUARD: Countdown timer for redemption expiry
   useEffect(() => {
-    if (!redemption?.expiresAt) return;
+    if (!redemption?.expires_at) return;
     
     const updateTimer = () => {
-      const expiresAt = new Date(redemption.expiresAt).getTime();
+      const expiresAt = new Date(redemption.expires_at).getTime();
       const now = Date.now();
       const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
       setTimeRemaining(remaining);
       
-      if (remaining === 0) {
-        // Redemption expired - refresh status from server
-        pollRedemptionStatus();
+      if (remaining === 0 && redemptionStatus === 'pending') {
+        setRedemptionStatus('expired');
       }
     };
     
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [redemption?.expiresAt]);
+  }, [redemption?.expires_at, redemptionStatus]);
   
   // RAILGUARD: Poll redemption status from server (only source of truth)
   const pollRedemptionStatus = useCallback(async () => {
-    if (!session?.hasSession || !redemption?.redemptionId) return;
+    if (!user || !redemption?.id) return;
     
     setIsPolling(true);
     try {
-      // No token needed - auth via httpOnly cookie
-      const status = await getRedemptionStatus(redemption.redemptionId);
-      setRedemptionStatus(status);
+      const { data, error: fetchError } = await supabase
+        .from('redemptions')
+        .select('status, redeemed_at')
+        .eq('id', redemption.id)
+        .single();
       
-      // Refresh balance after status check (server is source of truth)
-      if (status.status === 'used') {
-        refreshBalance();
+      if (!fetchError && data) {
+        setRedemptionStatus(data.status);
+        
+        // Refresh balance after status check (server is source of truth)
+        if (data.status === 'used') {
+          refreshBalance();
+        }
       }
     } catch (err) {
       console.error('Failed to poll redemption status:', err);
     } finally {
       setIsPolling(false);
     }
-  }, [session?.hasSession, redemption?.redemptionId, refreshBalance]);
+  }, [user, redemption?.id, refreshBalance]);
   
-  // RAILGUARD: Points deduction NEVER in client
-  // Only call server endpoint which handles all balance changes
+  // RAILGUARD: Points deduction handled by supabase-helpers
   const handleRedeem = async () => {
-    if (!session?.hasSession || !reward) return;
+    if (!user || !reward) return;
     
     setIsRedeeming(true);
     setRedemptionError(null);
     
     try {
-      // Server handles: validation, points deduction, code generation
-      // No token needed - auth via httpOnly cookie
-      const result = await redeemRewardById(reward.id);
-      setRedemption(result);
+      const result = await redeemReward(
+        user.id,
+        reward.id,
+        reward.partner_id,
+        reward.taler_cost
+      );
       
-      // Haptic + Sound feedback on success (mobile devices)
-      triggerHapticFeedback('success');
-      playFeedbackSound('success');
-      
-      // Refresh balance from server (source of truth)
-      refreshBalance();
+      if (result.error) {
+        triggerHapticFeedback('error');
+        playFeedbackSound('error');
+        setRedemptionError(result.error);
+      } else if (result.redemption) {
+        setRedemption(result.redemption);
+        setRedemptionStatus('pending');
+        
+        // Haptic + Sound feedback on success (mobile devices)
+        triggerHapticFeedback('success');
+        playFeedbackSound('success');
+        
+        // Refresh balance from server (source of truth)
+        refreshBalance();
+      }
     } catch (err) {
       console.error('Redemption failed:', err);
-      // Haptic + Sound feedback on error
       triggerHapticFeedback('error');
       playFeedbackSound('error');
       setRedemptionError('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
@@ -165,22 +183,18 @@ export default function RewardDetailPage() {
     
     switch (type) {
       case 'success':
-        // Double vibration pattern for success
         navigator.vibrate([50, 50, 100]);
         break;
       case 'error':
-        // Longer single vibration for error
         navigator.vibrate(200);
         break;
       case 'light':
-        // Short tap
         navigator.vibrate(10);
         break;
     }
   }, [vibrationEnabled]);
   
   // Sound feedback using Web Audio API (works on iOS)
-  // IMPORTANT: Skip if radio is playing to avoid interrupting the stream
   const playFeedbackSound = useCallback((type: 'success' | 'error') => {
     if (!soundEnabled || isRadioPlaying) return;
     
@@ -193,25 +207,22 @@ export default function RewardDetailPage() {
       gainNode.connect(audioContext.destination);
       
       if (type === 'success') {
-        // Pleasant rising chord for success
-        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
-        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.4);
       } else {
-        // Lower descending tone for error
-        oscillator.frequency.setValueAtTime(349.23, audioContext.currentTime); // F4
-        oscillator.frequency.setValueAtTime(261.63, audioContext.currentTime + 0.15); // C4
+        oscillator.frequency.setValueAtTime(349.23, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(261.63, audioContext.currentTime + 0.15);
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.3);
       }
     } catch (e) {
-      // Web Audio API not supported, silently fail
       console.log('Web Audio API not available');
     }
   }, [soundEnabled, isRadioPlaying]);
@@ -230,7 +241,7 @@ export default function RewardDetailPage() {
     navigate('/rewards');
   };
   
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return <PageLoader />;
   }
   
@@ -252,10 +263,11 @@ export default function RewardDetailPage() {
     );
   }
   
-  const Icon = categoryIcons[reward.category] || Gift;
-  const canAfford = balance && balance.current >= reward.cost;
-  const isExpired = timeRemaining !== null && timeRemaining === 0;
-  const statusUsed = redemptionStatus?.status === 'used';
+  const Icon = rewardTypeIcons[reward.reward_type] || Gift;
+  const canAfford = balance && balance.taler_balance >= reward.taler_cost;
+  const isExpired = redemptionStatus === 'expired' || (timeRemaining !== null && timeRemaining === 0);
+  const statusUsed = redemptionStatus === 'used';
+  const isLoggedIn = !!user;
   
   return (
     <div className="min-h-screen pb-24">
@@ -358,15 +370,22 @@ export default function RewardDetailPage() {
                       Zeige diesen Code beim Partner vor.
                     </motion.p>
                     
-                    {/* QR Code Placeholder - would use qrPayload */}
+                    {/* Real QR Code */}
                     <motion.div 
                       className="bg-white rounded-2xl p-4 mb-4 border border-border"
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.3 }}
                     >
-                      <div className="flex items-center justify-center h-32 w-32 mx-auto bg-muted rounded-xl mb-3">
-                        <QrCode className="h-16 w-16 text-muted-foreground" />
+                      <div className="flex items-center justify-center mb-3">
+                        <QRCodeSVG 
+                          value={redemption.qr_payload || redemption.redemption_code}
+                          size={140}
+                          level="M"
+                          includeMargin={false}
+                          bgColor="#ffffff"
+                          fgColor="#000000"
+                        />
                       </div>
                       
                       {/* Redemption Code */}
@@ -376,7 +395,7 @@ export default function RewardDetailPage() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
                       >
-                        {redemption.redemptionCode}
+                        {redemption.redemption_code}
                       </motion.p>
                     </motion.div>
                     
@@ -451,7 +470,7 @@ export default function RewardDetailPage() {
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
                     >
-                      Dieser Einlösecode ist abgelaufen. Deine Taler wurden nicht abgezogen.
+                      Dieser Einlösecode ist abgelaufen. Deine Taler wurden bereits abgezogen.
                     </motion.p>
                     
                     <motion.button 
@@ -496,17 +515,6 @@ export default function RewardDetailPage() {
                       Dieser Reward wurde erfolgreich beim Partner eingelöst.
                     </motion.p>
                     
-                    {redemptionStatus?.usedAt && (
-                      <motion.p 
-                        className="text-sm text-muted-foreground mb-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.25 }}
-                      >
-                        Eingelöst am {new Date(redemptionStatus.usedAt).toLocaleDateString('de-CH')}
-                      </motion.p>
-                    )}
-                    
                     <motion.button 
                       className="btn-primary w-full" 
                       onClick={handleClose}
@@ -526,58 +534,112 @@ export default function RewardDetailPage() {
         
         {/* Reward Content */}
         <div className="animate-in">
-          {/* Icon */}
+          {/* Icon & Image */}
           <div className="flex justify-center mb-6">
-            <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-accent/10">
-              <Icon className="h-12 w-12 text-accent" />
-            </div>
+            {reward.image_url ? (
+              <div className="h-32 w-full max-w-xs rounded-2xl overflow-hidden bg-muted">
+                <img 
+                  src={reward.image_url} 
+                  alt={reward.title}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-accent/10">
+                <Icon className="h-12 w-12 text-accent" />
+              </div>
+            )}
           </div>
           
           {/* Title & Cost */}
           <div className="text-center mb-6">
             <span className="badge-muted mb-3 inline-block">
-              {categoryLabels[reward.category]}
+              {rewardTypeLabels[reward.reward_type]}
             </span>
             <h2 className="text-display-sm mb-3">{reward.title}</h2>
             <span className="badge-accent text-base px-4 py-2">
-              {reward.cost.toLocaleString('de-CH')} Taler
+              {reward.taler_cost.toLocaleString('de-CH')} Taler
             </span>
           </div>
           
           {/* Description */}
-          <div className="card-base p-4 mb-4">
-            <h3 className="font-semibold mb-2">Beschreibung</h3>
-            <p className="text-muted-foreground">{reward.description}</p>
-          </div>
+          {reward.description && (
+            <div className="card-base p-4 mb-4">
+              <h3 className="font-semibold mb-2">Beschreibung</h3>
+              <p className="text-muted-foreground">{reward.description}</p>
+            </div>
+          )}
+          
+          {/* Value Info */}
+          {(reward.value_amount || reward.value_percent) && (
+            <div className="card-base p-4 mb-4">
+              <h3 className="font-semibold mb-2">Wert</h3>
+              <p className="text-muted-foreground">
+                {reward.value_amount && `CHF ${reward.value_amount.toFixed(2)}`}
+                {reward.value_percent && `${reward.value_percent}% Rabatt`}
+              </p>
+            </div>
+          )}
+          
+          {/* Terms */}
+          {reward.terms && (
+            <div className="card-base p-4 mb-4">
+              <h3 className="font-semibold mb-2">Bedingungen</h3>
+              <p className="text-muted-foreground text-sm">{reward.terms}</p>
+            </div>
+          )}
           
           {/* Partner Info */}
-          <div className="card-base p-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
-                <MapPin className="h-6 w-6 text-secondary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Einlösbar bei</p>
-                <p className="font-semibold">{reward.partnerName}</p>
+          {reward.partner && (
+            <div className="card-base p-4 mb-6">
+              <div className="flex items-center gap-4">
+                {reward.partner.logo_url ? (
+                  <img 
+                    src={reward.partner.logo_url} 
+                    alt={reward.partner.name}
+                    className="h-12 w-12 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
+                    <MapPin className="h-6 w-6 text-secondary" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Einlösbar bei</p>
+                  <p className="font-semibold">{reward.partner.name}</p>
+                  {reward.partner.city && (
+                    <p className="text-sm text-muted-foreground">{reward.partner.city}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
+          
+          {/* Stock Info */}
+          {reward.stock_remaining !== null && reward.stock_remaining <= 10 && (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-warning/10 mb-4">
+              <AlertCircle className="h-5 w-5 text-warning flex-shrink-0" />
+              <p className="text-sm text-warning">
+                Nur noch <span className="font-semibold">{reward.stock_remaining}</span> verfügbar!
+              </p>
+            </div>
+          )}
           
           {/* Action Button */}
-          {isBrowseMode ? (
+          {!isLoggedIn ? (
             <div className="text-center p-6 rounded-2xl bg-primary/10 border border-primary/20">
               <p className="text-foreground font-medium mb-2">
-                Zum Einlösen Karte öffnen
+                Zum Einlösen bitte anmelden
               </p>
               <p className="text-muted-foreground text-sm mb-4">
-                Öffne deine 2Go Taler Karte, um diesen Reward einzulösen.
+                Melde dich an, um diesen Reward einzulösen.
               </p>
               <button 
                 className="btn-primary"
-                onClick={() => loginWithToken('demo')}
+                onClick={() => navigate('/auth')}
               >
                 <Wallet className="h-5 w-5" />
-                Karte öffnen
+                Anmelden
               </button>
             </div>
           ) : (
@@ -586,7 +648,7 @@ export default function RewardDetailPage() {
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted">
                   <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    Du brauchst noch <span className="font-semibold text-foreground">{(reward.cost - (balance?.current || 0)).toLocaleString('de-CH')} Taler</span> für diesen Reward.
+                    Du brauchst noch <span className="font-semibold text-foreground">{(reward.taler_cost - (balance?.taler_balance || 0)).toLocaleString('de-CH')} Taler</span> für diesen Reward.
                   </p>
                 </div>
               )}
@@ -595,7 +657,7 @@ export default function RewardDetailPage() {
                 disabled={!canAfford || isRedeeming}
                 onClick={handleRedeem}
               >
-                {isRedeeming ? 'Wird eingelöst...' : `Für ${reward.cost.toLocaleString('de-CH')} Taler einlösen`}
+                {isRedeeming ? 'Wird eingelöst...' : `Für ${reward.taler_cost.toLocaleString('de-CH')} Taler einlösen`}
               </button>
               <p className="text-xs text-center text-muted-foreground">
                 Der Code ist {REDEMPTION_EXPIRY_MINUTES} Minuten gültig.
