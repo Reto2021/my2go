@@ -1,11 +1,12 @@
 import { ReactNode, useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { useSession } from '@/lib/session';
 
 interface AppLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
@@ -20,7 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-background">
       <RadioHeader />
       <main className="pt-20 pb-24">
-        {children}
+        {children || <Outlet />}
       </main>
       <BottomNav />
       <WhatsAppButton />
