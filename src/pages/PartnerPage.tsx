@@ -5,8 +5,9 @@ import { useLocation, calculateDistance } from '@/lib/location';
 import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { PartnerMap } from '@/components/PartnerMap';
 import { cn } from '@/lib/utils';
-import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter } from 'lucide-react';
+import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PartnerPage() {
@@ -19,6 +20,8 @@ export default function PartnerPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   
   // Location from global store
   const { 
@@ -52,8 +55,21 @@ export default function PartnerPage() {
     }
   };
   
+  const loadMapboxToken = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+      if (error) throw error;
+      if (data?.token) {
+        setMapboxToken(data.token);
+      }
+    } catch (err) {
+      console.error('Failed to load Mapbox token:', err);
+    }
+  };
+  
   useEffect(() => {
     loadData();
+    loadMapboxToken();
   }, []);
   
   // Extract unique categories from partners
@@ -157,15 +173,45 @@ export default function PartnerPage() {
         <div className="container py-4 space-y-3">
           <div className="flex items-center justify-between">
             <h1 className="text-display-sm">Partner entdecken</h1>
-            {hasActiveFilters && (
-              <button
-                onClick={clearAllFilters}
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-              >
-                <X className="h-4 w-4" />
-                Filter löschen
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  <X className="h-4 w-4" />
+                  Filter löschen
+                </button>
+              )}
+              
+              {/* View Mode Toggle */}
+              <div className="flex bg-muted rounded-xl p-1">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'p-2 rounded-lg transition-all',
+                    viewMode === 'list' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  aria-label="Listenansicht"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={cn(
+                    'p-2 rounded-lg transition-all',
+                    viewMode === 'map' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  aria-label="Kartenansicht"
+                >
+                  <MapIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
           
           {/* Search */}
@@ -274,7 +320,7 @@ export default function PartnerPage() {
       )}
       
       {/* Content */}
-      <div className="container py-6">
+      <div className={cn("container py-6", viewMode === 'map' && "h-[calc(100vh-350px)] min-h-[400px]")}>
         {isLoading ? (
           <div className="space-y-3 stagger-children">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -286,6 +332,22 @@ export default function PartnerPage() {
             title="Partner konnten nicht geladen werden"
             onRetry={loadData}
           />
+        ) : viewMode === 'map' ? (
+          /* Map View */
+          mapboxToken ? (
+            <PartnerMap 
+              partners={filteredPartners} 
+              userLocation={userLocation}
+              mapboxToken={mapboxToken}
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center bg-muted rounded-2xl">
+              <div className="text-center p-4">
+                <MapIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2 animate-pulse" />
+                <p className="text-muted-foreground">Karte wird geladen...</p>
+              </div>
+            </div>
+          )
         ) : filteredPartners.length === 0 ? (
           <EmptyState
             icon={Store}
