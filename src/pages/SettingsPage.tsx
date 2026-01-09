@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { 
     soundEnabled, 
     vibrationEnabled, 
@@ -25,6 +27,36 @@ export default function SettingsPage() {
       </header>
       
       <div className="container py-6 space-y-6">
+        {/* Account Section - only show if logged in */}
+        {user && (
+          <section className="animate-in">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Gift className="h-4 w-4" />
+              Mein Konto
+            </h2>
+            
+            <div className="card-base divide-y divide-border">
+              {/* My Redemptions */}
+              <button 
+                onClick={() => navigate('/my-redemptions')}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-success" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Meine Einlösungen</p>
+                    <p className="text-sm text-muted-foreground">
+                      Alle eingelösten Gutscheine ansehen
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+          </section>
+        )}
         {/* Feedback Section */}
         <section className="animate-in">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
