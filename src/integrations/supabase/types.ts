@@ -14,16 +14,652 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      air_drop_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          current_claims: number | null
+          id: string
+          is_active: boolean | null
+          max_claims: number | null
+          taler_value: number
+          valid_from: string | null
+          valid_until: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_claims?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_claims?: number | null
+          taler_value: number
+          valid_from?: string | null
+          valid_until: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_claims?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_claims?: number | null
+          taler_value?: number
+          valid_from?: string | null
+          valid_until?: string
+        }
+        Relationships: []
+      }
+      code_claims: {
+        Row: {
+          claimed_at: string
+          code_id: string
+          id: string
+          taler_awarded: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          code_id: string
+          id?: string
+          taler_awarded: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          code_id?: string
+          id?: string
+          taler_awarded?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_claims_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "air_drop_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_admins: {
+        Row: {
+          can_confirm_redemptions: boolean | null
+          can_manage_rewards: boolean | null
+          can_view_reports: boolean | null
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          partner_id: string
+          role: Database["public"]["Enums"]["partner_admin_role"]
+          user_id: string
+        }
+        Insert: {
+          can_confirm_redemptions?: boolean | null
+          can_manage_rewards?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          partner_id: string
+          role?: Database["public"]["Enums"]["partner_admin_role"]
+          user_id: string
+        }
+        Update: {
+          can_confirm_redemptions?: boolean | null
+          can_manage_rewards?: boolean | null
+          can_view_reports?: boolean | null
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          partner_id?: string
+          role?: Database["public"]["Enums"]["partner_admin_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_admins_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          address_number: string | null
+          address_street: string | null
+          billing_email: string | null
+          brand_color: string | null
+          category: string | null
+          city: string | null
+          commission_percent: number | null
+          contract_end: string | null
+          contract_start: string | null
+          country: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          lat: number | null
+          legal_name: string | null
+          lng: number | null
+          logo_url: string | null
+          name: string
+          opening_hours: Json | null
+          phone: string | null
+          postal_code: string | null
+          short_description: string | null
+          slug: string
+          special_hours: Json | null
+          tags: string[] | null
+          updated_at: string
+          verified_at: string | null
+          website: string | null
+        }
+        Insert: {
+          address_number?: string | null
+          address_street?: string | null
+          billing_email?: string | null
+          brand_color?: string | null
+          category?: string | null
+          city?: string | null
+          commission_percent?: number | null
+          contract_end?: string | null
+          contract_start?: string | null
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          lat?: number | null
+          legal_name?: string | null
+          lng?: number | null
+          logo_url?: string | null
+          name: string
+          opening_hours?: Json | null
+          phone?: string | null
+          postal_code?: string | null
+          short_description?: string | null
+          slug: string
+          special_hours?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          verified_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          address_number?: string | null
+          address_street?: string | null
+          billing_email?: string | null
+          brand_color?: string | null
+          category?: string | null
+          city?: string | null
+          commission_percent?: number | null
+          contract_end?: string | null
+          contract_start?: string | null
+          country?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          lat?: number | null
+          legal_name?: string | null
+          lng?: number | null
+          logo_url?: string | null
+          name?: string
+          opening_hours?: Json | null
+          phone?: string | null
+          postal_code?: string | null
+          short_description?: string | null
+          slug?: string
+          special_hours?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+          verified_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          birth_date: string | null
+          city: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_activity_at: string | null
+          last_name: string | null
+          marketing_consent: boolean | null
+          marketing_consent_at: string | null
+          phone: string | null
+          postal_code: string | null
+          terms_accepted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          birth_date?: string | null
+          city?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_activity_at?: string | null
+          last_name?: string | null
+          marketing_consent?: boolean | null
+          marketing_consent_at?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          terms_accepted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          birth_date?: string | null
+          city?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_activity_at?: string | null
+          last_name?: string | null
+          marketing_consent?: boolean | null
+          marketing_consent_at?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          terms_accepted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      redemptions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          partner_id: string
+          qr_payload: string | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          redemption_code: string
+          reward_id: string
+          status: Database["public"]["Enums"]["redemption_status"]
+          taler_spent: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          partner_id: string
+          qr_payload?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemption_code: string
+          reward_id: string
+          status?: Database["public"]["Enums"]["redemption_status"]
+          taler_spent: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          partner_id?: string
+          qr_payload?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          redemption_code?: string
+          reward_id?: string
+          status?: Database["public"]["Enums"]["redemption_status"]
+          taler_spent?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redemptions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regions: {
+        Row: {
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          radius_km: number | null
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          radius_km?: number | null
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          radius_km?: number | null
+          slug?: string
+        }
+        Relationships: []
+      }
+      rewards: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          partner_id: string
+          reward_type: Database["public"]["Enums"]["reward_type"]
+          stock_remaining: number | null
+          stock_total: number | null
+          taler_cost: number
+          terms: string | null
+          title: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+          value_amount: number | null
+          value_percent: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          partner_id: string
+          reward_type?: Database["public"]["Enums"]["reward_type"]
+          stock_remaining?: number | null
+          stock_total?: number | null
+          taler_cost: number
+          terms?: string | null
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value_amount?: number | null
+          value_percent?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          partner_id?: string
+          reward_type?: Database["public"]["Enums"]["reward_type"]
+          stock_remaining?: number | null
+          stock_total?: number | null
+          taler_cost?: number
+          terms?: string | null
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value_amount?: number | null
+          value_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          partner_id: string | null
+          reference_id: string | null
+          source: Database["public"]["Enums"]["transaction_source"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          partner_id?: string | null
+          reference_id?: string | null
+          source: Database["public"]["Enums"]["transaction_source"]
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          partner_id?: string | null
+          reference_id?: string | null
+          source?: Database["public"]["Enums"]["transaction_source"]
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_codes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          permanent_code: string
+          qr_payload: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          permanent_code: string
+          qr_payload?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          permanent_code?: string
+          qr_payload?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_passes: {
+        Row: {
+          apple_pass_auth_token: string | null
+          apple_pass_serial: string | null
+          created_at: string
+          google_pass_object_id: string | null
+          id: string
+          last_synced_balance: number | null
+          pass_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apple_pass_auth_token?: string | null
+          apple_pass_serial?: string | null
+          created_at?: string
+          google_pass_object_id?: string | null
+          id?: string
+          last_synced_balance?: number | null
+          pass_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apple_pass_auth_token?: string | null
+          apple_pass_serial?: string | null
+          created_at?: string
+          google_pass_object_id?: string | null
+          id?: string
+          last_synced_balance?: number | null
+          pass_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_redemption_code: { Args: never; Returns: string }
+      generate_unique_code: { Args: { prefix?: string }; Returns: string }
+      get_user_balance: {
+        Args: { _user_id: string }
+        Returns: {
+          lifetime_earned: number
+          lifetime_spent: number
+          taler_balance: number
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["user_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_partner_admin: {
+        Args: { _partner_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      partner_admin_role: "owner" | "manager" | "staff"
+      redemption_status: "pending" | "used" | "expired" | "cancelled"
+      reward_type:
+        | "fixed_discount"
+        | "percent_discount"
+        | "free_item"
+        | "topup_bonus"
+        | "experience"
+      transaction_source:
+        | "signup_bonus"
+        | "air_drop"
+        | "partner_visit"
+        | "partner_purchase"
+        | "bonus"
+        | "reward_redemption"
+        | "system"
+        | "referral"
+      transaction_type: "earn" | "spend" | "expire" | "adjust"
+      user_role: "user" | "partner_admin" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +786,28 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      partner_admin_role: ["owner", "manager", "staff"],
+      redemption_status: ["pending", "used", "expired", "cancelled"],
+      reward_type: [
+        "fixed_discount",
+        "percent_discount",
+        "free_item",
+        "topup_bonus",
+        "experience",
+      ],
+      transaction_source: [
+        "signup_bonus",
+        "air_drop",
+        "partner_visit",
+        "partner_purchase",
+        "bonus",
+        "reward_redemption",
+        "system",
+        "referral",
+      ],
+      transaction_type: ["earn", "spend", "expire", "adjust"],
+      user_role: ["user", "partner_admin", "admin"],
+    },
   },
 } as const
