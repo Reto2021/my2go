@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useSession, useBrowseMode } from '@/lib/session';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
-import { getRewards, getRewardsNearLocation, getPartners, Reward, Partner } from '@/lib/api';
+import { getRewards, getPartners, Reward, Partner } from '@/lib/supabase-helpers';
 import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
@@ -20,12 +20,11 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function HomePage() {
-  const { session, balance, isLoading, loginWithToken } = useSession();
-  const isBrowseMode = useBrowseMode();
+  const { user, profile, balance, isLoading } = useAuth();
+  const navigate = useNavigate();
   const { 
     userLocation, 
     isRequestingLocation, 
-    locationError,
     locationPermissionAsked,
     requestLocation, 
     clearLocation,
@@ -37,34 +36,48 @@ export default function HomePage() {
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
-  // Session is now initialized in AppLayout
+  const isAuthenticated = !!user;
   
   // Show location prompt if not asked yet (after session is loaded)
   useEffect(() => {
-    if (!isLoading && !isBrowseMode && !locationPermissionAsked) {
+    if (!isLoading && isAuthenticated && !locationPermissionAsked) {
       // Small delay to let the page load first
       const timer = setTimeout(() => setShowLocationPrompt(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isBrowseMode, locationPermissionAsked]);
+  }, [isLoading, isAuthenticated, locationPermissionAsked]);
   
-  // Load content - with or without location
+  // Load content from Supabase
   useEffect(() => {
     async function loadContent() {
       setIsLoadingContent(true);
       try {
-        let rewardsData: Reward[];
+        const [rewardsData, partnersData] = await Promise.all([
+          getRewards(),
+          getPartners(),
+        ]);
         
-        if (userLocation) {
-          // Load rewards near user's location
-          rewardsData = await getRewardsNearLocation(userLocation.lat, userLocation.lng);
-        } else {
-          // Load all rewards
-          rewardsData = await getRewards();
+        // Sort by distance if user location is available
+        let sortedRewards = rewardsData;
+        if (userLocation && rewardsData.length > 0) {
+          sortedRewards = rewardsData
+            .map(reward => {
+              const partner = reward.partner;
+              if (partner?.lat && partner?.lng) {
+                const distance = calculateDistance(
+                  userLocation.lat, 
+                  userLocation.lng, 
+                  partner.lat, 
+                  partner.lng
+                );
+                return { ...reward, distanceKm: distance };
+              }
+              return { ...reward, distanceKm: 9999 };
+            })
+            .sort((a, b) => (a.distanceKm || 9999) - (b.distanceKm || 9999));
         }
         
-        const partnersData = await getPartners();
-        setRewards(rewardsData.slice(0, 4));
+        setRewards(sortedRewards.slice(0, 4));
         setPartners(partnersData.slice(0, 3));
       } catch (error) {
         console.error('Failed to load content:', error);
@@ -85,12 +98,16 @@ export default function HomePage() {
     setLocationPermissionAsked();
   };
   
+  const handleLogin = () => {
+    navigate('/auth');
+  };
+  
   if (isLoading) {
     return <PageLoader />;
   }
   
-  if (isBrowseMode) {
-    return <BrowseModeHome rewards={rewards} partners={partners} isLoading={isLoadingContent} onLogin={() => loginWithToken('demo')} />;
+  if (!isAuthenticated) {
+    return <BrowseModeHome rewards={rewards} partners={partners} isLoading={isLoadingContent} onLogin={handleLogin} />;
   }
   
   return (
@@ -126,7 +143,7 @@ export default function HomePage() {
       )}
       
       <SessionModeHome 
-        displayName={session?.displayName} 
+        displayName={profile?.display_name || profile?.first_name} 
         balance={balance!}
         rewards={rewards}
         isLoading={isLoadingContent}
@@ -137,6 +154,19 @@ export default function HomePage() {
       />
     </>
   );
+}
+
+// Helper function to calculate distance between two coordinates
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
 }
 
 interface BrowseModeHomeProps {
@@ -217,6 +247,10 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
             ))
+          ) : rewards.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Keine Gutscheine verfügbar
+            </div>
           ) : (
             rewards.slice(0, 3).map(reward => (
               <RewardCard key={reward.id} reward={reward} />
@@ -239,6 +273,10 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
             ))
+          ) : partners.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Keine Partner verfügbar
+            </div>
           ) : (
             partners.slice(0, 2).map(partner => (
               <PartnerCard key={partner.id} partner={partner} />
@@ -284,8 +322,8 @@ function FeatureChip({ icon: Icon, label, color, to }: FeatureChipProps) {
 }
 
 interface SessionModeHomeProps {
-  displayName?: string;
-  balance: { current: number; pending: number; lifetime: number };
+  displayName?: string | null;
+  balance: { taler_balance: number; lifetime_earned: number; lifetime_spent: number };
   rewards: Reward[];
   isLoading: boolean;
   userLocation: { lat: number; lng: number } | null;
@@ -371,13 +409,7 @@ function SessionModeHome({
             ))
           ) : rewards.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-            <p>Keine Gutscheine in deiner Nähe gefunden.</p>
-              <button 
-                onClick={onClearLocation}
-                className="text-accent font-semibold mt-2"
-              >
-                Alle Gutscheine anzeigen
-              </button>
+              <p>Keine Gutscheine verfügbar.</p>
             </div>
           ) : (
             rewards.map(reward => (

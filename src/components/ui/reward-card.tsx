@@ -1,6 +1,7 @@
-import { Reward } from '@/lib/api';
+import { Reward } from '@/lib/supabase-helpers';
+import { useBalance } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin } from 'lucide-react';
+import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface RewardCardProps {
@@ -9,24 +10,23 @@ interface RewardCardProps {
   distance?: number; // Distance in km
 }
 
-const categoryIcons = {
-  experience: Star,
-  discount: Ticket,
-  product: Gift,
-  exclusive: Coffee,
-};
-
-const categoryColors = {
-  experience: 'bg-accent/15 text-accent',
-  discount: 'bg-success/15 text-success',
-  product: 'bg-primary/30 text-secondary',
-  exclusive: 'bg-secondary/10 text-secondary',
+// Map reward_type to icons and colors
+const typeConfig = {
+  experience: { icon: Star, colorClass: 'bg-accent/15 text-accent' },
+  fixed_discount: { icon: Ticket, colorClass: 'bg-success/15 text-success' },
+  percent_discount: { icon: Percent, colorClass: 'bg-success/15 text-success' },
+  free_item: { icon: Gift, colorClass: 'bg-primary/30 text-secondary' },
+  topup_bonus: { icon: Sparkles, colorClass: 'bg-secondary/10 text-secondary' },
 };
 
 export function RewardCard({ reward, className, distance }: RewardCardProps) {
-  const Icon = categoryIcons[reward.category] || Gift;
-  const colorClass = categoryColors[reward.category] || categoryColors.product;
-  const canAfford = reward.cost <= 500; // Mock: assume user has 500 points
+  const { balance } = useBalance();
+  const config = typeConfig[reward.reward_type] || typeConfig.free_item;
+  const Icon = config.icon;
+  const colorClass = config.colorClass;
+  
+  const userBalance = balance?.taler_balance ?? 0;
+  const canAfford = reward.taler_cost <= userBalance;
   
   const formatDistance = (km: number) => {
     if (km < 1) {
@@ -34,6 +34,9 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
     }
     return `${km.toFixed(1)} km`;
   };
+  
+  // Get partner name from nested partner object
+  const partnerName = reward.partner?.name || 'Partner';
   
   return (
     <Link
@@ -62,7 +65,7 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
           )}
         </div>
         <p className="text-sm text-muted-foreground line-clamp-1">
-          {reward.partnerName}
+          {partnerName}
         </p>
         
         {/* Points Badge */}
@@ -72,11 +75,11 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
             canAfford ? 'text-accent' : 'text-muted-foreground'
           )}>
             <Coins className="h-3.5 w-3.5" />
-            {reward.cost.toLocaleString('de-CH')}
+            {reward.taler_cost.toLocaleString('de-CH')}
           </span>
-          {!canAfford && (
+          {!canAfford && userBalance > 0 && (
             <span className="text-xs text-muted-foreground">
-              noch {(reward.cost - 500).toLocaleString('de-CH')} nötig
+              noch {(reward.taler_cost - userBalance).toLocaleString('de-CH')} nötig
             </span>
           )}
         </div>
