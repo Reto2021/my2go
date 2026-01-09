@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2 } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -117,6 +117,25 @@ export default function SettingsPage() {
                     <p className="font-medium">Meine Einlösungen</p>
                     <p className="text-sm text-muted-foreground">
                       Alle eingelösten Gutscheine ansehen
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+              
+              {/* Referral Program */}
+              <button 
+                onClick={() => navigate('/referral')}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Freunde einladen</p>
+                    <p className="text-sm text-muted-foreground">
+                      Erhalte 25 Taler pro Empfehlung
                     </p>
                   </div>
                 </div>

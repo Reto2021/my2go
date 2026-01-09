@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { signIn, signUp } from '@/lib/supabase-helpers';
 import { z } from 'zod';
-import { Mail, Lock, User, ArrowRight, Loader2, Gift } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Gift, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import logo from '@/assets/logo-radio2go.png';
@@ -14,6 +14,7 @@ const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -22,6 +23,16 @@ export default function AuthPage() {
   const [displayName, setDisplayName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  
+  // Check for referral code in URL
+  const referralCode = searchParams.get('ref') || '';
+  
+  // If referral code is present, default to signup mode
+  useEffect(() => {
+    if (referralCode) {
+      setMode('signup');
+    }
+  }, [referralCode]);
   
   // Check if already logged in
   useEffect(() => {
@@ -33,12 +44,36 @@ export default function AuthPage() {
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
+        // Process referral after signup
+        if (event === 'SIGNED_IN' && referralCode) {
+          processReferral(session.user.id, referralCode);
+        }
         navigate('/');
       }
     });
     
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, referralCode]);
+  
+  const processReferral = async (userId: string, code: string) => {
+    try {
+      const { data, error } = await supabase.rpc('process_referral', {
+        _referred_user_id: userId,
+        _referral_code: code
+      });
+      
+      const result = data as { success?: boolean; referred_bonus?: number } | null;
+      
+      if (result?.success) {
+        toast({
+          title: 'Empfehlungsbonus! 🎁',
+          description: `Du hast ${result.referred_bonus} Taler durch die Empfehlung erhalten!`,
+        });
+      }
+    } catch (error) {
+      console.error('Referral processing error:', error);
+    }
+  };
   
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -150,6 +185,19 @@ export default function AuthPage() {
             </p>
           </div>
           
+          {/* Referral Banner */}
+          {mode === 'signup' && referralCode && (
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20 mb-4 animate-in">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
+                <Users className="h-5 w-5 text-secondary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Du wurdest eingeladen!</p>
+                <p className="text-sm text-muted-foreground">Code: {referralCode}</p>
+              </div>
+            </div>
+          )}
+          
           {/* Signup Bonus Banner */}
           {mode === 'signup' && (
             <div className="flex items-center gap-3 p-4 rounded-2xl bg-accent/10 border border-accent/20 mb-6 animate-in">
@@ -157,8 +205,12 @@ export default function AuthPage() {
                 <Gift className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">50 Willkommens-Taler</p>
-                <p className="text-sm text-muted-foreground">Sofort nach der Registrierung</p>
+                <p className="font-semibold text-foreground">
+                  {referralCode ? '75 Willkommens-Taler' : '50 Willkommens-Taler'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {referralCode ? '50 + 25 Empfehlungsbonus!' : 'Sofort nach der Registrierung'}
+                </p>
               </div>
             </div>
           )}
