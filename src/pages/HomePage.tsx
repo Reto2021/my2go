@@ -16,7 +16,8 @@ import {
   ArrowRight,
   Navigation,
   X,
-  Ticket
+  Ticket,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -364,11 +365,12 @@ function SessionModeHome({
       {/* Quick Actions */}
       <section className="container section">
         <h2 className="section-title mb-5">Schnellzugriff</h2>
-        <div className="grid grid-cols-4 gap-3 stagger-children">
+        <div className="grid grid-cols-5 gap-2 stagger-children">
           <QuickAction to="/code" icon={Music} label="Radio-Taler" color="accent" />
-          <QuickAction to="/my-redemptions" icon={Ticket} label="Meine Einlösungen" color="primary" />
+          <QuickAction to="/my-redemptions" icon={Ticket} label="Einlösungen" color="primary" />
           <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="primary" />
           <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
+          <QuickAction to="/referral" icon={Users} label="Einladen" color="accent" />
         </div>
       </section>
       

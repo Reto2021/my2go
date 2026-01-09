@@ -259,6 +259,8 @@ export type Database = {
           marketing_consent_at: string | null
           phone: string | null
           postal_code: string | null
+          referral_count: number | null
+          referred_by: string | null
           terms_accepted_at: string | null
           updated_at: string
         }
@@ -277,6 +279,8 @@ export type Database = {
           marketing_consent_at?: string | null
           phone?: string | null
           postal_code?: string | null
+          referral_count?: number | null
+          referred_by?: string | null
           terms_accepted_at?: string | null
           updated_at?: string
         }
@@ -295,10 +299,20 @@ export type Database = {
           marketing_consent_at?: string | null
           phone?: string | null
           postal_code?: string | null
+          referral_count?: number | null
+          referred_by?: string | null
           terms_accepted_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
@@ -392,6 +406,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_bonus: number
+          referred_id: string
+          referrer_bonus: number
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_bonus?: number
+          referred_id: string
+          referrer_bonus?: number
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_bonus?: number
+          referred_id?: string
+          referrer_bonus?: number
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       regions: {
         Row: {
@@ -671,6 +715,10 @@ export type Database = {
       is_partner_admin: {
         Args: { _partner_id: string; _user_id: string }
         Returns: boolean
+      }
+      process_referral: {
+        Args: { _referral_code: string; _referred_user_id: string }
+        Returns: Json
       }
     }
     Enums: {

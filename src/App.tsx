@@ -20,6 +20,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import MyRedemptionsPage from "./pages/MyRedemptionsPage";
 import RedemptionDetailPage from "./pages/RedemptionDetailPage";
+import ReferralPage from "./pages/ReferralPage";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPartners from "./pages/admin/AdminPartners";
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
               <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
+              <Route path="/referral" element={<ReferralPage />} />
             </Route>
             
             {/* Catch-all */}

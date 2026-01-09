@@ -22,6 +22,8 @@ export interface UserProfile {
   marketing_consent: boolean;
   last_activity_at: string | null;
   created_at: string;
+  referred_by: string | null;
+  referral_count: number;
 }
 
 export interface UserBalance {
