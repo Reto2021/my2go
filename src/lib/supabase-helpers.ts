@@ -1,0 +1,544 @@
+/**
+ * Supabase Helper Functions for 2Go Taler Hub
+ */
+
+import { supabase } from '@/integrations/supabase/client';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface UserProfile {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  birth_date: string | null;
+  postal_code: string | null;
+  city: string | null;
+  avatar_url: string | null;
+  marketing_consent: boolean;
+  last_activity_at: string | null;
+  created_at: string;
+}
+
+export interface UserBalance {
+  taler_balance: number;
+  lifetime_earned: number;
+  lifetime_spent: number;
+}
+
+export interface UserCode {
+  permanent_code: string;
+  qr_payload: string | null;
+  is_active: boolean;
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  short_description: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  postal_code: string | null;
+  city: string | null;
+  lat: number | null;
+  lng: number | null;
+  logo_url: string | null;
+  category: string | null;
+  tags: string[] | null;
+  opening_hours: unknown;
+  is_active: boolean;
+  is_featured: boolean;
+}
+
+export interface Reward {
+  id: string;
+  partner_id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  reward_type: 'fixed_discount' | 'percent_discount' | 'free_item' | 'topup_bonus' | 'experience';
+  taler_cost: number;
+  value_amount: number | null;
+  value_percent: number | null;
+  stock_remaining: number | null;
+  terms: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  partner?: Partner;
+}
+
+export interface Redemption {
+  id: string;
+  reward_id: string;
+  partner_id: string;
+  redemption_code: string;
+  qr_payload: string | null;
+  status: 'pending' | 'used' | 'expired' | 'cancelled';
+  taler_spent: number;
+  expires_at: string;
+  redeemed_at: string | null;
+  created_at: string;
+  reward?: Reward;
+  partner?: Partner;
+}
+
+export interface Transaction {
+  id: string;
+  amount: number;
+  type: 'earn' | 'spend' | 'expire' | 'adjust';
+  source: string;
+  description: string | null;
+  partner_id: string | null;
+  created_at: string;
+  partner?: Partner;
+}
+
+export interface AirDropCode {
+  id: string;
+  code: string;
+  taler_value: number;
+  valid_until: string;
+  max_claims: number;
+  current_claims: number;
+  is_active: boolean;
+}
+
+export interface Region {
+  id: string;
+  name: string;
+  slug: string;
+  lat: number | null;
+  lng: number | null;
+  radius_km: number;
+}
+
+// ============================================================================
+// AUTH
+// ============================================================================
+
+export async function signUp(email: string, password: string, displayName?: string) {
+  const redirectUrl = `${window.location.origin}/`;
+  
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: redirectUrl,
+      data: {
+        display_name: displayName || email.split('@')[0],
+      },
+    },
+  });
+  
+  return { data, error };
+}
+
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  
+  return { data, error };
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  return { error };
+}
+
+// ============================================================================
+// PROFILE
+// ============================================================================
+
+export async function getProfile(userId: string): Promise<UserProfile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching profile:', error);
+    return null;
+  }
+  
+  return data;
+}
+
+export async function updateProfile(userId: string, updates: Partial<UserProfile>) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId)
+    .select()
+    .single();
+  
+  return { data, error };
+}
+
+// ============================================================================
+// USER CODE
+// ============================================================================
+
+export async function getUserCode(userId: string): Promise<UserCode | null> {
+  const { data, error } = await supabase
+    .from('user_codes')
+    .select('permanent_code, qr_payload, is_active')
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching user code:', error);
+    return null;
+  }
+  
+  return data;
+}
+
+// ============================================================================
+// BALANCE (from transactions ledger)
+// ============================================================================
+
+export async function getUserBalance(userId: string): Promise<UserBalance> {
+  const { data, error } = await supabase
+    .rpc('get_user_balance', { _user_id: userId });
+  
+  if (error || !data || data.length === 0) {
+    console.error('Error fetching balance:', error);
+    return { taler_balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+  }
+  
+  return data[0];
+}
+
+// ============================================================================
+// TRANSACTIONS
+// ============================================================================
+
+export async function getTransactions(userId: string, limit = 50): Promise<Transaction[]> {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select(`
+      id,
+      amount,
+      type,
+      source,
+      description,
+      partner_id,
+      created_at,
+      partner:partners(id, name, slug, logo_url)
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  
+  if (error) {
+    console.error('Error fetching transactions:', error);
+    return [];
+  }
+  
+  return (data || []).map(t => ({
+    ...t,
+    partner: Array.isArray(t.partner) ? t.partner[0] : t.partner,
+  })) as Transaction[];
+}
+
+// ============================================================================
+// PARTNERS
+// ============================================================================
+
+export async function getPartners(): Promise<Partner[]> {
+  const { data, error } = await supabase
+    .from('partners')
+    .select('*')
+    .eq('is_active', true)
+    .order('is_featured', { ascending: false })
+    .order('name');
+  
+  if (error) {
+    console.error('Error fetching partners:', error);
+    return [];
+  }
+  
+  return (data || []) as Partner[];
+}
+
+export async function getPartnerBySlug(slug: string): Promise<Partner | null> {
+  const { data, error } = await supabase
+    .from('partners')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching partner:', error);
+    return null;
+  }
+  
+  return data as Partner | null;
+}
+
+export async function getPartnerById(id: string): Promise<Partner | null> {
+  const { data, error } = await supabase
+    .from('partners')
+    .select('*')
+    .eq('id', id)
+    .eq('is_active', true)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching partner:', error);
+    return null;
+  }
+  
+  return data as Partner | null;
+}
+
+// ============================================================================
+// REWARDS
+// ============================================================================
+
+export async function getRewards(): Promise<Reward[]> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select(`
+      *,
+      partner:partners(id, name, slug, logo_url, city, lat, lng)
+    `)
+    .eq('is_active', true)
+    .order('taler_cost');
+  
+  if (error) {
+    console.error('Error fetching rewards:', error);
+    return [];
+  }
+  
+  return (data || []).map(r => ({
+    ...r,
+    partner: Array.isArray(r.partner) ? r.partner[0] : r.partner,
+  })) as Reward[];
+}
+
+export async function getRewardById(id: string): Promise<Reward | null> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select(`
+      *,
+      partner:partners(*)
+    `)
+    .eq('id', id)
+    .eq('is_active', true)
+    .maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching reward:', error);
+    return null;
+  }
+  
+  if (!data) return null;
+  
+  return {
+    ...data,
+    partner: Array.isArray(data.partner) ? data.partner[0] : data.partner,
+  } as Reward;
+}
+
+export async function getRewardsByPartner(partnerId: string): Promise<Reward[]> {
+  const { data, error } = await supabase
+    .from('rewards')
+    .select('*')
+    .eq('partner_id', partnerId)
+    .eq('is_active', true)
+    .order('taler_cost');
+  
+  if (error) {
+    console.error('Error fetching partner rewards:', error);
+    return [];
+  }
+  
+  return data || [];
+}
+
+// ============================================================================
+// REDEMPTIONS
+// ============================================================================
+
+export async function redeemReward(
+  userId: string,
+  rewardId: string,
+  partnerId: string,
+  talerCost: number
+): Promise<{ redemption: Redemption | null; error: string | null }> {
+  // 1. Check balance
+  const balance = await getUserBalance(userId);
+  if (balance.taler_balance < talerCost) {
+    return { redemption: null, error: 'Nicht genügend Taler' };
+  }
+  
+  // 2. Generate redemption code
+  const redemptionCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  
+  // 3. Create redemption
+  const { data: redemption, error: redemptionError } = await supabase
+    .from('redemptions')
+    .insert({
+      user_id: userId,
+      reward_id: rewardId,
+      partner_id: partnerId,
+      redemption_code: redemptionCode,
+      qr_payload: `${redemptionCode}:${userId}`,
+      taler_spent: talerCost,
+      expires_at: expiresAt,
+    })
+    .select()
+    .single();
+  
+  if (redemptionError) {
+    console.error('Error creating redemption:', redemptionError);
+    return { redemption: null, error: 'Fehler beim Einlösen' };
+  }
+  
+  // 4. Create spend transaction
+  const { error: transactionError } = await supabase
+    .from('transactions')
+    .insert({
+      user_id: userId,
+      partner_id: partnerId,
+      amount: talerCost,
+      type: 'spend',
+      source: 'reward_redemption',
+      description: `Reward eingelöst`,
+      reference_id: redemption.id,
+    });
+  
+  if (transactionError) {
+    console.error('Error creating transaction:', transactionError);
+    // Redemption was created, but transaction failed - should not happen with proper setup
+  }
+  
+  return { redemption, error: null };
+}
+
+export async function getRedemptions(userId: string): Promise<Redemption[]> {
+  const { data, error } = await supabase
+    .from('redemptions')
+    .select(`
+      *,
+      reward:rewards(id, title, description, image_url, reward_type, taler_cost),
+      partner:partners(id, name, slug, logo_url)
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching redemptions:', error);
+    return [];
+  }
+  
+  return (data || []).map(r => ({
+    ...r,
+    reward: Array.isArray(r.reward) ? r.reward[0] : r.reward,
+    partner: Array.isArray(r.partner) ? r.partner[0] : r.partner,
+  })) as Redemption[];
+}
+
+// ============================================================================
+// AIR DROP CODES
+// ============================================================================
+
+export async function redeemAirDropCode(
+  userId: string,
+  code: string
+): Promise<{ success: boolean; talerAwarded?: number; error?: string }> {
+  const normalizedCode = code.trim().toUpperCase();
+  
+  // 1. Find the code
+  const { data: airDropCode, error: codeError } = await supabase
+    .from('air_drop_codes')
+    .select('*')
+    .eq('code', normalizedCode)
+    .eq('is_active', true)
+    .gt('valid_until', new Date().toISOString())
+    .maybeSingle();
+  
+  if (codeError || !airDropCode) {
+    return { success: false, error: 'Ungültiger oder abgelaufener Code' };
+  }
+  
+  // 2. Check if max claims reached
+  if (airDropCode.current_claims >= airDropCode.max_claims) {
+    return { success: false, error: 'Code wurde bereits zu oft eingelöst' };
+  }
+  
+  // 3. Check if user already claimed
+  const { data: existingClaim } = await supabase
+    .from('code_claims')
+    .select('id')
+    .eq('code_id', airDropCode.id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (existingClaim) {
+    return { success: false, error: 'Du hast diesen Code bereits eingelöst' };
+  }
+  
+  // 4. Create claim
+  const { error: claimError } = await supabase
+    .from('code_claims')
+    .insert({
+      code_id: airDropCode.id,
+      user_id: userId,
+      taler_awarded: airDropCode.taler_value,
+    });
+  
+  if (claimError) {
+    console.error('Error creating claim:', claimError);
+    return { success: false, error: 'Fehler beim Einlösen' };
+  }
+  
+  // 5. Create earn transaction
+  await supabase
+    .from('transactions')
+    .insert({
+      user_id: userId,
+      amount: airDropCode.taler_value,
+      type: 'earn',
+      source: 'air_drop',
+      description: `Code ${normalizedCode} eingelöst`,
+    });
+  
+  // 6. Update claim count
+  await supabase
+    .from('air_drop_codes')
+    .update({ current_claims: airDropCode.current_claims + 1 })
+    .eq('id', airDropCode.id);
+  
+  return { success: true, talerAwarded: airDropCode.taler_value };
+}
+
+// ============================================================================
+// REGIONS
+// ============================================================================
+
+export async function getRegions(): Promise<Region[]> {
+  const { data, error } = await supabase
+    .from('regions')
+    .select('*')
+    .order('name');
+  
+  if (error) {
+    console.error('Error fetching regions:', error);
+    return [];
+  }
+  
+  return data || [];
+}
