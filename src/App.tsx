@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { PartnerGuard } from "@/components/partner/PartnerGuard";
+import { PartnerLayout } from "@/components/partner/PartnerLayout";
 import HomePage from "./pages/HomePage";
 import RewardsPage from "./pages/RewardsPage";
 import RewardDetailPage from "./pages/RewardDetailPage";
@@ -21,6 +23,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAirDrops from "./pages/admin/AdminAirDrops";
+import PartnerDashboard from "./pages/partner/PartnerDashboard";
+import PartnerRewards from "./pages/partner/PartnerRewards";
+import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +48,12 @@ const App = () => (
               <Route path="airdrops" element={<AdminAirDrops />} />
             </Route>
             
+            {/* Partner portal with partner layout and guard */}
+            <Route path="/partner-portal" element={<PartnerGuard><PartnerLayout /></PartnerGuard>}>
+              <Route index element={<PartnerDashboard />} />
+              <Route path="rewards" element={<PartnerRewards />} />
+              <Route path="redemptions" element={<PartnerRedemptions />} />
+            </Route>
             {/* All other pages with layout */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />

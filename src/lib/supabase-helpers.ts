@@ -66,8 +66,10 @@ export interface Reward {
   taler_cost: number;
   value_amount: number | null;
   value_percent: number | null;
+  stock_total: number | null;
   stock_remaining: number | null;
   terms: string | null;
+  valid_from: string | null;
   valid_until: string | null;
   is_active: boolean;
   partner?: Partner;
