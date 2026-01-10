@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,64 +45,100 @@ import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger"
 
 const queryClient = new QueryClient();
 
+// Setup Service Worker message listener for push notification handling
+function useServiceWorkerMessages() {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      const handleMessage = (event: MessageEvent) => {
+        console.log('[App] Message from SW:', event.data);
+        
+        if (event.data?.type === 'REVIEW_REQUEST_CLICKED') {
+          // Dispatch custom event that ReviewRequestTrigger listens to
+          const customEvent = new CustomEvent('openReviewSheet', {
+            detail: {
+              redemptionId: event.data.redemptionId,
+              partnerId: event.data.partnerId,
+            }
+          });
+          window.dispatchEvent(customEvent);
+        }
+      };
+
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      };
+    }
+  }, []);
+}
+
+function AppContent() {
+  useServiceWorkerMessages();
+  
+  return (
+    <BrowserRouter>
+      <ReviewRequestTrigger />
+      <Routes>
+        {/* Auth pages with layout but no login required */}
+        <Route element={<AppLayout />}>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+        </Route>
+        
+        {/* Admin pages with admin layout and guard */}
+        <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="partners" element={<AdminPartners />} />
+          <Route path="customers" element={<AdminCustomers />} />
+          <Route path="badges" element={<AdminBadges />} />
+          <Route path="radio" element={<AdminRadioTiers />} />
+          <Route path="airdrops" element={<AdminAirDrops />} />
+        </Route>
+        
+        {/* Partner portal with partner layout and guard */}
+        <Route path="/partner-portal" element={<PartnerGuard><PartnerLayout /></PartnerGuard>}>
+          <Route index element={<PartnerDashboard />} />
+          <Route path="rewards" element={<PartnerRewards />} />
+          <Route path="redemptions" element={<PartnerRedemptions />} />
+          <Route path="reviews" element={<PartnerReviews />} />
+        </Route>
+        
+        {/* All other pages with layout */}
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/rewards" element={<RewardsPage />} />
+          <Route path="/rewards/:id" element={<RewardDetailPage />} />
+          <Route path="/code" element={<CodePage />} />
+          <Route path="/partner" element={<PartnerPage />} />
+          <Route path="/partner/:id" element={<PartnerDetailPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
+          <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
+          <Route path="/referral" element={<ReferralPage />} />
+          <Route path="/badges" element={<BadgesPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/agb" element={<LegalTermsPage />} />
+          <Route path="/impressum" element={<ImpressumPage />} />
+          <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
+        </Route>
+        
+        {/* Catch-all */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <ReviewRequestTrigger />
-          <Routes>
-            {/* Auth pages with layout but no login required */}
-            <Route element={<AppLayout />}>
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-            </Route>
-            
-            {/* Admin pages with admin layout and guard */}
-            <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="partners" element={<AdminPartners />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="badges" element={<AdminBadges />} />
-              <Route path="radio" element={<AdminRadioTiers />} />
-              <Route path="airdrops" element={<AdminAirDrops />} />
-            </Route>
-            
-            {/* Partner portal with partner layout and guard */}
-            <Route path="/partner-portal" element={<PartnerGuard><PartnerLayout /></PartnerGuard>}>
-              <Route index element={<PartnerDashboard />} />
-              <Route path="rewards" element={<PartnerRewards />} />
-              <Route path="redemptions" element={<PartnerRedemptions />} />
-              <Route path="reviews" element={<PartnerReviews />} />
-            </Route>
-            {/* All other pages with layout */}
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/rewards" element={<RewardsPage />} />
-              <Route path="/rewards/:id" element={<RewardDetailPage />} />
-              <Route path="/code" element={<CodePage />} />
-              <Route path="/partner" element={<PartnerPage />} />
-              <Route path="/partner/:id" element={<PartnerDetailPage />} />
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
-              <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
-              <Route path="/referral" element={<ReferralPage />} />
-              <Route path="/badges" element={<BadgesPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/agb" element={<LegalTermsPage />} />
-              <Route path="/impressum" element={<ImpressumPage />} />
-              <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
-            </Route>
-            
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <AppContent />
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
