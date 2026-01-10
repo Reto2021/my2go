@@ -13,8 +13,8 @@ import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucid
 // Map reward_type to category labels
 const categories = [
   { id: 'all', label: 'Alle' },
-  { id: 'fixed_discount', label: '€ Rabatt' },
-  { id: 'percent_discount', label: '% Rabatt' },
+  { id: 'fixed_discount', label: 'CHF-Rabatt' },
+  { id: 'percent_discount', label: '%-Rabatt' },
   { id: 'free_item', label: 'Produkte' },
   { id: 'experience', label: 'Erlebnisse' },
   { id: 'topup_bonus', label: 'Bonus' },
