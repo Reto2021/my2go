@@ -472,8 +472,16 @@ export default function RedemptionDetailPage() {
 
   return (
     <div className="min-h-screen pb-24 bg-background">
-      {/* Confetti Animation */}
-      <Confetti isActive={showConfetti} duration={4000} particleCount={60} />
+      {/* Confetti Animation with Success Message */}
+      <Confetti 
+        isActive={showConfetti} 
+        duration={4000} 
+        particleCount={60}
+        showMessage={true}
+        message="🎉 Erfolgreich eingelöst!"
+        subMessage="Genieße deinen Vorteil!"
+        playSound={true}
+      />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50">
         <div className="container py-4 flex items-center gap-3">
