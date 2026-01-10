@@ -404,7 +404,7 @@ export async function redeemReward(
     return { redemption: null, error: 'Fehler beim Generieren des Codes' };
   }
   const redemptionCode = codeData as string;
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 60 minutes validity
   
   // 3. Create redemption
   const { data: redemption, error: redemptionError } = await supabase
