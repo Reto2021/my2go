@@ -7,11 +7,9 @@ import {
   Star,
   MessageSquare,
   Coins,
-  TrendingUp
+  TrendingUp,
+  ChevronRight
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { usePartner } from '@/components/partner/PartnerGuard';
 import { 
   getPartnerStats, 
@@ -22,9 +20,10 @@ import {
   DailyStats
 } from '@/lib/partner-helpers';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { 
   AreaChart, 
   Area, 
@@ -40,6 +39,9 @@ import {
 
 export default function PartnerDashboard() {
   const { partnerInfo } = usePartner();
+  const location = useLocation();
+  const queryString = location.search;
+  
   const [stats, setStats] = useState<PartnerStats | null>(null);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [recentRedemptions, setRecentRedemptions] = useState<RedemptionWithDetails[]>([]);
@@ -79,32 +81,32 @@ export default function PartnerDashboard() {
 
   const statCards = [
     {
-      title: 'Offene Einlösungen',
+      title: 'Offen',
       value: stats?.pendingRedemptions || 0,
       icon: Clock,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100',
+      color: 'text-warning',
+      bgColor: 'bg-warning/20',
     },
     {
-      title: 'Abgeschlossen',
+      title: 'Eingelöst',
       value: stats?.completedRedemptions || 0,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      color: 'text-success',
+      bgColor: 'bg-success/20',
     },
     {
       title: 'Bewertungen',
       value: stats?.totalReviews || 0,
       icon: MessageSquare,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-primary',
+      bgColor: 'bg-primary/20',
     },
     {
-      title: 'Taler eingelöst',
+      title: 'Taler',
       value: stats?.totalTalerRedeemed || 0,
       icon: Coins,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-100',
+      color: 'text-accent',
+      bgColor: 'bg-accent/20',
     },
   ];
 
@@ -115,259 +117,218 @@ export default function PartnerDashboard() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 animate-in">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold">Willkommen zurück!</h1>
-        <p className="text-muted-foreground">
-          Hier ist ein Überblick über dein Partner-Portal.
+        <h1 className="text-xl font-bold">Willkommen zurück!</h1>
+        <p className="text-sm text-muted-foreground">
+          Dein Partner-Überblick auf einen Blick.
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Grid - 2x2 on mobile */}
+      <div className="grid grid-cols-2 gap-3">
         {statCards.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.title}</p>
-                </div>
+          <div 
+            key={stat.title}
+            className="card-base p-3"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className={cn('p-2 rounded-xl', stat.bgColor)}>
+                <stat.icon className={cn('h-4 w-4', stat.color)} />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-xl font-bold">{stat.value}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{stat.title}</p>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Rating Overview */}
+      {/* Rating Overview - Compact */}
       {stats && stats.totalReviews > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              Bewertungsübersicht
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-8">
-              <div className="text-center">
-                <div className="flex items-center gap-1 justify-center">
-                  <span className="text-4xl font-bold">
-                    {stats.avgRating?.toFixed(1) || '-'}
-                  </span>
-                  <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                </div>
-                <p className="text-sm text-muted-foreground">Durchschnitt</p>
+        <div className="card-base p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <span className="text-2xl font-bold">
+                  {stats.avgRating?.toFixed(1) || '-'}
+                </span>
+                <Star className="h-5 w-5 text-accent fill-accent" />
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.totalReviews > 0 
-                    ? Math.round((stats.positiveReviews / stats.totalReviews) * 100) 
-                    : 0}%
-                </p>
-                <p className="text-sm text-muted-foreground">Positive (4-5★)</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold">{stats.totalReviews}</p>
-                <p className="text-sm text-muted-foreground">Gesamt</p>
+              <div className="text-sm text-muted-foreground">
+                <span className="text-success font-medium">
+                  {Math.round((stats.positiveReviews / stats.totalReviews) * 100)}%
+                </span> positiv
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <Link 
+              to={`/partner-portal/reviews${queryString}`}
+              className="text-sm text-primary font-medium flex items-center gap-1"
+            >
+              Details <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
       )}
 
-      {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Redemptions & Reviews Chart */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Aktivität (14 Tage)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="dateLabel" 
-                  className="text-xs" 
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis className="text-xs" tick={{ fontSize: 10 }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--background))', 
-                    border: '1px solid hsl(var(--border))' 
-                  }}
-                  labelFormatter={(label) => `Datum: ${label}`}
-                />
-                <Legend />
-                <Bar 
-                  dataKey="redemptions" 
-                  name="Einlösungen" 
-                  fill="hsl(var(--primary))" 
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="reviews" 
-                  name="Bewertungen" 
-                  fill="hsl(142, 76%, 36%)" 
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Taler Revenue Chart */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Coins className="h-5 w-5 text-amber-600" />
-              Taler-Umsatz (14 Tage)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="dateLabel" 
-                  className="text-xs" 
-                  tick={{ fontSize: 10 }}
-                />
-                <YAxis className="text-xs" tick={{ fontSize: 10 }} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--background))', 
-                    border: '1px solid hsl(var(--border))' 
-                  }}
-                  formatter={(value) => [`${value} Taler`, 'Eingelöst']}
-                  labelFormatter={(label) => `Datum: ${label}`}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="taler" 
-                  name="Taler" 
-                  stroke="hsl(43, 96%, 56%)" 
-                  fill="hsl(43, 96%, 56%)" 
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {partnerInfo?.canConfirmRedemptions && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <QrCode className="h-5 w-5" />
-                Einlösungen bestätigen
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                {stats?.pendingRedemptions || 0} Einlösungen warten auf Bestätigung.
-              </p>
-              <Button asChild>
-                <Link to="/partner-portal/redemptions">
-                  Zu den Einlösungen
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <Link 
+            to={`/partner-portal/redemptions${queryString}`}
+            className="card-base p-4 hover:bg-muted/50 transition-colors"
+          >
+            <QrCode className="h-6 w-6 text-primary mb-2" />
+            <p className="font-semibold text-sm">Einlösungen</p>
+            <p className="text-xs text-muted-foreground">
+              {stats?.pendingRedemptions || 0} offen
+            </p>
+          </Link>
         )}
         
         {partnerInfo?.canManageRewards && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5" />
-                Rewards verwalten
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Du hast {stats?.activeRewards || 0} aktive Rewards.
-              </p>
-              <Button asChild variant="outline">
-                <Link to="/partner-portal/rewards">
-                  Rewards bearbeiten
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <Link 
+            to={`/partner-portal/rewards${queryString}`}
+            className="card-base p-4 hover:bg-muted/50 transition-colors"
+          >
+            <Gift className="h-6 w-6 text-accent mb-2" />
+            <p className="font-semibold text-sm">Rewards</p>
+            <p className="text-xs text-muted-foreground">
+              {stats?.activeRewards || 0} aktiv
+            </p>
+          </Link>
         )}
       </div>
 
-      {/* Recent Redemptions */}
-      {partnerInfo?.canConfirmRedemptions && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Letzte Einlösungen</CardTitle>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/partner-portal/redemptions">Alle anzeigen</Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {recentRedemptions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Noch keine Einlösungen vorhanden.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {recentRedemptions.map((redemption) => (
-                  <div 
-                    key={redemption.id} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <Gift className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">
-                          {redemption.reward?.title || 'Unbekannter Reward'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {redemption.user?.display_name || redemption.user?.email || 'Unbekannter Nutzer'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge 
-                        variant={
-                          redemption.status === 'pending' ? 'secondary' :
-                          redemption.status === 'used' ? 'default' :
-                          'destructive'
-                        }
-                      >
-                        {redemption.status === 'pending' ? 'Offen' :
-                         redemption.status === 'used' ? 'Eingelöst' :
-                         redemption.status === 'expired' ? 'Abgelaufen' : 'Storniert'}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(redemption.created_at), 'dd.MM.yy HH:mm', { locale: de })}
-                      </p>
-                    </div>
+      {/* Activity Chart - Simplified for mobile */}
+      <div className="card-base p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <h3 className="font-semibold text-sm">Aktivität (14 Tage)</h3>
+        </div>
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis 
+              dataKey="dateLabel" 
+              tick={{ fontSize: 9 }}
+              interval="preserveStartEnd"
+            />
+            <YAxis tick={{ fontSize: 9 }} width={24} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--background))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}
+            />
+            <Bar 
+              dataKey="redemptions" 
+              name="Einlösungen" 
+              fill="hsl(var(--primary))" 
+              radius={[3, 3, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Taler Chart */}
+      <div className="card-base p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Coins className="h-4 w-4 text-accent" />
+          <h3 className="font-semibold text-sm">Taler-Umsatz</h3>
+        </div>
+        <ResponsiveContainer width="100%" height={120}>
+          <AreaChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis 
+              dataKey="dateLabel" 
+              tick={{ fontSize: 9 }}
+              interval="preserveStartEnd"
+            />
+            <YAxis tick={{ fontSize: 9 }} width={30} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--background))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}
+              formatter={(value) => [`${value} Taler`, 'Eingelöst']}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="taler" 
+              stroke="hsl(var(--accent))" 
+              fill="hsl(var(--accent))" 
+              fillOpacity={0.2}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Recent Redemptions - Compact List */}
+      {partnerInfo?.canConfirmRedemptions && recentRedemptions.length > 0 && (
+        <div className="card-base overflow-hidden">
+          <div className="flex items-center justify-between p-4 pb-2">
+            <h3 className="font-semibold text-sm">Letzte Einlösungen</h3>
+            <Link 
+              to={`/partner-portal/redemptions${queryString}`}
+              className="text-xs text-primary font-medium"
+            >
+              Alle anzeigen
+            </Link>
+          </div>
+          
+          <div className="divide-y divide-border">
+            {recentRedemptions.map((redemption) => (
+              <div 
+                key={redemption.id} 
+                className="flex items-center justify-between px-4 py-3"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0',
+                    redemption.status === 'pending' ? 'bg-warning/20' :
+                    redemption.status === 'used' ? 'bg-success/20' : 'bg-muted'
+                  )}>
+                    <Gift className={cn(
+                      'h-4 w-4',
+                      redemption.status === 'pending' ? 'text-warning' :
+                      redemption.status === 'used' ? 'text-success' : 'text-muted-foreground'
+                    )} />
                   </div>
-                ))}
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {redemption.reward?.title || 'Reward'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {redemption.user?.display_name || redemption.user?.email || 'Nutzer'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0 ml-2">
+                  <span className={cn(
+                    'inline-block px-2 py-0.5 rounded text-[10px] font-medium',
+                    redemption.status === 'pending' ? 'bg-warning/20 text-warning' :
+                    redemption.status === 'used' ? 'bg-success/20 text-success' :
+                    'bg-muted text-muted-foreground'
+                  )}>
+                    {redemption.status === 'pending' ? 'Offen' :
+                     redemption.status === 'used' ? 'Eingelöst' :
+                     redemption.status === 'expired' ? 'Abgelaufen' : 'Storniert'}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {format(new Date(redemption.created_at), 'dd.MM HH:mm', { locale: de })}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
