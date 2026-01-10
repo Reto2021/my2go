@@ -124,6 +124,7 @@ function AppContent() {
         
         {/* Go Partner Sales Funnel */}
         <Route path="/go" element={<GoLayout />}>
+          <Route index element={<PartnerLandingPage />} />
           <Route path="partner" element={<PartnerLandingPage />} />
           <Route path="partner/pricing" element={<PartnerPricingPage />} />
           <Route path="partner/checkout" element={<PartnerCheckoutPage />} />
