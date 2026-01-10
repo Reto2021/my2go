@@ -186,7 +186,7 @@ export function RadioHeader() {
               "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
               isPlaying 
                 ? "bg-accent text-accent-foreground" 
-                : "bg-secondary-foreground/20 text-secondary-foreground hover:bg-secondary-foreground/30",
+                : "bg-accent text-accent-foreground animate-pulse-play",
               isLoading && "opacity-60"
             )}
             aria-label={isPlaying ? 'Pause' : 'Abspielen'}

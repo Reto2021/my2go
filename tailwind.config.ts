@@ -142,8 +142,14 @@ export default {
           "100%": { transform: "translate(-30%, -30%) rotate(360deg)" },
         },
         "brush-stroke": {
-          "0%": { transform: "scaleX(0)", transformOrigin: "left" },
-          "100%": { transform: "scaleX(1)", transformOrigin: "left" },
+          "0%": { transform: "scaleX(0) rotate(-1deg)", transformOrigin: "left", opacity: "0.8" },
+          "50%": { transform: "scaleX(1.05) rotate(0.5deg)", opacity: "1" },
+          "75%": { transform: "scaleX(0.98) rotate(-0.3deg)", opacity: "1" },
+          "100%": { transform: "scaleX(1) rotate(-0.5deg)", transformOrigin: "left", opacity: "1" },
+        },
+        "pulse-play": {
+          "0%, 100%": { transform: "scale(1)", boxShadow: "0 0 0 0 hsl(44 98% 49% / 0.4)" },
+          "50%": { transform: "scale(1.05)", boxShadow: "0 0 0 8px hsl(44 98% 49% / 0)" },
         },
       },
       animation: {
@@ -161,7 +167,8 @@ export default {
         "marquee": "marquee 12s linear infinite",
         "marquee-slow": "marquee 25s linear infinite",
         "gradient-shift": "gradient-shift 30s linear infinite",
-        "brush-stroke": "brush-stroke 0.6s ease-out forwards",
+        "brush-stroke": "brush-stroke 0.7s ease-out forwards",
+        "pulse-play": "pulse-play 2s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
