@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Download, Share, Plus } from 'lucide-react';
+import { X, Download, Share, Plus, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -8,11 +8,18 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const VISIT_COUNT_KEY = 'pwa-visit-count';
+const LAST_VISIT_KEY = 'pwa-last-visit';
+const INSTALL_DISMISSED_KEY = 'pwa-install-dismissed';
+const MIN_VISITS_TO_SHOW = 3; // Show prompt after 3 visits
+const DISMISS_COOLDOWN_DAYS = 7; // Don't show again for 7 days after dismiss
+
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [visitCount, setVisitCount] = useState(0);
 
   useEffect(() => {
     // Check if already installed
@@ -20,37 +27,51 @@ export function InstallPrompt() {
       || (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
 
+    // Don't track visits if already installed
+    if (standalone) return;
+
     // Detect iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(iOS);
+
+    // Track visit count (count unique sessions, not page loads)
+    const lastVisit = localStorage.getItem(LAST_VISIT_KEY);
+    const lastVisitTime = lastVisit ? parseInt(lastVisit) : 0;
+    const hoursSinceLastVisit = (Date.now() - lastVisitTime) / (1000 * 60 * 60);
+    
+    let currentVisitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0');
+    
+    // Count as new visit if more than 1 hour since last visit
+    if (hoursSinceLastVisit > 1) {
+      currentVisitCount += 1;
+      localStorage.setItem(VISIT_COUNT_KEY, currentVisitCount.toString());
+      localStorage.setItem(LAST_VISIT_KEY, Date.now().toString());
+    }
+    
+    setVisitCount(currentVisitCount);
+
+    // Check if user dismissed before
+    const dismissed = localStorage.getItem(INSTALL_DISMISSED_KEY);
+    const dismissedTime = dismissed ? parseInt(dismissed) : 0;
+    const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+    const canShowPrompt = daysSinceDismissed > DISMISS_COOLDOWN_DAYS && currentVisitCount >= MIN_VISITS_TO_SHOW;
 
     // Listen for install prompt (Android/Chrome)
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Check if user dismissed before
-      const dismissed = localStorage.getItem('pwa-install-dismissed');
-      const dismissedTime = dismissed ? parseInt(dismissed) : 0;
-      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
-      
-      // Show after 3 seconds if not dismissed in last 7 days
-      if (daysSinceDismissed > 7) {
-        setTimeout(() => setShowPrompt(true), 3000);
+      // Show after delay if conditions are met
+      if (canShowPrompt) {
+        setTimeout(() => setShowPrompt(true), 2000);
       }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // For iOS, show prompt after delay if not installed
-    if (iOS && !standalone) {
-      const dismissed = localStorage.getItem('pwa-install-dismissed');
-      const dismissedTime = dismissed ? parseInt(dismissed) : 0;
-      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
-      
-      if (daysSinceDismissed > 7) {
-        setTimeout(() => setShowPrompt(true), 5000);
-      }
+    // For iOS, show prompt after delay if conditions are met
+    if (iOS && !standalone && canShowPrompt) {
+      setTimeout(() => setShowPrompt(true), 3000);
     }
 
     return () => {
@@ -71,7 +92,7 @@ export function InstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+    localStorage.setItem(INSTALL_DISMISSED_KEY, Date.now().toString());
   };
 
   // Don't show if already installed
@@ -109,11 +130,19 @@ export function InstallPrompt() {
 
               {/* Content */}
               <div className="flex-1 min-w-0 pr-4">
-                <h3 className="font-bold text-foreground text-sm">My 2Go installieren</h3>
+                <h3 className="font-bold text-foreground text-sm">Radio 2Go installieren</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Füge die App zum Homescreen hinzu für schnellen Zugriff
+                  Schneller Zugriff auf Radio, Taler & Gutscheine
                 </p>
               </div>
+            </div>
+
+            {/* Visit count indicator */}
+            <div className="flex items-center gap-2 mt-3 mb-3 px-2 py-1.5 rounded-lg bg-accent/10">
+              <Smartphone className="h-3.5 w-3.5 text-accent" />
+              <span className="text-xs text-accent font-medium">
+                Schon {visitCount}x besucht – Zeit für die App! 🎉
+              </span>
             </div>
 
             {/* Actions */}
