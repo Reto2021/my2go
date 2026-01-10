@@ -396,8 +396,13 @@ export async function redeemReward(
     return { redemption: null, error: 'Nicht genügend Taler' };
   }
   
-  // 2. Generate redemption code
-  const redemptionCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+  // 2. Generate cryptographically secure redemption code using database function
+  const { data: codeData, error: codeError } = await supabase.rpc('generate_redemption_code');
+  if (codeError || !codeData) {
+    console.error('Error generating redemption code:', codeError);
+    return { redemption: null, error: 'Fehler beim Generieren des Codes' };
+  }
+  const redemptionCode = codeData as string;
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   
   // 3. Create redemption
