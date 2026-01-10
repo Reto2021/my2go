@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
+import { useWeather } from '@/hooks/useWeather';
 import { getRewards, getPartners, Reward, Partner } from '@/lib/supabase-helpers';
 import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
@@ -10,6 +11,8 @@ import { PageLoader } from '@/components/ui/loading-spinner';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
+import { WeatherBackground, getWeatherMessage } from '@/components/weather/WeatherBackground';
+import { DigitalClock } from '@/components/ui/digital-clock';
 import {
   Gift, 
   MapPin, 
@@ -183,32 +186,59 @@ interface BrowseModeHomeProps {
 }
 
 function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
+  // Get user's approximate location for weather (uses IP-based geolocation as fallback)
+  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
+  useEffect(() => {
+    // Try to get rough location for weather
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setGeoLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {
+          // Fallback to Zurich
+          setGeoLocation({ lat: 47.3769, lng: 8.5417 });
+        },
+        { timeout: 5000, maximumAge: 300000 }
+      );
+    } else {
+      setGeoLocation({ lat: 47.3769, lng: 8.5417 });
+    }
+  }, []);
+  
+  const { weather } = useWeather(geoLocation?.lat, geoLocation?.lng);
+  
   return (
     <div className="min-h-screen bg-background -mt-20">
-      {/* Hero Section with Skyline */}
-      <section className="hero-section text-secondary pt-20">
-        {/* City Skyline */}
-        <div className="skyline-container">
-          <div className="skyline-distant" />
-          <div className="skyline-mid" />
-          <div className="skyline-front" />
-        </div>
+      {/* Hero Section with Dynamic Weather Background */}
+      <section className="relative min-h-[420px] text-white pt-20 overflow-hidden">
+        {/* Dynamic Weather Background */}
+        {weather && (
+          <WeatherBackground weatherType={weather.icon} />
+        )}
         
-        {/* Clouds at various heights */}
-        <div className="clouds-container">
-          <div className="cloud cloud-1" />
-          <div className="cloud cloud-2" />
-          <div className="cloud cloud-3" />
-          <div className="cloud cloud-4" />
-          <div className="cloud cloud-5" />
-          <div className="cloud cloud-6" />
-          <div className="cloud cloud-7" />
-          <div className="cloud cloud-8" />
+        {/* City Skyline (overlay) */}
+        <div className="skyline-container z-[5]">
+          <div className="skyline-distant opacity-30" />
+          <div className="skyline-mid opacity-40" />
+          <div className="skyline-front opacity-50" />
         </div>
         
         <div className="container relative z-10 pt-6 pb-32">
+          {/* Digital Clock & Weather Info */}
+          {weather && (
+            <div className="mb-6 animate-in">
+              <DigitalClock 
+                temperature={weather.temperature}
+                weatherDescription={weather.description}
+              />
+              <p className="text-sm text-white/70 mt-2 drop-shadow-sm">
+                {getWeatherMessage(weather.icon)}
+              </p>
+            </div>
+          )}
+          
           <div className="animate-in">
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
               Hör 2Go.<br />
               Sammle Taler.<br />
               <span className="relative inline-block">
@@ -217,7 +247,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
               </span>
             </h1>
             
-            <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
+            <p className="text-white/80 text-lg mb-8 max-w-xs leading-relaxed drop-shadow-sm">
               Das Bonusprogramm von Radio 2Go. Bei lokalen Partnern sammeln, exklusive Prämien einlösen.
             </p>
             
