@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Shield, HelpCircle, Radio } from "lucide-react";
+import { Check, ArrowRight, Shield, HelpCircle, Radio, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -16,45 +16,68 @@ export default function PartnerPricingPage() {
   const planOrder: PlanId[] = ['starter', 'growth', 'radio'];
 
   return (
-    <div className="py-12 md:py-20">
-      <div className="container max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <motion.div 
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Wähle dein Paket
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-2">
-            Alle Pakete inkl. 30 Tage Trial. Die erste Monatsgebühr wird erst nach dem Trial fällig.
-          </p>
-          <p className="text-sm text-muted-foreground mb-8">
-            Alle Preise exkl. MwSt (8.1%)
-          </p>
-          
-          {/* Billing Toggle */}
-          <div className="inline-flex items-center gap-3 p-1 rounded-full bg-muted">
-            <button
-              onClick={() => setIsYearly(false)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                !isYearly ? 'bg-background shadow-sm' : 'text-muted-foreground'
-              }`}
-            >
-              Monatlich
-            </button>
-            <button
-              onClick={() => setIsYearly(true)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                isYearly ? 'bg-background shadow-sm' : 'text-muted-foreground'
-              }`}
-            >
-              Jährlich
-              <span className="ml-1.5 text-xs text-green-600 font-semibold">-17%</span>
-            </button>
-          </div>
-        </motion.div>
+    <div className="overflow-hidden">
+      {/* Hero Section - Compact */}
+      <section className="hero-section relative py-12 md:py-16 overflow-hidden">
+        {/* Clouds */}
+        <div className="clouds-container opacity-50">
+          <div className="cloud cloud-2" />
+          <div className="cloud cloud-4" />
+          <div className="cloud cloud-6" />
+        </div>
+        
+        <div className="container relative z-10 max-w-6xl mx-auto px-4">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <span className="badge-accent mb-4">
+              <Sparkles className="w-3.5 h-3.5" />
+              Preise & Pakete
+            </span>
+            
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 text-secondary">
+              Wähle dein Paket
+            </h1>
+            <p className="text-lg text-secondary/80 max-w-2xl mx-auto mb-2">
+              Alle Pakete inkl. 30 Tage Trial. Die erste Monatsgebühr wird erst nach dem Trial fällig.
+            </p>
+            <p className="text-sm text-secondary/60 mb-8">
+              Alle Preise exkl. MwSt (8.1%)
+            </p>
+            
+            {/* Billing Toggle */}
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/90 backdrop-blur-sm shadow-lg">
+              <button
+                onClick={() => setIsYearly(false)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                  !isYearly ? 'bg-secondary text-white shadow-md' : 'text-secondary/70 hover:text-secondary'
+                }`}
+              >
+                Monatlich
+              </button>
+              <button
+                onClick={() => setIsYearly(true)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                  isYearly ? 'bg-secondary text-white shadow-md' : 'text-secondary/70 hover:text-secondary'
+                }`}
+              >
+                Jährlich
+                <span className="ml-1.5 text-xs text-green-500 font-bold">-17%</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Mini Skyline */}
+        <div className="skyline-container h-[80px] opacity-30">
+          <div className="skyline-front" />
+        </div>
+      </section>
+      
+      <div className="py-12 md:py-16 bg-background">
+        <div className="container max-w-6xl mx-auto px-4">
 
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-16">
@@ -247,6 +270,7 @@ export default function PartnerPricingPage() {
               Häufige Fragen ansehen
             </Link>
           </Button>
+        </div>
         </div>
       </div>
     </div>
