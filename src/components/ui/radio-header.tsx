@@ -220,7 +220,7 @@ export function RadioHeader() {
             ) : (
               <div className="flex items-center gap-2">
                 <p className="text-xs text-secondary-foreground/70 font-medium">
-                  Radio 2Go streamen
+                  Radio 2Go hören
                 </p>
                 <Expand className="h-4 w-4 text-accent flex-shrink-0" />
               </div>
