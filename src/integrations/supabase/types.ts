@@ -311,6 +311,7 @@ export type Database = {
           referral_count: number | null
           referred_by: string | null
           show_on_leaderboard: boolean | null
+          streak_freezes: number
           terms_accepted_at: string | null
           updated_at: string
         }
@@ -336,6 +337,7 @@ export type Database = {
           referral_count?: number | null
           referred_by?: string | null
           show_on_leaderboard?: boolean | null
+          streak_freezes?: number
           terms_accepted_at?: string | null
           updated_at?: string
         }
@@ -361,6 +363,7 @@ export type Database = {
           referral_count?: number | null
           referred_by?: string | null
           show_on_leaderboard?: boolean | null
+          streak_freezes?: number
           terms_accepted_at?: string | null
           updated_at?: string
         }
@@ -852,6 +855,7 @@ export type Database = {
         Args: { _referral_code: string; _referred_user_id: string }
         Returns: Json
       }
+      purchase_streak_freeze: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       partner_admin_role: "owner" | "manager" | "staff"

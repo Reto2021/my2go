@@ -9,6 +9,8 @@ interface StreakStatus {
   streak_active: boolean;
   next_bonus: number;
   last_claim_date: string | null;
+  streak_freezes: number;
+  freeze_cost: number;
 }
 
 interface ClaimResult {
@@ -18,6 +20,18 @@ interface ClaimResult {
   longest_streak?: number;
   bonus: number;
   message: string;
+  used_freeze?: boolean;
+  freezes_remaining?: number;
+}
+
+interface PurchaseFreezeResult {
+  success: boolean;
+  error?: string;
+  freezes?: number;
+  cost?: number;
+  message?: string;
+  required?: number;
+  balance?: number;
 }
 
 export function useStreak() {
@@ -55,11 +69,30 @@ export function useStreak() {
     },
   });
 
+  // Purchase streak freeze
+  const purchaseFreeze = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      const { data, error } = await supabase.rpc("purchase_streak_freeze", { _user_id: user.id });
+      if (error) throw error;
+      return data as unknown as PurchaseFreezeResult;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ["streak-status"] });
+        refreshBalance();
+      }
+    },
+  });
+
   return {
     streakStatus,
     isLoading,
     claimStreak: claimStreak.mutate,
     claimResult: claimStreak.data,
     isClaiming: claimStreak.isPending,
+    purchaseFreeze: purchaseFreeze.mutate,
+    purchaseResult: purchaseFreeze.data,
+    isPurchasing: purchaseFreeze.isPending,
   };
 }

@@ -1,17 +1,27 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Zap, Gift, Check, Loader2 } from "lucide-react";
+import { Flame, Zap, Gift, Check, Loader2, Snowflake, ShoppingCart } from "lucide-react";
 import { useStreak } from "@/hooks/useStreak";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
 import { toast } from "sonner";
 import talerCoin from "@/assets/taler-coin.png";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function DailyStreakCard() {
-  const { user } = useAuth();
-  const { streakStatus, isLoading, claimStreak, isClaiming } = useStreak();
+  const { user, balance } = useAuth();
+  const { streakStatus, isLoading, claimStreak, isClaiming, purchaseFreeze, isPurchasing } = useStreak();
   const [showConfetti, setShowConfetti] = useState(false);
   const [claimedBonus, setClaimedBonus] = useState<number | null>(null);
+  const [showFreezeDialog, setShowFreezeDialog] = useState(false);
 
   if (!user || isLoading) {
     return null;
@@ -27,9 +37,17 @@ export function DailyStreakCard() {
         if (data.success) {
           setClaimedBonus(data.bonus);
           setShowConfetti(true);
-          toast.success(`+${data.bonus} Taler erhalten!`, {
-            description: `Tag ${data.current_streak} Streak!`,
-          });
+          
+          if (data.used_freeze) {
+            toast.success(`Streak gerettet! +${data.bonus} Taler`, {
+              description: `Freeze verwendet! Noch ${data.freezes_remaining} übrig.`,
+            });
+          } else {
+            toast.success(`+${data.bonus} Taler erhalten!`, {
+              description: `Tag ${data.current_streak} Streak!`,
+            });
+          }
+          
           setTimeout(() => {
             setShowConfetti(false);
             setClaimedBonus(null);
@@ -42,8 +60,29 @@ export function DailyStreakCard() {
     });
   };
 
+  const handlePurchaseFreeze = () => {
+    purchaseFreeze(undefined, {
+      onSuccess: (data) => {
+        if (data.success) {
+          toast.success("Streak-Freeze gekauft!", {
+            description: `Du hast jetzt ${data.freezes} Freeze${data.freezes !== 1 ? 's' : ''}.`,
+          });
+          setShowFreezeDialog(false);
+        } else {
+          toast.error(data.error || "Kauf fehlgeschlagen");
+        }
+      },
+      onError: () => {
+        toast.error("Fehler beim Kauf");
+      },
+    });
+  };
+
   const currentStreak = streakStatus.current_streak || 0;
   const canClaim = streakStatus.can_claim;
+  const freezes = streakStatus.streak_freezes || 0;
+  const freezeCost = streakStatus.freeze_cost || 50;
+  const canAffordFreeze = (balance?.taler_balance || 0) >= freezeCost;
 
   // Generate streak day indicators (show 7 days)
   const days = Array.from({ length: 7 }, (_, i) => {
@@ -80,16 +119,28 @@ export function DailyStreakCard() {
             </div>
           </div>
           
-          {currentStreak > 0 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20"
+          <div className="flex items-center gap-2">
+            {/* Freeze counter */}
+            <motion.button
+              onClick={() => setShowFreezeDialog(true)}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 transition-colors"
+              title="Streak-Freezes kaufen"
             >
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span className="font-bold text-orange-500">{currentStreak}</span>
-            </motion.div>
-          )}
+              <Snowflake className="h-3.5 w-3.5 text-sky-400" />
+              <span className="text-xs font-bold text-sky-400">{freezes}</span>
+            </motion.button>
+            
+            {currentStreak > 0 && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20"
+              >
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="font-bold text-orange-500">{currentStreak}</span>
+              </motion.div>
+            )}
+          </div>
         </div>
 
         {/* Day indicators */}
@@ -182,6 +233,74 @@ export function DailyStreakCard() {
           </p>
         )}
       </motion.div>
+
+      {/* Freeze Purchase Dialog */}
+      <Dialog open={showFreezeDialog} onOpenChange={setShowFreezeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Snowflake className="h-5 w-5 text-sky-400" />
+              Streak-Freeze kaufen
+            </DialogTitle>
+            <DialogDescription>
+              Ein Streak-Freeze schützt deinen Streak, wenn du einen Tag verpasst. 
+              Der Freeze wird automatisch verwendet, wenn du nach einem verpassten Tag wieder beanspruchst.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Current freezes */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-sky-500/10 border border-sky-500/20">
+              <span className="text-sm text-muted-foreground">Deine Freezes:</span>
+              <span className="font-bold text-sky-400">{freezes}</span>
+            </div>
+            
+            {/* Price */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm text-muted-foreground">Preis pro Freeze:</span>
+              <div className="flex items-center gap-1">
+                <img src={talerCoin} alt="" className="w-4 h-4" />
+                <span className="font-bold">{freezeCost} Taler</span>
+              </div>
+            </div>
+            
+            {/* Balance */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <span className="text-sm text-muted-foreground">Dein Guthaben:</span>
+              <div className="flex items-center gap-1">
+                <img src={talerCoin} alt="" className="w-4 h-4" />
+                <span className={`font-bold ${!canAffordFreeze ? 'text-destructive' : ''}`}>
+                  {balance?.taler_balance || 0} Taler
+                </span>
+              </div>
+            </div>
+            
+            {!canAffordFreeze && (
+              <p className="text-xs text-destructive text-center">
+                Du brauchst mindestens {freezeCost} Taler für einen Freeze.
+              </p>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFreezeDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handlePurchaseFreeze}
+              disabled={!canAffordFreeze || isPurchasing}
+              className="bg-gradient-to-r from-sky-500 to-cyan-500 hover:opacity-90"
+            >
+              {isPurchasing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <ShoppingCart className="h-4 w-4 mr-2" />
+              )}
+              Freeze kaufen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
