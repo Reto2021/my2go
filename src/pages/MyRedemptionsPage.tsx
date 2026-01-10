@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode, Coins } from 'lucide-react';
+import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode, Coins, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -132,14 +132,23 @@ export default function MyRedemptionsPage() {
   }
 
   return (
-    <div className="container pb-24">
+    <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
-      <div className="py-6">
-        <h1 className="text-2xl font-bold text-foreground">Meine Gutscheine</h1>
-        <p className="text-muted-foreground mt-1">
-          Aktivierte Gutscheine und deren Status
-        </p>
-      </div>
+      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+        <div className="container py-4 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-lg font-semibold">Meine Gutscheine</h1>
+            <p className="text-sm text-muted-foreground">
+              Aktivierte Gutscheine und deren Status
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className="container py-6">
 
       {/* Info Box explaining the flow */}
       <Card className="mb-6 bg-muted/30 border-border/50">
@@ -329,6 +338,7 @@ export default function MyRedemptionsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
