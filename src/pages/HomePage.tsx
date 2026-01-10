@@ -10,6 +10,7 @@ import { PageLoader } from '@/components/ui/loading-spinner';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
+import { LiveActivityFeed } from '@/components/social-proof/LiveActivityFeed';
 import {
   Gift, 
   MapPin, 
@@ -400,6 +401,11 @@ function SessionModeHome({
         
         {/* Recent Badges Bar */}
         <RecentBadgesBar />
+        
+        {/* Live Activity Feed - Social Proof */}
+        <div className="card-base p-4">
+          <LiveActivityFeed maxItems={3} />
+        </div>
       </section>
       
       {/* Quick Actions */}

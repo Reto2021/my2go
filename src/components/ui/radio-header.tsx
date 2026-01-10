@@ -11,6 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
 import { ClockWeatherWidget } from './weather-widget';
+import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
 
 function Equalizer({ className }: { className?: string }) {
   return (
@@ -236,6 +237,8 @@ export function RadioHeader() {
                   <span className="text-secondary-foreground/60 hidden sm:inline">Du hörst: </span>
                   {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
                 </Marquee>
+                {/* Live Listener Count */}
+                <LiveListenerCount size="sm" showLabel={false} className="hidden sm:flex" />
                 {/* Expand hint */}
                 <Expand className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
               </div>

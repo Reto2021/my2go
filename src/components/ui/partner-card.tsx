@@ -3,14 +3,21 @@ import { cn } from '@/lib/utils';
 import { MapPin, ChevronRight, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
+import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
+import { usePartnerRedemptionCount } from '@/hooks/usePartnerRedemptionCount';
 
 interface PartnerCardProps {
   partner: Partner;
   className?: string;
   showArrow?: boolean;
+  redemptionCount?: number;
 }
 
-export function PartnerCard({ partner, className, showArrow = true }: PartnerCardProps) {
+export function PartnerCard({ partner, className, showArrow = true, redemptionCount }: PartnerCardProps) {
+  // Use provided count or fetch it
+  const { data: fetchedCount } = usePartnerRedemptionCount(partner.id);
+  const displayCount = redemptionCount ?? fetchedCount ?? 0;
+
   // Build full address from components
   const address = [partner.address_street, partner.address_number]
     .filter(Boolean)
@@ -44,7 +51,7 @@ export function PartnerCard({ partner, className, showArrow = true }: PartnerCar
         </p>
         
         {/* Location info & Reviews */}
-        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
           {partner.city && (
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
@@ -58,6 +65,9 @@ export function PartnerCard({ partner, className, showArrow = true }: PartnerCar
               googlePlaceId={partner.google_place_id}
               size="sm"
             />
+          )}
+          {displayCount > 0 && (
+            <RedemptionCountBadge count={displayCount} size="sm" />
           )}
           {partner.is_featured && (
             <span className="text-xs font-semibold text-accent">Featured</span>
