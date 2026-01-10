@@ -102,8 +102,8 @@ export function RadioHeader() {
   // Get real auth data from Supabase AuthContext
   const authContext = useAuthSafe();
   const isAuthenticated = !!authContext?.user;
-  const profile = authContext?.profile;
-  const realBalance = authContext?.balance;
+  const profile = authContext?.profile ?? null;
+  const realBalance = authContext?.balance ?? null;
   const isPartnerAdmin = authContext?.isPartnerAdmin ?? false;
   const partnerInfo = authContext?.partnerInfo ?? null;
   
