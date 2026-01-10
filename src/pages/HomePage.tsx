@@ -9,6 +9,7 @@ import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
+import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
 import {
   Gift, 
   MapPin, 
@@ -363,6 +364,9 @@ function SessionModeHome({
         <div className="animate-in">
           <BalanceCard balance={balance} />
         </div>
+        
+        {/* Leaderboard Invite */}
+        <LeaderboardInviteCard />
         
         {/* Daily Streak Card */}
         <DailyStreakCard />
