@@ -52,13 +52,13 @@ const CRITERIA_TYPES = [
   { value: 'lifetime_earned', label: 'Lebenslange Taler' },
   { value: 'redemption_count', label: 'Einlösungen' },
   { value: 'referral_count', label: 'Empfehlungen' },
-  { value: 'streak_days', label: 'Streak-Tage' },
+  { value: 'streak_days', label: 'Serien-Tage' },
   { value: 'leaderboard_rank', label: 'Leaderboard-Rang' },
 ];
 
 const CATEGORIES = [
   { value: 'general', label: 'Allgemein' },
-  { value: 'streak', label: 'Login-Streak' },
+  { value: 'streak', label: 'Bonus-Serie' },
   { value: 'leaderboard', label: 'Leaderboard' },
   { value: 'collector', label: 'Sammler' },
   { value: 'social', label: 'Social' },
@@ -505,7 +505,7 @@ export default function AdminBadges() {
                 {formData.criteria_type === 'lifetime_earned' && 'Anzahl Taler, die verdient werden müssen'}
                 {formData.criteria_type === 'redemption_count' && 'Anzahl Einlösungen, die getätigt werden müssen'}
                 {formData.criteria_type === 'referral_count' && 'Anzahl Empfehlungen'}
-                {formData.criteria_type === 'streak_days' && 'Anzahl aufeinanderfolgender Tage'}
+                {formData.criteria_type === 'streak_days' && 'Anzahl aufeinanderfolgender Serien-Tage'}
                 {formData.criteria_type === 'leaderboard_rank' && 'Platzierung im Leaderboard (1, 2 oder 3)'}
               </p>
             </div>

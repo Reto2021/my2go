@@ -121,15 +121,15 @@ Deno.serve(async (req) => {
 
       // Create notification payload
       const payload = JSON.stringify({
-        title: '🔥 Streak-Erinnerung!',
-        body: `Dein ${streakDays}-Tage-Streak ist in Gefahr! Hole dir jetzt ${nextBonus} Bonus-Taler, bevor dein Streak zurückgesetzt wird.`,
+        title: '🔥 Serien-Erinnerung!',
+        body: `Deine ${streakDays}-Tage-Serie ist in Gefahr! Hole dir jetzt ${nextBonus} Bonus-Taler, bevor deine Serie zurückgesetzt wird.`,
         icon: '/pwa-192x192.png',
         badge: '/pwa-192x192.png',
         data: {
           url: '/',
-          type: 'streak-reminder',
+          type: 'series-reminder',
         },
-        tag: 'streak-reminder',
+        tag: 'series-reminder',
         requireInteraction: true,
       })
 
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
           
           if (success) {
             sentCount++
-            console.log(`Streak reminder sent to user ${user.id} (${streakDays}-day streak)`)
+            console.log(`Serien-Erinnerung sent to user ${user.id} (${streakDays}-day series)`)
           } else {
             errorCount++
             // Deactivate failed subscription
@@ -159,12 +159,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Streak reminder sending complete. Sent: ${sentCount}, Errors: ${errorCount}`)
+    console.log(`Serien-Erinnerung sending complete. Sent: ${sentCount}, Errors: ${errorCount}`)
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Sent ${sentCount} streak reminders`,
+        message: `Sent ${sentCount} series reminders`,
         sent: sentCount,
         errors: errorCount,
         usersAtRisk: usersAtRisk.length,
