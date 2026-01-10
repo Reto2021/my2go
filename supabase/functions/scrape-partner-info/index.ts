@@ -5,6 +5,59 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to search for Google Place ID using Perplexity
+async function findGooglePlaceId(businessName: string, city: string, perplexityKey: string): Promise<string | null> {
+  if (!perplexityKey || !businessName) return null;
+  
+  try {
+    console.log(`Searching Google Place ID for: ${businessName}, ${city}`);
+    
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'sonar',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'Du bist ein Assistent der Google Place IDs findet. Antworte NUR mit der Place ID (Format: ChIJ...) oder "NOT_FOUND" wenn keine gefunden wurde. Keine weiteren Erklärungen.' 
+          },
+          { 
+            role: 'user', 
+            content: `Finde die Google Place ID für: "${businessName}" in ${city || 'Schweiz'}. Die Place ID beginnt mit "ChIJ" und ist etwa 27 Zeichen lang. Suche auf Google Maps.` 
+          }
+        ],
+        max_tokens: 100,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Perplexity API error:', await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content?.trim() || '';
+    
+    console.log('Perplexity response for Place ID:', content);
+    
+    // Extract Place ID if it matches the pattern (starts with ChIJ)
+    const placeIdMatch = content.match(/ChIJ[a-zA-Z0-9_-]{20,30}/);
+    if (placeIdMatch) {
+      console.log('Found Place ID:', placeIdMatch[0]);
+      return placeIdMatch[0];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error finding Place ID:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,6 +74,8 @@ serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
+    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
+    
     if (!apiKey) {
       console.error('FIRECRAWL_API_KEY not configured');
       return new Response(
@@ -48,21 +103,25 @@ serve(async (req) => {
         url: formattedUrl,
         formats: ['markdown', 'extract'],
         extract: {
-          prompt: `Extract business information from this website. Return a JSON object with these fields:
-            - name: the business/company name
-            - description: a short description of the business (max 200 chars)
-            - short_description: a very short tagline (max 80 chars)
-            - category: the type of business (e.g., Restaurant, Café, Bäckerei, Fitness, Mode, Kosmetik, Handwerk, Dienstleistung)
-            - address_street: street name without number
-            - address_number: street number
-            - postal_code: postal/zip code
-            - city: city name
-            - phone: phone number
-            - email: email address
-            - opening_hours: opening hours as text
-            - instagram: Instagram handle or URL
-            - facebook: Facebook page URL
-          Only include fields if you find the information. Return null for missing fields.`
+          prompt: `Extrahiere Geschäftsinformationen von dieser Website. WICHTIG: Alle Beschreibungen müssen auf DEUTSCH sein!
+          
+          Gib ein JSON-Objekt mit diesen Feldern zurück:
+            - name: der Geschäfts-/Firmenname
+            - description: eine kurze Beschreibung des Geschäfts auf DEUTSCH (max 200 Zeichen)
+            - short_description: ein sehr kurzer Slogan auf DEUTSCH (max 80 Zeichen)
+            - category: die Art des Geschäfts (z.B. Restaurant, Café, Bäckerei, Fitness, Mode, Kosmetik, Handwerk, Dienstleistung, Bar, Wellness & Spa, Hotel)
+            - address_street: Strassenname ohne Nummer
+            - address_number: Hausnummer
+            - postal_code: Postleitzahl
+            - city: Stadt/Ort
+            - phone: Telefonnummer
+            - email: E-Mail-Adresse
+            - opening_hours: Öffnungszeiten als Text
+            - instagram: Instagram-Handle oder URL
+            - facebook: Facebook-Seiten-URL
+          
+          Nur Felder einfügen, wenn die Information gefunden wird. Für fehlende Felder null zurückgeben.
+          WICHTIG: description und short_description MÜSSEN auf Deutsch sein!`
         },
         onlyMainContent: false,
       }),
@@ -85,21 +144,33 @@ serve(async (req) => {
     const extractedData = scrapedData.extract || {};
     const metadata = scrapedData.metadata || {};
 
+    const businessName = extractedData.name || metadata.title || null;
+    const city = extractedData.city || null;
+
+    // Try to find Google Place ID using Perplexity
+    let googlePlaceId: string | null = null;
+    if (perplexityKey && businessName) {
+      googlePlaceId = await findGooglePlaceId(businessName, city, perplexityKey);
+    } else if (!perplexityKey) {
+      console.log('PERPLEXITY_API_KEY not configured, skipping Place ID search');
+    }
+
     // Build partner info from scraped data
     const partnerInfo = {
-      name: extractedData.name || metadata.title || null,
+      name: businessName,
       description: extractedData.description || metadata.description || null,
       short_description: extractedData.short_description || null,
       category: extractedData.category || null,
       address_street: extractedData.address_street || null,
       address_number: extractedData.address_number || null,
       postal_code: extractedData.postal_code || null,
-      city: extractedData.city || null,
+      city: city,
       phone: extractedData.phone || null,
       email: extractedData.email || null,
       website: formattedUrl,
       instagram: extractedData.instagram || null,
       facebook: extractedData.facebook || null,
+      google_place_id: googlePlaceId,
     };
 
     console.log('Extracted partner info:', JSON.stringify(partnerInfo));
