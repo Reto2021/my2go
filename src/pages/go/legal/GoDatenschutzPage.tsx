@@ -42,7 +42,7 @@ export default function GoDatenschutzPage() {
                 <strong>My 2Go</strong><br />
                 c/o Radio 2Go<br />
                 Schweiz<br />
-                E-Mail: <a href="mailto:datenschutz@my2go.win" className="text-primary">datenschutz@my2go.win</a>
+                E-Mail: <a href="mailto:datenschutz@my2go.app" className="text-primary">datenschutz@my2go.app</a>
               </p>
 
               <h2>2. Erhobene Daten</h2>
@@ -119,7 +119,7 @@ export default function GoDatenschutzPage() {
               <h2>9. Kontakt</h2>
               <p>
                 Bei Fragen zum Datenschutz wenden Sie sich an:<br />
-                E-Mail: <a href="mailto:datenschutz@my2go.win" className="text-primary">datenschutz@my2go.win</a>
+                E-Mail: <a href="mailto:datenschutz@my2go.app" className="text-primary">datenschutz@my2go.app</a>
               </p>
             </div>
           </Card>
@@ -128,7 +128,7 @@ export default function GoDatenschutzPage() {
           <div className="text-center p-6 rounded-2xl bg-muted/40 border">
             <p className="text-muted-foreground mb-4">Fragen zum Datenschutz?</p>
             <Button asChild variant="outline">
-              <a href="mailto:datenschutz@my2go.win">
+              <a href="mailto:datenschutz@my2go.app">
                 <Mail className="mr-2 w-4 h-4" />
                 Kontakt aufnehmen
               </a>

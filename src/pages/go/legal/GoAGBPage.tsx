@@ -129,7 +129,7 @@ export default function GoAGBPage() {
           <div className="text-center p-6 rounded-2xl bg-muted/40 border">
             <p className="text-muted-foreground mb-4">Fragen zu den AGB?</p>
             <Button asChild variant="outline">
-              <a href="mailto:info@my2go.win">
+              <a href="mailto:info@my2go.app">
                 <Mail className="mr-2 w-4 h-4" />
                 Kontakt aufnehmen
               </a>

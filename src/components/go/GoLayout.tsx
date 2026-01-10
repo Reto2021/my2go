@@ -79,7 +79,7 @@ export function GoLayout() {
               <ul className="space-y-2.5 text-sm">
                 <li>
                   <a 
-                    href="https://www.my2go.win" 
+                    href="https://www.my2go.app" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-secondary-foreground/80 hover:text-white transition-colors"

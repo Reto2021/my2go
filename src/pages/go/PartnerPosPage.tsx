@@ -69,7 +69,7 @@ export default function PartnerPosPage() {
                   </CardContent>
                   <CardFooter>
                     <Button asChild className="w-full h-11 font-semibold">
-                      <a href={`mailto:partner@my2go.win?subject=POS Kit ${kit.name} Bestellung`}>
+                      <a href={`mailto:partner@my2go.app?subject=POS Kit ${kit.name} Bestellung`}>
                         <ShoppingCart className="mr-2 w-4 h-4" />
                         Bestellen
                       </a>
