@@ -91,7 +91,7 @@ export default function CodePage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
-          <h1 className="text-display-sm">My 2Go Code einlösen</h1>
+          <h1 className="text-display-sm">Radio-Code einlösen</h1>
         </div>
       </header>
       
@@ -102,25 +102,30 @@ export default function CodePage() {
             <Music className="h-8 w-8 text-accent" />
           </div>
           <p className="text-muted-foreground text-sm">
-            Hörst du Radio 2Go? Gib den Code ein!
+            Hörst du Radio 2Go? Codes werden während der Sendung genannt!
           </p>
         </div>
         
-        {/* Browse Mode */}
+        {/* Browse Mode - Better explanation */}
         {isBrowseMode ? (
           <div className="text-center p-6 rounded-2xl bg-primary/10 border border-primary/20 animate-in">
-            <p className="text-foreground font-medium mb-2">
-              Zum Einlösen Karte öffnen
-            </p>
-            <p className="text-muted-foreground text-sm mb-4">
-              Öffne deine My 2Go Karte, um Codes einzulösen.
-            </p>
+            <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="h-6 w-6 text-accent" />
+            </div>
+            <h3 className="text-foreground font-bold text-lg mb-2">
+              So funktioniert's
+            </h3>
+            <div className="text-sm text-muted-foreground mb-4 space-y-2">
+              <p>1️⃣ Höre Radio 2Go im Player</p>
+              <p>2️⃣ Warte auf den Code während der Sendung</p>
+              <p>3️⃣ Gib den Code hier ein und sammle Taler!</p>
+            </div>
             <button 
               className="btn-primary"
               onClick={() => loginWithToken('demo')}
             >
               <Wallet className="h-5 w-5" />
-              Karte öffnen
+              Jetzt anmelden & Codes einlösen
             </button>
           </div>
         ) : result ? (
