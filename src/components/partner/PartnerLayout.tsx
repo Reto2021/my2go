@@ -12,9 +12,9 @@ import { usePartner } from './PartnerGuard';
 
 const navItems = [
   { path: '/partner-portal', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-  { path: '/partner-portal/rewards', icon: Gift, label: 'Rewards' },
+  { path: '/partner-portal/rewards', icon: Gift, label: 'Gutscheine' },
   { path: '/partner-portal/redemptions', icon: QrCode, label: 'Einlösungen' },
-  { path: '/partner-portal/reviews', icon: Star, label: 'Reviews' },
+  { path: '/partner-portal/reviews', icon: Star, label: 'Bewertungen' },
 ];
 
 export function PartnerLayout() {
