@@ -7,7 +7,8 @@ import {
   QrCode,
   ArrowLeft,
   Shield,
-  Radio
+  Radio,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +19,7 @@ const navItems = [
   { path: '/admin/badges', icon: Award, label: 'Badges' },
   { path: '/admin/radio', icon: Radio, label: 'Radio-Belohnungen' },
   { path: '/admin/airdrops', icon: QrCode, label: 'Air Drops' },
+  { path: '/admin/settings', icon: Settings, label: 'Einstellungen' },
 ];
 
 export function AdminLayout() {
