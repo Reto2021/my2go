@@ -410,6 +410,72 @@ export type Database = {
         }
         Relationships: []
       }
+      radio_listening_sessions: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          rewarded: boolean
+          started_at: string
+          taler_awarded: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          rewarded?: boolean
+          started_at?: string
+          taler_awarded?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          rewarded?: boolean
+          started_at?: string
+          taler_awarded?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      radio_listening_tiers: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          min_duration_seconds: number
+          name: string
+          sort_order: number
+          taler_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_duration_seconds: number
+          name: string
+          sort_order?: number
+          taler_reward: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          min_duration_seconds?: number
+          name?: string
+          sort_order?: number
+          taler_reward?: number
+        }
+        Relationships: []
+      }
       redemptions: {
         Row: {
           created_at: string
@@ -728,6 +794,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_listening_stats: {
+        Row: {
+          current_streak_days: number
+          id: string
+          last_session_date: string | null
+          longest_streak_days: number
+          total_duration_seconds: number
+          total_sessions: number
+          total_taler_earned: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak_days?: number
+          id?: string
+          last_session_date?: string | null
+          longest_streak_days?: number
+          total_duration_seconds?: number
+          total_sessions?: number
+          total_taler_earned?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak_days?: number
+          id?: string
+          last_session_date?: string | null
+          longest_streak_days?: number
+          total_duration_seconds?: number
+          total_sessions?: number
+          total_taler_earned?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -812,6 +914,7 @@ export type Database = {
         Returns: undefined
       }
       claim_daily_streak: { Args: { _user_id: string }; Returns: Json }
+      end_listening_session: { Args: { _session_id: string }; Returns: Json }
       generate_redemption_code: { Args: never; Returns: string }
       generate_unique_code: { Args: { prefix?: string }; Returns: string }
       get_streak_status: { Args: { _user_id: string }; Returns: Json }
@@ -856,6 +959,7 @@ export type Database = {
         Returns: Json
       }
       purchase_streak_freeze: { Args: { _user_id: string }; Returns: Json }
+      start_listening_session: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       partner_admin_role: "owner" | "manager" | "staff"

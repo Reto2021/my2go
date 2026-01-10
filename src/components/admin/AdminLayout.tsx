@@ -6,7 +6,8 @@ import {
   Award, 
   QrCode,
   ArrowLeft,
-  Shield
+  Shield,
+  Radio
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,7 @@ const navItems = [
   { path: '/admin/partners', icon: Store, label: 'Partner' },
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
   { path: '/admin/badges', icon: Award, label: 'Badges' },
+  { path: '/admin/radio', icon: Radio, label: 'Radio-Belohnungen' },
   { path: '/admin/airdrops', icon: QrCode, label: 'Air Drops' },
 ];
 
