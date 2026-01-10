@@ -17,6 +17,16 @@ export interface PartnerStats {
   totalTalerRedeemed: number;
   activeRewards: number;
   totalRewards: number;
+  totalReviews: number;
+  avgRating: number | null;
+  positiveReviews: number;
+}
+
+export interface DailyStats {
+  date: string;
+  redemptions: number;
+  reviews: number;
+  taler: number;
 }
 
 export interface PartnerAdminInfo {
@@ -119,22 +129,36 @@ export async function getPartnerStats(partnerId: string): Promise<PartnerStats> 
     { count: completedRedemptions },
     { count: activeRewards },
     { count: totalRewards },
+    { count: totalReviews },
+    { count: positiveReviews },
   ] = await Promise.all([
     supabase.from('redemptions').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId),
     supabase.from('redemptions').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId).eq('status', 'pending'),
     supabase.from('redemptions').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId).eq('status', 'used'),
     supabase.from('rewards').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId).eq('is_active', true),
     supabase.from('rewards').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId),
+    supabase.from('review_requests').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId),
+    supabase.from('review_requests').select('*', { count: 'exact', head: true }).eq('partner_id', partnerId).gte('in_app_rating', 4),
   ]);
   
-  // Calculate total Taler redeemed
-  const { data: redemptionData } = await supabase
-    .from('redemptions')
-    .select('taler_spent')
-    .eq('partner_id', partnerId)
-    .eq('status', 'used');
+  // Calculate total Taler redeemed and avg rating
+  const [{ data: redemptionData }, { data: reviewData }] = await Promise.all([
+    supabase
+      .from('redemptions')
+      .select('taler_spent')
+      .eq('partner_id', partnerId)
+      .eq('status', 'used'),
+    supabase
+      .from('review_requests')
+      .select('in_app_rating')
+      .eq('partner_id', partnerId)
+      .not('in_app_rating', 'is', null),
+  ]);
   
   const totalTalerRedeemed = redemptionData?.reduce((sum, r) => sum + r.taler_spent, 0) || 0;
+  const avgRating = reviewData && reviewData.length > 0
+    ? reviewData.reduce((sum, r) => sum + (r.in_app_rating || 0), 0) / reviewData.length
+    : null;
   
   return {
     totalRedemptions: totalRedemptions || 0,
@@ -143,7 +167,63 @@ export async function getPartnerStats(partnerId: string): Promise<PartnerStats> 
     totalTalerRedeemed,
     activeRewards: activeRewards || 0,
     totalRewards: totalRewards || 0,
+    totalReviews: totalReviews || 0,
+    avgRating,
+    positiveReviews: positiveReviews || 0,
   };
+}
+
+export async function getPartnerDailyStats(partnerId: string, days: number = 30): Promise<DailyStats[]> {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  const startDateStr = startDate.toISOString();
+  
+  const [{ data: redemptions }, { data: reviews }] = await Promise.all([
+    supabase
+      .from('redemptions')
+      .select('created_at, taler_spent, status')
+      .eq('partner_id', partnerId)
+      .gte('created_at', startDateStr),
+    supabase
+      .from('review_requests')
+      .select('created_at')
+      .eq('partner_id', partnerId)
+      .gte('created_at', startDateStr),
+  ]);
+  
+  // Group by date
+  const dailyMap = new Map<string, DailyStats>();
+  
+  // Initialize all days
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - i));
+    const dateStr = date.toISOString().split('T')[0];
+    dailyMap.set(dateStr, { date: dateStr, redemptions: 0, reviews: 0, taler: 0 });
+  }
+  
+  // Count redemptions
+  redemptions?.forEach((r) => {
+    const dateStr = new Date(r.created_at).toISOString().split('T')[0];
+    const existing = dailyMap.get(dateStr);
+    if (existing) {
+      existing.redemptions += 1;
+      if (r.status === 'used') {
+        existing.taler += r.taler_spent;
+      }
+    }
+  });
+  
+  // Count reviews
+  reviews?.forEach((r) => {
+    const dateStr = new Date(r.created_at).toISOString().split('T')[0];
+    const existing = dailyMap.get(dateStr);
+    if (existing) {
+      existing.reviews += 1;
+    }
+  });
+  
+  return Array.from(dailyMap.values());
 }
 
 // ============================================================================
