@@ -93,16 +93,16 @@ export function BadgeProgressRing() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Award className="h-5 w-5 text-amber-500" />
-            <h3 className="font-semibold text-foreground">Badge-Sammlung</h3>
+            <h3 className="font-semibold text-foreground">Auszeichnungen</h3>
           </div>
           
           {remainingBadges > 0 ? (
             <p className="text-sm text-muted-foreground">
-              Noch <span className="font-medium text-amber-500">{remainingBadges}</span> Badge{remainingBadges !== 1 ? 's' : ''} zum Freischalten!
+              Noch <span className="font-medium text-amber-500">{remainingBadges}</span> zum Freischalten!
             </p>
           ) : (
             <p className="text-sm text-amber-500 font-medium">
-              🎉 Alle Badges freigeschaltet!
+              🎉 Alle freigeschaltet!
             </p>
           )}
 

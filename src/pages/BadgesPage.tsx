@@ -64,7 +64,7 @@ export default function BadgesPage() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Award size={32} className="text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Badges sammeln</h1>
+          <h1 className="text-2xl font-bold text-foreground">Auszeichnungen</h1>
           <p className="text-muted-foreground mt-1">
             Schalte Auszeichnungen frei und zeige deine Erfolge!
           </p>
@@ -104,7 +104,7 @@ export default function BadgesPage() {
         >
           <h3 className="font-bold text-foreground mb-2">Starte jetzt!</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Melde dich an, um Badges zu sammeln und deinen Fortschritt zu tracken.
+            Melde dich an, um Auszeichnungen zu sammeln und deinen Fortschritt zu tracken.
           </p>
           <Link
             to="/auth"
@@ -132,9 +132,9 @@ export default function BadgesPage() {
         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <Award size={32} className="text-primary" />
         </div>
-        <h1 className="text-2xl font-bold text-foreground">Meine Badges</h1>
+        <h1 className="text-2xl font-bold text-foreground">Meine Auszeichnungen</h1>
         <p className="text-muted-foreground mt-1">
-          {earnedCount} von {totalCount} Badges freigeschaltet
+          {earnedCount} von {totalCount} freigeschaltet
         </p>
         
         {/* Progress bar */}
