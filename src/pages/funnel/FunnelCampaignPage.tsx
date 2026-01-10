@@ -266,7 +266,7 @@ export default function FunnelCampaignPage() {
                   {config.hookType === 'coupon' && 'Exklusiver Coupon'}
                   {config.hookType === 'goodie' && 'Limitiertes Goodie'}
                   {config.hookType === 'raffle' && 'Gewinnspiel'}
-                  {config.hookType === 'streak' && 'Streak Challenge'}
+                  {config.hookType === 'streak' && 'Bonus-Serie Challenge'}
                   {config.hookType === 'none' && 'Bonus Aktion'}
                 </p>
                 <p className="font-bold text-foreground">{config.hookTitle}</p>

@@ -93,7 +93,7 @@ export default function AdminDashboard() {
   
   const categoryLabels: Record<string, string> = {
     general: 'Allgemein',
-    streak: 'Login-Streak',
+    streak: 'Bonus-Serie',
     leaderboard: 'Leaderboard',
     collector: 'Sammler',
     social: 'Social',
