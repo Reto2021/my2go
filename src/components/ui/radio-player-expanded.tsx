@@ -249,7 +249,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <Gift className="h-4 w-4 text-accent" />
                       <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">
-                        Taler beim Hören verdienen
+                        2Go-Taler beim Hören verdienen
                       </span>
                     </div>
                     
