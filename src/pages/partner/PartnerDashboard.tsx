@@ -4,22 +4,44 @@ import {
   QrCode, 
   CheckCircle, 
   Clock,
-  TrendingUp,
-  Coins
+  Star,
+  MessageSquare,
+  Coins,
+  TrendingUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePartner } from '@/components/partner/PartnerGuard';
-import { getPartnerStats, getPartnerRedemptions, PartnerStats, RedemptionWithDetails } from '@/lib/partner-helpers';
+import { 
+  getPartnerStats, 
+  getPartnerRedemptions, 
+  getPartnerDailyStats,
+  PartnerStats, 
+  RedemptionWithDetails,
+  DailyStats
+} from '@/lib/partner-helpers';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { 
+  AreaChart, 
+  Area, 
+  BarChart,
+  Bar,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 
 export default function PartnerDashboard() {
   const { partnerInfo } = usePartner();
   const [stats, setStats] = useState<PartnerStats | null>(null);
+  const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [recentRedemptions, setRecentRedemptions] = useState<RedemptionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +50,15 @@ export default function PartnerDashboard() {
       if (!partnerInfo?.partnerId) return;
       
       try {
-        const [statsData, redemptionsData] = await Promise.all([
+        const [statsData, redemptionsData, dailyData] = await Promise.all([
           getPartnerStats(partnerInfo.partnerId),
           getPartnerRedemptions(partnerInfo.partnerId),
+          getPartnerDailyStats(partnerInfo.partnerId, 14),
         ]);
         
         setStats(statsData);
         setRecentRedemptions(redemptionsData.slice(0, 5));
+        setDailyStats(dailyData);
       } catch (error) {
         console.error('Error loading partner data:', error);
       } finally {
@@ -69,11 +93,11 @@ export default function PartnerDashboard() {
       bgColor: 'bg-green-100',
     },
     {
-      title: 'Aktive Rewards',
-      value: stats?.activeRewards || 0,
-      icon: Gift,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      title: 'Bewertungen',
+      value: stats?.totalReviews || 0,
+      icon: MessageSquare,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
     },
     {
       title: 'Taler eingelöst',
@@ -83,6 +107,12 @@ export default function PartnerDashboard() {
       bgColor: 'bg-amber-100',
     },
   ];
+
+  // Format chart data for display
+  const chartData = dailyStats.map(d => ({
+    ...d,
+    dateLabel: format(new Date(d.date), 'dd.MM', { locale: de }),
+  }));
 
   return (
     <div className="space-y-6">
@@ -111,6 +141,128 @@ export default function PartnerDashboard() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Rating Overview */}
+      {stats && stats.totalReviews > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Bewertungsübersicht
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <div className="flex items-center gap-1 justify-center">
+                  <span className="text-4xl font-bold">
+                    {stats.avgRating?.toFixed(1) || '-'}
+                  </span>
+                  <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                </div>
+                <p className="text-sm text-muted-foreground">Durchschnitt</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-600">
+                  {stats.totalReviews > 0 
+                    ? Math.round((stats.positiveReviews / stats.totalReviews) * 100) 
+                    : 0}%
+                </p>
+                <p className="text-sm text-muted-foreground">Positive (4-5★)</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{stats.totalReviews}</p>
+                <p className="text-sm text-muted-foreground">Gesamt</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Charts */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Redemptions & Reviews Chart */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Aktivität (14 Tage)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="dateLabel" 
+                  className="text-xs" 
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis className="text-xs" tick={{ fontSize: 10 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))' 
+                  }}
+                  labelFormatter={(label) => `Datum: ${label}`}
+                />
+                <Legend />
+                <Bar 
+                  dataKey="redemptions" 
+                  name="Einlösungen" 
+                  fill="hsl(var(--primary))" 
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="reviews" 
+                  name="Bewertungen" 
+                  fill="hsl(142, 76%, 36%)" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Taler Revenue Chart */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Coins className="h-5 w-5 text-amber-600" />
+              Taler-Umsatz (14 Tage)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="dateLabel" 
+                  className="text-xs" 
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis className="text-xs" tick={{ fontSize: 10 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))' 
+                  }}
+                  formatter={(value) => [`${value} Taler`, 'Eingelöst']}
+                  labelFormatter={(label) => `Datum: ${label}`}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="taler" 
+                  name="Taler" 
+                  stroke="hsl(43, 96%, 56%)" 
+                  fill="hsl(43, 96%, 56%)" 
+                  fillOpacity={0.3}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}
