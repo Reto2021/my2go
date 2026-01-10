@@ -21,7 +21,7 @@ export function TalerIcon({ className, size = 64 }: TalerIconProps) {
         cy="50"
         r="46"
         fill="hsl(44, 98%, 49%)"
-        stroke="hsl(44, 98%, 40%)"
+        stroke="hsl(44, 98%, 38%)"
         strokeWidth="2"
       />
       
@@ -30,8 +30,8 @@ export function TalerIcon({ className, size = 64 }: TalerIconProps) {
         cx="50"
         cy="50"
         r="38"
-        fill="hsl(44, 98%, 55%)"
-        stroke="hsl(44, 98%, 45%)"
+        fill="hsl(44, 98%, 54%)"
+        stroke="hsl(44, 98%, 42%)"
         strokeWidth="1.5"
       />
       
@@ -51,28 +51,31 @@ export function TalerIcon({ className, size = 64 }: TalerIconProps) {
         );
       })}
       
-      {/* 2GO Text */}
+      {/* 2GO Text - Radio 2Go style: large bold "2" with smaller "GO" */}
       <text
-        x="50"
-        y="56"
+        x="32"
+        y="62"
         textAnchor="middle"
-        fontSize="24"
-        fontWeight="bold"
-        fontFamily="system-ui, -apple-system, sans-serif"
+        fontSize="38"
+        fontWeight="900"
+        fontFamily="Arial Black, Impact, sans-serif"
         fill="hsl(197, 96%, 18%)"
+        style={{ fontStyle: 'italic' }}
       >
-        2GO
+        2
       </text>
-      
-      {/* Shine effect */}
-      <ellipse
-        cx="38"
-        cy="32"
-        rx="12"
-        ry="6"
-        fill="white"
-        opacity="0.3"
-      />
+      <text
+        x="62"
+        y="58"
+        textAnchor="middle"
+        fontSize="20"
+        fontWeight="900"
+        fontFamily="Arial Black, Impact, sans-serif"
+        fill="hsl(197, 96%, 18%)"
+        letterSpacing="-1"
+      >
+        GO
+      </text>
     </svg>
   );
 }
