@@ -146,7 +146,10 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   },
 
   togglePlay: () => {
-    const { isPlaying, audio, nowPlaying } = get();
+    const { isPlaying, isLoading, audio, nowPlaying } = get();
+    
+    // Prevent multiple clicks while loading
+    if (isLoading) return;
     
     let currentAudio = audio;
     if (!currentAudio) {
