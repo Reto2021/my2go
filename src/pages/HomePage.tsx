@@ -7,6 +7,7 @@ import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
+import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import {
   Gift, 
   MapPin, 
@@ -356,10 +357,13 @@ function SessionModeHome({
       )}
       
       {/* Balance Card */}
-      <section className="container py-4">
+      <section className="container py-4 space-y-3">
         <div className="animate-in">
           <BalanceCard balance={balance} />
         </div>
+        
+        {/* Recent Badges Bar */}
+        <RecentBadgesBar />
       </section>
       
       {/* Quick Actions */}
