@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay, ChevronUp } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay, Expand } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
@@ -215,14 +215,14 @@ export function RadioHeader() {
                   {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
                 </Marquee>
                 {/* Expand hint */}
-                <ChevronUp className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
+                <Expand className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <p className="text-xs text-secondary-foreground/70 font-medium">
                   Radio 2Go streamen
                 </p>
-                <ChevronUp className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
+                <Expand className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
               </div>
             )}
           </div>
