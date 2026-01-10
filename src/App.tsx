@@ -44,6 +44,7 @@ import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
 import PartnerReviews from "./pages/partner/PartnerReviews";
 import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger";
+import { InstallPrompt } from "./components/ui/install-prompt";
 // Go Funnel Pages
 import PartnerLandingPage from "./pages/go/PartnerLandingPage";
 import PartnerPricingPage from "./pages/go/PartnerPricingPage";
@@ -91,6 +92,7 @@ function AppContent() {
   
   return (
     <BrowserRouter>
+      <InstallPrompt />
       <ReviewRequestTrigger />
       <Routes>
         {/* Auth pages with layout but no login required */}
