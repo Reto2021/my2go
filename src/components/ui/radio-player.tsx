@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Radio, Music2, Expand, ChevronUp, ChevronDown, Gift, Clock } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Radio, Music2, Expand, ChevronUp, ChevronDown, Gift, Clock, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
 import { TalerIcon } from '@/components/icons/TalerIcon';
+import { Confetti } from '@/components/ui/confetti';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ListeningTier {
@@ -13,6 +14,12 @@ interface ListeningTier {
   min_duration_seconds: number;
   taler_reward: number;
   sort_order: number;
+}
+
+interface SessionSummary {
+  duration: number;
+  tiersReached: ListeningTier[];
+  totalTaler: number;
 }
 
 const formatDuration = (seconds: number): string => {
@@ -39,6 +46,19 @@ const formatRemainingTime = (seconds: number): string => {
   return `${seconds}s`;
 };
 
+const formatSessionTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${mins}m ${secs}s`;
+  }
+  if (mins > 0) {
+    return `${mins}m ${secs}s`;
+  }
+  return `${secs}s`;
+};
+
 export function RadioPlayer({ className }: { className?: string }) {
   const { 
     isPlaying, 
@@ -57,7 +77,11 @@ export function RadioPlayer({ className }: { className?: string }) {
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
   const [showTierReached, setShowTierReached] = useState(false);
   const [reachedTier, setReachedTier] = useState<ListeningTier | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
   const lastReachedTierRef = useRef<string | null>(null);
+  const wasPlayingRef = useRef(false);
+  const lastSessionDurationRef = useRef(0);
 
   // Fetch now playing on mount and periodically
   useEffect(() => {
@@ -128,25 +152,149 @@ export function RadioPlayer({ className }: { className?: string }) {
 
   const { progress, currentTier, nextTier } = getCurrentTierInfo();
 
-  // Tier reached animation trigger
+  // Tier reached animation trigger with confetti
   useEffect(() => {
     if (currentTier && currentTier.id !== lastReachedTierRef.current && isPlaying) {
       lastReachedTierRef.current = currentTier.id;
       setReachedTier(currentTier);
       setShowTierReached(true);
-      setTimeout(() => setShowTierReached(false), 3000);
+      setShowConfetti(true);
+      setTimeout(() => {
+        setShowTierReached(false);
+        setShowConfetti(false);
+      }, 3000);
     }
   }, [currentTier, isPlaying]);
 
-  // Reset on stop
+  // Track session duration for summary
   useEffect(() => {
-    if (!isPlaying) {
+    if (isPlaying) {
+      lastSessionDurationRef.current = currentSessionDuration;
+    }
+  }, [isPlaying, currentSessionDuration]);
+
+  // Session summary when stopping
+  useEffect(() => {
+    if (wasPlayingRef.current && !isPlaying && lastSessionDurationRef.current > 0) {
+      // Calculate reached tiers
+      const reachedTiers = tiers.filter(t => lastSessionDurationRef.current >= t.min_duration_seconds);
+      const highestTier = reachedTiers[reachedTiers.length - 1];
+      
+      if (reachedTiers.length > 0) {
+        setSessionSummary({
+          duration: lastSessionDurationRef.current,
+          tiersReached: reachedTiers,
+          totalTaler: highestTier?.taler_reward || 0
+        });
+      }
+      
       lastReachedTierRef.current = null;
     }
-  }, [isPlaying]);
+    wasPlayingRef.current = isPlaying;
+  }, [isPlaying, tiers]);
 
   return (
     <>
+      {/* Confetti Effect */}
+      <Confetti isActive={showConfetti} particleCount={30} duration={2500} playSound={true} />
+
+      {/* Session Summary Modal */}
+      <AnimatePresence>
+        {sessionSummary && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 pt-safe pb-safe"
+            onClick={() => setSessionSummary(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 50 }}
+              className="bg-card rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-border relative max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setSessionSummary(null)}
+                className="absolute top-4 right-4 h-8 w-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+
+              {/* Header */}
+              <div className="text-center mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: 'spring' }}
+                  className="text-4xl mb-2"
+                >
+                  🎧
+                </motion.div>
+                <h2 className="text-xl font-bold text-foreground">Session beendet!</h2>
+                <p className="text-sm text-muted-foreground">
+                  Du hast {formatSessionTime(sessionSummary.duration)} gehört
+                </p>
+              </div>
+
+              {/* Stats */}
+              <div className="bg-muted/50 rounded-2xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-muted-foreground">Erreichte Stufen</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {sessionSummary.tiersReached.length} / {tiers.length}
+                  </span>
+                </div>
+                
+                {/* Tiers reached */}
+                <div className="space-y-2">
+                  {sessionSummary.tiersReached.map((tier, index) => (
+                    <motion.div
+                      key={tier.id}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 + index * 0.1 }}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-green-500">✓</span>
+                      <span className="text-foreground flex-1">{tier.name}</span>
+                      <div className="flex items-center gap-1">
+                        <TalerIcon size={12} />
+                        <span className="font-medium text-accent">+{tier.taler_reward}</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Total earned */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="bg-gradient-to-r from-accent/20 to-primary/20 rounded-2xl p-4 text-center border border-accent/30"
+              >
+                <p className="text-sm text-muted-foreground mb-1">Verdiente Taler</p>
+                <div className="flex items-center justify-center gap-2">
+                  <TalerIcon size={24} />
+                  <span className="text-3xl font-bold text-accent">+{sessionSummary.totalTaler}</span>
+                </div>
+              </motion.div>
+
+              {/* Close button */}
+              <button
+                onClick={() => setSessionSummary(null)}
+                className="w-full mt-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+              >
+                Super!
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative">
         {/* Tier Reached Celebration */}
         <AnimatePresence>
@@ -155,17 +303,23 @@ export function RadioPlayer({ className }: { className?: string }) {
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: -20 }}
-              className="absolute -top-16 left-1/2 -translate-x-1/2 z-10"
+              className="absolute -top-20 left-1/2 -translate-x-1/2 z-[50]"
             >
-              <div className="bg-gradient-to-r from-accent to-primary px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+              <div className="bg-gradient-to-r from-accent to-primary px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3">
                 <motion.div
-                  animate={{ rotate: [0, -10, 10, -10, 10, 0], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.5 }}
+                  animate={{ rotate: [0, -15, 15, -15, 15, 0], scale: [1, 1.3, 1] }}
+                  transition={{ duration: 0.6 }}
+                  className="text-xl"
                 >
                   🎉
                 </motion.div>
-                <TalerIcon size={16} />
-                <span className="text-sm font-bold text-white">+{reachedTier.taler_reward} Taler!</span>
+                <div className="flex flex-col">
+                  <span className="text-xs text-white/80">{reachedTier.name} erreicht!</span>
+                  <div className="flex items-center gap-1">
+                    <TalerIcon size={14} />
+                    <span className="text-sm font-bold text-white">+{reachedTier.taler_reward} Taler</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
