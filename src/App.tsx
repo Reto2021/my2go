@@ -47,7 +47,7 @@ import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
 import PartnerReviews from "./pages/partner/PartnerReviews";
 import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger";
 import { InstallPrompt } from "./components/ui/install-prompt";
-// Go Funnel Pages
+// Go Funnel Pages (B2B Partner Sales)
 import PartnerLandingPage from "./pages/go/PartnerLandingPage";
 import PartnerPricingPage from "./pages/go/PartnerPricingPage";
 import PartnerCheckoutPage from "./pages/go/PartnerCheckoutPage";
@@ -59,6 +59,16 @@ import PartnerRefundPage from "./pages/go/PartnerRefundPage";
 import GoAGBPage from "./pages/go/legal/GoAGBPage";
 import GoDatenschutzPage from "./pages/go/legal/GoDatenschutzPage";
 import GoImpressumPage from "./pages/go/legal/GoImpressumPage";
+// B2C Acquisition Funnel Pages
+import { FunnelLayout } from "./components/funnel/FunnelLayout";
+import FunnelEntryPage from "./pages/funnel/FunnelEntryPage";
+import FunnelDropPage from "./pages/funnel/FunnelDropPage";
+import FunnelWelcomePage from "./pages/funnel/FunnelWelcomePage";
+import FunnelPartnerPage from "./pages/funnel/FunnelPartnerPage";
+import FunnelInstallPage from "./pages/funnel/FunnelInstallPage";
+import FunnelTermsPage from "./pages/funnel/legal/FunnelTermsPage";
+import FunnelPrivacyPage from "./pages/funnel/legal/FunnelPrivacyPage";
+import FunnelImprintPage from "./pages/funnel/legal/FunnelImprintPage";
 
 const queryClient = new QueryClient();
 
@@ -124,7 +134,7 @@ function AppContent() {
           <Route path="reviews" element={<PartnerReviews />} />
         </Route>
         
-        {/* Go Partner Sales Funnel */}
+        {/* Go Partner Sales Funnel (B2B) */}
         <Route path="/go" element={<GoLayout />}>
           <Route index element={<PartnerLandingPage />} />
           <Route path="partner" element={<PartnerLandingPage />} />
@@ -138,6 +148,18 @@ function AppContent() {
           <Route path="legal/agb" element={<GoAGBPage />} />
           <Route path="legal/datenschutz" element={<GoDatenschutzPage />} />
           <Route path="legal/impressum" element={<GoImpressumPage />} />
+        </Route>
+        
+        {/* B2C Acquisition Funnel */}
+        <Route path="/u" element={<FunnelLayout />}>
+          <Route index element={<FunnelEntryPage />} />
+          <Route path="drop" element={<FunnelDropPage />} />
+          <Route path="welcome" element={<FunnelWelcomePage />} />
+          <Route path="p/:partnerSlug" element={<FunnelPartnerPage />} />
+          <Route path="install" element={<FunnelInstallPage />} />
+          <Route path="legal/terms" element={<FunnelTermsPage />} />
+          <Route path="legal/privacy" element={<FunnelPrivacyPage />} />
+          <Route path="legal/imprint" element={<FunnelImprintPage />} />
         </Route>
         
         {/* All other pages with layout */}
