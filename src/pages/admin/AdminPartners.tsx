@@ -20,7 +20,9 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
-  Globe
+  Globe,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -34,6 +36,37 @@ export default function AdminPartners() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showReviewsOverview, setShowReviewsOverview] = useState(false);
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
+  const [aiSearchUrl, setAiSearchUrl] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  
+  const PARTNER_CATEGORIES = [
+    'Restaurant',
+    'Café',
+    'Bar',
+    'Bäckerei',
+    'Metzgerei',
+    'Take-Away',
+    'Fitness',
+    'Wellness & Spa',
+    'Kosmetik & Beauty',
+    'Coiffeur',
+    'Mode & Bekleidung',
+    'Schuhe & Accessoires',
+    'Schmuck & Uhren',
+    'Optiker',
+    'Blumen & Garten',
+    'Lebensmittel',
+    'Handwerk',
+    'Autowerkstatt',
+    'Tankstelle',
+    'Hotel',
+    'Freizeit & Kultur',
+    'Sport',
+    'Gesundheit',
+    'Dienstleistung',
+    'Einzelhandel',
+    'Sonstiges'
+  ];
   
   // Form state
   const [formData, setFormData] = useState({
@@ -180,6 +213,47 @@ export default function AdminPartners() {
       google_place_id: partner.google_place_id || '',
     });
     setShowCreateForm(false);
+  };
+
+  const handleAiScrape = async () => {
+    if (!aiSearchUrl.trim()) {
+      toast.error('Bitte gib eine Website-URL ein');
+      return;
+    }
+    
+    setIsAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-partner-info', {
+        body: { url: aiSearchUrl }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success && data?.data) {
+        const scraped = data.data;
+        setFormData(prev => ({
+          ...prev,
+          name: scraped.name || prev.name,
+          description: scraped.description || prev.description,
+          short_description: scraped.short_description || prev.short_description,
+          category: scraped.category || prev.category,
+          address_street: scraped.address_street || prev.address_street,
+          address_number: scraped.address_number || prev.address_number,
+          postal_code: scraped.postal_code || prev.postal_code,
+          city: scraped.city || prev.city,
+          website: scraped.website || prev.website,
+        }));
+        toast.success('Partner-Daten erfolgreich geladen!');
+        setAiSearchUrl('');
+      } else {
+        toast.error(data?.error || 'Keine Daten gefunden');
+      }
+    } catch (error) {
+      console.error('AI scrape error:', error);
+      toast.error('Fehler beim Laden der Partner-Daten');
+    } finally {
+      setIsAiLoading(false);
+    }
   };
   
   const filteredPartners = partners.filter(p => 
@@ -428,6 +502,47 @@ export default function AdminPartners() {
             </button>
           </div>
           
+          {/* AI Assistant for new partners */}
+          {!editingPartner && (
+            <div className="p-4 rounded-xl bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-accent" />
+                <span className="font-semibold">AI-Assistent</span>
+                <span className="text-xs text-muted-foreground">– Website eingeben, Daten automatisch laden</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={aiSearchUrl}
+                  onChange={(e) => setAiSearchUrl(e.target.value)}
+                  placeholder="https://www.partner-website.ch"
+                  className="flex-1 h-11 px-4 rounded-xl bg-background border-2 border-transparent focus:outline-none focus:border-accent/30 transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAiScrape();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAiScrape}
+                  disabled={isAiLoading}
+                  className="btn-primary px-6"
+                >
+                  {isAiLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Laden
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={editingPartner ? handleUpdatePartner : handleCreatePartner} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -455,13 +570,16 @@ export default function AdminPartners() {
               
               <div>
                 <label className="block text-sm font-medium mb-1">Kategorie</label>
-                <input
-                  type="text"
+                <select
                   value={formData.category}
                   onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all"
-                  placeholder="z.B. Gastronomie"
-                />
+                  className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Kategorie wählen...</option>
+                  {PARTNER_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
               
               <div>
