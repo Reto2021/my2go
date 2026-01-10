@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay, Expand } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Cast, Airplay, Expand, Building2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
 import { useSession, useBrowseMode } from '@/lib/session';
+import { useAuthSafe, usePartnerAdmin } from '@/contexts/AuthContext';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
@@ -94,6 +95,12 @@ export function RadioHeader() {
   
   const { session, balance, logout, isLoggingOut } = useSession();
   const isBrowseMode = useBrowseMode();
+  const navigate = useNavigate();
+  
+  // Get partner admin status from real auth context
+  const authContext = useAuthSafe();
+  const isPartnerAdmin = authContext?.isPartnerAdmin ?? false;
+  const partnerInfo = authContext?.partnerInfo ?? null;
   
   const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -373,19 +380,27 @@ export function RadioHeader() {
             
             {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 top-12 w-48 rounded-2xl bg-white/95 dark:bg-secondary/95 backdrop-blur-xl border border-white/20 shadow-xl p-2 z-[200] animate-in">
-                {session.passLink && (
-                  <a 
-                    href={session.passLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <Wallet className="h-4 w-4 text-muted-foreground" />
-                    Wallet öffnen
-                  </a>
+              <div className="absolute right-0 top-12 w-56 rounded-2xl bg-white/95 dark:bg-secondary/95 backdrop-blur-xl border border-white/20 shadow-xl p-2 z-[200] animate-in">
+                {/* Partner Switch - only show if user is partner admin */}
+                {isPartnerAdmin && partnerInfo && (
+                  <>
+                    <button 
+                      onClick={() => {
+                        navigate('/partner-dashboard');
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/10 transition-colors text-primary"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      <div className="flex flex-col items-start">
+                        <span>Partner-Bereich</span>
+                        <span className="text-xs text-muted-foreground font-normal">{partnerInfo.partnerName}</span>
+                      </div>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                  </>
                 )}
+                
                 <Link 
                   to="/settings"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-muted transition-colors"
@@ -400,7 +415,7 @@ export function RadioHeader() {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
-                  {isLoggingOut ? 'Wird getrennt...' : 'Karte trennen'}
+                  {isLoggingOut ? 'Wird getrennt...' : 'Abmelden'}
                 </button>
               </div>
             )}

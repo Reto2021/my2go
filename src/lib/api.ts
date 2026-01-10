@@ -1,19 +1,13 @@
 /**
  * My 2Go - Gateway API Client
  * 
- * This file implements the Gateway API contract that connects to:
- * - Boomerangme (loyalty backend: points, rewards, redemptions)
- * - GoHighLevel (CRM: partners, communications)
+ * This file implements the Gateway API contract for the loyalty system.
  * 
  * ARCHITECTURE:
- * Frontend (Lovable) → Gateway API → Boomerangme/GHL
+ * Frontend (Lovable) → Supabase Backend
  * 
- * Currently using MOCK implementation.
- * Replace BASE_URL with real gateway endpoint when ready.
- * 
- * Boomerangme API Reference: https://docs.boomerangme.cards/api/api-docs
- * Card Types: Stamp(0), Cashback(1), Multipass(2), Coupon(3), 
- *             Discount(4), Gift(5), Membership(6), Reward(7)
+ * Currently using MOCK implementation for legacy session handling.
+ * Real data comes from Supabase.
  */
 
 // ============================================================================
@@ -219,7 +213,7 @@ export interface CodeRedeemResult {
 }
 
 // ============================================================================
-// MOCK DATA (Boomerangme-style)
+// MOCK DATA
 // Regions: Aargau (Brugg, Windisch, Aarau, Baden) + Liechtenstein (Vaduz, Schaan, Balzers)
 // ============================================================================
 
@@ -633,8 +627,7 @@ let mockSessionData: SessionResponse | null = null;
 
 /**
  * Exchange URL token for cookie session
- * In production: Gateway validates token with Boomerangme, sets httpOnly cookie
- * In mock: Just activates the session
+ * Legacy function - now uses Supabase Auth
  */
 export async function exchangeTokenForSession(token: string): Promise<SessionStartResponse> {
   if (USE_MOCK) {
@@ -650,7 +643,6 @@ export async function exchangeTokenForSession(token: string): Promise<SessionSta
         pendingBalance: 30,
         lifetimeBalance: 1250,
         tier: 'Gold',
-        passLink: 'https://boomerangme.biz/pass/abc123',
       };
       return { success: true };
     }
@@ -741,7 +733,6 @@ export async function getMe(token: string): Promise<MemberProfile> {
       firstName: 'Max',
       balance: 245,
       tier: 'Gold',
-      passLink: 'https://boomerangme.biz/pass/abc123',
     };
   }
   
@@ -1180,7 +1171,7 @@ export interface Region {
 
 /**
  * Get available regions based on partner locations
- * In production: This would come from Boomerangme API
+ * Data comes from Supabase regions table
  */
 export async function getRegions(): Promise<Region[]> {
   if (USE_MOCK) {
@@ -1208,7 +1199,7 @@ export async function getRegions(): Promise<Region[]> {
 
 /**
  * Get rewards near a location with distance information
- * In production: This would filter by geo-coordinates from Boomerangme
+ * Data comes from Supabase rewards and partners tables
  */
 export async function getRewardsNearLocation(lat: number, lng: number, radiusKm: number = 50): Promise<Reward[]> {
   if (USE_MOCK) {
