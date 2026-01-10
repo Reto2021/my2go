@@ -39,12 +39,12 @@ export function DailyStreakCard() {
           setShowConfetti(true);
           
           if (data.used_freeze) {
-            toast.success(`Streak gerettet! +${data.bonus} Taler`, {
-              description: `Freeze verwendet! Noch ${data.freezes_remaining} übrig.`,
+            toast.success(`Tagesbonus gerettet! +${data.bonus} Taler`, {
+              description: `Pause-Schutz verwendet! Noch ${data.freezes_remaining} übrig.`,
             });
           } else {
             toast.success(`+${data.bonus} Taler erhalten!`, {
-              description: `Tag ${data.current_streak} Streak!`,
+              description: `Tag ${data.current_streak} – weiter so!`,
             });
           }
           
@@ -64,8 +64,8 @@ export function DailyStreakCard() {
     purchaseFreeze(undefined, {
       onSuccess: (data) => {
         if (data.success) {
-          toast.success("Streak-Freeze gekauft!", {
-            description: `Du hast jetzt ${data.freezes} Freeze${data.freezes !== 1 ? 's' : ''}.`,
+          toast.success("Pause-Schutz gekauft!", {
+            description: `Du hast jetzt ${data.freezes} Pause-Schutz.`,
           });
           setShowFreezeDialog(false);
         } else {
@@ -109,11 +109,11 @@ export function DailyStreakCard() {
               <Flame className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Täglicher Streak</h3>
+              <h3 className="font-semibold text-foreground">Tagesbonus</h3>
               <p className="text-xs text-muted-foreground">
                 {currentStreak > 0 
                   ? `${currentStreak} Tag${currentStreak !== 1 ? 'e' : ''} in Folge!`
-                  : "Starte deinen Streak!"
+                  : "Starte deine Serie!"
                 }
               </p>
             </div>
@@ -124,7 +124,7 @@ export function DailyStreakCard() {
             <motion.button
               onClick={() => setShowFreezeDialog(true)}
               className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 transition-colors"
-              title="Streak-Freezes kaufen"
+              title="Pause-Schutz kaufen"
             >
               <Snowflake className="h-3.5 w-3.5 text-sky-400" />
               <span className="text-xs font-bold text-sky-400">{freezes}</span>
@@ -229,7 +229,7 @@ export function DailyStreakCard() {
         {/* Longest streak info */}
         {streakStatus.longest_streak > 0 && (
           <p className="text-xs text-center text-muted-foreground mt-3">
-            Längster Streak: {streakStatus.longest_streak} Tage
+            Längste Serie: {streakStatus.longest_streak} Tage
           </p>
         )}
       </motion.div>
@@ -240,24 +240,24 @@ export function DailyStreakCard() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Snowflake className="h-5 w-5 text-sky-400" />
-              Streak-Freeze kaufen
+              Pause-Schutz kaufen
             </DialogTitle>
             <DialogDescription>
-              Ein Streak-Freeze schützt deinen Streak, wenn du einen Tag verpasst. 
-              Der Freeze wird automatisch verwendet, wenn du nach einem verpassten Tag wieder beanspruchst.
+              Ein Pause-Schutz schützt deine Bonus-Serie, wenn du einen Tag verpasst. 
+              Er wird automatisch verwendet, wenn du nach einer Pause wieder einlöst.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             {/* Current freezes */}
             <div className="flex items-center justify-between p-3 rounded-lg bg-sky-500/10 border border-sky-500/20">
-              <span className="text-sm text-muted-foreground">Deine Freezes:</span>
+              <span className="text-sm text-muted-foreground">Dein Pause-Schutz:</span>
               <span className="font-bold text-sky-400">{freezes}</span>
             </div>
             
             {/* Price */}
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <span className="text-sm text-muted-foreground">Preis pro Freeze:</span>
+              <span className="text-sm text-muted-foreground">Preis:</span>
               <div className="flex items-center gap-1">
                 <img src={talerCoin} alt="" className="w-4 h-4" />
                 <span className="font-bold">{freezeCost} Taler</span>
@@ -277,7 +277,7 @@ export function DailyStreakCard() {
             
             {!canAffordFreeze && (
               <p className="text-xs text-destructive text-center">
-                Du brauchst mindestens {freezeCost} Taler für einen Freeze.
+                Du brauchst mindestens {freezeCost} Taler für einen Pause-Schutz.
               </p>
             )}
           </div>
@@ -296,7 +296,7 @@ export function DailyStreakCard() {
               ) : (
                 <ShoppingCart className="h-4 w-4 mr-2" />
               )}
-              Freeze kaufen
+              Pause-Schutz kaufen
             </Button>
           </DialogFooter>
         </DialogContent>
