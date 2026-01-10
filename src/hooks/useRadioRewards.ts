@@ -27,18 +27,27 @@ export function useRadioRewards() {
   const [userId, setUserId] = useState<string | null>(null);
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
+  const previousUserIdRef = useRef<string | null>(null);
   
   // Get user ID from Supabase auth
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUserId(user?.id || null);
+      const newUserId = user?.id || null;
+      previousUserIdRef.current = newUserId;
+      setUserId(newUserId);
     };
     
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUserId(session?.user?.id || null);
+      const newUserId = session?.user?.id || null;
+      
+      // Only update userId if it actually changed (not just token refresh)
+      if (newUserId !== previousUserIdRef.current) {
+        previousUserIdRef.current = newUserId;
+        setUserId(newUserId);
+      }
     });
     
     return () => subscription.unsubscribe();
