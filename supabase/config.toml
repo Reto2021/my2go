@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.sync-google-reviews]
 verify_jwt = false
+
+[functions.scrape-partner-info]
+verify_jwt = false
+
+[functions.search-partners-bulk]
+verify_jwt = false

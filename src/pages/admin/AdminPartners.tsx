@@ -23,10 +23,37 @@ import {
   Globe,
   Sparkles,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Download,
+  Building2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+interface BulkSearchResult {
+  google_place_id: string;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  address_street: string;
+  address_number: string;
+  category: string;
+  rating: number | null;
+  review_count: number | null;
+  lat: number | null;
+  lng: number | null;
+  types: string[];
+  selected?: boolean;
+  importing?: boolean;
+  imported?: boolean;
+  enriched?: boolean;
+  website?: string;
+  description?: string;
+  short_description?: string;
+}
 
 export default function AdminPartners() {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -39,6 +66,15 @@ export default function AdminPartners() {
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
   const [aiSearchUrl, setAiSearchUrl] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  
+  // Bulk import state
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkSearchCity, setBulkSearchCity] = useState('');
+  const [bulkSearchCategory, setBulkSearchCategory] = useState('');
+  const [bulkSearchResults, setBulkSearchResults] = useState<BulkSearchResult[]>([]);
+  const [isBulkSearching, setIsBulkSearching] = useState(false);
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [bulkImportProgress, setBulkImportProgress] = useState({ current: 0, total: 0 });
   
   const PARTNER_CATEGORIES = [
     'Restaurant',
@@ -302,6 +338,133 @@ export default function AdminPartners() {
       setIsAiLoading(false);
     }
   };
+
+  // Bulk search function
+  const handleBulkSearch = async () => {
+    if (!bulkSearchCity.trim()) {
+      toast.error('Bitte eine Stadt eingeben');
+      return;
+    }
+    
+    setIsBulkSearching(true);
+    setBulkSearchResults([]);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('search-partners-bulk', {
+        body: { 
+          city: bulkSearchCity.trim(),
+          category: bulkSearchCategory || undefined
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success && data?.data) {
+        // Filter out already existing partners by google_place_id
+        const existingPlaceIds = new Set(partners.map(p => p.google_place_id).filter(Boolean));
+        const newResults = data.data.filter((r: BulkSearchResult) => !existingPlaceIds.has(r.google_place_id));
+        
+        setBulkSearchResults(newResults.map((r: BulkSearchResult) => ({ ...r, selected: false })));
+        toast.success(`${newResults.length} neue Geschäfte gefunden (${data.data.length - newResults.length} bereits vorhanden)`);
+      } else {
+        toast.error(data?.error || 'Keine Ergebnisse');
+      }
+    } catch (error) {
+      console.error('Bulk search error:', error);
+      toast.error('Fehler bei der Suche');
+    } finally {
+      setIsBulkSearching(false);
+    }
+  };
+
+  // Toggle selection
+  const toggleBulkSelection = (index: number) => {
+    setBulkSearchResults(prev => prev.map((r, i) => 
+      i === index ? { ...r, selected: !r.selected } : r
+    ));
+  };
+
+  // Select all
+  const toggleSelectAll = () => {
+    const allSelected = bulkSearchResults.every(r => r.selected);
+    setBulkSearchResults(prev => prev.map(r => ({ ...r, selected: !allSelected })));
+  };
+
+  // Import selected partners
+  const handleBulkImport = async () => {
+    const selected = bulkSearchResults.filter(r => r.selected && !r.imported);
+    if (selected.length === 0) {
+      toast.error('Keine Partner ausgewählt');
+      return;
+    }
+    
+    setIsBulkImporting(true);
+    setBulkImportProgress({ current: 0, total: selected.length });
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < selected.length; i++) {
+      const result = selected[i];
+      setBulkImportProgress({ current: i + 1, total: selected.length });
+      
+      // Mark as importing
+      setBulkSearchResults(prev => prev.map(r => 
+        r.google_place_id === result.google_place_id ? { ...r, importing: true } : r
+      ));
+      
+      try {
+        // Generate slug
+        const slug = result.name
+          .toLowerCase()
+          .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+          .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        
+        // Create partner
+        const { partner, error } = await createPartner({
+          name: result.name,
+          slug,
+          category: result.category,
+          address_street: result.address_street,
+          address_number: result.address_number,
+          postal_code: result.postal_code,
+          city: result.city,
+          google_place_id: result.google_place_id,
+          is_active: false, // Default inactive
+          is_featured: false,
+          lat: result.lat,
+          lng: result.lng,
+          google_rating: result.rating,
+          google_review_count: result.review_count,
+        });
+        
+        if (error) {
+          console.error(`Error importing ${result.name}:`, error);
+          setBulkSearchResults(prev => prev.map(r => 
+            r.google_place_id === result.google_place_id ? { ...r, importing: false } : r
+          ));
+        } else {
+          successCount++;
+          if (partner) {
+            setPartners(prev => [partner, ...prev]);
+          }
+          setBulkSearchResults(prev => prev.map(r => 
+            r.google_place_id === result.google_place_id ? { ...r, importing: false, imported: true, selected: false } : r
+          ));
+        }
+      } catch (error) {
+        console.error(`Error importing ${result.name}:`, error);
+        setBulkSearchResults(prev => prev.map(r => 
+          r.google_place_id === result.google_place_id ? { ...r, importing: false } : r
+        ));
+      }
+      
+      // Small delay between imports
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    setIsBulkImporting(false);
+    toast.success(`${successCount} Partner erfolgreich importiert`);
+  };
   
   const filteredPartners = partners.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -360,6 +523,16 @@ export default function AdminPartners() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowBulkImport(!showBulkImport)}
+            className={cn(
+              "btn-ghost",
+              showBulkImport && "bg-accent/10 text-accent"
+            )}
+          >
+            <Download className="h-4 w-4" />
+            Bulk-Import
+          </button>
+          <button
             onClick={() => setShowReviewsOverview(!showReviewsOverview)}
             className={cn(
               "btn-ghost",
@@ -382,6 +555,156 @@ export default function AdminPartners() {
           </button>
         </div>
       </div>
+
+      {/* Bulk Import Section */}
+      {showBulkImport && (
+        <div className="card-base p-6 animate-in space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-accent" />
+                Massenerfassung
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Suche Geschäfte via Google Places und importiere sie als Partner
+              </p>
+            </div>
+            <button
+              onClick={() => setShowBulkImport(false)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Search Form */}
+          <div className="flex flex-wrap gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-sm font-medium mb-1">Stadt *</label>
+              <input
+                type="text"
+                value={bulkSearchCity}
+                onChange={(e) => setBulkSearchCity(e.target.value)}
+                placeholder="z.B. Brugg, Baden, Zürich..."
+                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleBulkSearch();
+                  }
+                }}
+              />
+            </div>
+            <div className="w-48">
+              <label className="block text-sm font-medium mb-1">Kategorie (optional)</label>
+              <select
+                value={bulkSearchCategory}
+                onChange={(e) => setBulkSearchCategory(e.target.value)}
+                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Alle Kategorien</option>
+                {PARTNER_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={handleBulkSearch}
+                disabled={isBulkSearching}
+                className="btn-primary h-11"
+              >
+                {isBulkSearching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                Suchen
+              </button>
+            </div>
+          </div>
+
+          {/* Results */}
+          {bulkSearchResults.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="btn-ghost text-sm"
+                  >
+                    {bulkSearchResults.every(r => r.selected) ? 'Keine auswählen' : 'Alle auswählen'}
+                  </button>
+                  <span className="text-sm text-muted-foreground">
+                    {bulkSearchResults.filter(r => r.selected).length} von {bulkSearchResults.length} ausgewählt
+                  </span>
+                </div>
+                <button
+                  onClick={handleBulkImport}
+                  disabled={isBulkImporting || bulkSearchResults.filter(r => r.selected && !r.imported).length === 0}
+                  className="btn-primary"
+                >
+                  {isBulkImporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {bulkImportProgress.current}/{bulkImportProgress.total}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Importieren ({bulkSearchResults.filter(r => r.selected && !r.imported).length})
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="divide-y divide-border rounded-xl border overflow-hidden max-h-96 overflow-y-auto">
+                {bulkSearchResults.map((result, index) => (
+                  <div 
+                    key={result.google_place_id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 transition-colors",
+                      result.imported ? "bg-success/10" : result.selected ? "bg-accent/5" : "bg-card hover:bg-muted/50",
+                      result.importing && "opacity-50"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={result.selected || result.imported}
+                      disabled={result.imported || result.importing}
+                      onChange={() => toggleBulkSelection(index)}
+                      className="h-5 w-5 rounded"
+                    />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted flex-shrink-0">
+                      <Store className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate flex items-center gap-2">
+                        {result.name}
+                        {result.imported && <CheckCircle2 className="h-4 w-4 text-success" />}
+                        {result.importing && <Loader2 className="h-4 w-4 animate-spin" />}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="px-2 py-0.5 rounded bg-muted">{result.category}</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {result.city}
+                        </span>
+                        {result.rating && (
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-accent fill-accent" />
+                            {result.rating.toFixed(1)} ({result.review_count})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Google Reviews Overview */}
       {showReviewsOverview && (

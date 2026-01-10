@@ -161,7 +161,7 @@ export async function getAllPartners(): Promise<Partner[]> {
   return data || [];
 }
 
-export async function createPartner(partner: Partial<Partner>): Promise<{ partner: Partner | null; error: string | null }> {
+export async function createPartner(partner: Partial<Partner> & { google_rating?: number | null; google_review_count?: number | null }): Promise<{ partner: Partner | null; error: string | null }> {
   const { data, error } = await supabase
     .from('partners')
     .insert({
@@ -177,7 +177,11 @@ export async function createPartner(partner: Partial<Partner>): Promise<{ partne
       lat: partner.lat,
       lng: partner.lng,
       logo_url: partner.logo_url,
-      is_active: partner.is_active ?? true,
+      website: partner.website,
+      google_place_id: partner.google_place_id,
+      google_rating: partner.google_rating,
+      google_review_count: partner.google_review_count,
+      is_active: partner.is_active ?? false,
       is_featured: partner.is_featured ?? false,
     })
     .select()
