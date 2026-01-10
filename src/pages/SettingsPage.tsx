@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,8 +30,14 @@ export default function SettingsPage() {
   const [pushLoading, setPushLoading] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   
   useEffect(() => {
+    // Check if PWA is installed
+    const standalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    setIsInstalled(standalone);
+    
     const checkPushStatus = async () => {
       const supported = isPushSupported();
       setPushSupported(supported);
@@ -292,6 +298,35 @@ export default function SettingsPage() {
                 onCheckedChange={setVibrationEnabled}
               />
             </div>
+          </div>
+        </section>
+        
+        {/* App Section */}
+        <section className="animate-in">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Smartphone className="h-4 w-4" />
+            App
+          </h2>
+          
+          <div className="card-base divide-y divide-border">
+            {/* Install App */}
+            <button 
+              onClick={() => navigate('/install')}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+                  <Download className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">App installieren</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isInstalled ? 'My 2Go ist installiert ✓' : 'Zum Homescreen hinzufügen'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
           </div>
         </section>
         

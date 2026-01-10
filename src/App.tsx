@@ -28,6 +28,7 @@ import RedemptionDetailPage from "./pages/RedemptionDetailPage";
 import ReferralPage from "./pages/ReferralPage";
 import NotFound from "./pages/NotFound";
 import BadgesPage from "./pages/BadgesPage";
+import InstallPage from "./pages/InstallPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import LegalTermsPage from "./pages/LegalTermsPage";
 import ImpressumPage from "./pages/ImpressumPage";
@@ -151,7 +152,8 @@ function AppContent() {
           <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
           <Route path="/referral" element={<ReferralPage />} />
           <Route path="/badges" element={<BadgesPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/install" element={<InstallPage />} />
           <Route path="/agb" element={<LegalTermsPage />} />
           <Route path="/impressum" element={<ImpressumPage />} />
           <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
