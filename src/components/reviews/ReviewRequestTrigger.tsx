@@ -11,9 +11,44 @@ interface PendingReviewCheck {
   redeemedAt: string;
 }
 
+interface PushReviewData {
+  redemptionId: string;
+  partnerId: string;
+}
+
 export function ReviewRequestTrigger() {
   const [pendingReview, setPendingReview] = useState<PendingReviewCheck | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Listen for push notification clicks with review data
+  useEffect(() => {
+    const handlePushReviewOpen = async (event: CustomEvent<PushReviewData>) => {
+      const { redemptionId, partnerId } = event.detail;
+      
+      // Fetch partner info
+      const { data: partner } = await supabase
+        .from('partners')
+        .select('name, google_place_id')
+        .eq('id', partnerId)
+        .single();
+
+      if (partner) {
+        setPendingReview({
+          redemptionId,
+          partnerId,
+          partnerName: partner.name,
+          googlePlaceId: partner.google_place_id,
+          redeemedAt: new Date().toISOString(),
+        });
+        setIsOpen(true);
+      }
+    };
+
+    window.addEventListener('openReviewSheet', handlePushReviewOpen as EventListener);
+    return () => {
+      window.removeEventListener('openReviewSheet', handlePushReviewOpen as EventListener);
+    };
+  }, []);
 
   // Check for recently redeemed rewards that need review
   const { data: recentRedemptions } = useQuery({
