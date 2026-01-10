@@ -78,7 +78,7 @@ export function RadioPlayer({ className }: { className?: string }) {
             <div className="flex items-center gap-2 mb-0.5">
               <Radio className="h-3.5 w-3.5 text-accent flex-shrink-0" />
               <span className="text-xs font-semibold text-accent uppercase tracking-wide">Radio 2Go Live</span>
-              <Expand className="h-3 w-3 text-secondary-foreground/50 ml-auto" />
+              <Expand className="h-4 w-4 text-accent ml-auto" />
             </div>
             {nowPlaying ? (
               <>
