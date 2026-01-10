@@ -23,7 +23,7 @@ export default function PartnerLandingPage() {
   return (
     <div className="overflow-hidden bg-background">
       {/* Hero Section - Clean, no clouds */}
-      <section className="relative pt-8 pb-16 md:pt-12 md:pb-24 overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background">
+      <section className="relative pt-20 pb-16 md:pt-24 md:pb-24 overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background">
         {/* Subtle decorative gradient orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />

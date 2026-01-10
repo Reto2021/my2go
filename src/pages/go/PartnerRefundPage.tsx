@@ -105,7 +105,7 @@ export default function PartnerRefundPage() {
   return (
     <div className="overflow-hidden bg-background">
       {/* Hero Section */}
-      <section className="relative py-10 md:py-14 overflow-hidden bg-gradient-to-b from-green-50 via-green-50/50 to-background dark:from-green-950/30 dark:via-green-950/10 dark:to-background">
+      <section className="relative pt-20 pb-10 md:pt-24 md:pb-14 overflow-hidden bg-gradient-to-b from-green-50 via-green-50/50 to-background dark:from-green-950/30 dark:via-green-950/10 dark:to-background">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-green-200/30 dark:bg-green-800/20 rounded-full blur-3xl" />
         </div>
