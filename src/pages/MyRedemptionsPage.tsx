@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { TalerIcon } from '@/components/icons/TalerIcon';
+// TalerIcon replaces talerCoin image
 
 interface Redemption {
   id: string;
