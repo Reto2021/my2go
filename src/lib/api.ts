@@ -1,5 +1,5 @@
 /**
- * 2Go Taler Hub - Gateway API Client
+ * My 2Go - Gateway API Client
  * 
  * This file implements the Gateway API contract that connects to:
  * - Boomerangme (loyalty backend: points, rewards, redemptions)
@@ -577,8 +577,8 @@ const MOCK_PARTNER_DETAILS: Record<string, PartnerDetail> = {
 const MOCK_FAQ: FAQItem[] = [
   // Grundlagen (3)
   { q: 'Was sind 2Go Taler?', a: 'Bonuspunkte von Radio 2Go. Sammeln bei Partnern, einlösen für Rewards. Nicht auszahlbar.', category: 'Grundlagen' },
-  { q: 'Wie sammle ich Taler?', a: 'Karte beim Partner vorzeigen oder On-Air Codes aus dem Radio eingeben.', category: 'Grundlagen' },
-  { q: 'Wo ist meine Karte?', a: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine Karte.', category: 'Grundlagen' },
+  { q: 'Wie sammle ich Taler?', a: 'My 2Go Karte beim Partner vorzeigen oder On-Air Codes aus dem Radio eingeben.', category: 'Grundlagen' },
+  { q: 'Wo ist meine Karte?', a: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine My 2Go Karte.', category: 'Grundlagen' },
   
   // Gutscheine (4)
   { q: 'Wie löse ich einen Gutschein ein?', a: 'Gutschein wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig.', category: 'Gutscheine' },

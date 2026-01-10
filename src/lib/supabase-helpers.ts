@@ -1,5 +1,5 @@
 /**
- * Supabase Helper Functions for 2Go Taler Hub
+ * Supabase Helper Functions for My 2Go
  */
 
 import { supabase } from '@/integrations/supabase/client';
