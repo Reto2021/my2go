@@ -195,7 +195,7 @@ export default function PartnerLandingPage() {
             {[
               {
                 icon: Users,
-                title: "2Go Taler Loyalty",
+                title: "My 2Go Loyalty",
                 description: "Kunden sammeln Punkte und lösen Belohnungen bei dir ein."
               },
               {
