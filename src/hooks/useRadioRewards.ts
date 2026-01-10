@@ -1,9 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRadioStore } from '@/lib/radio-store';
-import { useToast } from '@/hooks/use-toast';
 import { useSession } from '@/lib/session';
-import { Json } from '@/integrations/supabase/types';
 
 interface ListeningReward {
   success: boolean;
@@ -13,14 +11,21 @@ interface ListeningReward {
   message: string;
 }
 
+export interface SessionSummaryData {
+  duration: number;
+  reward: number;
+  tier?: string;
+}
+
 export function useRadioRewards() {
   const { refreshBalance } = useSession();
   const { isPlaying } = useRadioStore();
-  const { toast } = useToast();
   
   const sessionIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<Date | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   
   // Get user ID from Supabase auth
   useEffect(() => {
@@ -77,10 +82,13 @@ export function useRadioRewards() {
       const result = data as unknown as ListeningReward;
       
       if (result?.success && result.reward > 0) {
-        toast({
-          title: `🎧 ${result.tier || 'Hörbonus'}!`,
-          description: result.message,
+        // Show session summary modal instead of toast
+        setSessionSummary({
+          duration: result.duration,
+          reward: result.reward,
+          tier: result.tier,
         });
+        setShowSummary(true);
         
         // Refresh balance to show new Taler
         refreshBalance?.();
@@ -91,7 +99,12 @@ export function useRadioRewards() {
     } catch (error) {
       console.error('Error ending listening session:', error);
     }
-  }, [toast, refreshBalance]);
+  }, [refreshBalance]);
+  
+  const closeSummary = useCallback(() => {
+    setShowSummary(false);
+    setSessionSummary(null);
+  }, []);
   
   // Track play/pause state changes
   useEffect(() => {
@@ -130,5 +143,8 @@ export function useRadioRewards() {
   return {
     isTracking: !!sessionIdRef.current,
     startTime: startTimeRef.current,
+    sessionSummary,
+    showSummary,
+    closeSummary,
   };
 }
