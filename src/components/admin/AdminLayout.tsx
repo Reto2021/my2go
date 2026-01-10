@@ -8,13 +8,15 @@ import {
   ArrowLeft,
   Shield,
   Radio,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/admin/partners', icon: Store, label: 'Partner' },
+  { path: '/admin/applications', icon: FileText, label: 'Bewerbungen' },
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
   { path: '/admin/badges', icon: Award, label: 'Badges' },
   { path: '/admin/radio', icon: Radio, label: 'Radio-Belohnungen' },

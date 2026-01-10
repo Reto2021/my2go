@@ -177,6 +177,99 @@ export type Database = {
           },
         ]
       }
+      partner_applications: {
+        Row: {
+          address_number: string
+          address_street: string
+          city: string
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          country: string | null
+          created_at: string
+          goals: string[] | null
+          google_business_url: string | null
+          id: string
+          industry: string
+          notes: string | null
+          opening_hours: string | null
+          postal_code: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shipping_city: string | null
+          shipping_number: string | null
+          shipping_postal_code: string | null
+          shipping_same_as_location: boolean | null
+          shipping_street: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          website: string | null
+          whatsapp_opt_in: boolean | null
+        }
+        Insert: {
+          address_number: string
+          address_street: string
+          city: string
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string
+          country?: string | null
+          created_at?: string
+          goals?: string[] | null
+          google_business_url?: string | null
+          id?: string
+          industry: string
+          notes?: string | null
+          opening_hours?: string | null
+          postal_code: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shipping_city?: string | null
+          shipping_number?: string | null
+          shipping_postal_code?: string | null
+          shipping_same_as_location?: boolean | null
+          shipping_street?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+          whatsapp_opt_in?: boolean | null
+        }
+        Update: {
+          address_number?: string
+          address_street?: string
+          city?: string
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string
+          country?: string | null
+          created_at?: string
+          goals?: string[] | null
+          google_business_url?: string | null
+          id?: string
+          industry?: string
+          notes?: string | null
+          opening_hours?: string | null
+          postal_code?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shipping_city?: string | null
+          shipping_number?: string | null
+          shipping_postal_code?: string | null
+          shipping_same_as_location?: boolean | null
+          shipping_street?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          website?: string | null
+          whatsapp_opt_in?: boolean | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           address_number: string | null
