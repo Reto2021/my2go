@@ -15,7 +15,9 @@ import {
   Gift,
   Coins,
   LogIn,
-  Wallet
+  Wallet,
+  Video,
+  Image
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
@@ -61,6 +63,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
   const [showTiers, setShowTiers] = useState(false);
+  const [showVideo, setShowVideo] = useState(true); // Default to video when available
 
   // Update session duration every second
   useEffect(() => {
@@ -196,12 +199,15 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
 
           {/* Scrollable Main Content */}
           <div className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-            {/* Large Cover Art - memoized to prevent flickering */}
+            {/* Large Cover Art or Video */}
             <ArtworkDisplay 
               artworkUrl={nowPlaying?.artworkUrl} 
+              videoUrl={nowPlaying?.videoUrl}
               title={nowPlaying?.title}
               isPlaying={isPlaying}
               isFullscreen={isFullscreen}
+              showVideo={showVideo}
+              onToggleMedia={() => setShowVideo(!showVideo)}
             />
 
             {/* Song Info */}
@@ -491,63 +497,98 @@ function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) 
 // Memoized artwork component to prevent flickering during session duration updates
 const ArtworkDisplay = React.memo(function ArtworkDisplay({
   artworkUrl,
+  videoUrl,
   title,
   isPlaying,
-  isFullscreen
+  isFullscreen,
+  showVideo,
+  onToggleMedia
 }: {
   artworkUrl?: string | null;
+  videoUrl?: string | null;
   title?: string;
   isPlaying: boolean;
   isFullscreen: boolean;
+  showVideo: boolean;
+  onToggleMedia: () => void;
 }) {
+  const hasVideo = !!videoUrl;
+  const shouldShowVideo = showVideo && hasVideo;
+
   return (
-    <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ delay: 0.1 }}
-      className={cn(
-        "relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0",
-        isFullscreen ? "w-[400px] h-[400px]" : "w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
-      )}
-    >
-      {artworkUrl ? (
-        <img
-          src={artworkUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-accent/30 to-primary/30 flex items-center justify-center">
-          <Music2 className="h-24 w-24 text-white/30" />
-        </div>
-      )}
-      
-      {/* Playing indicator */}
-      {isPlaying && (
-        <div className="absolute bottom-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
-          <div className="flex items-end gap-0.5 h-4">
-            <motion.div
-              animate={{ height: ['40%', '100%', '60%', '80%', '40%'] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              className="w-1 bg-accent rounded-full"
-            />
-            <motion.div
-              animate={{ height: ['60%', '40%', '100%', '50%', '60%'] }}
-              transition={{ duration: 1, repeat: Infinity, delay: 0.1 }}
-              className="w-1 bg-accent rounded-full"
-            />
-            <motion.div
-              animate={{ height: ['80%', '60%', '40%', '100%', '80%'] }}
-              transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
-              className="w-1 bg-accent rounded-full"
-            />
+    <div className="relative">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className={cn(
+          "relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0",
+          isFullscreen ? "w-[400px] h-[400px]" : "w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
+        )}
+      >
+        {shouldShowVideo ? (
+          <video
+            src={videoUrl!}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        ) : artworkUrl ? (
+          <img
+            src={artworkUrl}
+            alt={title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-accent/30 to-primary/30 flex items-center justify-center">
+            <Music2 className="h-24 w-24 text-white/30" />
           </div>
-          <span className="text-xs font-semibold text-white ml-1">LIVE</span>
-        </div>
+        )}
+        
+        {/* Playing indicator */}
+        {isPlaying && !shouldShowVideo && (
+          <div className="absolute bottom-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
+            <div className="flex items-end gap-0.5 h-4">
+              <motion.div
+                animate={{ height: ['40%', '100%', '60%', '80%', '40%'] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="w-1 bg-accent rounded-full"
+              />
+              <motion.div
+                animate={{ height: ['60%', '40%', '100%', '50%', '60%'] }}
+                transition={{ duration: 1, repeat: Infinity, delay: 0.1 }}
+                className="w-1 bg-accent rounded-full"
+              />
+              <motion.div
+                animate={{ height: ['80%', '60%', '40%', '100%', '80%'] }}
+                transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+                className="w-1 bg-accent rounded-full"
+              />
+            </div>
+            <span className="text-xs font-semibold text-white ml-1">LIVE</span>
+          </div>
+        )}
+      </motion.div>
+      
+      {/* Video/Cover Toggle Button */}
+      {hasVideo && (
+        <button
+          onClick={onToggleMedia}
+          className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+          title={shouldShowVideo ? 'Cover anzeigen' : 'Video anzeigen'}
+        >
+          {shouldShowVideo ? (
+            <Image className="h-4 w-4 text-white" />
+          ) : (
+            <Video className="h-4 w-4 text-white" />
+          )}
+        </button>
       )}
-    </motion.div>
+    </div>
   );
 });
