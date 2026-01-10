@@ -8,7 +8,7 @@ import { FunnelRadioPlayer } from '@/components/funnel/FunnelRadioPlayer';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackFunnelEvent, SIGNUP_BONUS_TALER } from '@/lib/funnel-config';
 import { Confetti } from '@/components/ui/confetti';
-import { TalerIcon } from '@/components/icons/TalerIcon';
+import { Coins } from 'lucide-react';
 
 export default function FunnelWelcomePage() {
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export default function FunnelWelcomePage() {
           transition={{ delay: 0.3 }}
           className="flex items-center justify-center gap-2 mb-6"
         >
-          <TalerIcon size={24} />
+          <Coins className="h-6 w-6" />
           <span className="font-bold text-lg text-accent">
             +{SIGNUP_BONUS_TALER} 2Go Taler sind drauf
           </span>
@@ -92,7 +92,7 @@ export default function FunnelWelcomePage() {
         >
           <p className="text-sm text-muted-foreground mb-1">Dein Guthaben</p>
           <div className="flex items-center gap-3">
-            <TalerIcon size={40} />
+            <Coins className="h-10 w-10 text-accent" />
             <span className="text-4xl font-extrabold text-foreground">
               {balance?.taler_balance || SIGNUP_BONUS_TALER}
             </span>

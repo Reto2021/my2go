@@ -15,7 +15,7 @@ import {
   HookType,
   CampaignConfig
 } from '@/lib/funnel-config';
-import { TalerIcon } from '@/components/icons/TalerIcon';
+import { Coins } from 'lucide-react';
 
 const HOOK_ICONS: Record<HookType, typeof Gift> = {
   coupon: Ticket,
@@ -288,7 +288,7 @@ export default function FunnelCampaignPage() {
           transition={{ delay: 0.5 }}
           className="flex items-center justify-center gap-2 mb-6"
         >
-          <TalerIcon size={24} />
+          <Coins className="h-6 w-6" />
           <span className="font-bold text-accent">+{SIGNUP_BONUS_TALER} 2Go Taler Bonus</span>
         </motion.div>
 

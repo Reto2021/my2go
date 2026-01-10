@@ -25,7 +25,7 @@ import { Slider } from '@/components/ui/slider';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import { TalerIcon } from '@/components/icons/TalerIcon';
+
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
 
@@ -269,7 +269,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       <div className="flex items-center gap-1">
                         {currentTier ? (
                           <>
-                            <TalerIcon size={12} />
+                            <Coins className="h-3 w-3" />
                             <span className="text-accent font-semibold">+{currentTier.taler_reward}</span>
                             <span className="text-white/50 hidden xs:inline">{currentTier.name}</span>
                           </>
@@ -280,7 +280,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       {nextTier && (
                         <div className="flex items-center gap-1 text-white/70">
                           <span>Nächstes:</span>
-                          <TalerIcon size={12} />
+                          <Coins className="h-3 w-3" />
                           <span className="text-accent font-semibold">+{nextTier.taler_reward}</span>
                           <span className="text-white/50">({formatDuration(nextTier.min_duration_seconds)})</span>
                         </div>
@@ -294,7 +294,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   /* Login Prompt for unauthenticated users */
                   <div className="bg-white/10 rounded-2xl p-4 text-center">
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <TalerIcon size={20} />
+                      <Coins className="h-5 w-5" />
                       <span className="text-base font-bold text-white">2Go Taler verdienen</span>
                     </div>
                     <p className="text-sm text-white/70 mb-4">
@@ -487,7 +487,7 @@ function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) 
       className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10"
     >
       <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-        <TalerIcon size={20} />
+        <Coins className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white">{tier.name}</p>
@@ -495,7 +495,7 @@ function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) 
       </div>
       <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-accent/20">
         <span className="text-sm font-bold text-accent">+{tier.taler_reward}</span>
-        <TalerIcon size={14} />
+        <Coins className="h-3.5 w-3.5" />
       </div>
     </motion.div>
   );

@@ -9,7 +9,7 @@ import { QuickSignupSheet } from '@/components/funnel/QuickSignupSheet';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackFunnelEvent, SIGNUP_BONUS_TALER } from '@/lib/funnel-config';
-import { TalerIcon } from '@/components/icons/TalerIcon';
+import { Coins } from 'lucide-react';
 
 export default function FunnelEntryPage() {
   const navigate = useNavigate();
@@ -86,7 +86,7 @@ export default function FunnelEntryPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent-foreground font-bold text-sm mb-6"
           >
-            <TalerIcon size={20} />
+            <Coins className="h-5 w-5" />
             +{SIGNUP_BONUS_TALER} 2Go Taler Bonus
           </motion.div>
 
