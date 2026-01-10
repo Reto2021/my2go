@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, 
@@ -20,6 +20,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Confetti } from "@/components/ui/confetti";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { de } from "date-fns/locale";
@@ -35,12 +36,27 @@ export default function LeaderboardPage() {
     currentNickname,
     isParticipating,
     updateSettings,
-    isUpdating
+    isUpdating,
+    showTop3Celebration,
+    resetCelebration
   } = useLeaderboard();
   
   const [showSettings, setShowSettings] = useState(false);
   const [nickname, setNickname] = useState(currentNickname);
   const [participateEnabled, setParticipateEnabled] = useState(isParticipating);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Trigger confetti when user enters Top 3
+  useEffect(() => {
+    if (showTop3Celebration) {
+      setShowConfetti(true);
+      // Reset the celebration flag after triggering
+      const timer = setTimeout(() => {
+        resetCelebration();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [showTop3Celebration, resetCelebration]);
 
   // Week date range
   const now = new Date();
@@ -76,8 +92,42 @@ export default function LeaderboardPage() {
     );
   }
 
+  const getRankMessage = () => {
+    if (!userRank?.rank) return { message: '', subMessage: '' };
+    switch (userRank.rank) {
+      case 1:
+        return { 
+          message: '👑 Platz 1! Du bist der Top Hörer!', 
+          subMessage: 'Unglaublich! Du führst das Leaderboard an!' 
+        };
+      case 2:
+        return { 
+          message: '🥈 Platz 2! Fantastische Leistung!', 
+          subMessage: 'Nur noch ein kleiner Schritt zur Spitze!' 
+        };
+      case 3:
+        return { 
+          message: '🥉 Platz 3! Du bist in den Top 3!', 
+          subMessage: 'Weiter so, du gehörst zur Elite!' 
+        };
+      default:
+        return { message: '', subMessage: '' };
+    }
+  };
+
+  const rankMessages = getRankMessage();
+
   return (
     <div className="min-h-screen pb-24 bg-background">
+      {/* Confetti for Top 3 */}
+      <Confetti 
+        isActive={showConfetti}
+        showMessage={true}
+        message={rankMessages.message}
+        subMessage={rankMessages.subMessage}
+        particleCount={80}
+        duration={4000}
+      />
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4 flex items-center justify-between">

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface LeaderboardEntry {
   rank: number;
@@ -19,6 +19,10 @@ interface UserRank {
 export function useLeaderboard() {
   const { user, profile, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Track previous rank to detect Top 3 entry
+  const previousRankRef = useRef<number | null>(null);
+  const [showTop3Celebration, setShowTop3Celebration] = useState(false);
 
   // Fetch weekly leaderboard
   const { data: leaderboard = [], isLoading: loadingLeaderboard } = useQuery({
@@ -42,6 +46,29 @@ export function useLeaderboard() {
     },
     enabled: !!user,
   });
+
+  // Detect if user just entered Top 3
+  useEffect(() => {
+    if (userRank?.is_participating && userRank?.rank) {
+      const currentRank = userRank.rank;
+      const previousRank = previousRankRef.current;
+      
+      // Check if user just entered Top 3 (was outside or null, now in Top 3)
+      const justEnteredTop3 = currentRank <= 3 && (previousRank === null || previousRank > 3);
+      
+      if (justEnteredTop3 && previousRank !== null) {
+        // Only trigger celebration if we had a previous rank (not first load)
+        setShowTop3Celebration(true);
+      }
+      
+      previousRankRef.current = currentRank;
+    }
+  }, [userRank]);
+
+  // Reset celebration flag
+  const resetCelebration = () => {
+    setShowTop3Celebration(false);
+  };
 
   // Check for leaderboard badge when user views leaderboard and is in top 3
   useEffect(() => {
@@ -90,5 +117,7 @@ export function useLeaderboard() {
     isParticipating: (profile as any)?.show_on_leaderboard || false,
     updateSettings: updateSettings.mutate,
     isUpdating: updateSettings.isPending,
+    showTop3Celebration,
+    resetCelebration,
   };
 }
