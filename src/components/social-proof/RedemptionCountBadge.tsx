@@ -1,15 +1,39 @@
 import { motion } from 'framer-motion';
-import { Ticket } from 'lucide-react';
+import { Ticket, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePartnerRedemptionCount } from '@/hooks/usePartnerRedemptionCount';
 
-interface RedemptionCountBadgeProps {
+interface RedemptionCountBadgePropsWithCount {
   count: number;
+  partnerId?: never;
   className?: string;
   size?: 'sm' | 'md';
+  variant?: 'default' | 'prominent';
 }
 
-export function RedemptionCountBadge({ count, className, size = 'sm' }: RedemptionCountBadgeProps) {
-  if (count === 0) {
+interface RedemptionCountBadgePropsWithPartnerId {
+  partnerId: string;
+  count?: never;
+  className?: string;
+  size?: 'sm' | 'md';
+  variant?: 'default' | 'prominent';
+}
+
+export type RedemptionCountBadgeProps = RedemptionCountBadgePropsWithCount | RedemptionCountBadgePropsWithPartnerId;
+
+export function RedemptionCountBadge({ 
+  count: propCount, 
+  partnerId,
+  className, 
+  size = 'sm',
+  variant = 'default'
+}: RedemptionCountBadgeProps) {
+  // If partnerId is provided, fetch the count
+  const queryResult = usePartnerRedemptionCount(partnerId || '');
+  
+  const count = partnerId ? (queryResult.data ?? 0) : propCount;
+
+  if (!count || count === 0) {
     return null;
   }
 
@@ -30,6 +54,27 @@ export function RedemptionCountBadge({ count, className, size = 'sm' }: Redempti
     }
     return n.toString();
   };
+
+  if (variant === 'prominent') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          'inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-success/20 to-accent/20 border border-success/30',
+          className
+        )}
+      >
+        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-success/20">
+          <TrendingUp className="h-4 w-4 text-success" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-lg font-bold text-foreground">{formatCount(count)}</span>
+          <span className="text-xs text-muted-foreground">Gutscheine eingelöst</span>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
