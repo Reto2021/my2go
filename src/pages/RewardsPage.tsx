@@ -6,6 +6,7 @@ import { useLocation, calculateDistance } from '@/lib/location';
 import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { cn } from '@/lib/utils';
 import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucide-react';
 
@@ -152,7 +153,7 @@ export default function RewardsPage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h1 className="text-display-sm">Gutscheine</h1>
             
             {/* Filter Toggle */}
@@ -174,6 +175,9 @@ export default function RewardsPage() {
               )}
             </button>
           </div>
+          
+          {/* Live Activity Ticker - Social Proof */}
+          <ActivityTicker className="mb-3" />
           
           {/* Location + Category Filter */}
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
