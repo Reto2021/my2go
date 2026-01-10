@@ -118,6 +118,12 @@ export function useAuth() {
   return context;
 }
 
+// Safe version that returns null instead of throwing when outside provider
+export function useAuthSafe() {
+  const context = useContext(AuthContext);
+  return context ?? null;
+}
+
 // Convenience hooks
 export function useUser() {
   const { user } = useAuth();
