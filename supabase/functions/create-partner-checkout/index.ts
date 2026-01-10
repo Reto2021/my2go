@@ -11,6 +11,9 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CREATE-PARTNER-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Swiss MwSt rate
+const MWST_RATE = 8.1;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,22 +42,52 @@ serve(async (req) => {
       throw new Error("Missing required price IDs");
     }
 
-    // Build line items for one-time charges (activation fee + optional POS kit)
-    const oneTimeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+    // First, create or get tax rate for Swiss MwSt
+    let taxRateId: string;
+    
+    // Try to find existing tax rate
+    const existingTaxRates = await stripe.taxRates.list({ 
+      active: true, 
+      limit: 100 
+    });
+    
+    const swissMwSt = existingTaxRates.data.find(
+      (tr: Stripe.TaxRate) => tr.percentage === MWST_RATE && tr.country === 'CH' && tr.active
+    );
+    
+    if (swissMwSt) {
+      taxRateId = swissMwSt.id;
+      logStep("Found existing tax rate", { taxRateId });
+    } else {
+      // Create new tax rate
+      const newTaxRate = await stripe.taxRates.create({
+        display_name: 'MwSt',
+        description: 'Schweizer Mehrwertsteuer',
+        percentage: MWST_RATE,
+        country: 'CH',
+        inclusive: false,
+      });
+      taxRateId = newTaxRate.id;
+      logStep("Created new tax rate", { taxRateId });
+    }
+
+    // Build one-time items for invoice (activation fee + optional POS kit)
+    const invoiceItems: Stripe.Checkout.SessionCreateParams.SubscriptionData.AddInvoiceItem[] = [
       {
         price: activationPriceId,
         quantity: 1,
+        tax_rates: [taxRateId],
       }
     ];
 
     if (posKitPriceId) {
-      oneTimeLineItems.push({
+      invoiceItems.push({
         price: posKitPriceId,
         quantity: 1,
+        tax_rates: [taxRateId],
       });
     }
 
-    // Create checkout session with subscription + one-time items
     const origin = req.headers.get("origin") || "https://my2go.win";
     
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -64,18 +97,16 @@ serve(async (req) => {
         {
           price: subscriptionPriceId,
           quantity: 1,
-        },
-        ...oneTimeLineItems.map(item => ({
-          ...item,
-          // Add one-time items as invoice items
-        }))
+          tax_rates: [taxRateId],
+        }
       ],
       subscription_data: {
         trial_period_days: 30,
         metadata: {
           plan_id: planId,
           billing_interval: interval,
-        }
+        },
+        add_invoice_items: invoiceItems,
       },
       payment_method_collection: "always",
       success_url: `${origin}/go/partner/thank-you?session_id={CHECKOUT_SESSION_ID}&pos_kit=${posKitPriceId ? 'true' : 'false'}`,
@@ -88,25 +119,16 @@ serve(async (req) => {
       allow_promotion_codes: true,
       billing_address_collection: "required",
       customer_email: email || undefined,
+      tax_id_collection: {
+        enabled: true,
+      },
     };
 
-    // For one-time items with subscription, we need to use invoice items
-    // Stripe doesn't allow mixing modes, so we add activation fee to first invoice
-    if (oneTimeLineItems.length > 0) {
-      sessionParams.subscription_data!.add_invoice_items = oneTimeLineItems.map(item => ({
-        price: item.price as string,
-        quantity: item.quantity,
-      }));
-      // Remove one-time items from line_items (only subscription item)
-      sessionParams.line_items = [
-        {
-          price: subscriptionPriceId,
-          quantity: 1,
-        }
-      ];
-    }
-
-    logStep("Creating checkout session", sessionParams);
+    logStep("Creating checkout session", { 
+      subscriptionPriceId, 
+      invoiceItemsCount: invoiceItems.length,
+      taxRateId 
+    });
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 

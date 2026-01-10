@@ -1,0 +1,274 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Shield, Loader2, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { GUARANTEE_CONDITIONS } from "@/lib/partner-pricing";
+
+const refundSchema = z.object({
+  companyName: z.string().min(2, "Firmenname ist erforderlich"),
+  contactName: z.string().min(2, "Kontaktperson ist erforderlich"),
+  email: z.string().email("Gültige E-Mail erforderlich"),
+  stripeEmail: z.string().email("Stripe E-Mail ist erforderlich"),
+  startDate: z.string().min(1, "Startdatum ist erforderlich"),
+  conditionsConfirmed: z.boolean().refine(val => val === true, {
+    message: "Bitte bestätige, dass alle Bedingungen erfüllt sind"
+  }),
+  reason: z.string().min(10, "Bitte gib einen Grund an (mind. 10 Zeichen)"),
+});
+
+type RefundFormData = z.infer<typeof refundSchema>;
+
+export default function PartnerRefundPage() {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const form = useForm<RefundFormData>({
+    resolver: zodResolver(refundSchema),
+    defaultValues: {
+      companyName: "",
+      contactName: "",
+      email: "",
+      stripeEmail: "",
+      startDate: "",
+      conditionsConfirmed: false,
+      reason: "",
+    }
+  });
+
+  const onSubmit = async (data: RefundFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      // TODO: Submit to backend / send email
+      console.log("Refund request:", data);
+      
+      // Track event
+      if (typeof window !== 'undefined' && 'gtag' in window) {
+        (window as any).gtag('event', 'refund_form_submitted');
+      }
+      
+      setIsSubmitted(true);
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.message || "Bitte versuche es erneut.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="py-20 min-h-[60vh] flex items-center">
+        <div className="container max-w-lg mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+            </div>
+            <h1 className="text-2xl font-bold mb-4">Antrag eingereicht</h1>
+            <p className="text-muted-foreground">
+              Vielen Dank. Wir melden uns innert 2 Werktagen bei dir.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-12 md:py-20">
+      <div className="container max-w-2xl mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold mb-4">
+            Geld-zurück Garantie Antrag
+          </h1>
+          <p className="text-muted-foreground">
+            Wenn du im Trial merkst, dass My 2Go nicht zu dir passt, erstatten wir die Activation Fee zurück.
+          </p>
+        </motion.div>
+
+        {/* Conditions */}
+        <Card className="mb-8 bg-muted/30">
+          <CardContent className="p-6">
+            <h3 className="font-semibold mb-4">Voraussetzungen für die Erstattung:</h3>
+            <ul className="space-y-2">
+              {GUARANTEE_CONDITIONS.map((condition, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-primary font-medium">{i + 1}.</span>
+                  <span>{condition}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground mt-4">
+              Hinweis: POS-Druck und Versandkosten sind nicht erstattbar, falls bereits ausgelöst.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Firmenname *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Muster GmbH" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="contactName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kontaktperson *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Max Muster" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-Mail *</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="max@muster.ch" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="stripeEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-Mail bei Stripe *</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="billing@muster.ch" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Startdatum des Trials *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="conditionsConfirmed"
+                  render={({ field }) => (
+                    <FormItem className="flex items-start gap-3 space-y-0 p-4 rounded-lg bg-muted/50">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Ich bestätige, dass alle oben genannten Bedingungen erfüllt sind.</FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grund für die Kündigung *</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Warum passt My 2Go nicht zu dir?"
+                          rows={4}
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  size="lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                      Wird gesendet...
+                    </>
+                  ) : (
+                    "Antrag einreichen"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </form>
+        </Form>
+      </div>
+    </div>
+  );
+}
