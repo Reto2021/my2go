@@ -11,6 +11,7 @@ import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
 import { LiveActivityFeed } from '@/components/social-proof/LiveActivityFeed';
+import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import {
   Gift, 
   MapPin, 
@@ -401,6 +402,9 @@ function SessionModeHome({
         
         {/* Recent Badges Bar */}
         <RecentBadgesBar />
+        
+        {/* Top Listeners Widget - Social Proof */}
+        <TopListenersWidget />
         
         {/* Live Activity Feed - Social Proof */}
         <div className="card-base p-4">
