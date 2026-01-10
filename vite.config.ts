@@ -17,14 +17,18 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "sw-custom.js"],
       manifest: {
-        name: "2Go Taler Hub",
-        short_name: "2Go Taler",
-        description: "Das Bonusprogramm von Radio 2Go - Taler sammeln, Gutscheine einlösen",
+        name: "My 2Go - Radio 2Go Bonusprogramm",
+        short_name: "My 2Go",
+        description: "Das Bonusprogramm von Radio 2Go - 2Go Taler sammeln, Gutscheine bei lokalen Partnern einlösen",
         theme_color: "#023F5A",
         background_color: "#f8fafc",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
+        id: "/",
+        scope: "/",
+        lang: "de-CH",
+        categories: ["lifestyle", "shopping", "entertainment"],
         icons: [
           {
             src: "/pwa-192x192.png",
@@ -42,6 +46,26 @@ export default defineConfig(({ mode }) => ({
             type: "image/png",
             purpose: "any maskable",
           },
+        ],
+        shortcuts: [
+          {
+            name: "Gutscheine einlösen",
+            short_name: "Gutscheine",
+            url: "/rewards",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "Code eingeben",
+            short_name: "Code",
+            url: "/code",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "Partner finden",
+            short_name: "Partner",
+            url: "/partner",
+            icons: [{ src: "/pwa-192x192.png", sizes: "192x192" }]
+          }
         ],
       },
       workbox: {
