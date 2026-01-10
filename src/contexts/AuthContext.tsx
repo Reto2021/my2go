@@ -9,6 +9,7 @@ import {
   UserBalance,
   UserCode 
 } from '@/lib/supabase-helpers';
+import { checkIsPartnerAdmin, getPartnerAdminInfo, PartnerAdminInfo } from '@/lib/partner-helpers';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,8 @@ interface AuthContextType {
   balance: UserBalance | null;
   userCode: UserCode | null;
   isLoading: boolean;
+  isPartnerAdmin: boolean;
+  partnerInfo: PartnerAdminInfo | null;
   refreshBalance: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -30,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [balance, setBalance] = useState<UserBalance | null>(null);
   const [userCode, setUserCode] = useState<UserCode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPartnerAdmin, setIsPartnerAdmin] = useState(false);
+  const [partnerInfo, setPartnerInfo] = useState<PartnerAdminInfo | null>(null);
 
   const loadUserData = async (userId: string) => {
     const [profileData, balanceData, codeData] = await Promise.all([
@@ -41,6 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(profileData);
     setBalance(balanceData);
     setUserCode(codeData);
+    
+    // Check partner admin status
+    const hasPartnerRole = await checkIsPartnerAdmin(userId);
+    setIsPartnerAdmin(hasPartnerRole);
+    
+    if (hasPartnerRole) {
+      const adminInfo = await getPartnerAdminInfo(userId);
+      setPartnerInfo(adminInfo);
+    } else {
+      setPartnerInfo(null);
+    }
   };
 
   const refreshBalance = async () => {
@@ -73,6 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setBalance(null);
           setUserCode(null);
+          setIsPartnerAdmin(false);
+          setPartnerInfo(null);
         }
       }
     );
@@ -102,6 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       balance,
       userCode,
       isLoading,
+      isPartnerAdmin,
+      partnerInfo,
       refreshBalance,
       refreshProfile,
     }}>
@@ -148,4 +168,9 @@ export function useUserCode() {
 export function useIsAuthenticated() {
   const { user, isLoading } = useAuth();
   return { isAuthenticated: !!user, isLoading };
+}
+
+export function usePartnerAdmin() {
+  const { isPartnerAdmin, partnerInfo } = useAuth();
+  return { isPartnerAdmin, partnerInfo };
 }

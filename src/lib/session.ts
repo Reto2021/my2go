@@ -182,9 +182,3 @@ export const useDisplayName = () => {
   const session = useSession(state => state.session);
   return session?.displayName;
 };
-
-// Helper to get pass link for wallet
-export const usePassLink = () => {
-  const session = useSession(state => state.session);
-  return session?.passLink;
-};
