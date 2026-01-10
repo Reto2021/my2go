@@ -1,0 +1,326 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { ArrowLeft, User, Mail, Phone, MapPin, Camera, Loader2, Save, Check } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateProfile } from '@/lib/supabase-helpers';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+
+const profileSchema = z.object({
+  display_name: z.string().trim().max(100, 'Max 100 Zeichen').optional(),
+  first_name: z.string().trim().max(50, 'Max 50 Zeichen').optional(),
+  last_name: z.string().trim().max(50, 'Max 50 Zeichen').optional(),
+  phone: z.string().trim().regex(/^(\+41|0)?[0-9]{9,10}$/, 'Ungültige Telefonnummer').optional().or(z.literal('')),
+  postal_code: z.string().trim().max(10, 'Max 10 Zeichen').optional(),
+  city: z.string().trim().max(100, 'Max 100 Zeichen').optional(),
+  leaderboard_nickname: z.string().trim().max(20, 'Max 20 Zeichen').optional(),
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+
+export default function ProfilePage() {
+  const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
+  
+  const [formData, setFormData] = useState<ProfileFormData>({
+    display_name: '',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    postal_code: '',
+    city: '',
+    leaderboard_nickname: '',
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  
+  // Load profile data
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        display_name: profile.display_name || '',
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        phone: profile.phone || '',
+        postal_code: profile.postal_code || '',
+        city: profile.city || '',
+        leaderboard_nickname: profile.leaderboard_nickname || '',
+      });
+    }
+  }, [profile]);
+  
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+  
+  const handleChange = (field: keyof ProfileFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => ({ ...prev, [field]: undefined }));
+    setHasChanges(true);
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate
+    const result = profileSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: Partial<Record<keyof ProfileFormData, string>> = {};
+      result.error.errors.forEach(err => {
+        const field = err.path[0] as keyof ProfileFormData;
+        fieldErrors[field] = err.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+    
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      // Clean up empty strings to null
+      const cleanedData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [key, value === '' ? null : value])
+      );
+      
+      const { error } = await updateProfile(user.id, cleanedData);
+      
+      if (error) {
+        toast.error('Fehler beim Speichern');
+        return;
+      }
+      
+      await refreshProfile();
+      toast.success('Profil gespeichert');
+      setHasChanges(false);
+    } catch (error) {
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  if (!user) return null;
+  
+  return (
+    <div className="min-h-screen pb-24 bg-background">
+      {/* Header */}
+      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+        <div className="container py-4 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-lg font-semibold">Mein Profil</h1>
+        </div>
+      </header>
+      
+      <div className="container py-6 space-y-6">
+        {/* Avatar Section */}
+        <section className="animate-in">
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                {profile?.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt="Avatar" 
+                    className="h-24 w-24 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-3xl font-bold text-foreground">
+                    {(formData.display_name || formData.first_name || profile?.email || 'U').charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <button 
+                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
+                onClick={() => toast.info('Avatar-Upload kommt bald!')}
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">{profile?.email}</p>
+          </div>
+        </section>
+        
+        {/* Profile Form */}
+        <form onSubmit={handleSubmit} className="space-y-6 animate-in-delayed">
+          {/* Personal Info Section */}
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Persönliche Daten
+            </h2>
+            
+            <div className="card-base p-4 space-y-4">
+              {/* Display Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Anzeigename</label>
+                <Input
+                  value={formData.display_name}
+                  onChange={(e) => handleChange('display_name', e.target.value)}
+                  placeholder="Dein öffentlicher Name"
+                  maxLength={100}
+                  className={cn(errors.display_name && 'border-destructive')}
+                />
+                {errors.display_name && (
+                  <p className="text-sm text-destructive">{errors.display_name}</p>
+                )}
+              </div>
+              
+              {/* First Name & Last Name */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Vorname</label>
+                  <Input
+                    value={formData.first_name}
+                    onChange={(e) => handleChange('first_name', e.target.value)}
+                    placeholder="Max"
+                    maxLength={50}
+                    className={cn(errors.first_name && 'border-destructive')}
+                  />
+                  {errors.first_name && (
+                    <p className="text-sm text-destructive">{errors.first_name}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nachname</label>
+                  <Input
+                    value={formData.last_name}
+                    onChange={(e) => handleChange('last_name', e.target.value)}
+                    placeholder="Muster"
+                    maxLength={50}
+                    className={cn(errors.last_name && 'border-destructive')}
+                  />
+                  {errors.last_name && (
+                    <p className="text-sm text-destructive">{errors.last_name}</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Phone */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  Telefon
+                </label>
+                <Input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
+                  placeholder="+41 79 123 45 67"
+                  className={cn(errors.phone && 'border-destructive')}
+                />
+                {errors.phone && (
+                  <p className="text-sm text-destructive">{errors.phone}</p>
+                )}
+              </div>
+            </div>
+          </section>
+          
+          {/* Location Section */}
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Adresse
+            </h2>
+            
+            <div className="card-base p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">PLZ</label>
+                  <Input
+                    value={formData.postal_code}
+                    onChange={(e) => handleChange('postal_code', e.target.value)}
+                    placeholder="8000"
+                    maxLength={10}
+                    className={cn(errors.postal_code && 'border-destructive')}
+                  />
+                  {errors.postal_code && (
+                    <p className="text-sm text-destructive">{errors.postal_code}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Ort</label>
+                  <Input
+                    value={formData.city}
+                    onChange={(e) => handleChange('city', e.target.value)}
+                    placeholder="Zürich"
+                    maxLength={100}
+                    className={cn(errors.city && 'border-destructive')}
+                  />
+                  {errors.city && (
+                    <p className="text-sm text-destructive">{errors.city}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          {/* Leaderboard Section */}
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+              🏆 Leaderboard
+            </h2>
+            
+            <div className="card-base p-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nickname</label>
+                <Input
+                  value={formData.leaderboard_nickname}
+                  onChange={(e) => handleChange('leaderboard_nickname', e.target.value)}
+                  placeholder="TalerKing2024"
+                  maxLength={20}
+                  className={cn(errors.leaderboard_nickname && 'border-destructive')}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Wird öffentlich im Leaderboard angezeigt (max. 20 Zeichen)
+                </p>
+                {errors.leaderboard_nickname && (
+                  <p className="text-sm text-destructive">{errors.leaderboard_nickname}</p>
+                )}
+              </div>
+            </div>
+          </section>
+          
+          {/* Save Button */}
+          <Button
+            type="submit"
+            disabled={isLoading || !hasChanges}
+            className="w-full h-14 text-base"
+          >
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : hasChanges ? (
+              <>
+                <Save className="h-5 w-5 mr-2" />
+                Änderungen speichern
+              </>
+            ) : (
+              <>
+                <Check className="h-5 w-5 mr-2" />
+                Gespeichert
+              </>
+            )}
+          </Button>
+        </form>
+        
+        {/* Info */}
+        <section className="animate-in-delayed">
+          <div className="p-4 rounded-2xl bg-muted/50">
+            <p className="text-sm text-muted-foreground text-center">
+              Deine Daten werden sicher gespeichert und nicht an Dritte weitergegeben.
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
