@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
+import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
 import { useSession } from '@/lib/session';
 
 interface AppLayoutProps {
@@ -18,13 +19,15 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [initSession]);
   
   return (
-    <div className="min-h-screen bg-background">
-      <RadioHeader />
-      <main className="pt-20 pb-24">
-        {children || <Outlet />}
-      </main>
-      <BottomNav />
-      <WhatsAppButton />
-    </div>
+    <BadgeNotificationProvider>
+      <div className="min-h-screen bg-background">
+        <RadioHeader />
+        <main className="pt-20 pb-24">
+          {children || <Outlet />}
+        </main>
+        <BottomNav />
+        <WhatsAppButton />
+      </div>
+    </BadgeNotificationProvider>
   );
 }
