@@ -1032,6 +1032,10 @@ export type Database = {
         Returns: Json
       }
       purchase_streak_freeze: { Args: { _user_id: string }; Returns: Json }
+      redeem_air_drop_code: {
+        Args: { _code: string; _user_id: string }
+        Returns: Json
+      }
       start_listening_session: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
