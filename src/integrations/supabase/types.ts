@@ -294,13 +294,16 @@ export type Database = {
           birth_date: string | null
           city: string | null
           created_at: string
+          current_streak: number | null
           display_name: string | null
           email: string | null
           first_name: string | null
           id: string
           last_activity_at: string | null
           last_name: string | null
+          last_streak_date: string | null
           leaderboard_nickname: string | null
+          longest_streak: number | null
           marketing_consent: boolean | null
           marketing_consent_at: string | null
           phone: string | null
@@ -316,13 +319,16 @@ export type Database = {
           birth_date?: string | null
           city?: string | null
           created_at?: string
+          current_streak?: number | null
           display_name?: string | null
           email?: string | null
           first_name?: string | null
           id: string
           last_activity_at?: string | null
           last_name?: string | null
+          last_streak_date?: string | null
           leaderboard_nickname?: string | null
+          longest_streak?: number | null
           marketing_consent?: boolean | null
           marketing_consent_at?: string | null
           phone?: string | null
@@ -338,13 +344,16 @@ export type Database = {
           birth_date?: string | null
           city?: string | null
           created_at?: string
+          current_streak?: number | null
           display_name?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
           last_activity_at?: string | null
           last_name?: string | null
+          last_streak_date?: string | null
           leaderboard_nickname?: string | null
+          longest_streak?: number | null
           marketing_consent?: boolean | null
           marketing_consent_at?: string | null
           phone?: string | null
@@ -799,8 +808,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      claim_daily_streak: { Args: { _user_id: string }; Returns: Json }
       generate_redemption_code: { Args: never; Returns: string }
       generate_unique_code: { Args: { prefix?: string }; Returns: string }
+      get_streak_status: { Args: { _user_id: string }; Returns: Json }
       get_user_balance: {
         Args: { _user_id: string }
         Returns: {

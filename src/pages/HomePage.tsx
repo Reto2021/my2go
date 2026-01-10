@@ -8,6 +8,7 @@ import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
+import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import {
   Gift, 
   MapPin, 
@@ -357,11 +358,14 @@ function SessionModeHome({
         </header>
       )}
       
-      {/* Balance Card */}
+      {/* Balance Card & Streak */}
       <section className="container py-4 space-y-3">
         <div className="animate-in">
           <BalanceCard balance={balance} />
         </div>
+        
+        {/* Daily Streak Card */}
+        <DailyStreakCard />
         
         {/* Recent Badges Bar */}
         <RecentBadgesBar />
