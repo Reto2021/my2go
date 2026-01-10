@@ -150,7 +150,7 @@ export default function HomePage() {
       
       <SessionModeHome 
         displayName={profile?.display_name || profile?.first_name} 
-        balance={balance!}
+        balance={balance || { taler_balance: 0, lifetime_earned: 0, lifetime_spent: 0 }}
         rewards={rewards}
         isLoading={isLoadingContent}
         userLocation={userLocation}
