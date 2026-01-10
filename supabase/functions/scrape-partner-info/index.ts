@@ -93,56 +93,60 @@ async function searchForBusinessWebsite(searchQuery: string, apiKey: string): Pr
   }
 }
 
-// Helper function to search for Google Place ID using Perplexity
-async function findGooglePlaceId(businessName: string, city: string, perplexityKey: string): Promise<string | null> {
-  if (!perplexityKey || !businessName) return null;
+// Helper function to search for Google Place ID using Google Places API
+async function findGooglePlaceId(businessName: string, city: string, googleApiKey: string): Promise<{ placeId: string | null; contactName?: string; phone?: string }> {
+  if (!googleApiKey || !businessName) return { placeId: null };
   
   try {
-    console.log(`Searching Google Place ID for: ${businessName}, ${city}`);
+    const searchQuery = city ? `${businessName} ${city}` : businessName;
+    console.log(`Searching Google Places for: ${searchQuery}`);
     
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'sonar',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'Du bist ein Assistent der Google Place IDs findet. Antworte NUR mit der Place ID (Format: ChIJ...) oder "NOT_FOUND" wenn keine gefunden wurde. Keine weiteren Erklärungen.' 
-          },
-          { 
-            role: 'user', 
-            content: `Finde die Google Place ID für: "${businessName}" in ${city || 'Schweiz'}. Die Place ID beginnt mit "ChIJ" und ist etwa 27 Zeichen lang. Suche auf Google Maps.` 
-          }
-        ],
-        max_tokens: 100,
-      }),
-    });
+    // Use Places API Text Search
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(searchQuery)}&region=ch&language=de&key=${googleApiKey}`
+    );
 
     if (!response.ok) {
-      console.error('Perplexity API error:', await response.text());
-      return null;
+      console.error('Google Places API error:', await response.text());
+      return { placeId: null };
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content?.trim() || '';
     
-    console.log('Perplexity response for Place ID:', content);
-    
-    // Extract Place ID if it matches the pattern (starts with ChIJ)
-    const placeIdMatch = content.match(/ChIJ[a-zA-Z0-9_-]{20,30}/);
-    if (placeIdMatch) {
-      console.log('Found Place ID:', placeIdMatch[0]);
-      return placeIdMatch[0];
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      console.log('No Google Places results found');
+      return { placeId: null };
     }
-    
-    return null;
+
+    const place = data.results[0];
+    const placeId = place.place_id;
+    console.log('Found Google Place ID:', placeId);
+
+    // Optionally get more details (phone number, etc.)
+    if (placeId) {
+      try {
+        const detailsResponse = await fetch(
+          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_phone_number,name&language=de&key=${googleApiKey}`
+        );
+        
+        if (detailsResponse.ok) {
+          const detailsData = await detailsResponse.json();
+          if (detailsData.status === 'OK' && detailsData.result) {
+            return {
+              placeId,
+              phone: detailsData.result.formatted_phone_number || undefined,
+            };
+          }
+        }
+      } catch (e) {
+        console.log('Could not fetch place details:', e);
+      }
+    }
+
+    return { placeId };
   } catch (error) {
     console.error('Error finding Place ID:', error);
-    return null;
+    return { placeId: null };
   }
 }
 
@@ -162,7 +166,7 @@ serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
-    const perplexityKey = Deno.env.get('PERPLEXITY_API_KEY');
+    const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
     
     if (!apiKey) {
       console.error('FIRECRAWL_API_KEY not configured');
@@ -261,15 +265,20 @@ serve(async (req) => {
     const businessName = extractedData.name || metadata.title || null;
     const city = extractedData.city || null;
 
-    // Try to find Google Place ID using Perplexity
+    // Try to find Google Place ID using Google Places API
     let googlePlaceId: string | null = null;
-    if (perplexityKey && businessName) {
-      googlePlaceId = await findGooglePlaceId(businessName, city, perplexityKey);
-    } else if (!perplexityKey) {
-      console.log('PERPLEXITY_API_KEY not configured, skipping Place ID search');
+    let googlePhone: string | null = null;
+    
+    if (googlePlacesApiKey && businessName) {
+      const placeResult = await findGooglePlaceId(businessName, city, googlePlacesApiKey);
+      googlePlaceId = placeResult.placeId;
+      googlePhone = placeResult.phone || null;
+    } else if (!googlePlacesApiKey) {
+      console.log('GOOGLE_PLACES_API_KEY not configured, skipping Place ID search');
     }
 
     // Build partner info from scraped data
+    // Use Google phone if scraped phone is not available
     const partnerInfo = {
       name: businessName,
       description: extractedData.description || metadata.description || null,
@@ -279,7 +288,7 @@ serve(async (req) => {
       address_number: extractedData.address_number || null,
       postal_code: extractedData.postal_code || null,
       city: city,
-      phone: extractedData.phone || null,
+      phone: extractedData.phone || googlePhone || null,
       email: extractedData.email || null,
       contact_name: extractedData.contact_name || null,
       website: targetUrl,
