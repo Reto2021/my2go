@@ -261,7 +261,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             </motion.div>
 
             {/* Progress Bar to Next Tier */}
-            {isPlaying && tiers.length > 0 && (
+            {tiers.length > 0 && (
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
