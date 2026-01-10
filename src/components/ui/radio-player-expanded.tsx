@@ -245,47 +245,62 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               >
                 {isAuthenticated ? (
                   <div className="bg-white/10 rounded-2xl p-3 sm:p-4">
-                    {/* Timer Display */}
-                    <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
-                      <Clock className="h-4 w-4 text-accent" />
-                      <span className="text-base sm:text-lg font-bold text-white tabular-nums">
-                        {formatSessionDuration(currentSessionDuration)}
+                    {/* Section Label */}
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <Gift className="h-4 w-4 text-accent" />
+                      <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">
+                        Taler beim Hören verdienen
                       </span>
                     </div>
                     
-                    {/* Progress Bar */}
-                    <div className="relative h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden mb-2 sm:mb-3">
-                      <motion.div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ duration: 0.3 }}
-                      />
+                    {/* Timer Display */}
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-white/60" />
+                      <span className="text-base sm:text-lg font-bold text-white tabular-nums">
+                        {formatSessionDuration(currentSessionDuration)}
+                      </span>
+                      <span className="text-xs text-white/50">gehört</span>
                     </div>
                     
-                    {/* Tier Info */}
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
-                      <div className="flex items-center gap-1">
-                        {currentTier ? (
-                          <>
-                            <Coins className="h-3 w-3" />
-                            <span className="text-accent font-semibold">+{currentTier.taler_reward}</span>
-                            <span className="text-white/50 hidden xs:inline">{currentTier.name}</span>
-                          </>
-                        ) : (
-                          <span className="text-white/50">Höre weiter um Taler zu verdienen...</span>
+                    {/* Progress Bar with Label */}
+                    <div className="mb-2 sm:mb-3">
+                      <div className="flex items-center justify-between text-[10px] sm:text-xs mb-1">
+                        <span className="text-white/60">
+                          {currentTier ? `${currentTier.name} erreicht` : 'Fortschritt'}
+                        </span>
+                        {nextTier && (
+                          <span className="text-white/60">
+                            Nächste Stufe: {formatDuration(nextTier.min_duration_seconds)}
+                          </span>
                         )}
                       </div>
+                      <div className="relative h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Reward Info */}
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Coins className="h-4 w-4 text-accent" />
+                        <span className="text-white/70">Aktuell verdient:</span>
+                        <span className="text-accent font-bold">
+                          {currentTier ? `+${currentTier.taler_reward}` : '0'} Taler
+                        </span>
+                      </div>
                       {nextTier && (
-                        <div className="flex items-center gap-1 text-white/70">
-                          <span>Nächstes:</span>
-                          <Coins className="h-3 w-3" />
-                          <span className="text-accent font-semibold">+{nextTier.taler_reward}</span>
-                          <span className="text-white/50">({formatDuration(nextTier.min_duration_seconds)})</span>
+                        <div className="flex items-center gap-1 text-white/50">
+                          <span>→</span>
+                          <span className="text-accent/70">+{nextTier.taler_reward}</span>
                         </div>
                       )}
                       {!nextTier && currentTier && (
-                        <span className="text-green-400 font-semibold">Maximum erreicht! 🎉</span>
+                        <span className="text-green-400 font-semibold text-xs">Maximum! 🎉</span>
                       )}
                     </div>
                   </div>
