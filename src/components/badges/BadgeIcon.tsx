@@ -10,6 +10,9 @@ import {
   UserPlus, 
   Users, 
   Megaphone,
+  Flame,
+  Zap,
+  Medal,
   LucideIcon
 } from "lucide-react";
 
@@ -25,6 +28,9 @@ const iconMap: Record<string, LucideIcon> = {
   'user-plus': UserPlus,
   users: Users,
   megaphone: Megaphone,
+  flame: Flame,
+  zap: Zap,
+  medal: Medal,
 };
 
 interface BadgeIconProps {
