@@ -84,17 +84,44 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
     partners.forEach(partner => {
       if (!partner.lat || !partner.lng) return;
 
-      // Create custom marker element
+      // Create custom marker element using safe DOM methods (XSS prevention)
       const el = document.createElement('div');
       el.className = 'partner-marker';
-      el.innerHTML = `
-        <div class="w-10 h-10 rounded-full shadow-lg flex items-center justify-center cursor-pointer transform transition-transform hover:scale-110" style="background-color: hsl(var(--primary))">
-          ${partner.logo_url 
-            ? `<img src="${partner.logo_url}" alt="${partner.name}" class="w-8 h-8 rounded-full object-cover" />`
-            : `<svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
-          }
-        </div>
-      `;
+      
+      const markerContainer = document.createElement('div');
+      markerContainer.className = 'w-10 h-10 rounded-full shadow-lg flex items-center justify-center cursor-pointer transform transition-transform hover:scale-110';
+      markerContainer.style.backgroundColor = 'hsl(var(--primary))';
+      
+      if (partner.logo_url) {
+        const img = document.createElement('img');
+        img.src = partner.logo_url;
+        img.alt = partner.name || 'Partner';
+        img.className = 'w-8 h-8 rounded-full object-cover';
+        img.onerror = () => {
+          // Fallback to icon if image fails to load
+          img.remove();
+          const fallbackSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          fallbackSvg.setAttribute('class', 'w-5 h-5 text-white');
+          fallbackSvg.setAttribute('viewBox', '0 0 24 24');
+          fallbackSvg.setAttribute('fill', 'none');
+          fallbackSvg.setAttribute('stroke', 'currentColor');
+          fallbackSvg.setAttribute('stroke-width', '2');
+          fallbackSvg.innerHTML = '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>';
+          markerContainer.appendChild(fallbackSvg);
+        };
+        markerContainer.appendChild(img);
+      } else {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'w-5 h-5 text-white');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.innerHTML = '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>';
+        markerContainer.appendChild(svg);
+      }
+      
+      el.appendChild(markerContainer);
 
       el.addEventListener('click', () => {
         setSelectedPartner(partner);
@@ -121,13 +148,21 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
     userMarkerRef.current?.remove();
 
     if (userLocation) {
+      // Create user location marker using safe DOM methods (XSS prevention)
       const el = document.createElement('div');
-      el.innerHTML = `
-        <div class="relative">
-          <div class="w-4 h-4 rounded-full bg-accent border-2 border-white shadow-lg"></div>
-          <div class="absolute inset-0 w-4 h-4 rounded-full bg-accent animate-ping opacity-75"></div>
-        </div>
-      `;
+      
+      const container = document.createElement('div');
+      container.className = 'relative';
+      
+      const dot = document.createElement('div');
+      dot.className = 'w-4 h-4 rounded-full bg-accent border-2 border-white shadow-lg';
+      
+      const ping = document.createElement('div');
+      ping.className = 'absolute inset-0 w-4 h-4 rounded-full bg-accent animate-ping opacity-75';
+      
+      container.appendChild(dot);
+      container.appendChild(ping);
+      el.appendChild(container);
 
       userMarkerRef.current = new mapboxgl.Marker({ element: el })
         .setLngLat([userLocation.lng, userLocation.lat])
