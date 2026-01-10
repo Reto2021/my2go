@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay, Expand } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay, Expand, Cloud, Sun, Moon, CloudRain, CloudSnow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
 import { useSession, useBrowseMode } from '@/lib/session';
+import { useWeather, WeatherType } from '@/hooks/useWeather';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
@@ -66,6 +67,82 @@ function VolumeIcon({ volume, isMuted }: { volume: number; isMuted: boolean }) {
     return <Volume1 className="h-4 w-4 text-secondary-foreground/70" />;
   }
   return <Volume2 className="h-4 w-4 text-secondary-foreground/70" />;
+}
+
+function WeatherIcon({ type, className }: { type: WeatherType; className?: string }) {
+  const iconClass = cn("h-4 w-4", className);
+  
+  switch (type) {
+    case 'clear-day':
+      return <Sun className={cn(iconClass, "text-yellow-300")} />;
+    case 'clear-night':
+      return <Moon className={cn(iconClass, "text-blue-200")} />;
+    case 'rain':
+    case 'thunderstorm':
+      return <CloudRain className={cn(iconClass, "text-blue-300")} />;
+    case 'snow':
+      return <CloudSnow className={cn(iconClass, "text-white")} />;
+    default:
+      return <Cloud className={cn(iconClass, "text-gray-300")} />;
+  }
+}
+
+function WeatherWidget() {
+  const [time, setTime] = useState(new Date());
+  const [geoLocation, setGeoLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
+  // Get user location for weather
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setGeoLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => setGeoLocation({ lat: 47.3769, lng: 8.5417 }), // Fallback to Zurich
+        { timeout: 5000, maximumAge: 300000 }
+      );
+    } else {
+      setGeoLocation({ lat: 47.3769, lng: 8.5417 });
+    }
+  }, []);
+  
+  const { weather } = useWeather(geoLocation?.lat, geoLocation?.lng);
+  
+  // Update time every second
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
+  const hours = time.getHours().toString().padStart(2, '0');
+  const minutes = time.getMinutes().toString().padStart(2, '0');
+  
+  return (
+    <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-white/10 backdrop-blur-sm">
+      {/* Time */}
+      <div className="flex items-center font-mono text-sm font-bold text-white tabular-nums">
+        <span>{hours}</span>
+        <motion.span
+          animate={{ opacity: [1, 0.3, 1] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          :
+        </motion.span>
+        <span>{minutes}</span>
+      </div>
+      
+      {/* Divider */}
+      <div className="w-px h-4 bg-white/30" />
+      
+      {/* Weather */}
+      {weather && (
+        <div className="flex items-center gap-1.5">
+          <WeatherIcon type={weather.icon} />
+          <span className="text-xs font-semibold text-white">
+            {weather.temperature}°
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function RadioHeader() {
@@ -167,7 +244,7 @@ export function RadioHeader() {
       </div>
       
       <div className="relative container flex items-center gap-3 py-2">
-        {/* Logo - larger, links to home */}
+        {/* Logo - links to home */}
         <Link to="/">
           <img 
             src={logo} 
@@ -175,6 +252,9 @@ export function RadioHeader() {
             className="h-14 flex-shrink-0 hover:opacity-80 transition-opacity"
           />
         </Link>
+        
+        {/* Weather & Time Widget */}
+        <WeatherWidget />
         
         {/* Player area */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
