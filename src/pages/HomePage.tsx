@@ -211,7 +211,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
               Hör 2Go.<br />
               Sammle Taler.<br />
-              <span className="text-accent">Lös Gutscheine ein.</span>
+              <span className="text-accent drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">Lös Gutscheine ein.</span>
             </h1>
             
             <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
