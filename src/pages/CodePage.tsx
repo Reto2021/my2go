@@ -1,59 +1,63 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSession, useBrowseMode } from '@/lib/session';
-import { redeemOnAirCode } from '@/lib/api';
-import { CheckCircle2, XCircle, Music, Sparkles, Wallet, Coins, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { redeemAirDropCode } from '@/lib/supabase-helpers';
+import { CheckCircle2, XCircle, Music, Sparkles, Wallet, Coins, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CodePage() {
-  const { session, balance, refreshBalance, loginWithToken } = useSession();
-  const isBrowseMode = useBrowseMode();
+  const navigate = useNavigate();
+  const { user, balance, refreshBalance, isLoading: authLoading } = useAuth();
   
   const [code, setCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{
-    status: 'ok' | 'invalid' | 'expired' | 'used' | 'rate_limited';
+    status: 'ok' | 'error';
     message: string;
     pointsAwarded?: number;
-    newBalance?: number;
   } | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Auto-focus input on mount
+  // Auto-focus input on mount when logged in
   useEffect(() => {
-    if (!isBrowseMode) {
+    if (user && !authLoading) {
       inputRef.current?.focus();
     }
-  }, [isBrowseMode]);
+  }, [user, authLoading]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const trimmedCode = code.trim();
-    if (!session?.hasSession || !trimmedCode || isSubmitting) return;
+    const trimmedCode = code.trim().toUpperCase();
+    if (!user || !trimmedCode || isSubmitting) return;
     
     setIsSubmitting(true);
     setResult(null);
     
     try {
-      // RAILGUARD: Server handles rate limits, cooldowns, validation
-      // No token needed - auth via httpOnly cookie
-      const response = await redeemOnAirCode(trimmedCode);
+      const response = await redeemAirDropCode(user.id, trimmedCode);
       
-      setResult({
-        status: response.status,
-        message: response.message,
-        pointsAwarded: response.pointsAwarded,
-        newBalance: response.newBalance,
-      });
-      
-      if (response.status === 'ok') {
+      if (response.success) {
+        // Refresh balance to get new total
+        await refreshBalance();
+        
+        setResult({
+          status: 'ok',
+          message: 'Code erfolgreich eingelöst!',
+          pointsAwarded: response.talerAwarded,
+        });
         setCode('');
-        refreshBalance();
+      } else {
+        setResult({
+          status: 'error',
+          message: response.error || 'Ungültiger Code',
+        });
       }
     } catch (err) {
+      console.error('Redeem error:', err);
       setResult({
-        status: 'invalid',
+        status: 'error',
         message: 'Verbindungsfehler. Prüfe deine Internetverbindung.',
       });
     } finally {
@@ -68,23 +72,15 @@ export default function CodePage() {
   };
   
   const isSuccess = result?.status === 'ok';
-  const isRateLimited = result?.status === 'rate_limited';
   
-  // Helper for next step hints
-  const getNextStepHint = (status: string): string => {
-    switch (status) {
-      case 'invalid':
-        return 'Überprüfe die Schreibweise und versuche es erneut.';
-      case 'expired':
-        return 'Höre Radio 2Go für neue Codes!';
-      case 'used':
-        return 'Warte auf den nächsten Code in der Sendung.';
-      case 'rate_limited':
-        return 'Versuch es später nochmal.';
-      default:
-        return '';
-    }
-  };
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen pb-24 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen pb-24">
@@ -106,8 +102,8 @@ export default function CodePage() {
           </p>
         </div>
         
-        {/* Browse Mode - Better explanation */}
-        {isBrowseMode ? (
+        {/* Not logged in - Show login prompt */}
+        {!user ? (
           <div className="text-center p-6 rounded-2xl bg-primary/10 border border-primary/20 animate-in">
             <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles className="h-6 w-6 text-accent" />
@@ -122,14 +118,14 @@ export default function CodePage() {
             </div>
             <button 
               className="btn-primary"
-              onClick={() => loginWithToken('demo')}
+              onClick={() => navigate('/auth')}
             >
               <Wallet className="h-5 w-5" />
               Jetzt anmelden & Codes einlösen
             </button>
           </div>
         ) : result ? (
-          /* Result State - Fast feedback */
+          /* Result State */
           <div className={cn(
             'rounded-3xl p-6 text-center animate-in',
             isSuccess ? 'bg-success/5 border-2 border-success/20' : 'bg-muted'
@@ -155,11 +151,11 @@ export default function CodePage() {
                 </p>
                 
                 {/* New balance */}
-                {result.newBalance && (
+                {balance && (
                   <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-secondary/10 mb-6">
                     <Coins className="h-4 w-4 text-secondary" />
                     <span className="text-sm font-semibold text-secondary">
-                      Neues Guthaben: {result.newBalance.toLocaleString('de-CH')} Taler
+                      Neues Guthaben: {balance.taler_balance.toLocaleString('de-CH')} Taler
                     </span>
                   </div>
                 )}
@@ -171,7 +167,7 @@ export default function CodePage() {
               </>
             )}
             
-            {/* Error State - Friendly with next step */}
+            {/* Error State */}
             {!isSuccess && (
               <>
                 <div className="flex h-14 w-14 items-center justify-center rounded-full mx-auto mb-4 bg-muted-foreground/10">
@@ -182,23 +178,21 @@ export default function CodePage() {
                   {result.message}
                 </p>
                 
-                {/* Next step hint */}
                 <p className="text-sm text-muted-foreground mb-6">
-                  {getNextStepHint(result.status)}
+                  Überprüfe die Schreibweise und versuche es erneut.
                 </p>
                 
                 <button 
                   className="btn-secondary w-full"
                   onClick={handleReset}
-                  disabled={isRateLimited}
                 >
-                  {isRateLimited ? 'Später versuchen' : 'Erneut versuchen'}
+                  Erneut versuchen
                 </button>
               </>
             )}
           </div>
         ) : (
-          /* Input Form - Ultra fast flow */
+          /* Input Form */
           <form onSubmit={handleSubmit} className="space-y-4 animate-in">
             <div className="relative">
               <input
@@ -214,7 +208,7 @@ export default function CodePage() {
                   'focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent/10',
                   'transition-all duration-150'
                 )}
-                maxLength={12}
+                maxLength={20}
                 autoComplete="off"
                 autoCapitalize="characters"
                 spellCheck={false}
@@ -228,7 +222,7 @@ export default function CodePage() {
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Prüfe...
                 </span>
               ) : (
@@ -237,17 +231,17 @@ export default function CodePage() {
             </button>
             
             <p className="text-xs text-muted-foreground text-center">
-              Codes sind 24h gültig · 1x pro Code
+              Codes sind zeitlich begrenzt gültig · 1x pro Code
             </p>
           </form>
         )}
         
-        {/* Current balance indicator (session mode) */}
-        {!isBrowseMode && !result && balance && (
+        {/* Current balance indicator (when logged in) */}
+        {user && !result && balance && (
           <div className="flex items-center justify-center gap-2 mt-8 p-3 rounded-xl bg-muted/50">
             <Coins className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              Aktuell: <span className="font-semibold text-foreground">{balance.current.toLocaleString('de-CH')} Taler</span>
+              Aktuell: <span className="font-semibold text-foreground">{balance.taler_balance.toLocaleString('de-CH')} Taler</span>
             </span>
           </div>
         )}
