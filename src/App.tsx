@@ -65,6 +65,7 @@ import FunnelEntryPage from "./pages/funnel/FunnelEntryPage";
 import FunnelDropPage from "./pages/funnel/FunnelDropPage";
 import FunnelWelcomePage from "./pages/funnel/FunnelWelcomePage";
 import FunnelPartnerPage from "./pages/funnel/FunnelPartnerPage";
+import FunnelCampaignPage from "./pages/funnel/FunnelCampaignPage";
 import FunnelInstallPage from "./pages/funnel/FunnelInstallPage";
 import FunnelTermsPage from "./pages/funnel/legal/FunnelTermsPage";
 import FunnelPrivacyPage from "./pages/funnel/legal/FunnelPrivacyPage";
@@ -156,6 +157,7 @@ function AppContent() {
           <Route path="drop" element={<FunnelDropPage />} />
           <Route path="welcome" element={<FunnelWelcomePage />} />
           <Route path="p/:partnerSlug" element={<FunnelPartnerPage />} />
+          <Route path="c/:campaignSlug" element={<FunnelCampaignPage />} />
           <Route path="install" element={<FunnelInstallPage />} />
           <Route path="legal/terms" element={<FunnelTermsPage />} />
           <Route path="legal/privacy" element={<FunnelPrivacyPage />} />

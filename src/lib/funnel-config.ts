@@ -70,25 +70,47 @@ export const PARTNER_CONFIGS: Record<string, PartnerConfig> = {
   },
 };
 
-// Mock campaign configurations
+// Mock campaign configurations with time-based expiration
 export const CAMPAIGN_CONFIGS: Record<string, CampaignConfig> = {
   'winter-special': {
     campaignSlug: 'winter-special',
     campaignName: 'Winter Special',
     hookType: 'coupon',
     hookTitle: 'Doppelte Taler im Januar',
-    hookDetails: 'Bei allen Partnern',
+    hookDetails: 'Bei allen Partnern – jetzt doppelt kassieren!',
     validityText: 'Nur noch diese Woche',
-    rewardCtaText: 'Mitmachen',
+    rewardCtaText: 'Jetzt mitmachen',
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
   },
   'radio-drop': {
     campaignSlug: 'radio-drop',
     campaignName: 'Radio Drop',
     hookType: 'raffle',
     hookTitle: 'iPhone gewinnen',
-    hookDetails: 'Hör Radio & gewinne',
+    hookDetails: 'Hör Radio & gewinne – Teilnahme mit Registrierung',
     validityText: 'Endet heute 23:59',
     rewardCtaText: 'Teilnehmen',
+    expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(), // End of today
+  },
+  'sommer-aktion': {
+    campaignSlug: 'sommer-aktion',
+    campaignName: 'Sommer Aktion 🌞',
+    hookType: 'goodie',
+    hookTitle: 'Gratis Erfrischung',
+    hookDetails: 'Bei teilnehmenden Partnern – solange Vorrat reicht',
+    validityText: 'Limitierte Aktion',
+    rewardCtaText: 'Goodie sichern',
+    expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+  },
+  'streak-challenge': {
+    campaignSlug: 'streak-challenge',
+    campaignName: 'Streak Challenge',
+    hookType: 'streak',
+    hookTitle: '7-Tage Streak = 100 Bonus-Taler',
+    hookDetails: 'Hör 7 Tage in Folge Radio und sichere dir den Mega-Bonus',
+    validityText: 'Starte jetzt deine Streak',
+    rewardCtaText: 'Challenge starten',
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
   },
 };
 
