@@ -582,7 +582,7 @@ const MOCK_FAQ: FAQItem[] = [
   
   // Gutscheine (4)
   { q: 'Wie löse ich einen Gutschein ein?', a: 'Gutschein wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig.', category: 'Gutscheine' },
-  { q: 'Wie lange ist der Einlösecode gültig?', a: '10 Minuten. Danach verfällt er, deine Taler bleiben erhalten.', category: 'Gutscheine' },
+  { q: 'Wie lange ist der Einlösecode gültig?', a: '60 Minuten. Danach verfällt er, deine Taler bleiben erhalten.', category: 'Gutscheine' },
   { q: 'Kann ich Gutscheine zurückgeben?', a: 'Nein. Einmal eingelöst, kein Rücktausch möglich.', category: 'Gutscheine' },
   { q: 'Gibt es ein Limit pro Tag?', a: 'Ja, manche Gutscheine haben ein Tageslimit. Steht beim jeweiligen Gutschein.', category: 'Gutscheine' },
   
