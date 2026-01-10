@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAdminStats, AdminStats } from '@/lib/admin-helpers';
+import { getAdminStats, getBadgeStats, AdminStats, BadgeStats } from '@/lib/admin-helpers';
 import { 
   Users, 
   Store, 
@@ -9,20 +9,27 @@ import {
   Coins, 
   QrCode,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BadgeIcon } from '@/components/badges/BadgeIcon';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [badgeStats, setBadgeStats] = useState<BadgeStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     async function loadStats() {
       setIsLoading(true);
       try {
-        const data = await getAdminStats();
-        setStats(data);
+        const [statsData, badgeData] = await Promise.all([
+          getAdminStats(),
+          getBadgeStats(),
+        ]);
+        setStats(statsData);
+        setBadgeStats(badgeData);
       } catch (error) {
         console.error('Failed to load stats:', error);
       } finally {
@@ -77,6 +84,21 @@ export default function AdminDashboard() {
     },
   ];
   
+  // Group badges by category
+  const badgesByCategory = badgeStats.reduce((acc, badge) => {
+    if (!acc[badge.category]) acc[badge.category] = [];
+    acc[badge.category].push(badge);
+    return acc;
+  }, {} as Record<string, BadgeStats[]>);
+  
+  const categoryLabels: Record<string, string> = {
+    general: 'Allgemein',
+    streak: 'Login-Streak',
+    leaderboard: 'Leaderboard',
+    collector: 'Sammler',
+    social: 'Social',
+  };
+  
   return (
     <div className="space-y-6 animate-in">
       {/* Header */}
@@ -116,6 +138,84 @@ export default function AdminDashboard() {
         ))}
       </div>
       
+      {/* Badge Statistics */}
+      <div className="card-base p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-accent" />
+            <h2 className="text-lg font-bold">Badge-Statistiken</h2>
+          </div>
+          <Link 
+            to="/admin/badges" 
+            className="text-sm text-accent hover:underline flex items-center gap-1"
+          >
+            Alle verwalten
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="p-4 rounded-xl bg-accent/10">
+            <p className="text-2xl font-bold text-accent">
+              {isLoading ? '—' : stats?.totalBadges || 0}
+            </p>
+            <p className="text-sm text-muted-foreground">Aktive Badges</p>
+          </div>
+          <div className="p-4 rounded-xl bg-green-500/10">
+            <p className="text-2xl font-bold text-green-500">
+              {isLoading ? '—' : stats?.totalBadgesAwarded || 0}
+            </p>
+            <p className="text-sm text-muted-foreground">Vergebene Badges</p>
+          </div>
+        </div>
+        
+        {isLoading ? (
+          <div className="animate-pulse space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-12 bg-muted rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {Object.entries(badgesByCategory).map(([category, badges]) => (
+              <div key={category}>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                  {categoryLabels[category] || category}
+                </p>
+                <div className="space-y-2">
+                  {badges.map((badge) => (
+                    <div 
+                      key={badge.id}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: badge.color + '20' }}
+                      >
+                        <BadgeIcon icon={badge.icon} color={badge.color} size={20} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{badge.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold tabular-nums">{badge.awardedCount}</p>
+                        <p className="text-xs text-muted-foreground">Nutzer</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            
+            {badgeStats.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">
+                Noch keine Badges erstellt
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+      
       {/* Quick Actions */}
       <div className="card-base p-6">
         <h2 className="text-lg font-bold mb-4">Schnellaktionen</h2>
@@ -132,6 +232,17 @@ export default function AdminDashboard() {
           </Link>
           
           <Link
+            to="/admin/badges"
+            className="flex items-center gap-3 p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+          >
+            <Award className="h-5 w-5 text-accent" />
+            <div>
+              <p className="font-semibold">Badge erstellen</p>
+              <p className="text-xs text-muted-foreground">Neues Badge hinzufügen</p>
+            </div>
+          </Link>
+          
+          <Link
             to="/admin/airdrops"
             className="flex items-center gap-3 p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
           >
@@ -139,17 +250,6 @@ export default function AdminDashboard() {
             <div>
               <p className="font-semibold">Air Drop erstellen</p>
               <p className="text-xs text-muted-foreground">Neuen Code generieren</p>
-            </div>
-          </Link>
-          
-          <Link
-            to="/admin/customers"
-            className="flex items-center gap-3 p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
-          >
-            <Users className="h-5 w-5 text-blue-500" />
-            <div>
-              <p className="font-semibold">Kunden anzeigen</p>
-              <p className="text-xs text-muted-foreground">Alle Benutzer verwalten</p>
             </div>
           </Link>
         </div>
