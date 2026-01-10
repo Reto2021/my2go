@@ -9,7 +9,7 @@ import { useSession, useBrowseMode } from '@/lib/session';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
-import { WeatherWidget } from './weather-widget';
+import { WeatherWidget, DigitalClock } from './weather-widget';
 
 function Equalizer({ className }: { className?: string }) {
   return (
@@ -177,8 +177,11 @@ export function RadioHeader() {
           />
         </Link>
         
-        {/* Weather Widget */}
-        <WeatherWidget className="flex-shrink-0 hidden sm:flex" />
+        {/* Clock & Weather Widget */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 hidden sm:flex">
+          <DigitalClock />
+          <WeatherWidget />
+        </div>
         
         {/* Player area */}
         <div className="flex-1 flex items-center gap-2 min-w-0">

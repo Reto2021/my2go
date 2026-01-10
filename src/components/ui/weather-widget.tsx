@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, Wind } from 'lucide-react';
+import { Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, Wind, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WeatherData {
@@ -32,6 +32,30 @@ function getWeatherIcon(condition: string): React.ComponentType<{ className?: st
     }
   }
   return Cloud;
+}
+
+export function DigitalClock({ className }: { className?: string }) {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hours = time.getHours().toString().padStart(2, '0');
+  const minutes = time.getMinutes().toString().padStart(2, '0');
+
+  return (
+    <div className={cn(
+      "flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary-foreground/10",
+      className
+    )}>
+      <Clock className="h-3.5 w-3.5 text-secondary-foreground/70" />
+      <span className="text-xs font-medium text-secondary-foreground tabular-nums">
+        {hours}:{minutes}
+      </span>
+    </div>
+  );
 }
 
 export function WeatherWidget({ className }: { className?: string }) {
