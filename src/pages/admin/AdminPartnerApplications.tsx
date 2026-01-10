@@ -211,24 +211,43 @@ export default function AdminPartnerApplications() {
                       <Eye className="w-4 h-4 mr-1" />
                       Details
                     </Button>
-                    {app.status === 'pending' && (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'contacted' })}
-                        >
-                          <Phone className="w-4 h-4 mr-1" />
-                          Kontaktiert
-                        </Button>
-                        <Button 
-                          size="sm"
-                          onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'approved' })}
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-1" />
-                          Genehmigen
-                        </Button>
-                      </>
+                    {app.status !== 'pending' && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'pending' })}
+                      >
+                        Zurücksetzen
+                      </Button>
+                    )}
+                    {app.status !== 'contacted' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'contacted' })}
+                      >
+                        <Phone className="w-4 h-4 mr-1" />
+                        Kontaktiert
+                      </Button>
+                    )}
+                    {app.status !== 'approved' && (
+                      <Button 
+                        size="sm"
+                        onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'approved' })}
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                        Genehmigen
+                      </Button>
+                    )}
+                    {app.status !== 'rejected' && (
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => updateStatusMutation.mutate({ id: app.id, status: 'rejected' })}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Ablehnen
+                      </Button>
                     )}
                   </div>
                 </div>
