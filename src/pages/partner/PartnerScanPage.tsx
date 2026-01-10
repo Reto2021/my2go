@@ -112,12 +112,24 @@ export default function PartnerScanPage() {
     }
   }, [stopScanner]);
 
-  // Auto-focus input on mount
+  // Auto-start camera scanner on mount
   useEffect(() => {
-    if (!isScannerOpen) {
+    // Small delay to ensure component is fully mounted
+    const timer = setTimeout(() => {
+      if (!isScannerOpen && !result) {
+        startScanner();
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []); // Only on mount
+
+  // Focus input when scanner is closed
+  useEffect(() => {
+    if (!isScannerOpen && !result) {
       inputRef.current?.focus();
     }
-  }, [isScannerOpen]);
+  }, [isScannerOpen, result]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
