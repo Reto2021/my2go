@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { HelpCircle, ArrowRight } from "lucide-react";
+import { HelpCircle, ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -46,53 +46,78 @@ const faqs = [
 
 export default function PartnerFAQPage() {
   return (
-    <div className="py-12 md:py-20">
-      <div className="container max-w-3xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-            <HelpCircle className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Häufige Fragen
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Alles, was du über My 2Go wissen musst
-          </p>
-        </motion.div>
+    <div className="overflow-hidden bg-background">
+      {/* Hero Section */}
+      <section className="relative py-10 md:py-14 overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+              <HelpCircle className="w-7 h-7 text-primary" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              Häufige Fragen
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Alles, was du über My 2Go wissen musst
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
-        <Accordion type="single" collapsible className="mb-12">
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+      <div className="py-12 md:py-16">
+        <div className="container max-w-3xl mx-auto px-4">
+          <Accordion type="single" collapsible className="mb-12 space-y-3">
+            {faqs.map((faq, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <AccordionItem 
+                  value={`item-${index}`} 
+                  className="bg-card border rounded-2xl px-5 data-[state=open]:shadow-lg transition-shadow"
+                >
+                  <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground pb-5">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
+            ))}
+          </Accordion>
 
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">
-            Noch Fragen? Wir helfen gerne.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button asChild>
-              <Link to="/go/partner/pricing">
-                Jetzt starten
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="mailto:partner@my2go.win">
-                Kontakt aufnehmen
-              </a>
-            </Button>
+          {/* CTA */}
+          <div className="text-center p-8 rounded-3xl bg-muted/40 border">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="font-bold text-lg mb-2">Noch Fragen?</h3>
+            <p className="text-muted-foreground mb-5">
+              Wir helfen dir gerne weiter.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button asChild size="lg" className="font-bold">
+                <Link to="/go/partner/pricing">
+                  Jetzt starten
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <a href="mailto:partner@my2go.win">
+                  Kontakt aufnehmen
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
