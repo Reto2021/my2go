@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePartner } from '@/components/partner/PartnerGuard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,11 +14,14 @@ import {
   Coins,
   User,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  Camera,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Html5Qrcode } from 'html5-qrcode';
 
 type TransactionType = 'visit' | 'purchase';
 
@@ -37,13 +40,84 @@ export default function PartnerScanPage() {
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<TransactionResult | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerError, setScannerError] = useState<string | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
+
+  // Stop scanner when component unmounts or scanner closes
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        const state = scannerRef.current.getState();
+        if (state === 2) { // SCANNING state
+          await scannerRef.current.stop();
+        }
+      } catch (err) {
+        console.log('Scanner stop error:', err);
+      }
+      scannerRef.current = null;
+    }
+    setIsScannerOpen(false);
+    setScannerError(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopScanner();
+    };
+  }, [stopScanner]);
+
+  // Start camera scanner
+  const startScanner = useCallback(async () => {
+    if (!scannerContainerRef.current) return;
+    
+    setIsScannerOpen(true);
+    setScannerError(null);
+
+    try {
+      // Small delay to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      scannerRef.current = new Html5Qrcode('qr-scanner-container');
+      
+      await scannerRef.current.start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1,
+        },
+        (decodedText) => {
+          // Successfully scanned
+          setUserCode(decodedText.toUpperCase());
+          toast.success('QR-Code erkannt!');
+          stopScanner();
+        },
+        (errorMessage) => {
+          // Ignore continuous scan errors
+        }
+      );
+    } catch (err: any) {
+      console.error('Scanner error:', err);
+      setScannerError(
+        err.message?.includes('NotAllowedError') || err.name === 'NotAllowedError'
+          ? 'Kamera-Zugriff wurde verweigert. Bitte erlaube den Zugriff in den Browser-Einstellungen.'
+          : err.message?.includes('NotFoundError') || err.name === 'NotFoundError'
+          ? 'Keine Kamera gefunden.'
+          : 'Kamera konnte nicht gestartet werden.'
+      );
+    }
+  }, [stopScanner]);
 
   // Auto-focus input on mount
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isScannerOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isScannerOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,6 +188,48 @@ export default function PartnerScanPage() {
         </p>
       </div>
 
+      {/* Camera Scanner Modal */}
+      {isScannerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col">
+          <div className="flex items-center justify-between p-4 text-white">
+            <h2 className="text-lg font-semibold">QR-Code scannen</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={stopScanner}
+              className="text-white hover:bg-white/20"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-sm">
+              {scannerError ? (
+                <div className="text-center text-white p-8">
+                  <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-red-400 mb-4">{scannerError}</p>
+                  <Button onClick={stopScanner} variant="secondary">
+                    Schliessen
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div 
+                    id="qr-scanner-container" 
+                    ref={scannerContainerRef}
+                    className="w-full aspect-square rounded-xl overflow-hidden"
+                  />
+                  <p className="text-center text-white/70 text-sm mt-4">
+                    Halte den QR-Code des Kunden in den Rahmen
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {result ? (
         // Result State
         <Card className={cn(
@@ -177,6 +293,34 @@ export default function PartnerScanPage() {
       ) : (
         // Input Form
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* QR Scanner Button */}
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={startScanner}
+            className="w-full h-20 text-lg border-dashed border-2 hover:border-primary hover:bg-primary/5"
+          >
+            <Camera className="h-8 w-8 mr-3" />
+            <div className="text-left">
+              <div className="font-semibold">Kamera öffnen</div>
+              <div className="text-sm text-muted-foreground font-normal">
+                QR-Code mit Kamera scannen
+              </div>
+            </div>
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                oder manuell eingeben
+              </span>
+            </div>
+          </div>
+
           {/* Code Input */}
           <Card>
             <CardHeader className="pb-3">
@@ -189,7 +333,7 @@ export default function PartnerScanPage() {
               <Input
                 ref={inputRef}
                 type="text"
-                placeholder="2GO-XXXXX oder scannen"
+                placeholder="2GO-XXXXX"
                 value={userCode}
                 onChange={(e) => setUserCode(e.target.value.toUpperCase())}
                 className="h-14 text-center text-xl font-mono font-bold uppercase tracking-wider"
@@ -197,9 +341,6 @@ export default function PartnerScanPage() {
                 autoComplete="off"
                 autoCapitalize="characters"
               />
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Lasse den Kunden seinen QR-Code zeigen oder gib den Code ein
-              </p>
             </CardContent>
           </Card>
 
