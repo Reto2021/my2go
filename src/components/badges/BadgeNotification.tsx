@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BadgeIcon } from "./BadgeIcon";
 import { X } from "lucide-react";
 import { Confetti } from "@/components/ui/confetti";
+import { useEffect, useRef } from "react";
 
 interface Badge {
   id: string;
@@ -16,7 +17,62 @@ interface BadgeNotificationProps {
   onClose: () => void;
 }
 
+// Play a cheerful achievement sound
+function playBadgeSound() {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    const playNote = (frequency: number, startTime: number, duration: number) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = "sine";
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    };
+    
+    const now = audioContext.currentTime;
+    // Triumphant fanfare
+    playNote(523.25, now, 0.15); // C5
+    playNote(659.25, now + 0.12, 0.15); // E5
+    playNote(783.99, now + 0.24, 0.15); // G5
+    playNote(1046.50, now + 0.36, 0.4); // C6 (held longer)
+    
+  } catch (error) {
+    console.log("Could not play badge sound:", error);
+  }
+}
+
 export function BadgeNotification({ badge, onClose }: BadgeNotificationProps) {
+  const hasPlayedSound = useRef(false);
+
+  useEffect(() => {
+    if (badge && !hasPlayedSound.current) {
+      hasPlayedSound.current = true;
+      playBadgeSound();
+      
+      // Vibrate if supported
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 200]);
+      }
+    }
+    
+    return () => {
+      if (!badge) {
+        hasPlayedSound.current = false;
+      }
+    };
+  }, [badge]);
+
   if (!badge) return null;
 
   return (
