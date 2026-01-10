@@ -151,7 +151,14 @@ export default function SettingsPage() {
       </header>
       
       <div className="container py-6 space-y-6">
-        {/* Help & Info Section - at top for visibility */}
+        {/* Badge Progress Ring - only show if logged in */}
+        {user && (
+          <section className="animate-in">
+            <BadgeProgressRing />
+          </section>
+        )}
+
+        {/* Help & Info Section */}
         <section className="animate-in">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
             <HelpCircle className="h-4 w-4" />
@@ -179,13 +186,6 @@ export default function SettingsPage() {
             </button>
           </div>
         </section>
-
-        {/* Badge Progress Ring - only show if logged in */}
-        {user && (
-          <section className="animate-in">
-            <BadgeProgressRing />
-          </section>
-        )}
         
         {/* Account Section - only show if logged in */}
         {user && (
