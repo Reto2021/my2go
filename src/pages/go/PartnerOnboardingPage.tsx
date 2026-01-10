@@ -13,7 +13,9 @@ import {
   Upload,
   ArrowRight,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
@@ -104,6 +106,8 @@ export default function PartnerOnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiSearchInput, setAiSearchInput] = useState("");
   
   // Check if user has valid checkout session
   const hasPosKit = true; // This would come from session/context
@@ -208,6 +212,73 @@ export default function PartnerOnboardingPage() {
     }
   };
 
+  // AI auto-fill from website or search term
+  const handleAiAutoFill = async () => {
+    if (!aiSearchInput.trim()) {
+      toast({
+        title: "Eingabe fehlt",
+        description: "Bitte gib deine Website-URL oder deinen Firmennamen ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsAiLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-partner-info', {
+        body: { url: aiSearchInput.trim() }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success && data?.data) {
+        const scraped = data.data;
+        
+        // Update form with scraped data
+        if (scraped.name) form.setValue('companyName', scraped.name);
+        if (scraped.website) form.setValue('website', scraped.website);
+        if (scraped.category) {
+          // Try to match to existing industries
+          const matchedIndustry = INDUSTRIES.find(ind => 
+            ind.toLowerCase().includes(scraped.category.toLowerCase()) ||
+            scraped.category.toLowerCase().includes(ind.split(' ')[0].toLowerCase())
+          );
+          if (matchedIndustry) form.setValue('industry', matchedIndustry);
+        }
+        if (scraped.address_street) form.setValue('street', scraped.address_street);
+        if (scraped.address_number) form.setValue('streetNumber', scraped.address_number);
+        if (scraped.postal_code) form.setValue('postalCode', scraped.postal_code);
+        if (scraped.city) form.setValue('city', scraped.city);
+        if (scraped.contact_name) form.setValue('contactName', scraped.contact_name);
+        if (scraped.email) form.setValue('contactEmail', scraped.email);
+        if (scraped.phone) form.setValue('contactPhone', scraped.phone);
+        
+        toast({
+          title: "Daten geladen!",
+          description: "Die Firmendaten wurden automatisch ausgefüllt. Bitte überprüfe die Angaben."
+        });
+        
+        setAiSearchInput('');
+      } else {
+        toast({
+          title: "Keine Daten gefunden",
+          description: data?.error || "Bitte fülle das Formular manuell aus.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('AI auto-fill error:', error);
+      toast({
+        title: "Fehler",
+        description: "Die automatische Erkennung ist fehlgeschlagen. Bitte fülle das Formular manuell aus.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   // Success state after submission
   if (applicationSubmitted) {
     return (
@@ -302,6 +373,56 @@ export default function PartnerOnboardingPage() {
                     className="space-y-4"
                   >
                     <h2 className="text-xl font-semibold mb-4">Firma</h2>
+                    
+                    {/* AI Auto-Fill Section */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                        <span className="font-medium text-sm">Schnell ausfüllen mit KI</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Gib deine Website-URL oder deinen Firmennamen mit Ort ein, und wir füllen das Formular automatisch aus.
+                      </p>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={aiSearchInput}
+                            onChange={(e) => setAiSearchInput(e.target.value)}
+                            placeholder="www.deine-firma.ch oder Firmenname Ort"
+                            className="pl-10"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAiAutoFill();
+                              }
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleAiAutoFill}
+                          disabled={isAiLoading}
+                          size="sm"
+                        >
+                          {isAiLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="w-4 h-4" />
+                          )}
+                          Laden
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-2 text-muted-foreground">oder manuell eingeben</span>
+                      </div>
+                    </div>
                     
                     <FormField
                       control={form.control}
