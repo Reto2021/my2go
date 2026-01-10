@@ -38,6 +38,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const onboardingSchema = z.object({
   // Company
@@ -98,10 +100,12 @@ const GOALS = [
 export default function PartnerOnboardingPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   
-  // TODO: Check if user has valid checkout session
+  // Check if user has valid checkout session
   const hasPosKit = true; // This would come from session/context
 
   const form = useForm<OnboardingFormData>({
@@ -141,22 +145,47 @@ export default function PartnerOnboardingPage() {
     setIsSubmitting(true);
     
     try {
-      // TODO: Submit to backend
-      console.log("Onboarding data:", data);
+      // Insert partner application into database
+      const { error } = await supabase
+        .from('partner_applications')
+        .insert({
+          user_id: user?.id || null,
+          company_name: data.companyName,
+          industry: data.industry,
+          website: data.website || null,
+          address_street: data.street,
+          address_number: data.streetNumber,
+          postal_code: data.postalCode,
+          city: data.city,
+          contact_name: data.contactName,
+          contact_email: data.contactEmail,
+          contact_phone: data.contactPhone,
+          whatsapp_opt_in: data.whatsappOptIn,
+          google_business_url: data.googleBusinessUrl || null,
+          opening_hours: data.openingHours || null,
+          goals: data.goals,
+          shipping_same_as_location: data.shippingSameAsLocation,
+          shipping_street: data.shippingSameAsLocation ? null : data.shippingStreet,
+          shipping_number: data.shippingSameAsLocation ? null : data.shippingStreetNumber,
+          shipping_postal_code: data.shippingSameAsLocation ? null : data.shippingPostalCode,
+          shipping_city: data.shippingSameAsLocation ? null : data.shippingCity,
+        });
+      
+      if (error) throw error;
       
       // Track event
       if (typeof window !== 'undefined' && 'gtag' in window) {
-        (window as any).gtag('event', 'onboarding_completed');
+        (window as any).gtag('event', 'partner_application_submitted');
       }
       
-      toast({
-        title: "Onboarding abgeschlossen!",
-        description: "Dein Setup beginnt jetzt. Wir melden uns in Kürze."
-      });
+      setApplicationSubmitted(true);
       
-      // Redirect to success or dashboard
-      navigate("/partner-portal");
+      toast({
+        title: "Bewerbung eingereicht!",
+        description: "Wir prüfen deine Anfrage und melden uns in Kürze."
+      });
     } catch (error: any) {
+      console.error('Error submitting application:', error);
       toast({
         title: "Fehler",
         description: error.message || "Bitte versuche es erneut.",
@@ -179,6 +208,43 @@ export default function PartnerOnboardingPage() {
     }
   };
 
+  // Success state after submission
+  if (applicationSubmitted) {
+    return (
+      <div className="py-20 md:py-32">
+        <div className="container max-w-xl mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-6"
+          >
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold">Bewerbung eingereicht!</h1>
+            <p className="text-lg text-muted-foreground">
+              Vielen Dank für dein Interesse an My 2Go. Wir prüfen deine Bewerbung 
+              und melden uns innerhalb von 2-3 Werktagen bei dir.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button asChild variant="outline">
+                <Link to="/go">Zurück zur Startseite</Link>
+              </Button>
+              {!user && (
+                <Button asChild>
+                  <Link to="/auth">
+                    Account erstellen
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-12 md:py-20">
       <div className="container max-w-3xl mx-auto px-4">
@@ -187,9 +253,9 @@ export default function PartnerOnboardingPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-bold mb-2">Onboarding</h1>
+          <h1 className="text-3xl font-bold mb-2">Partner werden</h1>
           <p className="text-muted-foreground">
-            Fülle die folgenden Informationen aus, damit wir dein Setup starten können.
+            Fülle die folgenden Informationen aus, um dich als Partner zu bewerben.
           </p>
         </motion.div>
 

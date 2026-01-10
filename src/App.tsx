@@ -40,6 +40,7 @@ import AdminAirDrops from "./pages/admin/AdminAirDrops";
 import AdminBadges from "./pages/admin/AdminBadges";
 import AdminRadioTiers from "./pages/admin/AdminRadioTiers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminPartnerApplications from "./pages/admin/AdminPartnerApplications";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
@@ -111,6 +112,7 @@ function AppContent() {
           <Route path="badges" element={<AdminBadges />} />
           <Route path="radio" element={<AdminRadioTiers />} />
           <Route path="airdrops" element={<AdminAirDrops />} />
+          <Route path="applications" element={<AdminPartnerApplications />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
         
