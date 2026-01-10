@@ -63,15 +63,23 @@ export default function SettingsPage() {
       setPushSupported(supported);
       
       if (supported) {
-        const permission = await getNotificationPermission();
-        setPermissionDenied(permission === 'denied');
-        
-        const isSubscribed = await getPushSubscriptionStatus();
-        setPushEnabled(isSubscribed);
+        try {
+          const permission = await getNotificationPermission();
+          setPermissionDenied(permission === 'denied');
+          
+          const isSubscribed = await getPushSubscriptionStatus();
+          setPushEnabled(isSubscribed);
+        } catch (error) {
+          console.error('Error checking push status:', error);
+          // Service Worker not ready yet
+          setPushSupported(false);
+        }
       }
     };
     
-    checkPushStatus();
+    // Small delay to allow Service Worker to register
+    const timer = setTimeout(checkPushStatus, 500);
+    return () => clearTimeout(timer);
   }, []);
   
   const handlePushToggle = async (enabled: boolean) => {
@@ -93,7 +101,13 @@ export default function SettingsPage() {
             setPermissionDenied(true);
             toast.error('Benachrichtigungen wurden im Browser blockiert. Bitte ändere die Einstellungen in deinem Browser.');
           } else {
-            toast.error('Konnte Benachrichtigungen nicht aktivieren');
+            // Check if it's a Service Worker issue
+            const swReady = await navigator.serviceWorker?.ready;
+            if (!swReady) {
+              toast.error('Push-Benachrichtigungen sind in der Vorschau nicht verfügbar. Bitte installiere die App.');
+            } else {
+              toast.error('Konnte Benachrichtigungen nicht aktivieren. Bitte versuche es nach der Installation der App.');
+            }
           }
         }
       } else {
