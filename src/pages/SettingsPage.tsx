@@ -269,6 +269,20 @@ export default function SettingsPage() {
             </p>
           </div>
         </section>
+        
+        {/* Legal Links */}
+        <section className="animate-in-delayed">
+          <div className="p-4 rounded-2xl bg-muted/50">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              <a href="/agb" className="hover:text-foreground transition-colors">AGB</a>
+              <a href="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</a>
+              <a href="/impressum" className="hover:text-foreground transition-colors">Impressum</a>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-3">
+              © {new Date().getFullYear()} 2Go Media AG
+            </p>
+          </div>
+        </section>
       </div>
     </div>
   );
