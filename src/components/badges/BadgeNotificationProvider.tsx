@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthSafe } from "@/contexts/AuthContext";
 import { BadgeNotification } from "./BadgeNotification";
 
 interface Badge {
@@ -21,7 +21,8 @@ interface UserBadge {
 }
 
 export function BadgeNotificationProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const auth = useAuthSafe();
+  const user = auth?.user ?? null;
   const queryClient = useQueryClient();
   const [currentBadge, setCurrentBadge] = useState<Badge | null>(null);
   const [shownBadgeIds, setShownBadgeIds] = useState<Set<string>>(new Set());
