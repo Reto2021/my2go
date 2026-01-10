@@ -358,21 +358,23 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               )}
             </motion.button>
             
-            {/* Reward Tiers Toggle */}
-            <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.45 }}
-              onClick={() => setShowTiers(!showTiers)}
-              className="mt-4 sm:mt-6 mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <Gift className="h-4 w-4 text-accent" />
-              <span className="text-xs sm:text-sm font-medium text-white">
-                {showTiers ? 'Tiers ausblenden' : 'Hör-Belohnungen anzeigen'}
-              </span>
-            </motion.button>
+            {/* Reward Tiers Toggle - only show if tiers are available */}
+            {tiers.length > 0 && !isFullscreen && (
+              <motion.button
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.45 }}
+                onClick={() => setShowTiers(!showTiers)}
+                className="mt-4 sm:mt-6 mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <Gift className="h-4 w-4 text-accent" />
+                <span className="text-xs sm:text-sm font-medium text-white">
+                  {showTiers ? 'Zuletzt gespielt anzeigen' : 'Hör-Belohnungen anzeigen'}
+                </span>
+              </motion.button>
+            )}
 
-            {/* Reward Tiers Section - now inline in scroll area */}
+            {/* Reward Tiers Section - shown when toggle is active */}
             <AnimatePresence>
               {showTiers && !isFullscreen && tiers.length > 0 && (
                 <motion.div
@@ -400,8 +402,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               )}
             </AnimatePresence>
 
-            {/* Song History - now inline in scroll area */}
-            {songHistory.length > 0 && !isFullscreen && !showTiers && (
+            {/* Song History - shown when tiers toggle is off OR when no tiers available */}
+            {songHistory.length > 0 && !isFullscreen && (!showTiers || tiers.length === 0) && (
               <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
