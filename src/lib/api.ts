@@ -869,7 +869,7 @@ export async function redeemOnAirCode(code: string): Promise<CodeRedeemResponse>
     
     // Check if session is active
     if (!mockSessionActive) {
-      return { status: 'invalid', message: 'Bitte öffne zuerst deine 2Go Taler Karte.' };
+      return { status: 'invalid', message: 'Bitte öffne zuerst deine My 2Go Karte.' };
     }
     
     if (code.length < 4) {

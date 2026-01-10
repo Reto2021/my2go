@@ -42,7 +42,7 @@ export function AdminLayout() {
               </div>
               <div>
                 <h1 className="text-lg font-bold">Admin Dashboard</h1>
-                <p className="text-xs text-secondary-foreground/70">2Go Taler Hub</p>
+                <p className="text-xs text-secondary-foreground/70">My 2Go Admin</p>
               </div>
             </div>
             

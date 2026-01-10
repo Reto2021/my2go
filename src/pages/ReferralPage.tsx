@@ -40,8 +40,8 @@ export default function ReferralPage() {
     setIsSharing(true);
     try {
       await navigator.share({
-        title: 'Radio 2Go Taler',
-        text: `Melde dich bei Radio 2Go an und wir erhalten beide 25 Taler! Nutze meinen Code: ${referralCode}`,
+        title: 'My 2Go',
+        text: `Melde dich bei My 2Go an und wir erhalten beide 25 Taler! Nutze meinen Code: ${referralCode}`,
         url: referralLink,
       });
     } catch (error) {
