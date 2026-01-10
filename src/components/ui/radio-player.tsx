@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Radio, Music2, Expand, ChevronUp, ChevronDown, Gift, Clock, X } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Radio, Music2, Expand, ChevronUp, ChevronDown, Gift, Clock, X, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
@@ -391,6 +391,11 @@ export function RadioPlayer({ className }: { className?: string }) {
               {isPlaying && (
                 <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full flex items-center justify-center">
                   <Radio className="h-2.5 w-2.5 text-accent-foreground animate-pulse" />
+                </div>
+              )}
+              {nowPlaying?.videoUrl && (
+                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-primary rounded-full flex items-center justify-center shadow-md">
+                  <Video className="h-2.5 w-2.5 text-primary-foreground" />
                 </div>
               )}
             </div>
