@@ -27,6 +27,7 @@ import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { useAuthSafe } from '@/contexts/AuthContext';
+import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
 
 interface ListeningTier {
   id: string;
@@ -181,9 +182,12 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               <ChevronDown className="h-5 w-5 text-white" />
             </button>
             
-            <div className="flex items-center gap-2">
-              <Radio className="h-4 w-4 text-accent" />
-              <span className="text-sm font-semibold text-white">Radio 2Go Live</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Radio className="h-4 w-4 text-accent" />
+                <span className="text-sm font-semibold text-white">Radio 2Go Live</span>
+              </div>
+              {isPlaying && <LiveListenerCount size="sm" className="bg-white/10" />}
             </div>
             
             <button
