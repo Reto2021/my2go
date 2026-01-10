@@ -151,6 +151,35 @@ export default function SettingsPage() {
       </header>
       
       <div className="container py-6 space-y-6">
+        {/* Help & Info Section - at top for visibility */}
+        <section className="animate-in">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            Hilfe & Info
+          </h2>
+          
+          <div className="card-base divide-y divide-border">
+            {/* FAQ */}
+            <button 
+              onClick={() => navigate('/faq')}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <HelpCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Häufige Fragen (FAQ)</p>
+                  <p className="text-sm text-muted-foreground">
+                    Antworten auf die wichtigsten Fragen
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
+        </section>
+
         {/* Badge Progress Ring - only show if logged in */}
         {user && (
           <section className="animate-in">
@@ -425,35 +454,6 @@ export default function SettingsPage() {
             </div>
           </section>
         )}
-        
-        {/* Help & Info Section */}
-        <section className="animate-in-delayed">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-            <HelpCircle className="h-4 w-4" />
-            Hilfe & Info
-          </h2>
-          
-          <div className="card-base divide-y divide-border">
-            {/* FAQ */}
-            <button 
-              onClick={() => navigate('/faq')}
-              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-info/10 flex items-center justify-center">
-                  <HelpCircle className="h-5 w-5 text-info" />
-                </div>
-                <div className="text-left">
-                  <p className="font-medium">Häufige Fragen (FAQ)</p>
-                  <p className="text-sm text-muted-foreground">
-                    Antworten auf die wichtigsten Fragen
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-          </div>
-        </section>
         
         {/* Legal Links */}
         <section className="animate-in-delayed">
