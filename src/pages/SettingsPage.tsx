@@ -52,6 +52,7 @@ export default function SettingsPage() {
         .maybeSingle();
       setIsAdmin(!!data);
     };
+    checkAdminStatus();
   }, [user]);
 
   useEffect(() => {
