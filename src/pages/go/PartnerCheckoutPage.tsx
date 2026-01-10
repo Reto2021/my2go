@@ -1,18 +1,20 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Check, ArrowLeft, ShoppingCart, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   PLANS, 
   POS_KITS, 
-  formatCHF, 
+  formatCHF,
+  MWST_RATE,
+  calculateMwSt,
+  calculateBrutto,
   type PlanId, 
   type BillingInterval,
   type PosKitId 
@@ -20,7 +22,6 @@ import {
 
 export default function PartnerCheckoutPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { toast } = useToast();
   
   const planId = (searchParams.get('plan') as PlanId) || 'growth';
@@ -46,8 +47,18 @@ export default function PartnerCheckoutPage() {
   const subscriptionPriceId = interval === 'yearly' ? plan.yearlyPriceId : plan.monthlyPriceId;
   const posKit = selectedPosKit ? POS_KITS[selectedPosKit] : null;
   
-  // Total due today = Activation Fee + POS Kit (if selected)
-  const totalDueToday = plan.activationFee + (posKit?.price || 0);
+  // Netto amounts
+  const nettoActivation = plan.activationFee;
+  const nettoPosKit = posKit?.price || 0;
+  const nettoTodayTotal = nettoActivation + nettoPosKit;
+  
+  // MwSt calculation
+  const mwstAmount = calculateMwSt(nettoTodayTotal);
+  const bruttoTodayTotal = calculateBrutto(nettoTodayTotal);
+  
+  // Subscription MwSt
+  const subscriptionMwSt = calculateMwSt(subscriptionPrice);
+  const subscriptionBrutto = calculateBrutto(subscriptionPrice);
 
   const handleCheckout = async () => {
     setIsLoading(true);
@@ -128,7 +139,7 @@ export default function PartnerCheckoutPage() {
                       {formatCHF(interval === 'yearly' ? Math.round(plan.yearlyPrice / 12) : plan.monthlyPrice)}/Monat
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {interval === 'yearly' ? 'Jährliche Abrechnung' : 'Monatliche Abrechnung'}
+                      exkl. MwSt • {interval === 'yearly' ? 'Jährliche Abrechnung' : 'Monatliche Abrechnung'}
                     </p>
                   </div>
                 </div>
@@ -136,11 +147,11 @@ export default function PartnerCheckoutPage() {
                 <div className="p-3 rounded-lg bg-muted/50 text-sm">
                   <div className="flex justify-between mb-1">
                     <span>Activation Fee (einmalig, sofort fällig)</span>
-                    <span className="font-medium">{formatCHF(plan.activationFee)}</span>
+                    <span className="font-medium">{formatCHF(plan.activationFee)} exkl. MwSt</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Abo-Gebühr (erst nach 30 Tagen Trial)</span>
-                    <span>{formatCHF(subscriptionPrice)}/{interval === 'yearly' ? 'Jahr' : 'Monat'}</span>
+                    <span>{formatCHF(subscriptionPrice)}/{interval === 'yearly' ? 'Jahr' : 'Monat'} exkl. MwSt</span>
                   </div>
                 </div>
                 
@@ -184,7 +195,10 @@ export default function PartnerCheckoutPage() {
                               <h4 className="font-medium">POS Kit {kit.name}</h4>
                               <p className="text-sm text-muted-foreground">{kit.description}</p>
                             </div>
-                            <span className="font-semibold">{formatCHF(kit.price)}</span>
+                            <div className="text-right">
+                              <span className="font-semibold">{formatCHF(kit.price)}</span>
+                              <p className="text-xs text-muted-foreground">exkl. MwSt</p>
+                            </div>
                           </div>
                           <ul className="mt-2 text-xs text-muted-foreground space-y-1">
                             {kit.items.map((item, i) => (
@@ -214,28 +228,51 @@ export default function PartnerCheckoutPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>{plan.name} - Activation Fee</span>
-                    <span>{formatCHF(plan.activationFee)}</span>
+                    <span>{formatCHF(nettoActivation)}</span>
                   </div>
                   {posKit && (
                     <div className="flex justify-between">
                       <span>POS Kit {posKit.name}</span>
-                      <span>{formatCHF(posKit.price)}</span>
+                      <span>{formatCHF(nettoPosKit)}</span>
                     </div>
                   )}
                 </div>
                 
                 <Separator />
                 
-                <div className="flex justify-between font-semibold">
-                  <span>Heute fällig</span>
-                  <span>{formatCHF(totalDueToday)}</span>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Zwischensumme (netto)</span>
+                    <span>{formatCHF(nettoTodayTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>MwSt (8.1%)</span>
+                    <span>{formatCHF(mwstAmount)}</span>
+                  </div>
                 </div>
                 
-                <div className="text-sm text-muted-foreground">
-                  <p>Nach 30 Tagen Trial:</p>
-                  <p className="font-medium text-foreground">
-                    {formatCHF(subscriptionPrice)}/{interval === 'yearly' ? 'Jahr' : 'Monat'}
-                  </p>
+                <Separator />
+                
+                <div className="flex justify-between font-semibold text-lg">
+                  <span>Heute fällig</span>
+                  <span>{formatCHF(bruttoTodayTotal)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">inkl. MwSt</p>
+                
+                <div className="text-sm text-muted-foreground p-3 rounded-lg bg-muted/50">
+                  <p className="font-medium text-foreground mb-1">Nach 30 Tagen Trial:</p>
+                  <div className="flex justify-between">
+                    <span>Abo-Gebühr (netto)</span>
+                    <span>{formatCHF(subscriptionPrice)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>+ MwSt (8.1%)</span>
+                    <span>{formatCHF(subscriptionMwSt)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium text-foreground mt-1 pt-1 border-t">
+                    <span>Total (brutto)</span>
+                    <span>{formatCHF(subscriptionBrutto)}/{interval === 'yearly' ? 'Jahr' : 'Monat'}</span>
+                  </div>
                 </div>
                 
                 <Button 
@@ -251,7 +288,7 @@ export default function PartnerCheckoutPage() {
                     </>
                   ) : (
                     <>
-                      Jetzt bezahlen
+                      Jetzt bezahlen ({formatCHF(bruttoTodayTotal)})
                     </>
                   )}
                 </Button>

@@ -10,6 +10,7 @@ import { AdminGuard } from "@/components/admin/AdminGuard";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PartnerGuard } from "@/components/partner/PartnerGuard";
 import { PartnerLayout } from "@/components/partner/PartnerLayout";
+import { GoLayout } from "@/components/go/GoLayout";
 import HomePage from "./pages/HomePage";
 import RewardsPage from "./pages/RewardsPage";
 import RewardDetailPage from "./pages/RewardDetailPage";
@@ -43,6 +44,18 @@ import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
 import PartnerReviews from "./pages/partner/PartnerReviews";
 import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger";
+// Go Funnel Pages
+import PartnerLandingPage from "./pages/go/PartnerLandingPage";
+import PartnerPricingPage from "./pages/go/PartnerPricingPage";
+import PartnerCheckoutPage from "./pages/go/PartnerCheckoutPage";
+import PartnerThankYouPage from "./pages/go/PartnerThankYouPage";
+import PartnerOnboardingPage from "./pages/go/PartnerOnboardingPage";
+import PartnerFAQPage from "./pages/go/PartnerFAQPage";
+import PartnerPosPage from "./pages/go/PartnerPosPage";
+import PartnerRefundPage from "./pages/go/PartnerRefundPage";
+import GoAGBPage from "./pages/go/legal/GoAGBPage";
+import GoDatenschutzPage from "./pages/go/legal/GoDatenschutzPage";
+import GoImpressumPage from "./pages/go/legal/GoImpressumPage";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +117,21 @@ function AppContent() {
           <Route path="rewards" element={<PartnerRewards />} />
           <Route path="redemptions" element={<PartnerRedemptions />} />
           <Route path="reviews" element={<PartnerReviews />} />
+        </Route>
+        
+        {/* Go Partner Sales Funnel */}
+        <Route path="/go" element={<GoLayout />}>
+          <Route path="partner" element={<PartnerLandingPage />} />
+          <Route path="partner/pricing" element={<PartnerPricingPage />} />
+          <Route path="partner/checkout" element={<PartnerCheckoutPage />} />
+          <Route path="partner/thank-you" element={<PartnerThankYouPage />} />
+          <Route path="partner/onboarding" element={<PartnerOnboardingPage />} />
+          <Route path="partner/faq" element={<PartnerFAQPage />} />
+          <Route path="partner/pos" element={<PartnerPosPage />} />
+          <Route path="partner/refund" element={<PartnerRefundPage />} />
+          <Route path="legal/agb" element={<GoAGBPage />} />
+          <Route path="legal/datenschutz" element={<GoDatenschutzPage />} />
+          <Route path="legal/impressum" element={<GoImpressumPage />} />
         </Route>
         
         {/* All other pages with layout */}

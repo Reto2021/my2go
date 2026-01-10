@@ -1,10 +1,15 @@
 // My 2Go Partner Pricing Configuration
-// All prices in CHF (Rappen/Centimes)
+// All prices in CHF - NETTO (exkl. MwSt)
+// MwSt Rate: 8.1% (Switzerland)
+
+export const MWST_RATE = 0.081;
 
 export type PlanId = 'starter' | 'growth' | 'radio';
 export type BillingInterval = 'monthly' | 'yearly';
 export type PosKitId = 'basic' | 'pro' | 'premium';
 
+export const calculateMwSt = (netAmount: number) => Math.round(netAmount * MWST_RATE * 100) / 100;
+export const calculateBrutto = (netAmount: number) => netAmount + calculateMwSt(netAmount);
 export interface PlanDetails {
   id: PlanId;
   name: string;

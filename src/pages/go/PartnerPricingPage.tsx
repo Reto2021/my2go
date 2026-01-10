@@ -27,8 +27,11 @@ export default function PartnerPricingPage() {
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
             Wähle dein Paket
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-2">
             Alle Pakete inkl. 30 Tage Trial. Die erste Monatsgebühr wird erst nach dem Trial fällig.
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            Alle Preise exkl. MwSt (8.1%)
           </p>
           
           {/* Billing Toggle */}
@@ -92,6 +95,7 @@ export default function PartnerPricingPage() {
                         <span className="text-4xl font-bold">{formatCHF(displayPrice)}</span>
                         <span className="text-muted-foreground">/Monat</span>
                       </div>
+                      <p className="text-xs text-muted-foreground">exkl. MwSt</p>
                       {isYearly && (
                         <p className="text-sm text-muted-foreground mt-1">
                           {formatCHF(price)} jährlich abgerechnet
