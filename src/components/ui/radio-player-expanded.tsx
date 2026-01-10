@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, 
@@ -189,55 +189,13 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-4">
-            {/* Large Cover Art */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className={cn(
-                "relative rounded-3xl overflow-hidden shadow-2xl mb-8",
-                isFullscreen ? "w-[400px] h-[400px]" : "w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]"
-              )}
-            >
-              {nowPlaying?.artworkUrl ? (
-                <img
-                  src={nowPlaying.artworkUrl}
-                  alt={nowPlaying.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-accent/30 to-primary/30 flex items-center justify-center">
-                  <Music2 className="h-24 w-24 text-white/30" />
-                </div>
-              )}
-              
-              {/* Playing indicator */}
-              {isPlaying && (
-                <div className="absolute bottom-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
-                  <div className="flex items-end gap-0.5 h-4">
-                    <motion.div
-                      animate={{ height: ['40%', '100%', '60%', '80%', '40%'] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="w-1 bg-accent rounded-full"
-                    />
-                    <motion.div
-                      animate={{ height: ['60%', '40%', '100%', '50%', '60%'] }}
-                      transition={{ duration: 1, repeat: Infinity, delay: 0.1 }}
-                      className="w-1 bg-accent rounded-full"
-                    />
-                    <motion.div
-                      animate={{ height: ['80%', '60%', '40%', '100%', '80%'] }}
-                      transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
-                      className="w-1 bg-accent rounded-full"
-                    />
-                  </div>
-                  <span className="text-xs font-semibold text-white ml-1">LIVE</span>
-                </div>
-              )}
-            </motion.div>
+            {/* Large Cover Art - memoized to prevent flickering */}
+            <ArtworkDisplay 
+              artworkUrl={nowPlaying?.artworkUrl} 
+              title={nowPlaying?.title}
+              isPlaying={isPlaying}
+              isFullscreen={isFullscreen}
+            />
 
             {/* Song Info */}
             <motion.div
@@ -432,33 +390,31 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   );
 }
 
-function SongHistoryRow({ song, index }: { song: SongHistoryItem; index: number }) {
-  return (
-    <motion.div
-      initial={{ x: -20, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: 0.5 + index * 0.05 }}
-      className="flex items-center gap-3 p-2 rounded-xl bg-white/5"
-    >
-      <div className="h-10 w-10 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
-        {song.artworkUrl ? (
-          <img src={song.artworkUrl} alt={song.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Music2 className="h-4 w-4 text-white/30" />
-          </div>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white truncate">{song.title}</p>
-        <p className="text-xs text-white/50 truncate">{song.artist}</p>
-      </div>
-      <span className="text-xs text-white/40 flex-shrink-0">
-        {formatDistanceToNow(new Date(song.playedAt), { addSuffix: true, locale: de })}
-      </span>
-    </motion.div>
-  );
-}
+const SongHistoryRow = ({ song, index }: { song: SongHistoryItem; index: number }) => (
+  <motion.div
+    initial={{ x: -20, opacity: 0 }}
+    animate={{ x: 0, opacity: 1 }}
+    transition={{ delay: 0.5 + index * 0.05 }}
+    className="flex items-center gap-3 p-2 rounded-xl bg-white/5"
+  >
+    <div className="h-10 w-10 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+      {song.artworkUrl ? (
+        <img src={song.artworkUrl} alt={song.title} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Music2 className="h-4 w-4 text-white/30" />
+        </div>
+      )}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-medium text-white truncate">{song.title}</p>
+      <p className="text-xs text-white/50 truncate">{song.artist}</p>
+    </div>
+    <span className="text-xs text-white/40 flex-shrink-0">
+      {formatDistanceToNow(new Date(song.playedAt), { addSuffix: true, locale: de })}
+    </span>
+  </motion.div>
+);
 
 function formatDuration(seconds: number): string {
   if (seconds >= 3600) {
@@ -502,3 +458,67 @@ function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) 
     </motion.div>
   );
 }
+
+// Memoized artwork component to prevent flickering during session duration updates
+const ArtworkDisplay = React.memo(function ArtworkDisplay({
+  artworkUrl,
+  title,
+  isPlaying,
+  isFullscreen
+}: {
+  artworkUrl?: string | null;
+  title?: string;
+  isPlaying: boolean;
+  isFullscreen: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.1 }}
+      className={cn(
+        "relative rounded-3xl overflow-hidden shadow-2xl mb-8",
+        isFullscreen ? "w-[400px] h-[400px]" : "w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]"
+      )}
+    >
+      {artworkUrl ? (
+        <img
+          src={artworkUrl}
+          alt={title}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-accent/30 to-primary/30 flex items-center justify-center">
+          <Music2 className="h-24 w-24 text-white/30" />
+        </div>
+      )}
+      
+      {/* Playing indicator */}
+      {isPlaying && (
+        <div className="absolute bottom-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
+          <div className="flex items-end gap-0.5 h-4">
+            <motion.div
+              animate={{ height: ['40%', '100%', '60%', '80%', '40%'] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="w-1 bg-accent rounded-full"
+            />
+            <motion.div
+              animate={{ height: ['60%', '40%', '100%', '50%', '60%'] }}
+              transition={{ duration: 1, repeat: Infinity, delay: 0.1 }}
+              className="w-1 bg-accent rounded-full"
+            />
+            <motion.div
+              animate={{ height: ['80%', '60%', '40%', '100%', '80%'] }}
+              transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+              className="w-1 bg-accent rounded-full"
+            />
+          </div>
+          <span className="text-xs font-semibold text-white ml-1">LIVE</span>
+        </div>
+      )}
+    </motion.div>
+  );
+});
