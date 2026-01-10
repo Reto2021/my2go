@@ -270,9 +270,16 @@ export default function AdminPartners() {
       
       if (data?.success && data?.data) {
         const scraped = data.data;
+        // Auto-generate slug from name
+        const generatedSlug = scraped.name 
+          ? scraped.name.toLowerCase()
+              .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+              .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          : '';
         setFormData(prev => ({
           ...prev,
           name: scraped.name || prev.name,
+          slug: generatedSlug || prev.slug,
           description: scraped.description || prev.description,
           short_description: scraped.short_description || prev.short_description,
           category: scraped.category || prev.category,
@@ -281,6 +288,7 @@ export default function AdminPartners() {
           postal_code: scraped.postal_code || prev.postal_code,
           city: scraped.city || prev.city,
           website: scraped.website || prev.website,
+          google_place_id: scraped.google_place_id || prev.google_place_id,
         }));
         toast.success('Partner-Daten erfolgreich geladen!');
         setAiSearchUrl('');
