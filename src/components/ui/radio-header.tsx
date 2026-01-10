@@ -215,14 +215,14 @@ export function RadioHeader() {
                   {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
                 </Marquee>
                 {/* Expand hint */}
-                <Expand className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
+                <Expand className="h-4 w-4 text-accent flex-shrink-0" />
               </div>
             ) : (
               <div className="flex items-center gap-2">
                 <p className="text-xs text-secondary-foreground/70 font-medium">
                   Radio 2Go streamen
                 </p>
-                <Expand className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
+                <Expand className="h-4 w-4 text-accent flex-shrink-0" />
               </div>
             )}
           </div>
