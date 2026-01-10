@@ -116,6 +116,7 @@ serve(async (req) => {
             - city: Stadt/Ort
             - phone: Telefonnummer
             - email: E-Mail-Adresse
+            - contact_name: Name einer Kontaktperson (Inhaber, Geschäftsführer, Ansprechpartner)
             - opening_hours: Öffnungszeiten als Text
             - instagram: Instagram-Handle oder URL
             - facebook: Facebook-Seiten-URL
@@ -167,6 +168,7 @@ serve(async (req) => {
       city: city,
       phone: extractedData.phone || null,
       email: extractedData.email || null,
+      contact_name: extractedData.contact_name || null,
       website: formattedUrl,
       instagram: extractedData.instagram || null,
       facebook: extractedData.facebook || null,

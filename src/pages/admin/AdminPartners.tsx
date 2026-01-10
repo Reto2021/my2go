@@ -258,6 +258,37 @@ export default function AdminPartners() {
     if (partner) {
       setPartners(prev => [partner, ...prev]);
       toast.success('Partner erfolgreich erstellt');
+      
+      // Create a corresponding partner application for tracking
+      try {
+        const contactName = [formData.contact_first_name, formData.contact_last_name].filter(Boolean).join(' ') || formData.name;
+        const { error: appError } = await supabase
+          .from('partner_applications')
+          .insert({
+            company_name: formData.name,
+            industry: formData.category || 'Sonstiges',
+            contact_name: contactName,
+            contact_email: formData.contact_email || 'admin@radio2go.ch',
+            contact_phone: formData.contact_phone || '',
+            address_street: formData.address_street || '',
+            address_number: formData.address_number || '',
+            postal_code: formData.postal_code || '',
+            city: formData.city || '',
+            website: formData.website || null,
+            google_business_url: formData.google_place_id ? `https://www.google.com/maps/place/?q=place_id:${formData.google_place_id}` : null,
+            status: 'pending', // Open application for follow-up
+            notes: `Automatisch erstellt bei Partner-Anlage (Admin). Partner-ID: ${partner.id}`,
+          });
+        
+        if (appError) {
+          console.error('Error creating partner application:', appError);
+        } else {
+          toast.info('Offene Bewerbung zur Nachverfolgung erstellt');
+        }
+      } catch (appErr) {
+        console.error('Error creating partner application:', appErr);
+      }
+      
       setShowCreateForm(false);
       resetForm();
       
@@ -358,6 +389,16 @@ export default function AdminPartners() {
               .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
               .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
           : '';
+        
+        // Parse contact name if available (try to split into first/last name)
+        let contactFirstName = '';
+        let contactLastName = '';
+        if (scraped.contact_name) {
+          const nameParts = scraped.contact_name.split(' ');
+          contactFirstName = nameParts[0] || '';
+          contactLastName = nameParts.slice(1).join(' ') || '';
+        }
+        
         setFormData(prev => ({
           ...prev,
           name: scraped.name || prev.name,
@@ -371,6 +412,11 @@ export default function AdminPartners() {
           city: scraped.city || prev.city,
           website: scraped.website || prev.website,
           google_place_id: scraped.google_place_id || prev.google_place_id,
+          // Kontaktdaten aus Scraping übernehmen
+          contact_email: scraped.email || prev.contact_email,
+          contact_phone: scraped.phone || prev.contact_phone,
+          contact_first_name: contactFirstName || prev.contact_first_name,
+          contact_last_name: contactLastName || prev.contact_last_name,
         }));
         toast.success('Partner-Daten erfolgreich geladen!');
         setAiSearchUrl('');
