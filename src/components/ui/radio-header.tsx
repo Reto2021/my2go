@@ -167,27 +167,27 @@ export function RadioHeader() {
         />
       </div>
       
-      <div className="relative container flex items-center gap-3 py-2">
-        {/* Logo - larger, links to home */}
-        <Link to="/" className="flex items-center gap-2">
+      <div className="relative container flex items-center gap-2 sm:gap-3 py-1.5 sm:py-2">
+        {/* Logo - responsive size */}
+        <Link to="/" className="flex-shrink-0">
           <img 
             src={logo} 
             alt="Radio 2Go" 
-            className="h-14 flex-shrink-0 hover:opacity-80 transition-opacity"
+            className="h-10 sm:h-14 hover:opacity-80 transition-opacity"
           />
         </Link>
         
-        {/* Clock & Weather Widget - visible on all screens */}
-        <ClockWeatherWidget className="flex-shrink-0" />
+        {/* Clock & Weather Widget - hidden on very small screens */}
+        <ClockWeatherWidget className="flex-shrink-0 hidden xs:flex" />
         
-        {/* Player area */}
-        <div className="flex-1 flex items-center gap-2 min-w-0">
-          {/* Play button */}
+        {/* Player area - compact on mobile */}
+        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0">
+          {/* Play button - smaller on mobile */}
           <button
             onClick={togglePlay}
             disabled={isLoading}
             className={cn(
-              "h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
+              "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
               isPlaying 
                 ? "bg-accent text-accent-foreground" 
                 : "bg-accent text-accent-foreground animate-pulse-play",
@@ -196,11 +196,11 @@ export function RadioHeader() {
             aria-label={isPlaying ? 'Pause' : 'Abspielen'}
           >
             {isLoading ? (
-              <div className="h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+              <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
             ) : isPlaying ? (
-              <Pause className="h-4 w-4" />
+              <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             ) : (
-              <Play className="h-4 w-4 ml-0.5" />
+              <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5" />
             )}
           </button>
           
@@ -210,23 +210,24 @@ export function RadioHeader() {
             onClick={() => setIsExpanded(true)}
           >
             {isPlaying ? (
-              <div className="flex items-center gap-2">
-                {/* Equalizer */}
-                <Equalizer className="flex-shrink-0" />
+              <div className="flex items-center gap-1 sm:gap-2">
+                {/* Equalizer - hidden on small mobile */}
+                <Equalizer className="flex-shrink-0 hidden sm:flex" />
                 {/* Song info with marquee */}
-                <Marquee className="flex-1 min-w-0 text-xs text-secondary-foreground font-medium">
-                  <span className="text-secondary-foreground/60">Du hörst: </span>
+                <Marquee className="flex-1 min-w-0 text-[10px] sm:text-xs text-secondary-foreground font-medium">
+                  <span className="text-secondary-foreground/60 hidden sm:inline">Du hörst: </span>
                   {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
                 </Marquee>
                 {/* Expand hint */}
-                <Expand className="h-4 w-4 text-accent flex-shrink-0" />
+                <Expand className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-secondary-foreground/70 font-medium">
-                  Radio hören und 2Go Taler sammeln
+              <div className="flex items-center gap-1 sm:gap-2">
+                <p className="text-[10px] sm:text-xs text-secondary-foreground/70 font-medium truncate">
+                  <span className="sm:hidden">Taler sammeln</span>
+                  <span className="hidden sm:inline">Radio hören und 2Go Taler sammeln</span>
                 </p>
-                <Expand className="h-4 w-4 text-accent flex-shrink-0" />
+                <Expand className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
               </div>
             )}
           </div>
