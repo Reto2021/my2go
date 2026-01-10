@@ -279,6 +279,10 @@ export type Database = {
           category: string | null
           city: string | null
           commission_percent: number | null
+          contact_email: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
+          contact_phone: string | null
           contract_end: string | null
           contract_start: string | null
           country: string | null
@@ -320,6 +324,10 @@ export type Database = {
           category?: string | null
           city?: string | null
           commission_percent?: number | null
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          contact_phone?: string | null
           contract_end?: string | null
           contract_start?: string | null
           country?: string | null
@@ -361,6 +369,10 @@ export type Database = {
           category?: string | null
           city?: string | null
           commission_percent?: number | null
+          contact_email?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
+          contact_phone?: string | null
           contract_end?: string | null
           contract_start?: string | null
           country?: string | null
