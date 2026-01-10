@@ -127,6 +127,25 @@ export default function SettingsPage() {
             </h2>
             
             <div className="card-base divide-y divide-border">
+              {/* Profile */}
+              <button 
+                onClick={() => navigate('/profile')}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-secondary/10 flex items-center justify-center">
+                    <User className="h-5 w-5 text-secondary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Mein Profil</p>
+                    <p className="text-sm text-muted-foreground">
+                      Name, Telefon und Adresse bearbeiten
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+              
               {/* My Redemptions */}
               <button 
                 onClick={() => navigate('/my-redemptions')}

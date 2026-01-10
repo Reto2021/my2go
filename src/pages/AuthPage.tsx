@@ -394,6 +394,14 @@ export default function AuthPage() {
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
               )}
+              {mode === 'login' && (
+                <a 
+                  href="/forgot-password" 
+                  className="text-sm text-accent hover:underline"
+                >
+                  Passwort vergessen?
+                </a>
+              )}
             </div>
             
             {/* Submit Button */}

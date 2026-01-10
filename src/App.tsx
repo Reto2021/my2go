@@ -18,6 +18,9 @@ import PartnerDetailPage from "./pages/PartnerDetailPage";
 import FAQPage from "./pages/FAQPage";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProfilePage from "./pages/ProfilePage";
 import MyRedemptionsPage from "./pages/MyRedemptionsPage";
 import RedemptionDetailPage from "./pages/RedemptionDetailPage";
 import ReferralPage from "./pages/ReferralPage";
@@ -47,9 +50,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Auth page with layout but no login required */}
+            {/* Auth pages with layout but no login required */}
             <Route element={<AppLayout />}>
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
             </Route>
             
             {/* Admin pages with admin layout and guard */}
@@ -78,6 +83,7 @@ const App = () => (
               <Route path="/partner/:id" element={<PartnerDetailPage />} />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
               <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
               <Route path="/referral" element={<ReferralPage />} />
