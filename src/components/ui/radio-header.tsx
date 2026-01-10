@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Wallet, Coins, Cast, Airplay, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
 import { useSession, useBrowseMode } from '@/lib/session';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
+import { ExpandedRadioPlayer } from './radio-player-expanded';
 
 function Equalizer({ className }: { className?: string }) {
   return (
@@ -96,6 +97,7 @@ export function RadioHeader() {
   const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showCastMenu, setShowCastMenu] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [prevBalance, setPrevBalance] = useState<number | null>(null);
   const [balanceChanged, setBalanceChanged] = useState(false);
   
@@ -198,8 +200,11 @@ export function RadioHeader() {
             )}
           </button>
           
-          {/* Now playing info */}
-          <div className="flex-1 min-w-0">
+          {/* Now playing info - clickable to expand */}
+          <div 
+            className="flex-1 min-w-0 cursor-pointer"
+            onClick={() => setIsExpanded(true)}
+          >
             {isPlaying ? (
               <div className="flex items-center gap-2">
                 {/* Equalizer */}
@@ -209,11 +214,16 @@ export function RadioHeader() {
                   <span className="text-secondary-foreground/60">Du hörst: </span>
                   {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
                 </Marquee>
+                {/* Expand hint */}
+                <ChevronUp className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
               </div>
             ) : (
-              <p className="text-xs text-secondary-foreground/70 font-medium">
-                Radio 2Go streamen
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-secondary-foreground/70 font-medium">
+                  Radio 2Go streamen
+                </p>
+                <ChevronUp className="h-3 w-3 text-secondary-foreground/40 flex-shrink-0" />
+              </div>
             )}
           </div>
           
@@ -393,6 +403,9 @@ export function RadioHeader() {
           </div>
         )}
       </div>
+      
+      {/* Expanded Player Modal */}
+      <ExpandedRadioPlayer isOpen={isExpanded} onClose={() => setIsExpanded(false)} />
     </header>
   );
 }
