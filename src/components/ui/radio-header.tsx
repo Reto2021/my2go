@@ -9,6 +9,7 @@ import { useSession, useBrowseMode } from '@/lib/session';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
+import { WeatherWidget } from './weather-widget';
 
 function Equalizer({ className }: { className?: string }) {
   return (
@@ -168,13 +169,16 @@ export function RadioHeader() {
       
       <div className="relative container flex items-center gap-3 py-2">
         {/* Logo - larger, links to home */}
-        <Link to="/">
+        <Link to="/" className="flex items-center gap-2">
           <img 
             src={logo} 
             alt="Radio 2Go" 
             className="h-14 flex-shrink-0 hover:opacity-80 transition-opacity"
           />
         </Link>
+        
+        {/* Weather Widget */}
+        <WeatherWidget className="flex-shrink-0 hidden sm:flex" />
         
         {/* Player area */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
