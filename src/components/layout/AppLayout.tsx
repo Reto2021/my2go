@@ -4,6 +4,7 @@ import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
+import { SessionSummarySheet } from '@/components/ui/session-summary-sheet';
 import { useSession } from '@/lib/session';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 
@@ -20,7 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [initSession]);
   
   // Track radio listening for rewards
-  useRadioRewards();
+  const { sessionSummary, showSummary, closeSummary } = useRadioRewards();
   
   return (
     <BadgeNotificationProvider>
@@ -31,6 +32,13 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
         <BottomNav />
         <WhatsAppButton />
+        
+        {/* Session Summary Modal with Share Option */}
+        <SessionSummarySheet
+          isOpen={showSummary}
+          onClose={closeSummary}
+          sessionData={sessionSummary}
+        />
       </div>
     </BadgeNotificationProvider>
   );
