@@ -313,7 +313,7 @@ interface FeatureChipProps {
 function FeatureChip({ icon: Icon, label, color, to }: FeatureChipProps) {
   const colorClasses = {
     accent: 'bg-accent/15 text-accent',
-    primary: 'bg-primary/20 text-secondary',
+    primary: 'bg-primary/20 text-secondary ring-2 ring-accent/60',
     secondary: 'bg-secondary/10 text-secondary',
   };
   
