@@ -44,6 +44,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     volume, 
     nowPlaying, 
     songHistory,
+    currentSessionDuration,
+    updateSessionDuration,
     togglePlay, 
     toggleMute, 
     setVolume 
@@ -52,6 +54,16 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
   const [showTiers, setShowTiers] = useState(false);
+
+  // Update session duration every second
+  useEffect(() => {
+    if (isOpen && isPlaying) {
+      const interval = setInterval(() => {
+        updateSessionDuration();
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isOpen, isPlaying, updateSessionDuration]);
 
   // Fetch listening tiers
   useEffect(() => {
@@ -66,6 +78,42 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
         });
     }
   }, [isOpen, tiers.length]);
+
+  // Calculate current and next tier
+  const getCurrentAndNextTier = () => {
+    if (tiers.length === 0) return { current: null, next: null, progress: 0 };
+    
+    let currentTier: ListeningTier | null = null;
+    let nextTier: ListeningTier | null = null;
+    
+    for (let i = 0; i < tiers.length; i++) {
+      if (currentSessionDuration >= tiers[i].min_duration_seconds) {
+        currentTier = tiers[i];
+        nextTier = tiers[i + 1] || null;
+      } else {
+        if (!currentTier) {
+          nextTier = tiers[i];
+        }
+        break;
+      }
+    }
+    
+    // Calculate progress to next tier
+    let progress = 0;
+    if (nextTier) {
+      const startSeconds = currentTier?.min_duration_seconds || 0;
+      const endSeconds = nextTier.min_duration_seconds;
+      const range = endSeconds - startSeconds;
+      const elapsed = currentSessionDuration - startSeconds;
+      progress = Math.min(100, Math.max(0, (elapsed / range) * 100));
+    } else if (currentTier) {
+      progress = 100; // All tiers completed
+    }
+    
+    return { current: currentTier, next: nextTier, progress };
+  };
+
+  const { current: currentTier, next: nextTier, progress } = getCurrentAndNextTier();
 
   // Handle fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -211,6 +259,62 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 {nowPlaying?.artist || 'Live Stream'}
               </p>
             </motion.div>
+
+            {/* Progress Bar to Next Tier */}
+            {isPlaying && tiers.length > 0 && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.25 }}
+                className="w-full max-w-sm mb-6"
+              >
+                <div className="bg-white/10 rounded-2xl p-4">
+                  {/* Timer Display */}
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-accent" />
+                    <span className="text-lg font-bold text-white tabular-nums">
+                      {formatSessionDuration(currentSessionDuration)}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+                    <motion.div
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                  
+                  {/* Tier Info */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1">
+                      {currentTier ? (
+                        <>
+                          <TalerIcon size={12} />
+                          <span className="text-accent font-semibold">+{currentTier.taler_reward}</span>
+                          <span className="text-white/50">{currentTier.name}</span>
+                        </>
+                      ) : (
+                        <span className="text-white/50">Starte zu hören...</span>
+                      )}
+                    </div>
+                    {nextTier && (
+                      <div className="flex items-center gap-1 text-white/70">
+                        <span>Nächstes:</span>
+                        <TalerIcon size={12} />
+                        <span className="text-accent font-semibold">+{nextTier.taler_reward}</span>
+                        <span className="text-white/50">({formatDuration(nextTier.min_duration_seconds)})</span>
+                      </div>
+                    )}
+                    {!nextTier && currentTier && (
+                      <span className="text-green-400 font-semibold">Maximum erreicht! 🎉</span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Volume Slider */}
             <motion.div
@@ -363,6 +467,17 @@ function formatDuration(seconds: number): string {
   }
   const minutes = Math.floor(seconds / 60);
   return `${minutes} Min.`;
+}
+
+function formatSessionDuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) {
