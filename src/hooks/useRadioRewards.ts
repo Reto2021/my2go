@@ -24,10 +24,10 @@ export function useRadioRewards() {
   
   const sessionIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<Date | null>(null);
+  const previousUserIdRef = useRef<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
-  const previousUserIdRef = useRef<string | null>(null);
   
   // Get user ID from Supabase auth
   useEffect(() => {
