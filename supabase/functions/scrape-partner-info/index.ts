@@ -90,6 +90,19 @@ serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
+    // Validate URL - must have a valid domain (no spaces, must have a dot)
+    const urlPattern = /^https?:\/\/[^\s]+\.[^\s]+$/;
+    if (!urlPattern.test(formattedUrl) || formattedUrl.includes(' ')) {
+      console.error('Invalid URL format:', formattedUrl);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Bitte gib eine gültige Website-URL ein (z.B. www.beispiel.ch). Suchbegriffe wie "restaurant brugg" funktionieren nicht.' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Scraping partner info from:', formattedUrl);
 
     // Use Firecrawl with extract for structured data
