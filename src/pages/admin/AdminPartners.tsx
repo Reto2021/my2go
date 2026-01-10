@@ -32,6 +32,7 @@ export default function AdminPartners() {
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showReviewsOverview, setShowReviewsOverview] = useState(false);
+  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -46,6 +47,7 @@ export default function AdminPartners() {
     city: '',
     is_active: true,
     is_featured: false,
+    google_place_id: '',
   });
   
   const loadPartners = async () => {
@@ -60,9 +62,26 @@ export default function AdminPartners() {
       setIsLoading(false);
     }
   };
+
+  const loadLastSyncDate = async () => {
+    try {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'google_reviews_last_sync')
+        .single();
+      
+      if (data?.value) {
+        setLastSyncDate(data.value as string);
+      }
+    } catch (error) {
+      // Setting might not exist yet
+    }
+  };
   
   useEffect(() => {
     loadPartners();
+    loadLastSyncDate();
   }, []);
   
   const resetForm = () => {
@@ -78,6 +97,7 @@ export default function AdminPartners() {
       city: '',
       is_active: true,
       is_featured: false,
+      google_place_id: '',
     });
   };
   
@@ -153,6 +173,7 @@ export default function AdminPartners() {
       city: partner.city || '',
       is_active: partner.is_active,
       is_featured: partner.is_featured,
+      google_place_id: partner.google_place_id || '',
     });
     setShowCreateForm(false);
   };
@@ -170,6 +191,15 @@ export default function AdminPartners() {
       
       if (error) throw error;
       
+      // Save last sync date
+      const now = new Date().toISOString();
+      await supabase.from('system_settings').upsert({
+        key: 'google_reviews_last_sync',
+        value: now,
+        description: 'Letzte Google Reviews Synchronisierung'
+      }, { onConflict: 'key' });
+      setLastSyncDate(now);
+      
       toast.success(`Google Reviews synchronisiert: ${data?.updated || 0} Partner aktualisiert`);
       loadPartners(); // Reload to show updated data
     } catch (error) {
@@ -178,6 +208,18 @@ export default function AdminPartners() {
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  const formatLastSync = (dateStr: string | null) => {
+    if (!dateStr) return 'Noch nie synchronisiert';
+    const date = new Date(dateStr);
+    return date.toLocaleString('de-CH', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const partnersWithReviews = partners.filter(p => p.google_place_id);
@@ -219,7 +261,7 @@ export default function AdminPartners() {
       {/* Google Reviews Overview */}
       {showReviewsOverview && (
         <div className="card-base p-6 animate-in space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Star className="h-5 w-5 text-accent" />
@@ -227,6 +269,9 @@ export default function AdminPartners() {
               </h2>
               <p className="text-sm text-muted-foreground">
                 {partnersWithReviews.length} von {partners.length} Partnern mit Google Place ID
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Letzte Synchronisierung: {formatLastSync(lastSyncDate)}
               </p>
             </div>
             <button
@@ -481,6 +526,32 @@ export default function AdminPartners() {
                 className="w-full px-4 py-3 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all resize-none"
                 placeholder="Ausführliche Beschreibung"
               />
+            </div>
+            
+            {/* Google Place ID */}
+            <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2">
+                <Star className="h-4 w-4 text-accent" />
+                Google Place ID
+              </label>
+              <input
+                type="text"
+                value={formData.google_place_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, google_place_id: e.target.value }))}
+                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all"
+                placeholder="z.B. ChIJ..."
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Die Google Place ID findest du auf{' '}
+                <a 
+                  href="https://developers.google.com/maps/documentation/places/web-service/place-id" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-accent hover:underline"
+                >
+                  Google Place ID Finder
+                </a>
+              </p>
             </div>
             
             <div className="flex items-center gap-6">
