@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { ArrowLeft, Mail, Loader2, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Loader2, ArrowRight, CheckCircle, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
-import { TalerIcon } from '@/components/icons/TalerIcon';
 
 const emailSchema = z.string().trim().email('Ungültige E-Mail-Adresse');
 
@@ -101,7 +100,7 @@ export default function ForgotPasswordPage() {
           {/* Hero */}
           <div className="text-center mb-8 animate-in">
             <div className="flex justify-center mb-4">
-              <TalerIcon size={80} />
+              <Coins className="h-20 w-20 text-accent" />
             </div>
             <h1 className="text-2xl font-bold mb-2">Passwort vergessen?</h1>
             <p className="text-muted-foreground">
