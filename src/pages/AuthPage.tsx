@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { Mail, Lock, User, ArrowRight, Loader2, Gift, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import talerIcon from '@/assets/taler-icon.png';
+import { TalerIcon } from '@/components/icons/TalerIcon';
 
 const emailSchema = z.string().email('Ungültige E-Mail-Adresse');
 const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
@@ -167,7 +167,7 @@ export default function AuthPage() {
           {/* Hero */}
           <div className="text-center mb-8 animate-in">
             <div className="flex justify-center mb-4">
-              <img src={talerIcon} alt="2Go Taler" className="h-24 w-24 rounded-2xl shadow-lg" />
+              <TalerIcon size={96} />
             </div>
             <h1 className="text-2xl font-bold mb-2">
               {mode === 'login' ? 'Willkommen zurück!' : 'Jetzt registrieren'}
