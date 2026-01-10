@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { GoogleReviewCard } from '@/components/partner/GoogleReviewBadge';
+import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -116,14 +117,22 @@ export default function PartnerDetailPage() {
       <div className="container py-6 animate-in">
         {/* Partner Header */}
         <div className="text-center mb-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/20 mx-auto mb-4 overflow-hidden">
-            {partner.logo_url ? (
-              <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover" />
-            ) : (
-              <Store className="h-10 w-10 text-secondary" />
-            )}
+          <div className="relative">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/20 mx-auto mb-4 overflow-hidden">
+              {partner.logo_url ? (
+                <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover" />
+              ) : (
+                <Store className="h-10 w-10 text-secondary" />
+              )}
+            </div>
           </div>
           <h2 className="text-xl font-bold mb-2">{partner.name}</h2>
+          
+          {/* Social Proof - Redemption Count */}
+          <div className="flex justify-center mb-3">
+            <RedemptionCountBadge partnerId={partner.id} variant="prominent" />
+          </div>
+          
           <span className="badge-primary">
             {partner.category || 'Partner'}
           </span>

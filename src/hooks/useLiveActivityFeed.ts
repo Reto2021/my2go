@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface ActivityItem {
   id: string;
-  type: 'taler_earned' | 'redemption' | 'badge' | 'streak' | 'referral';
+  type: 'taler_earned' | 'redemption' | 'badge' | 'streak' | 'referral' | 'milestone' | 'streak_start';
   message: string;
   icon: string;
   timestamp: Date;
@@ -31,10 +31,20 @@ const ACTIVITY_MESSAGES = {
     'Jemand bleibt am Ball 💪',
     'Ein weiterer Tag, ein weiterer Streak 🎯',
   ],
+  streak_start: [
+    'Ein neuer Streak wurde gestartet 🚀',
+    'Jemand beginnt seine Treue-Serie 💫',
+    'Ein Hörer startet durch! 🌟',
+  ],
   referral: [
     'Ein neuer Hörer wurde eingeladen 👋',
     'Die Community wächst! 🚀',
     'Freunde werben Freunde 💜',
+  ],
+  milestone: [
+    'Ein Taler-Meilenstein wurde erreicht 🎯',
+    'Jemand hat ein neues Level erreicht 📈',
+    'Ein Hörer feiert seinen Erfolg! 🎊',
   ],
 };
 
@@ -43,17 +53,35 @@ const ICONS = {
   redemption: '🎁',
   badge: '🏆',
   streak: '🔥',
+  streak_start: '🚀',
   referral: '👋',
+  milestone: '🎯',
 };
+
+// Taler milestones to celebrate
+const TALER_MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000];
 
 function getRandomMessage(type: ActivityItem['type']): string {
   const messages = ACTIVITY_MESSAGES[type];
   return messages[Math.floor(Math.random() * messages.length)];
 }
 
+function getMilestoneMessage(amount: number): string {
+  return `${amount.toLocaleString('de-DE')} Taler wurden gerade erreicht! 🎯`;
+}
+
+function getStreakMessage(days: number): string {
+  if (days === 1) return 'Ein neuer Streak wurde gestartet! 🚀';
+  if (days === 7) return '7-Tage Streak! Eine Woche am Ball 🔥';
+  if (days === 14) return '14-Tage Streak! Zwei Wochen stark 💪';
+  if (days === 30) return '30-Tage Streak! Ein ganzer Monat! 🏆';
+  if (days >= 100) return `${days}-Tage Streak! Unglaublich! 👑`;
+  return `${days}-Tage Streak geht weiter 🔥`;
+}
+
 function createMockActivity(): ActivityItem {
-  const types: ActivityItem['type'][] = ['taler_earned', 'redemption', 'badge', 'streak', 'referral'];
-  const weights = [40, 25, 15, 15, 5]; // Weighted probability
+  const types: ActivityItem['type'][] = ['taler_earned', 'redemption', 'badge', 'streak', 'referral', 'milestone', 'streak_start'];
+  const weights = [35, 20, 12, 12, 5, 8, 8]; // Weighted probability
   
   let totalWeight = weights.reduce((a, b) => a + b, 0);
   let random = Math.random() * totalWeight;
@@ -65,6 +93,32 @@ function createMockActivity(): ActivityItem {
       break;
     }
     random -= weights[i];
+  }
+
+  // Special handling for milestone type
+  if (selectedType === 'milestone') {
+    const milestone = TALER_MILESTONES[Math.floor(Math.random() * TALER_MILESTONES.length)];
+    return {
+      id: `mock-${Date.now()}-${Math.random()}`,
+      type: 'milestone',
+      message: getMilestoneMessage(milestone),
+      icon: '🎯',
+      timestamp: new Date(),
+      amount: milestone,
+    };
+  }
+
+  // Special handling for streak type
+  if (selectedType === 'streak') {
+    const days = [3, 5, 7, 10, 14, 21, 30][Math.floor(Math.random() * 7)];
+    return {
+      id: `mock-${Date.now()}-${Math.random()}`,
+      type: 'streak',
+      message: getStreakMessage(days),
+      icon: '🔥',
+      timestamp: new Date(),
+      amount: days,
+    };
   }
 
   return {
@@ -100,7 +154,7 @@ export function useLiveActivityFeed(maxItems: number = 5) {
     setActivities(initialActivities);
     setIsConnected(true);
 
-    // Listen to real transactions
+    // Listen to real transactions (including Taler milestones)
     const transactionChannel = supabase
       .channel('activity-transactions')
       .on(
@@ -113,14 +167,31 @@ export function useLiveActivityFeed(maxItems: number = 5) {
         (payload) => {
           const tx = payload.new as { type: string; amount: number; source: string };
           if (tx.type === 'earn' && tx.amount > 0) {
-            addActivity({
-              id: `tx-${Date.now()}`,
-              type: 'taler_earned',
-              message: `+${tx.amount} Taler wurden gerade verdient 🪙`,
-              icon: '🪙',
-              timestamp: new Date(),
-              amount: tx.amount,
-            });
+            // Check if this might be a milestone (large round numbers)
+            const isMilestone = TALER_MILESTONES.some(m => tx.amount >= m && tx.amount < m + 50);
+            
+            if (isMilestone && Math.random() < 0.3) {
+              const nearestMilestone = TALER_MILESTONES.reduce((prev, curr) => 
+                Math.abs(curr - tx.amount) < Math.abs(prev - tx.amount) ? curr : prev
+              );
+              addActivity({
+                id: `milestone-${Date.now()}`,
+                type: 'milestone',
+                message: getMilestoneMessage(nearestMilestone),
+                icon: '🎯',
+                timestamp: new Date(),
+                amount: nearestMilestone,
+              });
+            } else {
+              addActivity({
+                id: `tx-${Date.now()}`,
+                type: 'taler_earned',
+                message: `+${tx.amount} Taler wurden gerade verdient 🪙`,
+                icon: '🪙',
+                timestamp: new Date(),
+                amount: tx.amount,
+              });
+            }
           }
         }
       )
@@ -173,6 +244,70 @@ export function useLiveActivityFeed(maxItems: number = 5) {
       )
       .subscribe();
 
+    // Listen to profile updates for streak changes
+    const profileChannel = supabase
+      .channel('activity-profiles')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          const oldProfile = payload.old as { current_streak?: number };
+          const newProfile = payload.new as { current_streak?: number };
+          
+          const oldStreak = oldProfile.current_streak || 0;
+          const newStreak = newProfile.current_streak || 0;
+          
+          // New streak started (went from 0 to 1)
+          if (oldStreak === 0 && newStreak === 1) {
+            addActivity({
+              id: `streak-start-${Date.now()}`,
+              type: 'streak_start',
+              message: getRandomMessage('streak_start'),
+              icon: '🚀',
+              timestamp: new Date(),
+            });
+          }
+          // Streak milestone reached
+          else if (newStreak > oldStreak && [7, 14, 30, 50, 100].includes(newStreak)) {
+            addActivity({
+              id: `streak-${Date.now()}`,
+              type: 'streak',
+              message: getStreakMessage(newStreak),
+              icon: '🔥',
+              timestamp: new Date(),
+              amount: newStreak,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Listen to referrals
+    const referralChannel = supabase
+      .channel('activity-referrals')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'referrals',
+        },
+        () => {
+          addActivity({
+            id: `referral-${Date.now()}`,
+            type: 'referral',
+            message: getRandomMessage('referral'),
+            icon: '👋',
+            timestamp: new Date(),
+          });
+        }
+      )
+      .subscribe();
+
     // Simulate periodic activity for demo purposes when no real activity
     const simulationInterval = setInterval(() => {
       // Only add mock activity sometimes (30% chance)
@@ -185,6 +320,8 @@ export function useLiveActivityFeed(maxItems: number = 5) {
       transactionChannel.unsubscribe();
       redemptionChannel.unsubscribe();
       badgeChannel.unsubscribe();
+      profileChannel.unsubscribe();
+      referralChannel.unsubscribe();
       clearInterval(simulationInterval);
     };
   }, [addActivity, maxItems]);
