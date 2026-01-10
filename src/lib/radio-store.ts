@@ -4,11 +4,19 @@ const STREAM_URL = 'http://uksoutha.streaming.broadcast.radio/radio2go';
 const API_URL = 'https://api.broadcast.radio/api/nowplaying/2400';
 const ARTWORK_BASE = 'https://api.broadcast.radio';
 const DEFAULT_ARTWORK = '/pwa-512x512.png';
+const ITUNES_SEARCH_API = 'https://itunes.apple.com/search';
 
 interface NowPlayingData {
   title: string;
   artist: string;
   artworkUrl: string | null;
+}
+
+export interface SongHistoryItem {
+  title: string;
+  artist: string;
+  artworkUrl: string | null;
+  playedAt: string;
 }
 
 interface RadioStore {
@@ -17,6 +25,7 @@ interface RadioStore {
   isLoading: boolean;
   volume: number;
   nowPlaying: NowPlayingData | null;
+  songHistory: SongHistoryItem[];
   audio: HTMLAudioElement | null;
   
   togglePlay: () => void;
@@ -24,6 +33,22 @@ interface RadioStore {
   setVolume: (volume: number) => void;
   fetchNowPlaying: () => Promise<void>;
 }
+
+// Fetch artwork from iTunes as fallback
+const fetchITunesArtwork = async (title: string, artist: string): Promise<string | null> => {
+  try {
+    const query = encodeURIComponent(`${artist} ${title}`);
+    const response = await fetch(`${ITUNES_SEARCH_API}?term=${query}&media=music&limit=1`);
+    const data = await response.json();
+    if (data.results && data.results.length > 0) {
+      // Get high-res artwork (replace 100x100 with 600x600)
+      return data.results[0].artworkUrl100?.replace('100x100', '600x600') || null;
+    }
+  } catch (error) {
+    console.error('iTunes artwork fetch failed:', error);
+  }
+  return null;
+};
 
 // Update Media Session API for lock screen controls
 const updateMediaSession = (nowPlaying: NowPlayingData | null, isPlaying: boolean) => {
@@ -63,6 +88,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   isLoading: false,
   volume: 1,
   nowPlaying: null,
+  songHistory: [],
   audio: null,
 
   fetchNowPlaying: async () => {
@@ -71,11 +97,33 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       const data = await response.json();
       if (data.success && data.body?.now_playing) {
         const np = data.body.now_playing;
-        const nowPlaying = {
-          title: np.title || 'Unknown',
-          artist: np.artist || 'Unknown Artist',
-          artworkUrl: np.artworkUrl ? `${ARTWORK_BASE}${np.artworkUrl}` : null,
-        };
+        const title = np.title || 'Unknown';
+        const artist = np.artist || 'Unknown Artist';
+        let artworkUrl = np.artworkUrl ? `${ARTWORK_BASE}${np.artworkUrl}` : null;
+        
+        // Try iTunes fallback if no artwork from API
+        if (!artworkUrl && title && artist) {
+          artworkUrl = await fetchITunesArtwork(title, artist);
+        }
+        
+        const nowPlaying = { title, artist, artworkUrl };
+        const currentNowPlaying = get().nowPlaying;
+        
+        // Add to history if song changed
+        if (currentNowPlaying && 
+            (currentNowPlaying.title !== title || currentNowPlaying.artist !== artist)) {
+          const history = get().songHistory;
+          const newHistoryItem: SongHistoryItem = {
+            ...currentNowPlaying,
+            playedAt: new Date().toISOString()
+          };
+          // Keep only last 10 songs, avoid duplicates
+          const updatedHistory = [newHistoryItem, ...history.filter(
+            h => !(h.title === currentNowPlaying.title && h.artist === currentNowPlaying.artist)
+          )].slice(0, 10);
+          set({ songHistory: updatedHistory });
+        }
+        
         set({ nowPlaying });
         updateMediaSession(nowPlaying, get().isPlaying);
       }
@@ -90,7 +138,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     let currentAudio = audio;
     if (!currentAudio) {
       currentAudio = new Audio(STREAM_URL);
-      currentAudio.volume = 1;
+      currentAudio.volume = get().volume;
       set({ audio: currentAudio });
       
       // Setup media session handlers once
