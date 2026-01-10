@@ -2,6 +2,7 @@ import { Partner } from '@/lib/supabase-helpers';
 import { cn } from '@/lib/utils';
 import { MapPin, ChevronRight, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
 
 interface PartnerCardProps {
   partner: Partner;
@@ -42,13 +43,21 @@ export function PartnerCard({ partner, className, showArrow = true }: PartnerCar
           {partner.category || 'Partner'}
         </p>
         
-        {/* Location info */}
-        <div className="flex items-center gap-3 mt-1.5">
+        {/* Location info & Reviews */}
+        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           {partner.city && (
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
               <span>{partner.city}</span>
             </div>
+          )}
+          {partner.google_rating && (
+            <GoogleReviewBadge
+              rating={partner.google_rating}
+              reviewCount={partner.google_review_count}
+              googlePlaceId={partner.google_place_id}
+              size="sm"
+            />
           )}
           {partner.is_featured && (
             <span className="text-xs font-semibold text-accent">Featured</span>
