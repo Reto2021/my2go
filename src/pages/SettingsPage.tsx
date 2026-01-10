@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -411,6 +411,35 @@ export default function SettingsPage() {
             </div>
           </section>
         )}
+        
+        {/* Help & Info Section */}
+        <section className="animate-in-delayed">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <HelpCircle className="h-4 w-4" />
+            Hilfe & Info
+          </h2>
+          
+          <div className="card-base divide-y divide-border">
+            {/* FAQ */}
+            <button 
+              onClick={() => navigate('/faq')}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-info/10 flex items-center justify-center">
+                  <HelpCircle className="h-5 w-5 text-info" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Häufige Fragen (FAQ)</p>
+                  <p className="text-sm text-muted-foreground">
+                    Antworten auf die wichtigsten Fragen
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
+        </section>
         
         {/* Legal Links */}
         <section className="animate-in-delayed">
