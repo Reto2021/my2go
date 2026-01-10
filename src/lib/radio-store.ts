@@ -10,6 +10,7 @@ interface NowPlayingData {
   title: string;
   artist: string;
   artworkUrl: string | null;
+  videoUrl: string | null;
 }
 
 export interface SongHistoryItem {
@@ -37,20 +38,42 @@ interface RadioStore {
   updateSessionDuration: () => void;
 }
 
-// Fetch artwork from iTunes as fallback
-const fetchITunesArtwork = async (title: string, artist: string): Promise<string | null> => {
+interface iTunesMediaResult {
+  artworkUrl: string | null;
+  videoUrl: string | null;
+}
+
+// Fetch artwork and video from iTunes as fallback
+const fetchITunesMedia = async (title: string, artist: string): Promise<iTunesMediaResult> => {
   try {
     const query = encodeURIComponent(`${artist} ${title}`);
-    const response = await fetch(`${ITUNES_SEARCH_API}?term=${query}&media=music&limit=1`);
-    const data = await response.json();
-    if (data.results && data.results.length > 0) {
-      // Get high-res artwork (replace 100x100 with 600x600)
-      return data.results[0].artworkUrl100?.replace('100x100', '600x600') || null;
+    // First try to find a music video
+    const videoResponse = await fetch(`${ITUNES_SEARCH_API}?term=${query}&media=musicVideo&limit=1`);
+    const videoData = await videoResponse.json();
+    
+    let videoUrl: string | null = null;
+    let artworkUrl: string | null = null;
+    
+    if (videoData.results && videoData.results.length > 0) {
+      const result = videoData.results[0];
+      videoUrl = result.previewUrl || null;
+      artworkUrl = result.artworkUrl100?.replace('100x100', '600x600') || null;
     }
+    
+    // If no video found, try music for artwork
+    if (!artworkUrl) {
+      const musicResponse = await fetch(`${ITUNES_SEARCH_API}?term=${query}&media=music&limit=1`);
+      const musicData = await musicResponse.json();
+      if (musicData.results && musicData.results.length > 0) {
+        artworkUrl = musicData.results[0].artworkUrl100?.replace('100x100', '600x600') || null;
+      }
+    }
+    
+    return { artworkUrl, videoUrl };
   } catch (error) {
-    console.error('iTunes artwork fetch failed:', error);
+    console.error('iTunes media fetch failed:', error);
   }
-  return null;
+  return { artworkUrl: null, videoUrl: null };
 };
 
 // Update Media Session API for lock screen controls
@@ -113,13 +136,18 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         const title = np.title || 'Unknown';
         const artist = np.artist || 'Unknown Artist';
         let artworkUrl = np.artworkUrl ? `${ARTWORK_BASE}${np.artworkUrl}` : null;
+        let videoUrl: string | null = null;
         
-        // Try iTunes fallback if no artwork from API
-        if (!artworkUrl && title && artist) {
-          artworkUrl = await fetchITunesArtwork(title, artist);
+        // Try iTunes for artwork and video
+        if (title && artist) {
+          const iTunesMedia = await fetchITunesMedia(title, artist);
+          if (!artworkUrl && iTunesMedia.artworkUrl) {
+            artworkUrl = iTunesMedia.artworkUrl;
+          }
+          videoUrl = iTunesMedia.videoUrl;
         }
         
-        const nowPlaying = { title, artist, artworkUrl };
+        const nowPlaying = { title, artist, artworkUrl, videoUrl };
         const currentNowPlaying = get().nowPlaying;
         
         // Add to history if song changed
