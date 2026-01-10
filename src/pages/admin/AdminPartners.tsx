@@ -62,6 +62,10 @@ interface BulkSearchResult {
   website?: string;
   description?: string;
   short_description?: string;
+  // Contact info from scraping
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }
 
 interface RewardSuggestion {
@@ -989,6 +993,10 @@ export default function AdminPartners() {
                 description: scraped.description,
                 short_description: scraped.short_description,
                 google_place_id: scraped.google_place_id || '',
+                // Kontaktdaten aus Scraping
+                contact_name: scraped.contact_name || '',
+                contact_email: scraped.email || '',
+                contact_phone: scraped.phone || '',
               }
             } : r
           ));
@@ -1059,7 +1067,16 @@ export default function AdminPartners() {
           .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
           .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
-        // Create partner
+        // Parse contact name into first/last name
+        let contactFirstName = '';
+        let contactLastName = '';
+        if (data.contact_name) {
+          const nameParts = data.contact_name.split(' ');
+          contactFirstName = nameParts[0] || '';
+          contactLastName = nameParts.slice(1).join(' ') || '';
+        }
+        
+        // Create partner with contact info
         const { partner, error } = await createPartner({
           name: data.name || result.searchTerm,
           slug,
@@ -1074,6 +1091,11 @@ export default function AdminPartners() {
           google_place_id: data.google_place_id || undefined,
           is_active: false,
           is_featured: false,
+          // Kontaktdaten
+          contact_first_name: contactFirstName,
+          contact_last_name: contactLastName,
+          contact_email: data.contact_email,
+          contact_phone: data.contact_phone,
         });
         
         if (error) {
