@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Radio, Music2, Expand } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Radio, Music2, Expand, ChevronUp, ChevronDown, Gift, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
@@ -15,6 +15,15 @@ interface ListeningTier {
   sort_order: number;
 }
 
+const formatDuration = (seconds: number): string => {
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    return `${hours} Std.`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes} Min.`;
+};
+
 export function RadioPlayer({ className }: { className?: string }) {
   const { 
     isPlaying, 
@@ -29,6 +38,7 @@ export function RadioPlayer({ className }: { className?: string }) {
   } = useRadioStore();
   
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showTiersOverview, setShowTiersOverview] = useState(false);
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
   const [showTierReached, setShowTierReached] = useState(false);
   const [reachedTier, setReachedTier] = useState<ListeningTier | null>(null);
@@ -277,6 +287,98 @@ export function RadioPlayer({ className }: { className?: string }) {
               </button>
             </div>
           </div>
+
+          {/* Tiers Overview Toggle */}
+          {tiers.length > 0 && (
+            <div 
+              className="relative border-t border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowTiersOverview(!showTiersOverview)}
+                className="w-full flex items-center justify-center gap-2 py-2 hover:bg-white/5 transition-colors"
+              >
+                <Gift className="h-3.5 w-3.5 text-accent" />
+                <span className="text-xs font-medium text-white/70">
+                  {showTiersOverview ? 'Tiers ausblenden' : 'Hör-Belohnungen'}
+                </span>
+                {showTiersOverview ? (
+                  <ChevronUp className="h-3.5 w-3.5 text-white/50" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 text-white/50" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showTiersOverview && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 pt-2 space-y-2">
+                      {tiers.map((tier, index) => {
+                        const isReached = currentSessionDuration >= tier.min_duration_seconds;
+                        const isNext = !isReached && (index === 0 || currentSessionDuration >= tiers[index - 1].min_duration_seconds);
+                        return (
+                          <motion.div
+                            key={tier.id}
+                            initial={{ x: -10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: index * 0.05 }}
+                            className={cn(
+                              "flex items-center gap-3 p-2.5 rounded-xl transition-all",
+                              isReached 
+                                ? "bg-accent/20 border border-accent/30" 
+                                : isNext
+                                  ? "bg-white/10 border border-white/20"
+                                  : "bg-white/5"
+                            )}
+                          >
+                            <div className={cn(
+                              "h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0",
+                              isReached ? "bg-accent" : "bg-white/10"
+                            )}>
+                              {isReached ? (
+                                <span className="text-sm">✓</span>
+                              ) : (
+                                <Clock className="h-3.5 w-3.5 text-white/50" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(
+                                "text-xs font-semibold",
+                                isReached ? "text-accent" : "text-white/80"
+                              )}>
+                                {tier.name}
+                              </p>
+                              <p className="text-xs text-white/50">
+                                {formatDuration(tier.min_duration_seconds)} hören
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <TalerIcon size={14} />
+                              <span className={cn(
+                                "text-sm font-bold",
+                                isReached ? "text-accent" : "text-white/70"
+                              )}>
+                                +{tier.taler_reward}
+                              </span>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                      <p className="text-xs text-white/40 text-center pt-1">
+                        Du erhältst die Taler der höchsten erreichten Stufe.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
