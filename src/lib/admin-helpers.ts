@@ -17,6 +17,18 @@ export interface AdminStats {
   totalRedemptions: number;
   totalTalerCirculating: number;
   activeAirDropCodes: number;
+  totalBadges: number;
+  totalBadgesAwarded: number;
+}
+
+export interface BadgeStats {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  color: string;
+  category: string;
+  awardedCount: number;
 }
 
 export interface CustomerWithBalance extends UserProfile {
@@ -55,12 +67,16 @@ export async function getAdminStats(): Promise<AdminStats> {
     { count: totalRewards },
     { count: totalRedemptions },
     { count: activeAirDropCodes },
+    { count: totalBadges },
+    { count: totalBadgesAwarded },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('partners').select('*', { count: 'exact', head: true }),
     supabase.from('rewards').select('*', { count: 'exact', head: true }),
     supabase.from('redemptions').select('*', { count: 'exact', head: true }),
     supabase.from('air_drop_codes').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('badges').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('user_badges').select('*', { count: 'exact', head: true }),
   ]);
   
   // Calculate circulating Taler (sum of all balances)
@@ -86,7 +102,45 @@ export async function getAdminStats(): Promise<AdminStats> {
     totalRedemptions: totalRedemptions || 0,
     totalTalerCirculating,
     activeAirDropCodes: activeAirDropCodes || 0,
+    totalBadges: totalBadges || 0,
+    totalBadgesAwarded: totalBadgesAwarded || 0,
   };
+}
+
+export async function getBadgeStats(): Promise<BadgeStats[]> {
+  // Get all badges
+  const { data: badges, error: badgesError } = await supabase
+    .from('badges')
+    .select('id, name, slug, icon, color, category')
+    .eq('is_active', true)
+    .order('category')
+    .order('sort_order');
+  
+  if (badgesError || !badges) {
+    console.error('Error fetching badges:', badgesError);
+    return [];
+  }
+  
+  // Get count of awards for each badge
+  const { data: awardCounts, error: countError } = await supabase
+    .from('user_badges')
+    .select('badge_id');
+  
+  if (countError) {
+    console.error('Error fetching award counts:', countError);
+    return badges.map(b => ({ ...b, awardedCount: 0 }));
+  }
+  
+  // Count awards per badge
+  const countMap = new Map<string, number>();
+  awardCounts?.forEach(ub => {
+    countMap.set(ub.badge_id, (countMap.get(ub.badge_id) || 0) + 1);
+  });
+  
+  return badges.map(badge => ({
+    ...badge,
+    awardedCount: countMap.get(badge.id) || 0,
+  }));
 }
 
 // ============================================================================
