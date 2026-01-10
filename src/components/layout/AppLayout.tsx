@@ -5,6 +5,7 @@ import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
 import { useSession } from '@/lib/session';
+import { useRadioRewards } from '@/hooks/useRadioRewards';
 
 interface AppLayoutProps {
   children?: ReactNode;
@@ -17,6 +18,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     initSession();
   }, [initSession]);
+  
+  // Track radio listening for rewards
+  useRadioRewards();
   
   return (
     <BadgeNotificationProvider>

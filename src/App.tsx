@@ -32,6 +32,7 @@ import AdminPartners from "./pages/admin/AdminPartners";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAirDrops from "./pages/admin/AdminAirDrops";
 import AdminBadges from "./pages/admin/AdminBadges";
+import AdminRadioTiers from "./pages/admin/AdminRadioTiers";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="partners" element={<AdminPartners />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="badges" element={<AdminBadges />} />
+              <Route path="radio" element={<AdminRadioTiers />} />
               <Route path="airdrops" element={<AdminAirDrops />} />
             </Route>
             
