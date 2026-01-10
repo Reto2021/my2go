@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
 import { signOut } from '@/lib/supabase-helpers';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   isPushSupported, 
   getPushSubscriptionStatus, 
@@ -21,7 +22,7 @@ const LAST_VISIT_KEY = 'pwa-last-visit';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isPartnerAdmin, partnerInfo } = useAuth();
   const { 
     soundEnabled, 
     vibrationEnabled, 
@@ -37,7 +38,22 @@ export default function SettingsPage() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [visitCount, setVisitCount] = useState(0);
   const [firstVisitDate, setFirstVisitDate] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   
+  useEffect(() => {
+    // Check admin status
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      setIsAdmin(!!data);
+    };
+  }, [user]);
+
   useEffect(() => {
     // Check if PWA is installed
     const standalone = window.matchMedia('(display-mode: standalone)').matches 
@@ -408,6 +424,60 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+        
+        {/* Admin & Partner Portal Access */}
+        {(isAdmin || isPartnerAdmin) && (
+          <section className="animate-in-delayed">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Settings2 className="h-4 w-4" />
+              Verwaltung
+            </h2>
+            
+            <div className="card-base divide-y divide-border">
+              {/* Admin Dashboard */}
+              {isAdmin && (
+                <button 
+                  onClick={() => navigate('/admin')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Admin Dashboard</p>
+                      <p className="text-sm text-muted-foreground">
+                        System verwalten, Partner & Nutzer
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </button>
+              )}
+              
+              {/* Partner Portal */}
+              {isPartnerAdmin && partnerInfo && (
+                <button 
+                  onClick={() => navigate('/partner-portal')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-success/10 flex items-center justify-center">
+                      <Store className="h-5 w-5 text-success" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Partner-Portal</p>
+                      <p className="text-sm text-muted-foreground">
+                        {partnerInfo.partnerName} verwalten
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          </section>
+        )}
         
         {/* Info */}
         <section className="animate-in-delayed">
