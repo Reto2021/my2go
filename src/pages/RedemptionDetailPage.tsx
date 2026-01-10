@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Confetti } from '@/components/ui/confetti';
 import { 
   ArrowLeft, 
   Clock, 
@@ -240,7 +241,26 @@ export default function RedemptionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const shareCardRef = useRef<HTMLDivElement>(null);
+
+  // Trigger confetti when redemption is successfully used
+  useEffect(() => {
+    if (redemption?.status === 'used') {
+      // Check if this is the first time viewing after redemption (within 30 seconds)
+      const redeemedAt = redemption.redeemed_at ? new Date(redemption.redeemed_at).getTime() : 0;
+      const now = Date.now();
+      const isRecentlyRedeemed = now - redeemedAt < 30000; // 30 seconds
+      
+      if (isRecentlyRedeemed) {
+        // Small delay for dramatic effect
+        const timer = setTimeout(() => {
+          setShowConfetti(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [redemption?.status, redemption?.redeemed_at]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -452,6 +472,8 @@ export default function RedemptionDetailPage() {
 
   return (
     <div className="min-h-screen pb-24 bg-background">
+      {/* Confetti Animation */}
+      <Confetti isActive={showConfetti} duration={4000} particleCount={60} />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50">
         <div className="container py-4 flex items-center gap-3">
