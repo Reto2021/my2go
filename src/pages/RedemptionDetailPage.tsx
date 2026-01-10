@@ -30,7 +30,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import talerCoin from '@/assets/taler-coin.png';
+import { TalerIcon } from '@/components/icons/TalerIcon';
 import logoRadio2go from '@/assets/logo-radio2go.png';
 import html2canvas from 'html2canvas';
 import {
@@ -67,13 +67,13 @@ const InstagramShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
       >
         {/* Floating coins */}
         <div className="absolute top-12 left-6 w-10 h-10 opacity-60">
-          <img src={talerCoin} alt="" className="w-full h-full" />
+          <TalerIcon size={40} />
         </div>
         <div className="absolute top-32 right-8 w-8 h-8 opacity-50">
-          <img src={talerCoin} alt="" className="w-full h-full" />
+          <TalerIcon size={32} />
         </div>
         <div className="absolute bottom-48 right-12 w-8 h-8 opacity-50">
-          <img src={talerCoin} alt="" className="w-full h-full" />
+          <TalerIcon size={32} />
         </div>
 
         {/* Main Content */}
@@ -143,7 +143,7 @@ const InstagramShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
           </div>
 
           <div className="flex items-center gap-3 px-5 py-3 rounded-2xl mb-8" style={{ background: 'rgba(255, 255, 255, 0.7)' }}>
-            <img src={talerCoin} alt="Taler" className="w-8 h-8" />
+            <TalerIcon size={32} />
             <span className="font-bold text-lg" style={{ color: 'hsl(197 96% 18%)' }}>
               {talerSpent} Taler eingesetzt
             </span>
@@ -569,7 +569,7 @@ export default function RedemptionDetailPage() {
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-2">
-                  <img src={talerCoin} alt="Taler" className="w-4 h-4" />
+                  <TalerIcon size={16} />
                   <span className="text-sm font-semibold text-secondary">
                     {redemption.taler_spent} Taler
                   </span>

@@ -10,7 +10,7 @@ import { QuickSignupSheet } from '@/components/funnel/QuickSignupSheet';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackFunnelEvent, SIGNUP_BONUS_TALER, DROP_CONFIG } from '@/lib/funnel-config';
-import talerCoin from '@/assets/taler-coin.png';
+import { TalerIcon } from '@/components/icons/TalerIcon';
 
 export default function FunnelDropPage() {
   const navigate = useNavigate();
@@ -141,7 +141,7 @@ export default function FunnelDropPage() {
           className="flex items-center justify-center gap-3 mb-8"
         >
           <div className="relative">
-            <img src={talerCoin} alt="" className="h-16 w-16" />
+            <TalerIcon size={64} />
             <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ repeat: Infinity, duration: 2 }}

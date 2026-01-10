@@ -24,7 +24,7 @@ import { Confetti } from "@/components/ui/confetti";
 import { toast } from "sonner";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { de } from "date-fns/locale";
-import talerCoin from "@/assets/taler-coin.png";
+import { TalerIcon } from "@/components/icons/TalerIcon";
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
@@ -390,7 +390,7 @@ function PodiumSpot({ entry, position, delay }: PodiumSpotProps) {
         {entry.nickname}
       </p>
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <img src={talerCoin} alt="" className="w-3 h-3" />
+        <TalerIcon size={12} />
         {entry.weekly_earned}
       </div>
 
@@ -447,7 +447,7 @@ function LeaderboardRow({ entry, index, delay }: LeaderboardRowProps) {
 
       {/* Points */}
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10">
-        <img src={talerCoin} alt="" className="w-4 h-4" />
+        <TalerIcon size={16} />
         <span className="font-semibold text-amber-600">{entry.weekly_earned}</span>
       </div>
     </motion.div>
