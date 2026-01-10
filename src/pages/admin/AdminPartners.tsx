@@ -81,7 +81,7 @@ export default function AdminPartners() {
     postal_code: '',
     city: '',
     website: '',
-    is_active: true,
+    is_active: false,
     is_featured: false,
     google_place_id: '',
   });
@@ -158,7 +158,7 @@ export default function AdminPartners() {
       postal_code: '',
       city: '',
       website: '',
-      is_active: true,
+      is_active: false,
       is_featured: false,
       google_place_id: '',
     });
