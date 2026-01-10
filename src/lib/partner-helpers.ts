@@ -1,5 +1,5 @@
 /**
- * Partner Helper Functions for 2Go Taler Hub
+ * Partner Helper Functions for My 2Go
  * Server-side role checking via Supabase RLS policies
  */
 
