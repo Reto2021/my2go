@@ -256,7 +256,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
               className="btn-primary group"
             >
               <Wallet className="h-5 w-5" />
-              Taler Karte öffnen
+              Jetzt Taler sammeln
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
