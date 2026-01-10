@@ -990,6 +990,97 @@ export type Database = {
       end_listening_session: { Args: { _session_id: string }; Returns: Json }
       generate_redemption_code: { Args: never; Returns: string }
       generate_unique_code: { Args: { prefix?: string }; Returns: string }
+      get_public_partner_by_id: {
+        Args: { partner_id: string }
+        Returns: {
+          address_number: string
+          address_street: string
+          brand_color: string
+          category: string
+          city: string
+          country: string
+          cover_image_url: string
+          description: string
+          facebook: string
+          google_place_id: string
+          google_rating: number
+          google_review_count: number
+          id: string
+          instagram: string
+          is_featured: boolean
+          lat: number
+          lng: number
+          logo_url: string
+          name: string
+          opening_hours: Json
+          postal_code: string
+          short_description: string
+          slug: string
+          special_hours: Json
+          tags: string[]
+          website: string
+        }[]
+      }
+      get_public_partner_by_slug: {
+        Args: { partner_slug: string }
+        Returns: {
+          address_number: string
+          address_street: string
+          brand_color: string
+          category: string
+          city: string
+          country: string
+          cover_image_url: string
+          description: string
+          facebook: string
+          google_rating: number
+          google_review_count: number
+          id: string
+          instagram: string
+          is_featured: boolean
+          lat: number
+          lng: number
+          logo_url: string
+          name: string
+          opening_hours: Json
+          postal_code: string
+          short_description: string
+          slug: string
+          special_hours: Json
+          tags: string[]
+          website: string
+        }[]
+      }
+      get_public_partners: {
+        Args: never
+        Returns: {
+          address_number: string
+          address_street: string
+          brand_color: string
+          category: string
+          city: string
+          country: string
+          cover_image_url: string
+          description: string
+          facebook: string
+          google_rating: number
+          google_review_count: number
+          id: string
+          instagram: string
+          is_featured: boolean
+          lat: number
+          lng: number
+          logo_url: string
+          name: string
+          opening_hours: Json
+          postal_code: string
+          short_description: string
+          slug: string
+          special_hours: Json
+          tags: string[]
+          website: string
+        }[]
+      }
       get_streak_status: { Args: { _user_id: string }; Returns: Json }
       get_user_balance: {
         Args: { _user_id: string }

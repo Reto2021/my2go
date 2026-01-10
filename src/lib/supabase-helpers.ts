@@ -50,17 +50,24 @@ export interface Partner {
   address_number: string | null;
   postal_code: string | null;
   city: string | null;
+  country?: string | null;
   lat: number | null;
   lng: number | null;
   logo_url: string | null;
+  cover_image_url?: string | null;
+  brand_color?: string | null;
   category: string | null;
   tags: string[] | null;
   opening_hours: unknown;
-  is_active: boolean;
-  is_featured: boolean;
-  google_place_id: string | null;
+  special_hours?: unknown;
+  is_active?: boolean;
+  is_featured?: boolean;
+  google_place_id?: string | null;
   google_rating: number | null;
   google_review_count: number | null;
+  website?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
 }
 
 export interface Reward {
@@ -265,12 +272,8 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
 // ============================================================================
 
 export async function getPartners(): Promise<Partner[]> {
-  const { data, error } = await supabase
-    .from('partners')
-    .select('*')
-    .eq('is_active', true)
-    .order('is_featured', { ascending: false })
-    .order('name');
+  // Use secure RPC function that only exposes public-safe fields
+  const { data, error } = await supabase.rpc('get_public_partners');
   
   if (error) {
     console.error('Error fetching partners:', error);
@@ -281,35 +284,35 @@ export async function getPartners(): Promise<Partner[]> {
 }
 
 export async function getPartnerBySlug(slug: string): Promise<Partner | null> {
-  const { data, error } = await supabase
-    .from('partners')
-    .select('*')
-    .eq('slug', slug)
-    .eq('is_active', true)
-    .maybeSingle();
+  // Use secure RPC function that only exposes public-safe fields
+  const { data, error } = await supabase.rpc('get_public_partner_by_slug', {
+    partner_slug: slug
+  });
   
   if (error) {
     console.error('Error fetching partner:', error);
     return null;
   }
   
-  return data as Partner | null;
+  // RPC returns an array, get first element
+  const partners = data as Partner[] | null;
+  return partners && partners.length > 0 ? partners[0] : null;
 }
 
 export async function getPartnerById(id: string): Promise<Partner | null> {
-  const { data, error } = await supabase
-    .from('partners')
-    .select('*')
-    .eq('id', id)
-    .eq('is_active', true)
-    .maybeSingle();
+  // Use secure RPC function that only exposes public-safe fields
+  const { data, error } = await supabase.rpc('get_public_partner_by_id', {
+    partner_id: id
+  });
   
   if (error) {
     console.error('Error fetching partner:', error);
     return null;
   }
   
-  return data as Partner | null;
+  // RPC returns an array, get first element
+  const partners = data as Partner[] | null;
+  return partners && partners.length > 0 ? partners[0] : null;
 }
 
 // ============================================================================

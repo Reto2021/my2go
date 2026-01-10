@@ -191,10 +191,10 @@ export async function createPartner(partner: Partial<Partner>): Promise<{ partne
   return { partner: data, error: null };
 }
 
-export async function updatePartner(id: string, updates: Partial<Omit<Partner, 'opening_hours'>>): Promise<{ success: boolean; error: string | null }> {
+export async function updatePartner(id: string, updates: Partial<Omit<Partner, 'opening_hours' | 'special_hours'>>): Promise<{ success: boolean; error: string | null }> {
   const { error } = await supabase
     .from('partners')
-    .update(updates)
+    .update(updates as Record<string, unknown>)
     .eq('id', id);
   
   if (error) {
