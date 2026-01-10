@@ -1,120 +1,155 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { RadioHeader } from "@/components/ui/radio-header";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
+import logoRadio2go from "@/assets/logo-radio2go.png";
 
 export function GoLayout() {
   const location = useLocation();
   const isLegalPage = location.pathname.startsWith('/go/legal');
+  const isLandingPage = location.pathname === '/go';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Radio Header - same as consumer app */}
       <RadioHeader />
       
-      {/* Secondary Navigation for Go */}
-      <nav className="sticky top-[52px] sm:top-[60px] z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-12 items-center justify-between max-w-6xl mx-auto px-4">
-          <Link to="/go" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">2G</span>
-            </div>
-            <span className="font-bold text-base">My 2Go Business</span>
-          </Link>
-          
-          <div className="flex items-center gap-4">
-            <nav className="hidden md:flex items-center gap-5">
-              <Link 
-                to="/go" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Übersicht
-              </Link>
-              <Link 
-                to="/go/partner/pricing" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Preise
-              </Link>
-              <Link 
-                to="/go/partner/faq" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                FAQ
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <Link 
-                to="/auth" 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
-              >
-                Login
-              </Link>
-              <Link 
-                to="/go/partner/pricing"
-                className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Jetzt starten
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content - with proper top padding for headers */}
-      <main className="flex-1 pt-[100px] sm:pt-[108px]">
+      {/* Main Content */}
+      <main className="flex-1">
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className="border-t bg-muted/30">
-        <div className="container max-w-6xl mx-auto px-4 py-12">
+      {/* Footer - Premium Style matching consumer app */}
+      <footer className="relative overflow-hidden bg-gradient-to-b from-secondary/95 to-secondary text-secondary-foreground">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-accent rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container relative max-w-6xl mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">2G</span>
+            {/* Brand */}
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src={logoRadio2go} 
+                  alt="Radio 2Go" 
+                  className="h-10 w-auto"
+                />
+                <div>
+                  <span className="font-bold text-lg block">My 2Go</span>
+                  <span className="text-xs text-secondary-foreground/70">für Partner</span>
                 </div>
-                <span className="font-bold">My 2Go</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Das Loyalitäts-Netzwerk für lokale Betriebe in der Schweiz.
+              <p className="text-sm text-secondary-foreground/80 leading-relaxed">
+                Das Loyalitäts-Netzwerk für lokale Betriebe in der Schweiz. Powered by Radio 2Go.
               </p>
             </div>
             
+            {/* Product */}
             <div>
-              <h4 className="font-semibold mb-4">Produkt</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/go" className="hover:text-foreground transition-colors">Für Partner</Link></li>
-                <li><Link to="/go/partner/pricing" className="hover:text-foreground transition-colors">Preise</Link></li>
-                <li><Link to="/go/partner/pos" className="hover:text-foreground transition-colors">POS Kits</Link></li>
-                <li><Link to="/go/partner/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
+              <h4 className="font-semibold mb-4 text-accent">Produkt</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li>
+                  <Link to="/go" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    Übersicht
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/go/partner/pricing" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    Preise & Pakete
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/go/partner/pos" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    POS Kits
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/go/partner/faq" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    FAQ
+                  </Link>
+                </li>
               </ul>
             </div>
             
+            {/* Company */}
             <div>
-              <h4 className="font-semibold mb-4">Unternehmen</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="https://www.my2go.win" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Website</a></li>
-                <li><Link to="/go/legal/impressum" className="hover:text-foreground transition-colors">Impressum</Link></li>
-                <li><Link to="/go/legal/agb" className="hover:text-foreground transition-colors">AGB</Link></li>
+              <h4 className="font-semibold mb-4 text-accent">Unternehmen</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li>
+                  <a 
+                    href="https://www.my2go.win" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-secondary-foreground/80 hover:text-white transition-colors"
+                  >
+                    Website
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="https://radio2go.fm" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-secondary-foreground/80 hover:text-white transition-colors"
+                  >
+                    Radio 2Go
+                  </a>
+                </li>
+                <li>
+                  <Link to="/go/legal/impressum" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    Impressum
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/go/legal/agb" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    AGB
+                  </Link>
+                </li>
               </ul>
             </div>
             
+            {/* Legal */}
             <div>
-              <h4 className="font-semibold mb-4">Rechtliches</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/go/legal/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link></li>
-                <li><Link to="/go/partner/refund" className="hover:text-foreground transition-colors">Geld-zurück Garantie</Link></li>
+              <h4 className="font-semibold mb-4 text-accent">Rechtliches</h4>
+              <ul className="space-y-2.5 text-sm">
+                <li>
+                  <Link to="/go/legal/datenschutz" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    Datenschutz
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/go/partner/refund" className="text-secondary-foreground/80 hover:text-white transition-colors">
+                    Geld-zurück Garantie
+                  </Link>
+                </li>
               </ul>
+              
+              {/* CTA in footer */}
+              <div className="mt-6">
+                <Link 
+                  to="/go/partner/pricing"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent/90 transition-colors"
+                >
+                  Jetzt Partner werden
+                </Link>
+              </div>
             </div>
           </div>
           
-          <div className="border-t mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+          {/* Bottom bar */}
+          <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-secondary-foreground/60">
             <p>© {new Date().getFullYear()} My 2Go. Alle Rechte vorbehalten.</p>
-            <p>Made with ❤️ in Switzerland</p>
+            <p className="flex items-center gap-1">
+              Made with <span className="text-red-400">❤️</span> in Switzerland
+            </p>
           </div>
         </div>
       </footer>
+      
+      {/* WhatsApp Button - same as consumer app */}
+      <WhatsAppButton />
     </div>
   );
 }
