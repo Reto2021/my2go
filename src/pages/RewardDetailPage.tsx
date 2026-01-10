@@ -277,7 +277,7 @@ export default function RewardDetailPage() {
           <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-semibold truncate">Reward Details</h1>
+          <h1 className="text-lg font-semibold truncate">Gutschein-Details</h1>
         </div>
       </header>
       
