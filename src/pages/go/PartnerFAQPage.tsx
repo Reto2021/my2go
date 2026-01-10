@@ -113,7 +113,7 @@ export default function PartnerFAQPage() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <a href="mailto:partner@my2go.win">
+                <a href="mailto:partner@my2go.app">
                   Kontakt aufnehmen
                 </a>
               </Button>

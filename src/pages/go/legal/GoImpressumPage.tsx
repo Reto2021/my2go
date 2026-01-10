@@ -49,10 +49,10 @@ export default function GoImpressumPage() {
               <h2 className="font-bold text-lg mb-4">Kontakt</h2>
               <div className="text-muted-foreground space-y-2">
                 <p>
-                  E-Mail: <a href="mailto:info@my2go.win" className="text-primary hover:underline">info@my2go.win</a>
+                  E-Mail: <a href="mailto:info@my2go.app" className="text-primary hover:underline">info@my2go.app</a>
                 </p>
                 <p>
-                  Website: <a href="https://www.my2go.win" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.my2go.win</a>
+                  Website: <a href="https://www.my2go.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.my2go.app</a>
                 </p>
               </div>
             </Card>
@@ -90,7 +90,7 @@ export default function GoImpressumPage() {
           <div className="text-center p-6 rounded-2xl bg-muted/40 border">
             <p className="text-muted-foreground mb-4">Kontakt aufnehmen?</p>
             <Button asChild variant="outline">
-              <a href="mailto:info@my2go.win">
+              <a href="mailto:info@my2go.app">
                 <Mail className="mr-2 w-4 h-4" />
                 E-Mail senden
               </a>

@@ -88,7 +88,7 @@ serve(async (req) => {
       });
     }
 
-    const origin = req.headers.get("origin") || "https://my2go.win";
+    const origin = req.headers.get("origin") || "https://my2go.app";
     
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
