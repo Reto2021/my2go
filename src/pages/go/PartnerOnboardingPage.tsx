@@ -145,12 +145,68 @@ export default function PartnerOnboardingPage() {
     { id: "goals", title: "Ziele", icon: Target },
   ];
 
+  // Generate slug from company name
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[äÄ]/g, 'ae')
+      .replace(/[öÖ]/g, 'oe')
+      .replace(/[üÜ]/g, 'ue')
+      .replace(/[ß]/g, 'ss')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
+  };
+
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
     
     try {
-      // Insert partner application into database
-      const { error } = await supabase
+      // Generate unique slug
+      const baseSlug = generateSlug(data.companyName);
+      let slug = baseSlug;
+      let slugSuffix = 1;
+      
+      // Check for existing slugs and make unique
+      while (true) {
+        const { data: existingPartner } = await supabase
+          .from('partners')
+          .select('id')
+          .eq('slug', slug)
+          .maybeSingle();
+        
+        if (!existingPartner) break;
+        slug = `${baseSlug}-${slugSuffix}`;
+        slugSuffix++;
+      }
+
+      // Create inactive partner first
+      const { data: newPartner, error: partnerError } = await supabase
+        .from('partners')
+        .insert({
+          name: data.companyName,
+          slug: slug,
+          category: data.industry,
+          website: data.website || null,
+          address_street: data.street,
+          address_number: data.streetNumber,
+          postal_code: data.postalCode,
+          city: data.city,
+          country: 'Schweiz',
+          contact_first_name: data.contactName.split(' ')[0] || data.contactName,
+          contact_last_name: data.contactName.split(' ').slice(1).join(' ') || null,
+          contact_email: data.contactEmail,
+          contact_phone: data.contactPhone,
+          is_active: false, // Inactive until approved
+          is_featured: false,
+        })
+        .select('id')
+        .single();
+      
+      if (partnerError) throw partnerError;
+
+      // Insert partner application linked to the partner
+      const { error: appError } = await supabase
         .from('partner_applications')
         .insert({
           user_id: user?.id || null,
@@ -173,9 +229,10 @@ export default function PartnerOnboardingPage() {
           shipping_number: data.shippingSameAsLocation ? null : data.shippingStreetNumber,
           shipping_postal_code: data.shippingSameAsLocation ? null : data.shippingPostalCode,
           shipping_city: data.shippingSameAsLocation ? null : data.shippingCity,
+          notes: `Partner-ID: ${newPartner.id}`, // Link to partner
         });
       
-      if (error) throw error;
+      if (appError) throw appError;
       
       // Track event
       if (typeof window !== 'undefined' && 'gtag' in window) {
