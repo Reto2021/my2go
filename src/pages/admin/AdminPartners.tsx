@@ -117,6 +117,11 @@ export default function AdminPartners() {
   }>>([]);
   const [isSearchingTerms, setIsSearchingTerms] = useState(false);
   
+  // Bulk reward generation state
+  const [autoGenerateRewards, setAutoGenerateRewards] = useState(true);
+  const [bulkRewardProgress, setBulkRewardProgress] = useState({ current: 0, total: 0 });
+  const [isGeneratingBulkRewards, setIsGeneratingBulkRewards] = useState(false);
+  
   // Reward suggestions state
   const [rewardSuggestions, setRewardSuggestions] = useState<RewardSuggestion[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
@@ -1036,6 +1041,7 @@ export default function AdminPartners() {
     setBulkImportProgress({ current: 0, total: selected.length });
     
     let successCount = 0;
+    const importedPartners: Array<{ partner: Partner; data: Partial<BulkSearchResult> }> = [];
     
     for (let i = 0; i < selected.length; i++) {
       const result = selected[i];
@@ -1076,6 +1082,7 @@ export default function AdminPartners() {
           successCount++;
           if (partner) {
             setPartners(prev => [partner, ...prev]);
+            importedPartners.push({ partner, data });
           }
           setBulkTermResults(prev => prev.map((r, idx) => 
             idx === originalIndex ? { ...r, status: 'imported', selected: false } : r
@@ -1091,6 +1098,77 @@ export default function AdminPartners() {
     
     setIsBulkImporting(false);
     toast.success(`${successCount} Partner erfolgreich importiert`);
+    
+    // Auto-generate rewards if enabled
+    if (autoGenerateRewards && importedPartners.length > 0) {
+      await generateBulkRewards(importedPartners);
+    }
+  };
+
+  // Generate rewards for multiple partners
+  const generateBulkRewards = async (importedPartners: Array<{ partner: Partner; data: Partial<BulkSearchResult> }>) => {
+    setIsGeneratingBulkRewards(true);
+    setBulkRewardProgress({ current: 0, total: importedPartners.length });
+    
+    let rewardCount = 0;
+    
+    toast.info(`Generiere Gutscheine für ${importedPartners.length} Partner...`);
+    
+    for (let i = 0; i < importedPartners.length; i++) {
+      const { partner, data } = importedPartners[i];
+      setBulkRewardProgress({ current: i + 1, total: importedPartners.length });
+      
+      try {
+        const { data: rewardData, error } = await supabase.functions.invoke('suggest-rewards', {
+          body: {
+            partnerName: partner.name,
+            category: partner.category || data.category || 'Sonstiges',
+            description: partner.description || data.description || data.short_description
+          }
+        });
+        
+        if (error) {
+          console.error(`Error generating rewards for ${partner.name}:`, error);
+          continue;
+        }
+        
+        if (rewardData?.success && rewardData?.rewards) {
+          const now = new Date();
+          const endOfYear = new Date(now.getFullYear(), 11, 31);
+          
+          // Save all rewards
+          for (const reward of rewardData.rewards) {
+            const { error: saveError } = await supabase
+              .from('rewards')
+              .insert({
+                partner_id: partner.id,
+                title: reward.title,
+                description: reward.description,
+                reward_type: reward.reward_type,
+                taler_cost: reward.taler_cost,
+                value_amount: reward.value_amount || null,
+                value_percent: reward.value_percent || null,
+                terms: reward.terms,
+                is_active: true,
+                valid_from: now.toISOString().split('T')[0],
+                valid_until: endOfYear.toISOString().split('T')[0],
+              });
+            
+            if (!saveError) {
+              rewardCount++;
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Error generating rewards for ${partner.name}:`, error);
+      }
+      
+      // Small delay between AI calls to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+    
+    setIsGeneratingBulkRewards(false);
+    toast.success(`${rewardCount} Gutscheine für ${importedPartners.length} Partner erstellt!`);
   };
   
   const filteredPartners = partners.filter(p => 
@@ -1278,6 +1356,38 @@ export default function AdminPartners() {
               {/* Term Search Results */}
               {bulkTermResults.length > 0 && (
                 <div className="space-y-3">
+                  {/* Auto-generate rewards option */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-accent/5 to-primary/5 border border-accent/20">
+                    <div className="flex items-center gap-3">
+                      <Gift className="h-5 w-5 text-accent" />
+                      <div>
+                        <p className="font-medium text-sm">Automatische Gutschein-Vorschläge</p>
+                        <p className="text-xs text-muted-foreground">KI generiert passende Gutscheine für jeden Partner</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={autoGenerateRewards}
+                        onChange={(e) => setAutoGenerateRewards(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:bg-accent transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                    </label>
+                  </div>
+
+                  {isGeneratingBulkRewards && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/10 border border-accent/20">
+                      <Loader2 className="h-5 w-5 text-accent animate-spin" />
+                      <div>
+                        <p className="font-medium text-sm">Generiere Gutscheine...</p>
+                        <p className="text-xs text-muted-foreground">
+                          {bulkRewardProgress.current} von {bulkRewardProgress.total} Partner
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button
@@ -1295,7 +1405,7 @@ export default function AdminPartners() {
                     </div>
                     <button
                       onClick={handleTermImport}
-                      disabled={isBulkImporting || bulkTermResults.filter(r => r.selected && r.status === 'found').length === 0}
+                      disabled={isBulkImporting || isGeneratingBulkRewards || bulkTermResults.filter(r => r.selected && r.status === 'found').length === 0}
                       className="btn-primary"
                     >
                       {isBulkImporting ? (
