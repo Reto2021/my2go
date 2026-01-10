@@ -1,11 +1,10 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
 import { SessionSummarySheet } from '@/components/ui/session-summary-sheet';
-import { useSession } from '@/lib/session';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 
 interface AppLayoutProps {
@@ -13,13 +12,6 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { initSession } = useSession();
-  
-  // Initialize session on app load (handles URL token + cookie)
-  useEffect(() => {
-    initSession();
-  }, [initSession]);
-  
   // Track radio listening for rewards
   const { sessionSummary, showSummary, closeSummary } = useRadioRewards();
   

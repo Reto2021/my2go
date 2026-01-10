@@ -5,7 +5,6 @@ import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Cast, 
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
-import { useSession, useBrowseMode } from '@/lib/session';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Slider } from '@/components/ui/slider';
@@ -94,10 +93,8 @@ export function RadioHeader() {
     checkAirPlayAvailability,
   } = useCastStore();
   
-  // Legacy session for mock compatibility
-  const { logout, isLoggingOut } = useSession();
-  const isBrowseMode = useBrowseMode();
   const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Get real auth data from Supabase AuthContext
   const authContext = useAuthSafe();
@@ -161,12 +158,14 @@ export function RadioHeader() {
   };
   
   const handleLogout = async () => {
-    // Use Supabase auth signOut
-    await supabase.auth.signOut();
-    // Also clear legacy session
-    await logout();
-    setShowMenu(false);
-    navigate('/');
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      setShowMenu(false);
+      navigate('/');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -342,7 +341,7 @@ export function RadioHeader() {
         </div>
         
         {/* Taler Balance + User Menu - only when logged in */}
-        {!isBrowseMode && isAuthenticated && (
+        {isAuthenticated && (
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Taler Balance */}
             {realBalance && (

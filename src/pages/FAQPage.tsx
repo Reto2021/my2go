@@ -82,7 +82,7 @@ export default function FAQPage() {
       const result = await createSupportTicket({
         topic,
         message: message.trim(),
-        emailOrPhone: contact.trim() || undefined,
+        contact: contact.trim() || undefined,
       });
       setTicketId(result.ticketId);
     } catch (error) {

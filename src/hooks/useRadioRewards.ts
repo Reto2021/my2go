@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRadioStore } from '@/lib/radio-store';
-import { useSession } from '@/lib/session';
+import { useAuthSafe } from '@/contexts/AuthContext';
 
 interface ListeningReward {
   success: boolean;
@@ -18,7 +18,8 @@ export interface SessionSummaryData {
 }
 
 export function useRadioRewards() {
-  const { refreshBalance } = useSession();
+  const authContext = useAuthSafe();
+  const refreshBalance = authContext?.refreshBalance;
   const { isPlaying } = useRadioStore();
   
   const sessionIdRef = useRef<string | null>(null);

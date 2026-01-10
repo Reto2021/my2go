@@ -116,7 +116,7 @@ export function BadgeNotification({ badge, onClose }: BadgeNotificationProps) {
             transition={{ delay: 0.4 }}
           >
             <p className="text-sm text-primary font-medium mb-1">
-              🎉 Neues Badge erhalten!
+              🎉 Neue Auszeichnung erhalten!
             </p>
             <h2 className="text-2xl font-bold text-foreground mb-2">
               {badge.name}
