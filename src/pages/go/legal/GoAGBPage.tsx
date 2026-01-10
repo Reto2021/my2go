@@ -31,7 +31,7 @@ export default function GoAGBPage() {
             </p>
             <ul>
               <li>Zugang zum My 2Go Partner-Dashboard</li>
-              <li>Integration in das 2Go Taler Loyalitätsprogramm</li>
+              <li>Integration in das My 2Go Loyalitätsprogramm</li>
               <li>Review-Booster Funktionalität</li>
               <li>Audio-Credits für Radio-Werbung (je nach gewähltem Paket)</li>
               <li>Marketing-Kampagnen und Automationen</li>
