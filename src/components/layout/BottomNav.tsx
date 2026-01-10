@@ -1,13 +1,13 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Gift, Music, Store, HelpCircle } from 'lucide-react';
+import { Home, Gift, QrCode, Store, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/rewards', label: 'Gutscheine', icon: Gift },
-  { path: '/code', label: 'Radio-Code', icon: Music },
+  { path: '/my-qr', label: 'Mein QR', icon: QrCode, highlight: true },
   { path: '/partner', label: 'Partner', icon: Store },
-  { path: '/faq', label: 'FAQ', icon: HelpCircle },
+  { path: '/code', label: 'Radio-Code', icon: Music },
 ];
 
 export function BottomNav() {
@@ -35,6 +35,7 @@ export function BottomNav() {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || 
             (item.path !== '/' && location.pathname.startsWith(item.path));
+          const isHighlight = item.highlight;
           
           return (
             <button
@@ -44,17 +45,21 @@ export function BottomNav() {
                 'flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200',
                 isActive
                   ? 'text-secondary'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : isHighlight 
+                    ? 'text-accent'
+                    : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <div className={cn(
                 'relative p-2 rounded-xl transition-all duration-200',
-                isActive && 'bg-primary/20'
+                isActive && 'bg-primary/20',
+                isHighlight && !isActive && 'bg-accent/20'
               )}>
                 <Icon className={cn(
                   'h-5 w-5 transition-transform duration-200',
-                  isActive && 'scale-110'
-                )} strokeWidth={isActive ? 2.5 : 2} />
+                  isActive && 'scale-110',
+                  isHighlight && 'h-6 w-6'
+                )} strokeWidth={isActive || isHighlight ? 2.5 : 2} />
               </div>
               <span className={cn(
                 'text-[10px] font-semibold tracking-wide',
