@@ -40,31 +40,31 @@ export function PartnerLayout() {
           <div className="container flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-sm font-medium">
               <ShieldCheck className="h-4 w-4" />
-              <span>Admin-Modus: {partnerInfo?.partnerName}</span>
+              <span>Admin-Ansicht: Du siehst das Dashboard von "{partnerInfo?.partnerName}"</span>
             </div>
             <Link 
               to="/admin/partners" 
-              className="text-xs underline hover:no-underline"
+              className="text-xs bg-accent-foreground/20 px-2 py-1 rounded hover:bg-accent-foreground/30 transition-colors"
             >
-              Zurück zur Partnerliste
+              ← Zurück zur Partnerliste
             </Link>
           </div>
         </div>
       )}
 
-      {/* Partner Header - Simplified for mobile */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border">
-        <div className="container py-3">
+      {/* Partner Header - Same style as Admin */}
+      <header className="sticky top-0 z-50 bg-primary text-primary-foreground">
+        <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/20">
-                <Store className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                <Store className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-base font-bold truncate max-w-[180px] sm:max-w-none">
+                <h1 className="text-lg font-bold truncate max-w-[200px] sm:max-w-none">
                   {partnerInfo?.partnerName || 'Partner Portal'}
                 </h1>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-primary-foreground/70">
                   {partnerInfo?.role === 'owner' ? 'Inhaber' : 
                    partnerInfo?.role === 'manager' ? 'Manager' : 'Mitarbeiter'}
                 </p>
@@ -74,10 +74,10 @@ export function PartnerLayout() {
             {!isAdminOverride && (
               <Link 
                 to="/" 
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted hover:bg-muted/80 transition-colors text-xs font-medium"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Zurück</span>
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Zurück zur App</span>
               </Link>
             )}
           </div>
@@ -96,7 +96,7 @@ export function PartnerLayout() {
           className={cn(
             "fixed right-4 bottom-24 z-50 flex items-center gap-2 px-5 py-4 rounded-2xl shadow-lg transition-all",
             "bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95",
-            isActive('/partner-portal/scan') && "bg-primary text-primary-foreground"
+            isActive('/partner-portal/scan') && "bg-secondary text-secondary-foreground"
           )}
         >
           <ScanLine className="h-6 w-6" />

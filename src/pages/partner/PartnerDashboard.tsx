@@ -81,21 +81,24 @@ export default function PartnerDashboard() {
 
   const statCards = [
     {
-      title: 'Offen',
+      title: 'Wartend',
+      subtitle: 'Noch nicht abgeholt',
       value: stats?.pendingRedemptions || 0,
       icon: Clock,
       color: 'text-warning',
       bgColor: 'bg-warning/20',
     },
     {
-      title: 'Eingelöst',
+      title: 'Bestätigt',
+      subtitle: 'Erfolgreich eingelöst',
       value: stats?.completedRedemptions || 0,
       icon: CheckCircle,
       color: 'text-success',
       bgColor: 'bg-success/20',
     },
     {
-      title: 'Bewertungen',
+      title: 'Feedback',
+      subtitle: 'In-App Bewertungen',
       value: stats?.totalReviews || 0,
       icon: MessageSquare,
       color: 'text-primary',
@@ -103,6 +106,7 @@ export default function PartnerDashboard() {
     },
     {
       title: 'Taler',
+      subtitle: 'Gesamt ausgegeben',
       value: stats?.totalTalerRedeemed || 0,
       icon: Coins,
       color: 'text-accent',
@@ -133,13 +137,14 @@ export default function PartnerDashboard() {
             key={stat.title}
             className="card-base p-3"
           >
-            <div className="flex items-center gap-2.5">
-              <div className={cn('p-2 rounded-xl', stat.bgColor)}>
+            <div className="flex items-start gap-2.5">
+              <div className={cn('p-2 rounded-xl flex-shrink-0', stat.bgColor)}>
                 <stat.icon className={cn('h-4 w-4', stat.color)} />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xl font-bold">{stat.value}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{stat.title}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold">{stat.title}</p>
+                <p className="text-[9px] text-muted-foreground/70 truncate">{stat.subtitle}</p>
               </div>
             </div>
           </div>
