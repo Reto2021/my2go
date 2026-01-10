@@ -379,9 +379,9 @@ export default function RedemptionDetailPage() {
     const rewardTitle = redemption.reward?.title || 'Gutschein';
     
     if (redemption.status === 'used') {
-      return `🎉 Ich habe gerade "${rewardTitle}" bei ${partnerName} eingelöst! Mit Radio 2Go Talern spare ich richtig Geld. 💰`;
+      return `🎉 Ich habe gerade "${rewardTitle}" bei ${partnerName} eingelöst! Mit My 2Go spare ich richtig Geld. 💰`;
     }
-    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Sammle auch du Radio 2Go Taler und hol dir tolle Gutscheine! 🎧`;
+    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Sammle auch du 2Go Taler und hol dir tolle Gutscheine! 🎧`;
   };
 
   const handleShareWhatsApp = () => {
@@ -393,7 +393,7 @@ export default function RedemptionDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Radio 2Go Taler',
+          title: 'My 2Go',
           text: getShareText(),
           url: `${window.location.origin}/auth`,
         });

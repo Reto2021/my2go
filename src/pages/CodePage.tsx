@@ -91,7 +91,7 @@ export default function CodePage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
-          <h1 className="text-display-sm">Radio 2Go Taler-Code einlösen</h1>
+          <h1 className="text-display-sm">My 2Go Code einlösen</h1>
         </div>
       </header>
       
@@ -113,7 +113,7 @@ export default function CodePage() {
               Zum Einlösen Karte öffnen
             </p>
             <p className="text-muted-foreground text-sm mb-4">
-              Öffne deine 2Go Taler Karte, um Codes einzulösen.
+              Öffne deine My 2Go Karte, um Codes einzulösen.
             </p>
             <button 
               className="btn-primary"
