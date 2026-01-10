@@ -29,7 +29,9 @@ import {
   ChevronDown,
   ChevronUp,
   Upload,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ArrowRight,
+  Settings2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -82,6 +84,28 @@ export default function AdminPartners() {
   const [csvData, setCsvData] = useState<BulkSearchResult[]>([]);
   const [showCsvImport, setShowCsvImport] = useState(false);
   const [csvFileName, setCsvFileName] = useState('');
+  const [csvRawHeaders, setCsvRawHeaders] = useState<string[]>([]);
+  const [csvRawData, setCsvRawData] = useState<Record<string, string>[]>([]);
+  const [showColumnMapping, setShowColumnMapping] = useState(false);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  
+  // Partner field definitions for mapping
+  const PARTNER_FIELDS = [
+    { key: 'name', label: 'Name *', required: true },
+    { key: 'category', label: 'Kategorie', required: false },
+    { key: 'address_street', label: 'Strasse', required: false },
+    { key: 'address_number', label: 'Hausnummer', required: false },
+    { key: 'postal_code', label: 'PLZ', required: false },
+    { key: 'city', label: 'Stadt', required: false },
+    { key: 'website', label: 'Website', required: false },
+    { key: 'description', label: 'Beschreibung', required: false },
+    { key: 'short_description', label: 'Kurzbeschreibung', required: false },
+    { key: 'google_place_id', label: 'Google Place ID', required: false },
+    { key: 'rating', label: 'Rating', required: false },
+    { key: 'review_count', label: 'Anzahl Reviews', required: false },
+    { key: 'lat', label: 'Breitengrad', required: false },
+    { key: 'lng', label: 'Längengrad', required: false },
+  ];
   
   const PARTNER_CATEGORIES = [
     'Restaurant',
@@ -473,14 +497,14 @@ export default function AdminPartners() {
     toast.success(`${successCount} Partner erfolgreich importiert`);
   };
 
-  // CSV parsing function
-  const parseCSV = (text: string): Record<string, string>[] => {
+  // CSV parsing function - returns headers and raw data
+  const parseCSV = (text: string): { headers: string[], rows: Record<string, string>[] } => {
     const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
+    if (lines.length < 2) return { headers: [], rows: [] };
     
     // Parse header - handle both semicolon and comma as delimiter
     const delimiter = lines[0].includes(';') ? ';' : ',';
-    const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/['"]/g, ''));
     
     const rows: Record<string, string>[] = [];
     for (let i = 1; i < lines.length; i++) {
@@ -493,37 +517,101 @@ export default function AdminPartners() {
         rows.push(row);
       }
     }
-    return rows;
+    return { headers, rows };
   };
 
-  // Map CSV columns to our format
-  const mapCsvToPartner = (row: Record<string, string>): BulkSearchResult | null => {
-    // Try to find name column
-    const name = row['name'] || row['name'] || row['firmenname'] || row['geschäft'] || row['partner'];
+  // Auto-detect column mapping based on common column names
+  const autoDetectMapping = (headers: string[]): Record<string, string> => {
+    const mapping: Record<string, string> = {};
+    const lowerHeaders = headers.map(h => h.toLowerCase());
+    
+    // Define common aliases for each field
+    const fieldAliases: Record<string, string[]> = {
+      name: ['name', 'firmenname', 'geschäft', 'partner', 'firma', 'unternehmen', 'business'],
+      category: ['category', 'kategorie', 'branche', 'type', 'typ'],
+      address_street: ['address_street', 'strasse', 'street', 'adresse', 'address'],
+      address_number: ['address_number', 'hausnummer', 'nr', 'number', 'hnr'],
+      postal_code: ['postal_code', 'plz', 'postleitzahl', 'zip', 'zipcode'],
+      city: ['city', 'stadt', 'ort', 'gemeinde', 'town'],
+      website: ['website', 'url', 'homepage', 'web', 'webseite'],
+      description: ['description', 'beschreibung', 'desc', 'info'],
+      short_description: ['short_description', 'kurzbeschreibung', 'kurztext', 'short_desc'],
+      google_place_id: ['google_place_id', 'place_id', 'placeid', 'google_id'],
+      rating: ['rating', 'bewertung', 'sterne', 'stars'],
+      review_count: ['review_count', 'reviews', 'anzahl_bewertungen', 'bewertungen'],
+      lat: ['lat', 'latitude', 'breitengrad'],
+      lng: ['lng', 'longitude', 'längengrad', 'laengengrad'],
+    };
+    
+    // Match headers to fields
+    for (const [field, aliases] of Object.entries(fieldAliases)) {
+      for (const header of headers) {
+        if (aliases.includes(header.toLowerCase())) {
+          mapping[field] = header;
+          break;
+        }
+      }
+    }
+    
+    return mapping;
+  };
+
+  // Map CSV row using custom column mapping
+  const mapCsvToPartnerWithMapping = (row: Record<string, string>, mapping: Record<string, string>): BulkSearchResult | null => {
+    const getValue = (field: string): string => {
+      const csvColumn = mapping[field];
+      return csvColumn ? (row[csvColumn] || '') : '';
+    };
+    
+    const name = getValue('name');
     if (!name) return null;
 
+    const placeId = getValue('google_place_id');
+    
     return {
-      google_place_id: row['google_place_id'] || row['place_id'] || `csv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      google_place_id: placeId || `csv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name,
-      address: row['adresse'] || row['address'] || '',
-      city: row['city'] || row['stadt'] || row['ort'] || '',
-      postal_code: row['postal_code'] || row['plz'] || row['postleitzahl'] || '',
-      address_street: row['address_street'] || row['strasse'] || row['street'] || '',
-      address_number: row['address_number'] || row['hausnummer'] || row['nr'] || row['number'] || '',
-      category: row['category'] || row['kategorie'] || 'Sonstiges',
-      rating: row['rating'] ? parseFloat(row['rating']) : null,
-      review_count: row['review_count'] || row['reviews'] ? parseInt(row['review_count'] || row['reviews']) : null,
-      lat: row['lat'] || row['latitude'] ? parseFloat(row['lat'] || row['latitude']) : null,
-      lng: row['lng'] || row['longitude'] ? parseFloat(row['lng'] || row['longitude']) : null,
+      address: '',
+      city: getValue('city'),
+      postal_code: getValue('postal_code'),
+      address_street: getValue('address_street'),
+      address_number: getValue('address_number'),
+      category: getValue('category') || 'Sonstiges',
+      rating: getValue('rating') ? parseFloat(getValue('rating')) : null,
+      review_count: getValue('review_count') ? parseInt(getValue('review_count')) : null,
+      lat: getValue('lat') ? parseFloat(getValue('lat')) : null,
+      lng: getValue('lng') ? parseFloat(getValue('lng')) : null,
       types: [],
       selected: false,
-      website: row['website'] || row['url'] || row['homepage'] || '',
-      description: row['description'] || row['beschreibung'] || '',
-      short_description: row['short_description'] || row['kurzbeschreibung'] || '',
+      website: getValue('website'),
+      description: getValue('description'),
+      short_description: getValue('short_description'),
     };
   };
 
-  // Handle CSV file upload
+  // Apply column mapping and show preview
+  const applyColumnMapping = () => {
+    if (!columnMapping.name) {
+      toast.error('Bitte mindestens die Spalte "Name" zuordnen');
+      return;
+    }
+    
+    // Map data using custom mapping
+    const existingNames = new Set(partners.map(p => p.name.toLowerCase()));
+    const existingPlaceIds = new Set(partners.map(p => p.google_place_id).filter(Boolean));
+    
+    const mappedData = csvRawData
+      .map(row => mapCsvToPartnerWithMapping(row, columnMapping))
+      .filter((p): p is BulkSearchResult => p !== null)
+      .filter(p => !existingNames.has(p.name.toLowerCase()) && !existingPlaceIds.has(p.google_place_id));
+
+    setCsvData(mappedData.map(d => ({ ...d, selected: true })));
+    setShowColumnMapping(false);
+    
+    toast.success(`${mappedData.length} Partner gemappt (${csvRawData.length - mappedData.length} übersprungen/bereits vorhanden)`);
+  };
+
+  // Handle CSV file upload - now shows column mapping dialog first
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -532,26 +620,26 @@ export default function AdminPartners() {
     
     try {
       const text = await file.text();
-      const parsed = parseCSV(text);
+      const { headers, rows } = parseCSV(text);
       
-      if (parsed.length === 0) {
+      if (rows.length === 0) {
         toast.error('Keine gültigen Daten in der CSV-Datei gefunden');
         return;
       }
 
-      // Map to our format and filter out already existing partners
-      const existingNames = new Set(partners.map(p => p.name.toLowerCase()));
-      const existingPlaceIds = new Set(partners.map(p => p.google_place_id).filter(Boolean));
+      // Store raw data and headers
+      setCsvRawHeaders(headers);
+      setCsvRawData(rows);
       
-      const mappedData = parsed
-        .map(mapCsvToPartner)
-        .filter((p): p is BulkSearchResult => p !== null)
-        .filter(p => !existingNames.has(p.name.toLowerCase()) && !existingPlaceIds.has(p.google_place_id));
-
-      setCsvData(mappedData.map(d => ({ ...d, selected: true })));
-      setShowCsvImport(true);
+      // Auto-detect column mapping
+      const autoMapping = autoDetectMapping(headers);
+      setColumnMapping(autoMapping);
       
-      toast.success(`${mappedData.length} Partner aus CSV geladen (${parsed.length - mappedData.length} bereits vorhanden)`);
+      // Show column mapping dialog
+      setShowColumnMapping(true);
+      setCsvData([]); // Clear previous data
+      
+      toast.success(`CSV geladen: ${rows.length} Zeilen, ${headers.length} Spalten`);
     } catch (error) {
       console.error('CSV parse error:', error);
       toast.error('Fehler beim Lesen der CSV-Datei');
@@ -937,38 +1025,132 @@ export default function AdminPartners() {
           {/* CSV Import */}
           {showCsvImport && (
             <div className="space-y-4">
-              {/* Upload Area */}
-              <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
-                <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                <p className="font-medium mb-1">CSV-Datei hochladen</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Spalten: name, kategorie, strasse, hausnummer, plz, stadt, website, beschreibung
-                </p>
-                <div className="flex justify-center gap-3">
-                  <label className="btn-primary cursor-pointer">
-                    <Upload className="h-4 w-4" />
-                    CSV auswählen
-                    <input
-                      type="file"
-                      accept=".csv,.txt"
-                      onChange={handleCsvUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <button
-                    onClick={downloadCsvTemplate}
-                    className="btn-ghost"
-                  >
-                    <Download className="h-4 w-4" />
-                    Vorlage herunterladen
-                  </button>
-                </div>
-                {csvFileName && (
-                  <p className="text-sm text-accent mt-3">
-                    Geladen: {csvFileName}
+              {/* Column Mapping Dialog */}
+              {showColumnMapping && csvRawHeaders.length > 0 && (
+                <div className="p-5 rounded-xl bg-gradient-to-br from-accent/5 to-primary/5 border border-accent/20 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Settings2 className="h-5 w-5 text-accent" />
+                      <h3 className="font-bold">Spalten-Mapping</h3>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {csvRawData.length} Zeilen geladen
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground">
+                    Ordne deine CSV-Spalten den Partner-Feldern zu. Automatisch erkannte Zuordnungen sind bereits ausgewählt.
                   </p>
-                )}
-              </div>
+                  
+                  {/* Preview of first row */}
+                  {csvRawData.length > 0 && (
+                    <div className="p-3 rounded-lg bg-muted/50 text-xs">
+                      <div className="font-medium mb-1 text-muted-foreground">Vorschau erste Zeile:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {csvRawHeaders.slice(0, 6).map(header => (
+                          <span key={header} className="px-2 py-1 rounded bg-background border">
+                            <span className="font-medium">{header}:</span>{' '}
+                            <span className="text-muted-foreground">{csvRawData[0][header]?.substring(0, 20) || '(leer)'}</span>
+                          </span>
+                        ))}
+                        {csvRawHeaders.length > 6 && (
+                          <span className="px-2 py-1 text-muted-foreground">+{csvRawHeaders.length - 6} weitere</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Mapping Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {PARTNER_FIELDS.map(field => (
+                      <div key={field.key} className="flex items-center gap-3">
+                        <div className="w-36 text-sm font-medium flex items-center gap-1">
+                          {field.label}
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <select
+                          value={columnMapping[field.key] || ''}
+                          onChange={(e) => setColumnMapping(prev => ({
+                            ...prev,
+                            [field.key]: e.target.value
+                          }))}
+                          className={cn(
+                            "flex-1 h-9 px-3 rounded-lg bg-background border text-sm",
+                            "focus:outline-none focus:ring-2 focus:ring-accent/30",
+                            columnMapping[field.key] && "border-accent/50 bg-accent/5"
+                          )}
+                        >
+                          <option value="">-- Nicht zuordnen --</option>
+                          {csvRawHeaders.map(header => (
+                            <option key={header} value={header}>
+                              {header}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <button
+                      onClick={() => {
+                        setShowColumnMapping(false);
+                        setCsvRawHeaders([]);
+                        setCsvRawData([]);
+                        setCsvFileName('');
+                      }}
+                      className="btn-ghost"
+                    >
+                      <X className="h-4 w-4" />
+                      Abbrechen
+                    </button>
+                    <button
+                      onClick={applyColumnMapping}
+                      disabled={!columnMapping.name}
+                      className="btn-primary"
+                    >
+                      <Check className="h-4 w-4" />
+                      Mapping anwenden
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Upload Area - only show if not in mapping mode */}
+              {!showColumnMapping && (
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
+                  <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                  <p className="font-medium mb-1">CSV-Datei hochladen</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Beliebige Spalten – du kannst sie im nächsten Schritt zuordnen
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <label className="btn-primary cursor-pointer">
+                      <Upload className="h-4 w-4" />
+                      CSV auswählen
+                      <input
+                        type="file"
+                        accept=".csv,.txt"
+                        onChange={handleCsvUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={downloadCsvTemplate}
+                      className="btn-ghost"
+                    >
+                      <Download className="h-4 w-4" />
+                      Vorlage herunterladen
+                    </button>
+                  </div>
+                  {csvFileName && csvData.length > 0 && (
+                    <p className="text-sm text-accent mt-3">
+                      Geladen: {csvFileName} ({csvData.length} Partner bereit)
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* CSV Data Preview */}
               {csvData.length > 0 && (
