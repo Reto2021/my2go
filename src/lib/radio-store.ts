@@ -27,11 +27,14 @@ interface RadioStore {
   nowPlaying: NowPlayingData | null;
   songHistory: SongHistoryItem[];
   audio: HTMLAudioElement | null;
+  sessionStartTime: Date | null;
+  currentSessionDuration: number;
   
   togglePlay: () => void;
   toggleMute: () => void;
   setVolume: (volume: number) => void;
   fetchNowPlaying: () => Promise<void>;
+  updateSessionDuration: () => void;
 }
 
 // Fetch artwork from iTunes as fallback
@@ -90,6 +93,16 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   nowPlaying: null,
   songHistory: [],
   audio: null,
+  sessionStartTime: null,
+  currentSessionDuration: 0,
+
+  updateSessionDuration: () => {
+    const { sessionStartTime, isPlaying } = get();
+    if (isPlaying && sessionStartTime) {
+      const duration = Math.floor((Date.now() - sessionStartTime.getTime()) / 1000);
+      set({ currentSessionDuration: duration });
+    }
+  },
 
   fetchNowPlaying: async () => {
     try {
@@ -148,14 +161,14 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     if (isPlaying) {
       currentAudio.pause();
       currentAudio.src = '';
-      set({ isPlaying: false });
+      set({ isPlaying: false, sessionStartTime: null, currentSessionDuration: 0 });
       updateMediaSession(nowPlaying, false);
     } else {
       set({ isLoading: true });
       currentAudio.src = STREAM_URL;
       currentAudio.play()
         .then(() => {
-          set({ isPlaying: true, isLoading: false });
+          set({ isPlaying: true, isLoading: false, sessionStartTime: new Date(), currentSessionDuration: 0 });
           get().fetchNowPlaying();
           updateMediaSession(get().nowPlaying, true);
         })
