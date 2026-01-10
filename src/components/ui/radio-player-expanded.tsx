@@ -157,15 +157,15 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           exit={{ opacity: 0, y: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className={cn(
-            "fixed inset-0 z-[200] flex flex-col",
+            "fixed inset-0 z-[200] flex flex-col overflow-hidden",
             isFullscreen ? "bg-black" : "bg-gradient-to-b from-secondary via-secondary to-black"
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 pt-safe">
+          <div className="flex items-center justify-between p-3 sm:p-4 flex-shrink-0" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
             <button
               onClick={onClose}
-              className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
             >
               <ChevronDown className="h-5 w-5 text-white" />
             </button>
@@ -177,7 +177,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             
             <button
               onClick={toggleFullscreen}
-              className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
             >
               {isFullscreen ? (
                 <Minimize2 className="h-5 w-5 text-white" />
@@ -187,8 +187,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             </button>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col items-center justify-center px-8 py-4">
+          {/* Scrollable Main Content */}
+          <div className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
             {/* Large Cover Art - memoized to prevent flickering */}
             <ArtworkDisplay 
               artworkUrl={nowPlaying?.artworkUrl} 
@@ -202,17 +202,17 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-center mb-8 max-w-md"
+              className="text-center mb-4 sm:mb-8 max-w-md w-full"
             >
               <h2 className={cn(
-                "font-bold text-white mb-2 truncate",
-                isFullscreen ? "text-3xl" : "text-2xl"
+                "font-bold text-white mb-1 sm:mb-2 truncate",
+                isFullscreen ? "text-3xl" : "text-xl sm:text-2xl"
               )}>
                 {nowPlaying?.title || 'Radio 2Go'}
               </h2>
               <p className={cn(
                 "text-white/60 truncate",
-                isFullscreen ? "text-xl" : "text-lg"
+                isFullscreen ? "text-xl" : "text-base sm:text-lg"
               )}>
                 {nowPlaying?.artist || 'Live Stream'}
               </p>
@@ -224,19 +224,19 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.25 }}
-                className="w-full max-w-sm mb-6"
+                className="w-full max-w-sm mb-4 sm:mb-6"
               >
-                <div className="bg-white/10 rounded-2xl p-4">
+                <div className="bg-white/10 rounded-2xl p-3 sm:p-4">
                   {/* Timer Display */}
-                  <div className="flex items-center justify-center gap-2 mb-3">
+                  <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
                     <Clock className="h-4 w-4 text-accent" />
-                    <span className="text-lg font-bold text-white tabular-nums">
+                    <span className="text-base sm:text-lg font-bold text-white tabular-nums">
                       {formatSessionDuration(currentSessionDuration)}
                     </span>
                   </div>
                   
                   {/* Progress Bar */}
-                  <div className="relative h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+                  <div className="relative h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden mb-2 sm:mb-3">
                     <motion.div
                       className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
                       initial={{ width: 0 }}
@@ -246,13 +246,13 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   </div>
                   
                   {/* Tier Info */}
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-[10px] sm:text-xs">
                     <div className="flex items-center gap-1">
                       {currentTier ? (
                         <>
                           <TalerIcon size={12} />
                           <span className="text-accent font-semibold">+{currentTier.taler_reward}</span>
-                          <span className="text-white/50">{currentTier.name}</span>
+                          <span className="text-white/50 hidden xs:inline">{currentTier.name}</span>
                         </>
                       ) : (
                         <span className="text-white/50">Starte zu hören...</span>
@@ -279,7 +279,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="w-full max-w-xs mb-8"
+              className="w-full max-w-xs mb-4 sm:mb-8"
             >
               <div className="flex items-center gap-4">
                 <button onClick={toggleMute} className="text-white/60 hover:text-white transition-colors">
@@ -307,7 +307,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               onClick={togglePlay}
               disabled={isLoading}
               className={cn(
-                "h-20 w-20 rounded-full flex items-center justify-center transition-all",
+                "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0",
                 isPlaying 
                   ? "bg-white text-secondary hover:bg-white/90" 
                   : "bg-accent text-accent-foreground hover:bg-accent/90",
@@ -315,75 +315,76 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               )}
             >
               {isLoading ? (
-                <div className="h-8 w-8 border-3 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="h-6 w-6 sm:h-8 sm:w-8 border-3 border-current border-t-transparent rounded-full animate-spin" />
               ) : isPlaying ? (
-                <Pause className="h-8 w-8" />
+                <Pause className="h-6 w-6 sm:h-8 sm:w-8" />
               ) : (
-                <Play className="h-8 w-8 ml-1" />
+                <Play className="h-6 w-6 sm:h-8 sm:w-8 ml-1" />
               )}
             </motion.button>
+            
             {/* Reward Tiers Toggle */}
             <motion.button
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.45 }}
               onClick={() => setShowTiers(!showTiers)}
-              className="mt-6 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              className="mt-4 sm:mt-6 mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
             >
               <Gift className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-white">
+              <span className="text-xs sm:text-sm font-medium text-white">
                 {showTiers ? 'Tiers ausblenden' : 'Hör-Belohnungen anzeigen'}
               </span>
             </motion.button>
-          </div>
 
-          {/* Reward Tiers Section */}
-          <AnimatePresence>
-            {showTiers && !isFullscreen && tiers.length > 0 && (
+            {/* Reward Tiers Section - now inline in scroll area */}
+            <AnimatePresence>
+              {showTiers && !isFullscreen && tiers.length > 0 && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full max-w-sm overflow-hidden"
+                >
+                  <div className="pb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Coins className="h-4 w-4 text-accent" />
+                      <span className="text-sm font-semibold text-white/80">Taler verdienen beim Hören</span>
+                    </div>
+                    <div className="grid gap-2">
+                      {tiers.map((tier, index) => (
+                        <RewardTierRow key={tier.id} tier={tier} index={index} />
+                      ))}
+                    </div>
+                    <p className="text-xs text-white/40 mt-3 text-center">
+                      Du erhältst die Taler der höchsten erreichten Stufe beim Stoppen.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Song History - now inline in scroll area */}
+            {songHistory.length > 0 && !isFullscreen && !showTiers && (
               <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden px-4"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="w-full max-w-sm pb-4"
               >
-                <div className="pb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Coins className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-semibold text-white/80">Taler verdienen beim Hören</span>
-                  </div>
-                  <div className="grid gap-2">
-                    {tiers.map((tier, index) => (
-                      <RewardTierRow key={tier.id} tier={tier} index={index} />
-                    ))}
-                  </div>
-                  <p className="text-xs text-white/40 mt-3 text-center">
-                    Du erhältst die Taler der höchsten erreichten Stufe beim Stoppen.
-                  </p>
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="h-4 w-4 text-white/40" />
+                  <span className="text-sm font-semibold text-white/60">Zuletzt gespielt</span>
+                </div>
+                <div className="space-y-2">
+                  {songHistory.slice(0, 5).map((song, index) => (
+                    <SongHistoryRow key={`${song.title}-${song.playedAt}`} song={song} index={index} />
+                  ))}
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
-
-          {/* Song History */}
-          {songHistory.length > 0 && !isFullscreen && !showTiers && (
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="px-4 pb-8 pb-safe"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="h-4 w-4 text-white/40" />
-                <span className="text-sm font-semibold text-white/60">Zuletzt gespielt</span>
-              </div>
-              <div className="space-y-2">
-                {songHistory.slice(0, 5).map((song, index) => (
-                  <SongHistoryRow key={`${song.title}-${song.playedAt}`} song={song} index={index} />
-                ))}
-              </div>
-            </motion.div>
-          )}
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -477,8 +478,8 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
       animate={{ scale: 1, opacity: 1 }}
       transition={{ delay: 0.1 }}
       className={cn(
-        "relative rounded-3xl overflow-hidden shadow-2xl mb-8",
-        isFullscreen ? "w-[400px] h-[400px]" : "w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]"
+        "relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0",
+        isFullscreen ? "w-[400px] h-[400px]" : "w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
       )}
     >
       {artworkUrl ? (
