@@ -37,7 +37,7 @@ serve(async (req) => {
 
     console.log('Scraping partner info from:', formattedUrl);
 
-    // Use Firecrawl with branding and JSON extraction
+    // Use Firecrawl with extract for structured data
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
       method: 'POST',
       headers: {
@@ -46,28 +46,24 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url: formattedUrl,
-        formats: [
-          'markdown',
-          'branding',
-          {
-            type: 'json',
-            prompt: `Extract business information from this website. Return a JSON object with these fields:
-              - name: the business/company name
-              - description: a short description of the business (max 200 chars)
-              - short_description: a very short tagline (max 80 chars)
-              - category: the type of business (e.g., Restaurant, Café, Bäckerei, Fitness, Mode, Kosmetik, Handwerk, Dienstleistung)
-              - address_street: street name without number
-              - address_number: street number
-              - postal_code: postal/zip code
-              - city: city name
-              - phone: phone number
-              - email: email address
-              - opening_hours: opening hours as text
-              - instagram: Instagram handle or URL
-              - facebook: Facebook page URL
-            Only include fields if you find the information. Return null for missing fields.`
-          }
-        ],
+        formats: ['markdown', 'extract'],
+        extract: {
+          prompt: `Extract business information from this website. Return a JSON object with these fields:
+            - name: the business/company name
+            - description: a short description of the business (max 200 chars)
+            - short_description: a very short tagline (max 80 chars)
+            - category: the type of business (e.g., Restaurant, Café, Bäckerei, Fitness, Mode, Kosmetik, Handwerk, Dienstleistung)
+            - address_street: street name without number
+            - address_number: street number
+            - postal_code: postal/zip code
+            - city: city name
+            - phone: phone number
+            - email: email address
+            - opening_hours: opening hours as text
+            - instagram: Instagram handle or URL
+            - facebook: Facebook page URL
+          Only include fields if you find the information. Return null for missing fields.`
+        },
         onlyMainContent: false,
       }),
     });
@@ -82,31 +78,31 @@ serve(async (req) => {
       );
     }
 
+    console.log('Firecrawl response received');
+
     // Extract the data from Firecrawl response
     const scrapedData = data.data || data;
-    const extractedJson = scrapedData.json || {};
-    const branding = scrapedData.branding || {};
+    const extractedData = scrapedData.extract || {};
+    const metadata = scrapedData.metadata || {};
 
     // Build partner info from scraped data
     const partnerInfo = {
-      name: extractedJson.name || null,
-      description: extractedJson.description || null,
-      short_description: extractedJson.short_description || null,
-      category: extractedJson.category || null,
-      address_street: extractedJson.address_street || null,
-      address_number: extractedJson.address_number || null,
-      postal_code: extractedJson.postal_code || null,
-      city: extractedJson.city || null,
-      phone: extractedJson.phone || null,
-      email: extractedJson.email || null,
+      name: extractedData.name || metadata.title || null,
+      description: extractedData.description || metadata.description || null,
+      short_description: extractedData.short_description || null,
+      category: extractedData.category || null,
+      address_street: extractedData.address_street || null,
+      address_number: extractedData.address_number || null,
+      postal_code: extractedData.postal_code || null,
+      city: extractedData.city || null,
+      phone: extractedData.phone || null,
+      email: extractedData.email || null,
       website: formattedUrl,
-      instagram: extractedJson.instagram || null,
-      facebook: extractedJson.facebook || null,
-      brand_color: branding.colors?.primary || null,
-      logo_url: branding.images?.logo || branding.logo || null,
+      instagram: extractedData.instagram || null,
+      facebook: extractedData.facebook || null,
     };
 
-    console.log('Extracted partner info:', partnerInfo);
+    console.log('Extracted partner info:', JSON.stringify(partnerInfo));
 
     return new Response(
       JSON.stringify({ success: true, data: partnerInfo }),
