@@ -117,9 +117,9 @@ export default function MyRedemptionsPage() {
   });
 
   const stats = {
-    total: redemptions.length,
     pending: redemptions.filter((r) => getEffectiveStatus(r) === 'pending').length,
     used: redemptions.filter((r) => getEffectiveStatus(r) === 'used').length,
+    expired: redemptions.filter((r) => getEffectiveStatus(r) === 'expired').length,
     totalSpent: redemptions.filter((r) => getEffectiveStatus(r) === 'used').reduce((sum, r) => sum + r.taler_spent, 0),
   };
 
@@ -153,12 +153,6 @@ export default function MyRedemptionsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <Card className="bg-card border-border/50">
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Aktiviert</p>
-          </CardContent>
-        </Card>
         <Card className="bg-accent/10 border-accent/30">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-accent">{stats.pending}</p>
@@ -169,6 +163,12 @@ export default function MyRedemptionsPage() {
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-success">{stats.used}</p>
             <p className="text-xs text-muted-foreground">Verwendet</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-muted/50 border-border/50">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-muted-foreground">{stats.expired}</p>
+            <p className="text-xs text-muted-foreground">Abgelaufen</p>
           </CardContent>
         </Card>
       </div>
