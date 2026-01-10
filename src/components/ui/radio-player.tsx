@@ -394,8 +394,30 @@ export function RadioPlayer({ className }: { className?: string }) {
                 </div>
               )}
               {nowPlaying?.videoUrl && (
-                <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-primary rounded-full flex items-center justify-center shadow-md">
-                  <Video className="h-2.5 w-2.5 text-primary-foreground" />
+                <div className="group absolute -bottom-1 -right-1">
+                  <div className="h-5 w-5 bg-primary rounded-full flex items-center justify-center shadow-md cursor-pointer hover:scale-110 transition-transform">
+                    <Video className="h-2.5 w-2.5 text-primary-foreground" />
+                  </div>
+                  {/* Video Preview on Hover */}
+                  <div className="absolute bottom-full right-0 mb-2 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 z-50">
+                    <div className="relative w-40 h-24 rounded-xl overflow-hidden shadow-2xl ring-2 ring-white/20">
+                      <video
+                        src={nowPlaying.videoUrl}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1">
+                        <Video className="h-3 w-3 text-white" />
+                        <span className="text-[10px] font-medium text-white truncate">Video verfügbar</span>
+                      </div>
+                    </div>
+                    {/* Arrow pointer */}
+                    <div className="absolute -bottom-1 right-2 w-2 h-2 bg-black/80 rotate-45" />
+                  </div>
                 </div>
               )}
             </div>
