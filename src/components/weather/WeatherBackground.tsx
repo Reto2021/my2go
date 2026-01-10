@@ -46,7 +46,7 @@ export const WeatherBackground = memo(function WeatherBackground({ weatherType, 
         style={{ background: gradients[weatherType] }} 
       />
       
-      {/* Weather elements - rendered above gradient */}
+      {/* Weather elements - rendered above gradient but below content */}
       <div className="absolute inset-0 z-[1]">
         {weatherType === 'clear-day' && <SunnyDay />}
         {weatherType === 'clear-night' && <StarryNight />}
@@ -103,13 +103,13 @@ const Cloud = memo(function Cloud({
   );
 });
 
-// Sun component - optimized
+// Sun component - optimized, positioned below header
 const SunnyDay = memo(function SunnyDay() {
   return (
     <>
-      {/* Bright sun with glow */}
+      {/* Bright sun with glow - positioned below header */}
       <motion.div
-        className="absolute top-6 right-6 w-24 h-24"
+        className="absolute top-20 right-6 w-24 h-24"
         animate={{ 
           scale: [1, 1.08, 1],
           rotate: [0, 3, -3, 0],
@@ -134,9 +134,9 @@ const SunnyDay = memo(function SunnyDay() {
         ))}
       </motion.div>
       
-      {/* Small decorative clouds */}
-      <Cloud className="top-16 left-4" size="small" opacity={0.7} animationDuration={25} />
-      <Cloud className="top-28 right-1/3" size="small" opacity={0.6} animationDuration={30} />
+      {/* Small decorative clouds - positioned below header */}
+      <Cloud className="top-28 left-4" size="small" opacity={0.7} animationDuration={25} />
+      <Cloud className="top-40 right-1/3" size="small" opacity={0.6} animationDuration={30} />
     </>
   );
 });
@@ -146,7 +146,7 @@ const StarryNight = memo(function StarryNight() {
   const stars = useMemo(() => 
     Array.from({ length: 40 }, (_, i) => ({
       x: Math.random() * 100,
-      y: Math.random() * 50,
+      y: 20 + Math.random() * 50, // Start below header (20% = ~88px)
       size: Math.random() * 2 + 1,
       delay: (i % 5) * 0.4,
       duration: 2 + (i % 3),
@@ -155,7 +155,7 @@ const StarryNight = memo(function StarryNight() {
 
   return (
     <>
-      {/* Stars with twinkle */}
+      {/* Stars with twinkle - positioned below header */}
       {stars.map((star, i) => (
         <motion.div
           key={i}
@@ -172,9 +172,9 @@ const StarryNight = memo(function StarryNight() {
         />
       ))}
       
-      {/* Moon with crescent effect */}
+      {/* Moon with crescent effect - positioned below header */}
       <motion.div
-        className="absolute top-8 right-10"
+        className="absolute top-24 right-10"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       >
@@ -194,9 +194,9 @@ const StarryNight = memo(function StarryNight() {
       <motion.div
         className="absolute w-1 h-1 bg-white rounded-full"
         style={{ boxShadow: '0 0 10px 3px white, -30px -15px 30px 3px rgba(255,255,255,0.4)' }}
-        initial={{ top: '15%', left: '15%', opacity: 0 }}
+        initial={{ top: '25%', left: '15%', opacity: 0 }}
         animate={{ 
-          top: ['15%', '35%'],
+          top: ['25%', '45%'],
           left: ['15%', '55%'],
           opacity: [0, 1, 0],
         }}
@@ -206,23 +206,23 @@ const StarryNight = memo(function StarryNight() {
   );
 });
 
-// Partly cloudy variations
+// Partly cloudy variations - positioned below header
 const PartlyCloudyDay = memo(function PartlyCloudyDay() {
   return (
     <>
       {/* Sun peeking through */}
       <motion.div
-        className="absolute top-4 right-20 w-16 h-16"
+        className="absolute top-20 right-20 w-16 h-16"
         animate={{ scale: [1, 1.05, 1] }}
         transition={{ duration: 5, repeat: Infinity }}
       >
         <div className="w-full h-full rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 shadow-[0_0_50px_18px_rgba(253,224,71,0.35)]" />
       </motion.div>
       
-      {/* Fluffy clouds */}
-      <Cloud className="top-2 right-2" size="large" opacity={0.95} animationDuration={22} />
-      <Cloud className="top-14 left-2" size="large" opacity={0.9} animationDuration={26} />
-      <Cloud className="top-6 left-1/3" size="medium" opacity={0.85} animationDuration={24} />
+      {/* Fluffy clouds - positioned below header */}
+      <Cloud className="top-20 right-2" size="large" opacity={0.95} animationDuration={22} />
+      <Cloud className="top-32 left-2" size="large" opacity={0.9} animationDuration={26} />
+      <Cloud className="top-24 left-1/3" size="medium" opacity={0.85} animationDuration={24} />
     </>
   );
 });
@@ -231,7 +231,7 @@ const PartlyCloudyNight = memo(function PartlyCloudyNight() {
   const stars = useMemo(() => 
     Array.from({ length: 20 }, (_, i) => ({
       x: Math.random() * 100,
-      y: Math.random() * 35,
+      y: 20 + Math.random() * 30, // Start below header
       size: Math.random() * 1.5 + 1,
       delay: (i % 4) * 0.5,
     })), []
@@ -250,34 +250,34 @@ const PartlyCloudyNight = memo(function PartlyCloudyNight() {
         />
       ))}
       
-      {/* Moon */}
+      {/* Moon - positioned below header */}
       <motion.div
-        className="absolute top-6 right-24 w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 shadow-[0_0_35px_10px_rgba(255,255,255,0.12)]"
+        className="absolute top-24 right-24 w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 shadow-[0_0_35px_10px_rgba(255,255,255,0.12)]"
         animate={{ y: [0, -4, 0] }}
         transition={{ duration: 6, repeat: Infinity }}
       />
       
-      {/* Night clouds */}
-      <Cloud className="top-2 right-0" size="large" opacity={0.75} animationDuration={24} />
-      <Cloud className="top-12 left-4" size="large" opacity={0.65} animationDuration={28} />
+      {/* Night clouds - positioned below header */}
+      <Cloud className="top-20 right-0" size="large" opacity={0.75} animationDuration={24} />
+      <Cloud className="top-32 left-4" size="large" opacity={0.65} animationDuration={28} />
     </>
   );
 });
 
-// Full cloudy sky
+// Full cloudy sky - positioned below header
 const Cloudy = memo(function Cloudy() {
   return (
     <>
-      <Cloud className="top-0 -left-6" size="large" opacity={0.95} animationDuration={22} />
-      <Cloud className="top-6 right-0" size="large" opacity={0.9} animationDuration={26} />
-      <Cloud className="top-14 left-1/4" size="large" opacity={0.85} animationDuration={24} />
-      <Cloud className="top-2 right-1/3" size="medium" opacity={0.9} animationDuration={28} />
-      <Cloud className="top-20 right-1/4" size="medium" opacity={0.8} animationDuration={30} />
+      <Cloud className="top-20 -left-6" size="large" opacity={0.95} animationDuration={22} />
+      <Cloud className="top-24 right-0" size="large" opacity={0.9} animationDuration={26} />
+      <Cloud className="top-36 left-1/4" size="large" opacity={0.85} animationDuration={24} />
+      <Cloud className="top-20 right-1/3" size="medium" opacity={0.9} animationDuration={28} />
+      <Cloud className="top-44 right-1/4" size="medium" opacity={0.8} animationDuration={30} />
     </>
   );
 });
 
-// Fog layers
+// Fog layers - positioned below header
 const Foggy = memo(function Foggy() {
   return (
     <>
@@ -286,7 +286,7 @@ const Foggy = memo(function Foggy() {
           key={i}
           className="absolute h-12 bg-white/35 rounded-full blur-2xl"
           style={{
-            top: `${12 + i * 16}%`,
+            top: `${22 + i * 14}%`, // Start below header
             left: '-10%',
             width: '120%',
           }}
@@ -298,7 +298,7 @@ const Foggy = memo(function Foggy() {
   );
 });
 
-// Rain with optimized drops
+// Rain with optimized drops - positioned below header
 const Rainy = memo(function Rainy() {
   const drops = useMemo(() =>
     Array.from({ length: 25 }, (_, i) => ({
@@ -310,19 +310,19 @@ const Rainy = memo(function Rainy() {
 
   return (
     <>
-      {/* Dark rain clouds */}
-      <Cloud className="top-0 left-0" size="large" opacity={0.85} animationDuration={30} />
-      <Cloud className="top-2 right-0" size="large" opacity={0.8} animationDuration={35} />
-      <Cloud className="top-0 left-1/3" size="large" opacity={0.75} animationDuration={32} />
+      {/* Dark rain clouds - positioned below header */}
+      <Cloud className="top-20 left-0" size="large" opacity={0.85} animationDuration={30} />
+      <Cloud className="top-24 right-0" size="large" opacity={0.8} animationDuration={35} />
+      <Cloud className="top-20 left-1/3" size="large" opacity={0.75} animationDuration={32} />
       
-      {/* Rain drops - CSS animated for performance */}
+      {/* Rain drops - start from below header area */}
       {drops.map((drop, i) => (
         <motion.div
           key={i}
           className="absolute w-0.5 h-6 bg-gradient-to-b from-blue-300/70 to-blue-400/40 rounded-full"
-          style={{ left: `${drop.x}%`, top: '-5%' }}
+          style={{ left: `${drop.x}%`, top: '18%' }}
           animate={{ 
-            y: ['0%', '500%'], 
+            y: ['0%', '400%'], 
             opacity: [0.7, 0.3] 
           }}
           transition={{
@@ -337,41 +337,41 @@ const Rainy = memo(function Rainy() {
   );
 });
 
-// Snow with visible, animated flakes
+// Snow with visible, animated flakes - positioned below header
 const Snowy = memo(function Snowy() {
   const flakes = useMemo(() =>
     Array.from({ length: 35 }, (_, i) => ({
       x: (i * 2.9) % 100,
-      size: 4 + (i % 4) * 2,
+      size: 5 + (i % 4) * 2.5, // Slightly larger for visibility
       delay: (i % 10) * 0.5,
-      duration: 5 + (i % 5) * 2,
+      duration: 6 + (i % 5) * 2,
       sway: ((i % 2) === 0 ? 1 : -1) * (15 + (i % 3) * 10),
     })), []
   );
 
   return (
     <>
-      {/* Snow clouds */}
-      <Cloud className="top-0 -left-4" size="large" opacity={0.9} animationDuration={35} />
-      <Cloud className="top-0 right-0" size="large" opacity={0.85} animationDuration={40} />
+      {/* Snow clouds - positioned below header */}
+      <Cloud className="top-20 -left-4" size="large" opacity={0.9} animationDuration={35} />
+      <Cloud className="top-20 right-0" size="large" opacity={0.85} animationDuration={40} />
       
-      {/* Snowflakes - larger and more visible */}
+      {/* Snowflakes - larger and more visible, start below header */}
       {flakes.map((flake, i) => (
         <motion.div
           key={i}
           className="absolute rounded-full bg-white"
           style={{ 
             left: `${flake.x}%`, 
-            top: '-3%', 
+            top: '18%', // Start below header 
             width: flake.size, 
             height: flake.size,
-            boxShadow: `0 0 ${flake.size}px ${flake.size / 2}px rgba(255,255,255,0.6)`,
+            boxShadow: `0 0 ${flake.size + 2}px ${flake.size / 2}px rgba(255,255,255,0.7)`,
           }}
           animate={{
-            y: ['0%', '400%'],
+            y: ['0%', '350%'],
             x: [0, flake.sway, 0, -flake.sway, 0],
             rotate: [0, 180, 360],
-            opacity: [0.9, 0.7, 0.5],
+            opacity: [1, 0.8, 0.5],
           }}
           transition={{
             duration: flake.duration,
