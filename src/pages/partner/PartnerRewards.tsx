@@ -122,7 +122,7 @@ export default function PartnerRewards() {
     if (editingReward) {
       const { success, error } = await updateReward(editingReward.id, rewardData);
       if (success) {
-        toast.success('Reward aktualisiert');
+        toast.success('Gutschein aktualisiert');
         resetForm();
         loadRewards();
       } else {
@@ -131,7 +131,7 @@ export default function PartnerRewards() {
     } else {
       const { reward, error } = await createReward(rewardData);
       if (reward) {
-        toast.success('Reward erstellt');
+        toast.success('Gutschein erstellt');
         resetForm();
         loadRewards();
       } else {
@@ -141,11 +141,11 @@ export default function PartnerRewards() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Reward wirklich löschen?')) return;
+    if (!confirm('Gutschein wirklich löschen?')) return;
     
     const { success, error } = await deleteReward(id);
     if (success) {
-      toast.success('Reward gelöscht');
+      toast.success('Gutschein gelöscht');
       loadRewards();
     } else {
       toast.error('Fehler: ' + error);
@@ -155,7 +155,7 @@ export default function PartnerRewards() {
   async function handleToggleActive(reward: Reward) {
     const { success } = await updateReward(reward.id, { is_active: !reward.is_active });
     if (success) {
-      toast.success(reward.is_active ? 'Reward deaktiviert' : 'Reward aktiviert');
+      toast.success(reward.is_active ? 'Gutschein deaktiviert' : 'Gutschein aktiviert');
       loadRewards();
     }
   }
@@ -173,14 +173,14 @@ export default function PartnerRewards() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Rewards verwalten</h1>
+          <h1 className="text-2xl font-bold">Gutscheine verwalten</h1>
           <p className="text-muted-foreground">
-            Erstelle und verwalte deine Rewards
+            Erstelle und verwalte deine Gutscheine
           </p>
         </div>
         <Button onClick={() => setShowForm(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          Neuer Reward
+          Neuer Gutschein
         </Button>
       </div>
 
@@ -188,7 +188,7 @@ export default function PartnerRewards() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingReward ? 'Reward bearbeiten' : 'Neuer Reward'}</CardTitle>
+            <CardTitle>{editingReward ? 'Gutschein bearbeiten' : 'Neuer Gutschein'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -223,14 +223,14 @@ export default function PartnerRewards() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Beschreibe deinen Reward..."
+                  placeholder="Beschreibe deinen Gutschein..."
                   rows={3}
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reward_type">Reward-Typ</Label>
+                  <Label htmlFor="reward_type">Gutschein-Typ</Label>
                   <Select 
                     value={formData.reward_type} 
                     onValueChange={(value: any) => setFormData({ ...formData, reward_type: value })}

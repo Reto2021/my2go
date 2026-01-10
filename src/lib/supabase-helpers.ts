@@ -435,7 +435,7 @@ export async function redeemReward(
       amount: talerCost,
       type: 'spend',
       source: 'reward_redemption',
-      description: `Reward eingelöst`,
+      description: `Gutschein eingelöst`,
       reference_id: redemption.id,
     });
   
