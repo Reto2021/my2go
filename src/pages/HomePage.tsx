@@ -218,7 +218,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             </h1>
             
             <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
-              Das Bonusprogramm von Radio 2Go. Bei lokalen Partnern sammeln, exklusive Prämien einlösen.
+              Hör Radio 2Go, sammle 2Go Taler und löse exklusive Gutscheine bei lokalen Partnern ein.
             </p>
             
             <button 
@@ -226,7 +226,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
               className="btn-primary group"
             >
               <Wallet className="h-5 w-5" />
-              Taler Karte öffnen
+              Jetzt kostenlos starten
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
@@ -236,9 +236,9 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       {/* Features */}
       <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-3 animate-in-delayed">
-          <FeatureChip icon={Music} label="Radio-Taler sammeln" color="accent" to="/code" />
+          <FeatureChip icon={Music} label="Radio hören & verdienen" color="accent" to="/auth" />
           <FeatureChip icon={Gift} label="Gutscheine einlösen" color="primary" to="/rewards" />
-          <FeatureChip icon={MapPin} label="Partner finden" color="secondary" to="/partner" />
+          <FeatureChip icon={MapPin} label="Partner entdecken" color="secondary" to="/partner" />
         </div>
       </section>
       
@@ -406,8 +406,8 @@ function SessionModeHome({
       <section className="container section">
         <h2 className="section-title mb-5">Schnellzugriff</h2>
         <div className="grid grid-cols-6 gap-2 stagger-children">
-          <QuickAction to="/code" icon={Music} label="Radio-Taler" color="accent" />
-          <QuickAction to="/my-redemptions" icon={Ticket} label="Einlösungen" color="primary" />
+          <QuickAction to="/code" icon={Music} label="Code eingeben" color="accent" />
+          <QuickAction to="/my-redemptions" icon={Ticket} label="Meine Codes" color="primary" />
           <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="primary" />
           <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
           <QuickAction to="/referral" icon={Users} label="Einladen" color="accent" />

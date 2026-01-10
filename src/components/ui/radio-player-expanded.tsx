@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   Play, 
   Pause, 
@@ -12,7 +13,9 @@ import {
   ChevronDown,
   Clock,
   Gift,
-  Coins
+  Coins,
+  LogIn,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
@@ -21,6 +24,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { TalerIcon } from '@/components/icons/TalerIcon';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ListeningTier {
   id: string;
@@ -37,6 +41,9 @@ interface ExpandedRadioPlayerProps {
 }
 
 export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProps) {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+  
   const { 
     isPlaying, 
     isMuted, 
@@ -218,7 +225,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </p>
             </motion.div>
 
-            {/* Progress Bar to Next Tier */}
+            {/* Progress Bar to Next Tier - or Login Prompt for unauthenticated */}
             {tiers.length > 0 && (
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
@@ -226,51 +233,72 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 transition={{ delay: 0.25 }}
                 className="w-full max-w-sm mb-4 sm:mb-6"
               >
-                <div className="bg-white/10 rounded-2xl p-3 sm:p-4">
-                  {/* Timer Display */}
-                  <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
-                    <Clock className="h-4 w-4 text-accent" />
-                    <span className="text-base sm:text-lg font-bold text-white tabular-nums">
-                      {formatSessionDuration(currentSessionDuration)}
-                    </span>
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="relative h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden mb-2 sm:mb-3">
-                    <motion.div
-                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                  
-                  {/* Tier Info */}
-                  <div className="flex items-center justify-between text-[10px] sm:text-xs">
-                    <div className="flex items-center gap-1">
-                      {currentTier ? (
-                        <>
+                {isAuthenticated ? (
+                  <div className="bg-white/10 rounded-2xl p-3 sm:p-4">
+                    {/* Timer Display */}
+                    <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+                      <Clock className="h-4 w-4 text-accent" />
+                      <span className="text-base sm:text-lg font-bold text-white tabular-nums">
+                        {formatSessionDuration(currentSessionDuration)}
+                      </span>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="relative h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden mb-2 sm:mb-3">
+                      <motion.div
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                    
+                    {/* Tier Info */}
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                      <div className="flex items-center gap-1">
+                        {currentTier ? (
+                          <>
+                            <TalerIcon size={12} />
+                            <span className="text-accent font-semibold">+{currentTier.taler_reward}</span>
+                            <span className="text-white/50 hidden xs:inline">{currentTier.name}</span>
+                          </>
+                        ) : (
+                          <span className="text-white/50">Höre weiter um Taler zu verdienen...</span>
+                        )}
+                      </div>
+                      {nextTier && (
+                        <div className="flex items-center gap-1 text-white/70">
+                          <span>Nächstes:</span>
                           <TalerIcon size={12} />
-                          <span className="text-accent font-semibold">+{currentTier.taler_reward}</span>
-                          <span className="text-white/50 hidden xs:inline">{currentTier.name}</span>
-                        </>
-                      ) : (
-                        <span className="text-white/50">Starte zu hören...</span>
+                          <span className="text-accent font-semibold">+{nextTier.taler_reward}</span>
+                          <span className="text-white/50">({formatDuration(nextTier.min_duration_seconds)})</span>
+                        </div>
+                      )}
+                      {!nextTier && currentTier && (
+                        <span className="text-green-400 font-semibold">Maximum erreicht! 🎉</span>
                       )}
                     </div>
-                    {nextTier && (
-                      <div className="flex items-center gap-1 text-white/70">
-                        <span>Nächstes:</span>
-                        <TalerIcon size={12} />
-                        <span className="text-accent font-semibold">+{nextTier.taler_reward}</span>
-                        <span className="text-white/50">({formatDuration(nextTier.min_duration_seconds)})</span>
-                      </div>
-                    )}
-                    {!nextTier && currentTier && (
-                      <span className="text-green-400 font-semibold">Maximum erreicht! 🎉</span>
-                    )}
                   </div>
-                </div>
+                ) : (
+                  /* Login Prompt for unauthenticated users */
+                  <div className="bg-white/10 rounded-2xl p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <TalerIcon size={20} />
+                      <span className="text-base font-bold text-white">2Go Taler verdienen</span>
+                    </div>
+                    <p className="text-sm text-white/70 mb-4">
+                      Melde dich an, um beim Radiohören Taler zu sammeln und exklusive Gutscheine einzulösen!
+                    </p>
+                    <Link
+                      to="/auth"
+                      onClick={onClose}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:bg-accent/90 transition-colors"
+                    >
+                      <Wallet className="h-4 w-4" />
+                      Kostenlos anmelden
+                    </Link>
+                  </div>
+                )}
               </motion.div>
             )}
 

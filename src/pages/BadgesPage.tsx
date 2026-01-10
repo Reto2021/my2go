@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { Award, Coins, Gift, Users, Trophy, Flame } from "lucide-react";
+import { Award, Coins, Gift, Users, Trophy, Flame, Lock, ArrowRight } from "lucide-react";
 import { useBadges } from "@/hooks/useBadges";
 import { BadgeCard } from "@/components/badges/BadgeCard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useIsAuthenticated } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const categoryInfo: Record<string, { title: string; icon: React.ElementType; description: string }> = {
   earning: {
@@ -51,8 +51,71 @@ export default function BadgesPage() {
     );
   }
 
+  // Show attractive preview for non-authenticated users
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return (
+      <div className="pb-24 px-4">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-6"
+        >
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Award size={32} className="text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Badges sammeln</h1>
+          <p className="text-muted-foreground mt-1">
+            Schalte Auszeichnungen frei und zeige deine Erfolge!
+          </p>
+        </motion.div>
+
+        {/* Preview of badge categories */}
+        <div className="space-y-6 mb-8">
+          {Object.entries(categoryInfo).map(([category, info], index) => {
+            const Icon = info.icon;
+            return (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border"
+              >
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Icon size={24} className="text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">{info.title}</h3>
+                  <p className="text-sm text-muted-foreground">{info.description}</p>
+                </div>
+                <Lock size={16} className="text-muted-foreground" />
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-center p-6 rounded-2xl bg-primary/10 border border-primary/20"
+        >
+          <h3 className="font-bold text-foreground mb-2">Starte jetzt!</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Melde dich an, um Badges zu sammeln und deinen Fortschritt zu tracken.
+          </p>
+          <Link
+            to="/auth"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Kostenlos anmelden
+            <ArrowRight size={16} />
+          </Link>
+        </motion.div>
+      </div>
+    );
   }
 
   const earnedCount = userBadges.length;
