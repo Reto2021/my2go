@@ -44,7 +44,7 @@ export default function PartnerLandingPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <img src={logoRadio2go} alt="Radio 2Go" className="h-5 w-auto brightness-0 invert" />
+              <img src={logoRadio2go} alt="Radio 2Go" className="h-5 w-auto" />
               Für Partner & Betriebe
             </motion.div>
             
@@ -322,15 +322,15 @@ export default function PartnerLandingPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="aspect-square max-w-sm mx-auto rounded-3xl bg-gradient-to-br from-secondary via-secondary/90 to-primary/80 p-10 flex items-center justify-center shadow-2xl">
-                <div className="text-center text-white">
+              <div className="aspect-square max-w-sm mx-auto rounded-3xl bg-gradient-to-br from-white via-gray-50 to-gray-100 p-10 flex items-center justify-center shadow-2xl border border-border">
+                <div className="text-center">
                   <img 
                     src={logoRadio2go} 
                     alt="Radio 2Go" 
-                    className="h-16 w-auto mx-auto mb-6 brightness-0 invert drop-shadow-lg"
+                    className="h-20 w-auto mx-auto mb-6 drop-shadow-lg"
                   />
-                  <p className="text-2xl font-bold">Radio 2Go</p>
-                  <p className="text-white/70 text-sm">Dein Partner fürs Radio</p>
+                  <p className="text-2xl font-bold text-foreground">Radio 2Go</p>
+                  <p className="text-muted-foreground text-sm">Dein Partner fürs Radio</p>
                 </div>
               </div>
             </motion.div>
