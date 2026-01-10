@@ -795,7 +795,7 @@ export default function AdminPartners() {
               
               <div className="flex items-center gap-2">
                 <a
-                  href={`/partner/dashboard?partner_id=${partner.id}`}
+                  href={`/partner-portal?partner_id=${partner.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
