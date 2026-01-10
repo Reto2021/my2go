@@ -469,70 +469,28 @@ export async function redeemAirDropCode(
   userId: string,
   code: string
 ): Promise<{ success: boolean; talerAwarded?: number; error?: string }> {
-  const normalizedCode = code.trim().toUpperCase();
-  
-  // 1. Find the code
-  const { data: airDropCode, error: codeError } = await supabase
-    .from('air_drop_codes')
-    .select('*')
-    .eq('code', normalizedCode)
-    .eq('is_active', true)
-    .gt('valid_until', new Date().toISOString())
-    .maybeSingle();
-  
-  if (codeError || !airDropCode) {
-    return { success: false, error: 'Ungültiger oder abgelaufener Code' };
+  // Use atomic server-side RPC function to prevent race conditions
+  const { data, error } = await supabase.rpc('redeem_air_drop_code', {
+    _user_id: userId,
+    _code: code,
+  });
+
+  if (error) {
+    console.error('Error redeeming air drop code:', error);
+    return { success: false, error: 'Fehler beim Einlösen des Codes' };
   }
-  
-  // 2. Check if max claims reached
-  if (airDropCode.current_claims >= airDropCode.max_claims) {
-    return { success: false, error: 'Code wurde bereits zu oft eingelöst' };
+
+  const result = data as { success: boolean; taler_awarded?: number; error?: string } | null;
+
+  if (!result) {
+    return { success: false, error: 'Unbekannter Fehler' };
   }
-  
-  // 3. Check if user already claimed
-  const { data: existingClaim } = await supabase
-    .from('code_claims')
-    .select('id')
-    .eq('code_id', airDropCode.id)
-    .eq('user_id', userId)
-    .maybeSingle();
-  
-  if (existingClaim) {
-    return { success: false, error: 'Du hast diesen Code bereits eingelöst' };
+
+  if (!result.success) {
+    return { success: false, error: result.error || 'Fehler beim Einlösen' };
   }
-  
-  // 4. Create claim
-  const { error: claimError } = await supabase
-    .from('code_claims')
-    .insert({
-      code_id: airDropCode.id,
-      user_id: userId,
-      taler_awarded: airDropCode.taler_value,
-    });
-  
-  if (claimError) {
-    console.error('Error creating claim:', claimError);
-    return { success: false, error: 'Fehler beim Einlösen' };
-  }
-  
-  // 5. Create earn transaction
-  await supabase
-    .from('transactions')
-    .insert({
-      user_id: userId,
-      amount: airDropCode.taler_value,
-      type: 'earn',
-      source: 'air_drop',
-      description: `Code ${normalizedCode} eingelöst`,
-    });
-  
-  // 6. Update claim count
-  await supabase
-    .from('air_drop_codes')
-    .update({ current_claims: airDropCode.current_claims + 1 })
-    .eq('id', airDropCode.id);
-  
-  return { success: true, talerAwarded: airDropCode.taler_value };
+
+  return { success: true, talerAwarded: result.taler_awarded };
 }
 
 // ============================================================================
