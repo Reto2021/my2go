@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,10 @@ import {
 } from '@/lib/push-notifications';
 import { toast } from 'sonner';
 import { BadgeProgressRing } from '@/components/badges/BadgeProgressRing';
+
+// Visit tracking keys (same as in install-prompt.tsx)
+const VISIT_COUNT_KEY = 'pwa-visit-count';
+const LAST_VISIT_KEY = 'pwa-last-visit';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -31,12 +35,28 @@ export default function SettingsPage() {
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [visitCount, setVisitCount] = useState(0);
+  const [firstVisitDate, setFirstVisitDate] = useState<string | null>(null);
   
   useEffect(() => {
     // Check if PWA is installed
     const standalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
     setIsInstalled(standalone);
+    
+    // Get visit statistics
+    const storedVisitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0');
+    setVisitCount(storedVisitCount);
+    
+    const firstVisit = localStorage.getItem('pwa-first-visit');
+    if (firstVisit) {
+      const date = new Date(parseInt(firstVisit));
+      setFirstVisitDate(date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+    } else {
+      // Set first visit if not exists
+      localStorage.setItem('pwa-first-visit', Date.now().toString());
+      setFirstVisitDate(new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+    }
     
     const checkPushStatus = async () => {
       const supported = isPushSupported();
@@ -327,6 +347,22 @@ export default function SettingsPage() {
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
+            
+            {/* Visit Statistics */}
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                  <Eye className="h-5 w-5 text-accent" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Besuchs-Statistik</p>
+                  <p className="text-sm text-muted-foreground">
+                    {visitCount} Besuche {firstVisitDate && `seit ${firstVisitDate}`}
+                  </p>
+                </div>
+              </div>
+              <span className="text-2xl font-bold text-accent">{visitCount}</span>
+            </div>
           </div>
         </section>
         
