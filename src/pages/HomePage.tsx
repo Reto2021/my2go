@@ -210,20 +210,21 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
   return (
     <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section with Dynamic Weather Background */}
-      <section className="relative min-h-[420px] text-white pt-20 overflow-hidden">
-        {/* Dynamic Weather Background */}
+      <section className="relative min-h-[440px] text-white overflow-hidden">
+        {/* Dynamic Weather Background - z-0 base */}
         {weather && (
-          <WeatherBackground weatherType={weather.icon} />
+          <WeatherBackground weatherType={weather.icon} className="z-0" />
         )}
         
-        {/* City Skyline (overlay) */}
-        <div className="skyline-container z-[5]">
+        {/* City Skyline - above weather, below content */}
+        <div className="skyline-container z-[2]">
           <div className="skyline-distant opacity-30" />
           <div className="skyline-mid opacity-40" />
           <div className="skyline-front opacity-50" />
         </div>
         
-        <div className="container relative z-10 pt-6 pb-32">
+        {/* Content layer - above everything except header */}
+        <div className="container relative z-[5] pt-28 pb-32">
           {/* Digital Clock & Weather Info */}
           {weather && (
             <div className="mb-6 animate-in">
@@ -231,14 +232,14 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
                 temperature={weather.temperature}
                 weatherDescription={weather.description}
               />
-              <p className="text-sm text-white/70 mt-2 drop-shadow-sm">
+              <p className="text-sm text-white/80 mt-2 drop-shadow-md">
                 {getWeatherMessage(weather.icon)}
               </p>
             </div>
           )}
           
           <div className="animate-in">
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
               Hör 2Go.<br />
               Sammle Taler.<br />
               <span className="relative inline-block">
@@ -247,7 +248,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
               </span>
             </h1>
             
-            <p className="text-white/80 text-lg mb-8 max-w-xs leading-relaxed drop-shadow-sm">
+            <p className="text-white/90 text-lg mb-8 max-w-xs leading-relaxed drop-shadow-md">
               Das Bonusprogramm von Radio 2Go. Bei lokalen Partnern sammeln, exklusive Prämien einlösen.
             </p>
             
