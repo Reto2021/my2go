@@ -300,12 +300,14 @@ export type Database = {
           id: string
           last_activity_at: string | null
           last_name: string | null
+          leaderboard_nickname: string | null
           marketing_consent: boolean | null
           marketing_consent_at: string | null
           phone: string | null
           postal_code: string | null
           referral_count: number | null
           referred_by: string | null
+          show_on_leaderboard: boolean | null
           terms_accepted_at: string | null
           updated_at: string
         }
@@ -320,12 +322,14 @@ export type Database = {
           id: string
           last_activity_at?: string | null
           last_name?: string | null
+          leaderboard_nickname?: string | null
           marketing_consent?: boolean | null
           marketing_consent_at?: string | null
           phone?: string | null
           postal_code?: string | null
           referral_count?: number | null
           referred_by?: string | null
+          show_on_leaderboard?: boolean | null
           terms_accepted_at?: string | null
           updated_at?: string
         }
@@ -340,12 +344,14 @@ export type Database = {
           id?: string
           last_activity_at?: string | null
           last_name?: string | null
+          leaderboard_nickname?: string | null
           marketing_consent?: boolean | null
           marketing_consent_at?: string | null
           phone?: string | null
           postal_code?: string | null
           referral_count?: number | null
           referred_by?: string | null
+          show_on_leaderboard?: boolean | null
           terms_accepted_at?: string | null
           updated_at?: string
         }
@@ -796,6 +802,23 @@ export type Database = {
           lifetime_earned: number
           lifetime_spent: number
           taler_balance: number
+        }[]
+      }
+      get_user_weekly_rank: {
+        Args: { _user_id: string }
+        Returns: {
+          is_participating: boolean
+          rank: number
+          weekly_earned: number
+        }[]
+      }
+      get_weekly_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          nickname: string
+          rank: number
+          weekly_earned: number
         }[]
       }
       has_role: {
