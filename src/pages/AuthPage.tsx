@@ -6,8 +6,7 @@ import { z } from 'zod';
 import { Mail, Lock, User, ArrowRight, Loader2, Gift, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import logo from '@/assets/logo-radio2go.png';
-import talerCoin from '@/assets/taler-coin.png';
+import talerIcon from '@/assets/taler-icon.png';
 
 const emailSchema = z.string().email('Ungültige E-Mail-Adresse');
 const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
@@ -162,18 +161,13 @@ export default function AuthPage() {
   
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="container pt-6 pb-4">
-        <img src={logo} alt="Radio 2Go" className="h-10 w-auto" />
-      </header>
-      
       {/* Content */}
       <div className="flex-1 container flex flex-col justify-center py-8">
         <div className="max-w-md mx-auto w-full">
           {/* Hero */}
           <div className="text-center mb-8 animate-in">
             <div className="flex justify-center mb-4">
-              <img src={talerCoin} alt="Taler" className="h-16 w-16" />
+              <img src={talerIcon} alt="2Go Taler" className="h-24 w-24 rounded-2xl shadow-lg" />
             </div>
             <h1 className="text-2xl font-bold mb-2">
               {mode === 'login' ? 'Willkommen zurück!' : 'Jetzt registrieren'}
