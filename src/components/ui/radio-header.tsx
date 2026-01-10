@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Cast, Airplay, Expand, Building2, User } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Cast, Airplay, Expand, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
 import { useSession, useBrowseMode } from '@/lib/session';
-import { useAuthSafe, usePartnerAdmin } from '@/contexts/AuthContext';
+import { useAuthSafe } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
@@ -93,14 +94,21 @@ export function RadioHeader() {
     checkAirPlayAvailability,
   } = useCastStore();
   
-  const { session, balance, logout, isLoggingOut } = useSession();
+  // Legacy session for mock compatibility
+  const { logout, isLoggingOut } = useSession();
   const isBrowseMode = useBrowseMode();
   const navigate = useNavigate();
   
-  // Get partner admin status from real auth context
+  // Get real auth data from Supabase AuthContext
   const authContext = useAuthSafe();
+  const isAuthenticated = !!authContext?.user;
+  const profile = authContext?.profile;
+  const realBalance = authContext?.balance;
   const isPartnerAdmin = authContext?.isPartnerAdmin ?? false;
   const partnerInfo = authContext?.partnerInfo ?? null;
+  
+  // Display name: prefer first_name, fallback to email prefix
+  const displayName = profile?.first_name || profile?.display_name || authContext?.user?.email?.split('@')[0] || 'User';
   
   const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -117,15 +125,15 @@ export function RadioHeader() {
   
   // Track balance changes for animation
   useEffect(() => {
-    if (balance && prevBalance !== null && balance.current !== prevBalance) {
+    if (realBalance && prevBalance !== null && realBalance.taler_balance !== prevBalance) {
       setBalanceChanged(true);
       const timer = setTimeout(() => setBalanceChanged(false), 600);
       return () => clearTimeout(timer);
     }
-    if (balance) {
-      setPrevBalance(balance.current);
+    if (realBalance) {
+      setPrevBalance(realBalance.taler_balance);
     }
-  }, [balance, prevBalance]);
+  }, [realBalance, prevBalance]);
 
   useEffect(() => {
     fetchNowPlaying();
@@ -153,8 +161,12 @@ export function RadioHeader() {
   };
   
   const handleLogout = async () => {
+    // Use Supabase auth signOut
+    await supabase.auth.signOut();
+    // Also clear legacy session
     await logout();
     setShowMenu(false);
+    navigate('/');
   };
 
   return (
@@ -330,10 +342,10 @@ export function RadioHeader() {
         </div>
         
         {/* Taler Balance + User Menu - only when logged in */}
-        {!isBrowseMode && session?.displayName && (
+        {!isBrowseMode && isAuthenticated && (
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Taler Balance */}
-            {balance && (
+            {realBalance && (
               <motion.div 
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/20"
                 animate={balanceChanged ? {
@@ -352,14 +364,14 @@ export function RadioHeader() {
                 )} />
                 <AnimatePresence mode="wait">
                   <motion.span 
-                    key={balance.current}
+                    key={realBalance.taler_balance}
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: 10, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                     className="text-xs font-bold text-accent tabular-nums"
                   >
-                    {balance.current.toLocaleString('de-CH')}
+                    {realBalance.taler_balance.toLocaleString('de-CH')}
                   </motion.span>
                 </AnimatePresence>
               </motion.div>
@@ -373,7 +385,7 @@ export function RadioHeader() {
               >
                 <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
                   <span className="text-sm font-bold text-secondary-foreground">
-                    {session.displayName.charAt(0).toUpperCase()}
+                    {displayName.charAt(0).toUpperCase()}
                   </span>
                 </div>
               </button>
