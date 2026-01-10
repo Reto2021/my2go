@@ -170,7 +170,7 @@ export function WalletCTA({
           <button
             onClick={handleDismiss}
             className="p-1 rounded-full hover:bg-muted transition-colors"
-            aria-label="Schließen"
+            aria-label="Schliessen"
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>

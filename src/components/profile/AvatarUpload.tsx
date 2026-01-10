@@ -45,7 +45,7 @@ export function AvatarUpload({
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('Das Bild darf maximal 5MB groß sein');
+      toast.error('Das Bild darf maximal 5MB gross sein');
       return;
     }
 

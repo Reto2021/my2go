@@ -19,7 +19,7 @@ const ACTIVITY_MESSAGES = {
   redemption: [
     'Ein Gutschein wurde gerade eingelöst ☕',
     'Jemand spart bei einem Partner 🎁',
-    'Ein Hörer genießt seine Belohnung 🛍️',
+    'Ein Hörer geniesst seine Belohnung 🛍️',
   ],
   badge: [
     'Eine neue Auszeichnung wurde erreicht 🏆',

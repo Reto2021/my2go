@@ -479,7 +479,7 @@ export default function RedemptionDetailPage() {
         particleCount={60}
         showMessage={true}
         message="🎉 Erfolgreich eingelöst!"
-        subMessage="Genieße deinen Vorteil!"
+        subMessage="Geniesse deinen Vorteil!"
         playSound={true}
       />
       {/* Header */}
