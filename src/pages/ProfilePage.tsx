@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { ArrowLeft, User, Mail, Phone, MapPin, Camera, Loader2, Save, Check } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, MapPin, Camera, Loader2, Save, Check, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateProfile } from '@/lib/supabase-helpers';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const profileSchema = z.object({
   display_name: z.string().trim().max(100, 'Max 100 Zeichen').optional(),
@@ -18,6 +27,8 @@ const profileSchema = z.object({
   city: z.string().trim().max(100, 'Max 100 Zeichen').optional(),
   leaderboard_nickname: z.string().trim().max(20, 'Max 20 Zeichen').optional(),
 });
+
+const emailSchema = z.string().trim().email('Ungültige E-Mail-Adresse');
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
@@ -37,6 +48,13 @@ export default function ProfilePage() {
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Email change state
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   
   // Load profile data
   useEffect(() => {
@@ -107,6 +125,56 @@ export default function ProfilePage() {
     }
   };
   
+  const handleEmailChange = async () => {
+    setEmailError(null);
+    
+    // Validate email
+    const result = emailSchema.safeParse(newEmail);
+    if (!result.success) {
+      setEmailError(result.error.errors[0].message);
+      return;
+    }
+    
+    // Check if same as current
+    if (newEmail.toLowerCase() === user?.email?.toLowerCase()) {
+      setEmailError('Das ist bereits deine aktuelle E-Mail-Adresse');
+      return;
+    }
+    
+    setIsEmailLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail,
+      }, {
+        emailRedirectTo: `${window.location.origin}/profile`,
+      });
+      
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setEmailError('Diese E-Mail-Adresse wird bereits verwendet');
+        } else {
+          setEmailError(error.message);
+        }
+        return;
+      }
+      
+      setEmailSent(true);
+      toast.success('Bestätigungs-E-Mail gesendet!');
+    } catch (error) {
+      setEmailError('Ein Fehler ist aufgetreten');
+    } finally {
+      setIsEmailLoading(false);
+    }
+  };
+  
+  const closeEmailDialog = () => {
+    setShowEmailDialog(false);
+    setNewEmail('');
+    setEmailError(null);
+    setEmailSent(false);
+  };
+  
   if (!user) return null;
   
   return (
@@ -147,6 +215,30 @@ export default function ProfilePage() {
               </button>
             </div>
             <p className="text-sm text-muted-foreground mt-3">{profile?.email}</p>
+          </div>
+        </section>
+        
+        {/* Email Change Section */}
+        <section className="animate-in">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            E-Mail-Adresse
+          </h2>
+          
+          <div className="card-base p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-foreground">{user.email}</p>
+                <p className="text-sm text-muted-foreground">Deine Anmelde-E-Mail</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEmailDialog(true)}
+              >
+                Ändern
+              </Button>
+            </div>
           </div>
         </section>
         
@@ -321,6 +413,104 @@ export default function ProfilePage() {
           </div>
         </section>
       </div>
+      
+      {/* Email Change Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>E-Mail-Adresse ändern</DialogTitle>
+            <DialogDescription>
+              {emailSent 
+                ? 'Wir haben dir eine Bestätigungs-E-Mail gesendet.'
+                : 'Gib deine neue E-Mail-Adresse ein. Du erhältst eine Bestätigungs-E-Mail.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {emailSent ? (
+            <div className="py-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center mb-4">
+                  <CheckCircle className="h-8 w-8 text-success" />
+                </div>
+                <p className="font-medium text-foreground mb-2">
+                  Bestätigungs-E-Mail gesendet!
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Wir haben eine E-Mail an <strong>{newEmail}</strong> gesendet. 
+                  Klicke auf den Link in der E-Mail, um deine neue Adresse zu bestätigen.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Aktuelle E-Mail</label>
+                <Input
+                  value={user.email || ''}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Neue E-Mail</label>
+                <Input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => {
+                    setNewEmail(e.target.value);
+                    setEmailError(null);
+                  }}
+                  placeholder="neue@email.ch"
+                  className={cn(emailError && 'border-destructive')}
+                  autoComplete="email"
+                />
+                {emailError && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {emailError}
+                  </p>
+                )}
+              </div>
+              
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <p className="text-sm text-amber-700">
+                  <strong>Hinweis:</strong> Nach der Bestätigung musst du dich mit der neuen E-Mail-Adresse anmelden.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            {emailSent ? (
+              <Button onClick={closeEmailDialog} className="w-full">
+                Verstanden
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={closeEmailDialog}
+                  disabled={isEmailLoading}
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  onClick={handleEmailChange}
+                  disabled={isEmailLoading || !newEmail}
+                >
+                  {isEmailLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Mail className="h-4 w-4 mr-2" />
+                  )}
+                  Bestätigung senden
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
