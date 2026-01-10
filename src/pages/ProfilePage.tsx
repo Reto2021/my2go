@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { ArrowLeft, User, Mail, Phone, MapPin, Camera, Loader2, Save, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, MapPin, Loader2, Save, Check, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateProfile } from '@/lib/supabase-helpers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -192,30 +193,15 @@ export default function ProfilePage() {
       <div className="container py-6 space-y-6">
         {/* Avatar Section */}
         <section className="animate-in">
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                {profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Avatar" 
-                    className="h-24 w-24 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-3xl font-bold text-foreground">
-                    {(formData.display_name || formData.first_name || profile?.email || 'U').charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <button 
-                className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
-                onClick={() => toast.info('Avatar-Upload kommt bald!')}
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-3">{profile?.email}</p>
-          </div>
+          {user && (
+            <AvatarUpload
+              userId={user.id}
+              currentAvatarUrl={profile?.avatar_url || null}
+              displayName={formData.display_name || formData.first_name || profile?.email || 'U'}
+              onAvatarUpdated={refreshProfile}
+            />
+          )}
+          <p className="text-sm text-muted-foreground mt-3 text-center">{profile?.email}</p>
         </section>
         
         {/* Email Change Section */}
