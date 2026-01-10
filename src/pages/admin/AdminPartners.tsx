@@ -27,7 +27,9 @@ import {
   Download,
   Building2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Upload,
+  FileSpreadsheet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -75,6 +77,11 @@ export default function AdminPartners() {
   const [isBulkSearching, setIsBulkSearching] = useState(false);
   const [isBulkImporting, setIsBulkImporting] = useState(false);
   const [bulkImportProgress, setBulkImportProgress] = useState({ current: 0, total: 0 });
+  
+  // CSV import state
+  const [csvData, setCsvData] = useState<BulkSearchResult[]>([]);
+  const [showCsvImport, setShowCsvImport] = useState(false);
+  const [csvFileName, setCsvFileName] = useState('');
   
   const PARTNER_CATEGORIES = [
     'Restaurant',
@@ -465,6 +472,201 @@ export default function AdminPartners() {
     setIsBulkImporting(false);
     toast.success(`${successCount} Partner erfolgreich importiert`);
   };
+
+  // CSV parsing function
+  const parseCSV = (text: string): Record<string, string>[] => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    
+    // Parse header - handle both semicolon and comma as delimiter
+    const delimiter = lines[0].includes(';') ? ';' : ',';
+    const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+    
+    const rows: Record<string, string>[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ''));
+      if (values.length === headers.length) {
+        const row: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index];
+        });
+        rows.push(row);
+      }
+    }
+    return rows;
+  };
+
+  // Map CSV columns to our format
+  const mapCsvToPartner = (row: Record<string, string>): BulkSearchResult | null => {
+    // Try to find name column
+    const name = row['name'] || row['name'] || row['firmenname'] || row['geschäft'] || row['partner'];
+    if (!name) return null;
+
+    return {
+      google_place_id: row['google_place_id'] || row['place_id'] || `csv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      address: row['adresse'] || row['address'] || '',
+      city: row['city'] || row['stadt'] || row['ort'] || '',
+      postal_code: row['postal_code'] || row['plz'] || row['postleitzahl'] || '',
+      address_street: row['address_street'] || row['strasse'] || row['street'] || '',
+      address_number: row['address_number'] || row['hausnummer'] || row['nr'] || row['number'] || '',
+      category: row['category'] || row['kategorie'] || 'Sonstiges',
+      rating: row['rating'] ? parseFloat(row['rating']) : null,
+      review_count: row['review_count'] || row['reviews'] ? parseInt(row['review_count'] || row['reviews']) : null,
+      lat: row['lat'] || row['latitude'] ? parseFloat(row['lat'] || row['latitude']) : null,
+      lng: row['lng'] || row['longitude'] ? parseFloat(row['lng'] || row['longitude']) : null,
+      types: [],
+      selected: false,
+      website: row['website'] || row['url'] || row['homepage'] || '',
+      description: row['description'] || row['beschreibung'] || '',
+      short_description: row['short_description'] || row['kurzbeschreibung'] || '',
+    };
+  };
+
+  // Handle CSV file upload
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvFileName(file.name);
+    
+    try {
+      const text = await file.text();
+      const parsed = parseCSV(text);
+      
+      if (parsed.length === 0) {
+        toast.error('Keine gültigen Daten in der CSV-Datei gefunden');
+        return;
+      }
+
+      // Map to our format and filter out already existing partners
+      const existingNames = new Set(partners.map(p => p.name.toLowerCase()));
+      const existingPlaceIds = new Set(partners.map(p => p.google_place_id).filter(Boolean));
+      
+      const mappedData = parsed
+        .map(mapCsvToPartner)
+        .filter((p): p is BulkSearchResult => p !== null)
+        .filter(p => !existingNames.has(p.name.toLowerCase()) && !existingPlaceIds.has(p.google_place_id));
+
+      setCsvData(mappedData.map(d => ({ ...d, selected: true })));
+      setShowCsvImport(true);
+      
+      toast.success(`${mappedData.length} Partner aus CSV geladen (${parsed.length - mappedData.length} bereits vorhanden)`);
+    } catch (error) {
+      console.error('CSV parse error:', error);
+      toast.error('Fehler beim Lesen der CSV-Datei');
+    }
+    
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Toggle CSV selection
+  const toggleCsvSelection = (index: number) => {
+    setCsvData(prev => prev.map((r, i) => 
+      i === index ? { ...r, selected: !r.selected } : r
+    ));
+  };
+
+  // Toggle all CSV
+  const toggleCsvSelectAll = () => {
+    const allSelected = csvData.every(r => r.selected);
+    setCsvData(prev => prev.map(r => ({ ...r, selected: !allSelected })));
+  };
+
+  // Import from CSV
+  const handleCsvImport = async () => {
+    const selected = csvData.filter(r => r.selected && !r.imported);
+    if (selected.length === 0) {
+      toast.error('Keine Partner ausgewählt');
+      return;
+    }
+    
+    setIsBulkImporting(true);
+    setBulkImportProgress({ current: 0, total: selected.length });
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < selected.length; i++) {
+      const result = selected[i];
+      setBulkImportProgress({ current: i + 1, total: selected.length });
+      
+      // Mark as importing
+      setCsvData(prev => prev.map(r => 
+        r.google_place_id === result.google_place_id ? { ...r, importing: true } : r
+      ));
+      
+      try {
+        // Generate slug
+        const slug = result.name
+          .toLowerCase()
+          .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+          .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        
+        // Create partner
+        const { partner, error } = await createPartner({
+          name: result.name,
+          slug,
+          description: result.description,
+          short_description: result.short_description,
+          category: result.category,
+          address_street: result.address_street,
+          address_number: result.address_number,
+          postal_code: result.postal_code,
+          city: result.city,
+          website: result.website,
+          google_place_id: result.google_place_id.startsWith('csv_') ? undefined : result.google_place_id,
+          is_active: false,
+          is_featured: false,
+          lat: result.lat,
+          lng: result.lng,
+          google_rating: result.rating,
+          google_review_count: result.review_count,
+        });
+        
+        if (error) {
+          console.error(`Error importing ${result.name}:`, error);
+          setCsvData(prev => prev.map(r => 
+            r.google_place_id === result.google_place_id ? { ...r, importing: false } : r
+          ));
+        } else {
+          successCount++;
+          if (partner) {
+            setPartners(prev => [partner, ...prev]);
+          }
+          setCsvData(prev => prev.map(r => 
+            r.google_place_id === result.google_place_id ? { ...r, importing: false, imported: true, selected: false } : r
+          ));
+        }
+      } catch (error) {
+        console.error(`Error importing ${result.name}:`, error);
+        setCsvData(prev => prev.map(r => 
+          r.google_place_id === result.google_place_id ? { ...r, importing: false } : r
+        ));
+      }
+      
+      // Small delay between imports
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    setIsBulkImporting(false);
+    toast.success(`${successCount} Partner aus CSV importiert`);
+  };
+
+  // Download CSV template
+  const downloadCsvTemplate = () => {
+    const headers = ['name', 'kategorie', 'strasse', 'hausnummer', 'plz', 'stadt', 'website', 'beschreibung', 'kurzbeschreibung', 'google_place_id'];
+    const exampleRow = ['Muster Café', 'Café', 'Bahnhofstrasse', '12', '5200', 'Brugg', 'https://www.muster.ch', 'Gemütliches Café im Herzen der Stadt', 'Ihr Lieblingscafé', ''];
+    
+    const csv = [headers.join(';'), exampleRow.join(';')].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'partner-import-vorlage.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
   
   const filteredPartners = partners.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -566,7 +768,7 @@ export default function AdminPartners() {
                 Massenerfassung
               </h2>
               <p className="text-sm text-muted-foreground">
-                Suche Geschäfte via Google Places und importiere sie als Partner
+                Suche Geschäfte via Google Places oder importiere aus CSV
               </p>
             </div>
             <button
@@ -577,130 +779,278 @@ export default function AdminPartners() {
             </button>
           </div>
 
-          {/* Search Form */}
-          <div className="flex flex-wrap gap-3">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium mb-1">Stadt *</label>
-              <input
-                type="text"
-                value={bulkSearchCity}
-                onChange={(e) => setBulkSearchCity(e.target.value)}
-                placeholder="z.B. Brugg, Baden, Zürich..."
-                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleBulkSearch();
-                  }
-                }}
-              />
-            </div>
-            <div className="w-48">
-              <label className="block text-sm font-medium mb-1">Kategorie (optional)</label>
-              <select
-                value={bulkSearchCategory}
-                onChange={(e) => setBulkSearchCategory(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all appearance-none cursor-pointer"
-              >
-                <option value="">Alle Kategorien</option>
-                {PARTNER_CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={handleBulkSearch}
-                disabled={isBulkSearching}
-                className="btn-primary h-11"
-              >
-                {isBulkSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4" />
-                )}
-                Suchen
-              </button>
-            </div>
+          {/* Tabs for Google Places vs CSV */}
+          <div className="flex gap-2 border-b border-border pb-3">
+            <button
+              onClick={() => setShowCsvImport(false)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                !showCsvImport ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <Search className="h-4 w-4 inline mr-2" />
+              Google Places
+            </button>
+            <button
+              onClick={() => setShowCsvImport(true)}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                showCsvImport ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <FileSpreadsheet className="h-4 w-4 inline mr-2" />
+              CSV-Import
+            </button>
           </div>
 
-          {/* Results */}
-          {bulkSearchResults.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={toggleSelectAll}
-                    className="btn-ghost text-sm"
-                  >
-                    {bulkSearchResults.every(r => r.selected) ? 'Keine auswählen' : 'Alle auswählen'}
-                  </button>
-                  <span className="text-sm text-muted-foreground">
-                    {bulkSearchResults.filter(r => r.selected).length} von {bulkSearchResults.length} ausgewählt
-                  </span>
+          {/* Google Places Search */}
+          {!showCsvImport && (
+            <>
+              <div className="flex flex-wrap gap-3">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-sm font-medium mb-1">Stadt *</label>
+                  <input
+                    type="text"
+                    value={bulkSearchCity}
+                    onChange={(e) => setBulkSearchCity(e.target.value)}
+                    placeholder="z.B. Brugg, Baden, Zürich..."
+                    className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleBulkSearch();
+                      }
+                    }}
+                  />
                 </div>
-                <button
-                  onClick={handleBulkImport}
-                  disabled={isBulkImporting || bulkSearchResults.filter(r => r.selected && !r.imported).length === 0}
-                  className="btn-primary"
-                >
-                  {isBulkImporting ? (
-                    <>
+                <div className="w-48">
+                  <label className="block text-sm font-medium mb-1">Kategorie (optional)</label>
+                  <select
+                    value={bulkSearchCategory}
+                    onChange={(e) => setBulkSearchCategory(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="">Alle Kategorien</option>
+                    {PARTNER_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={handleBulkSearch}
+                    disabled={isBulkSearching}
+                    className="btn-primary h-11"
+                  >
+                    {isBulkSearching ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      {bulkImportProgress.current}/{bulkImportProgress.total}
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Importieren ({bulkSearchResults.filter(r => r.selected && !r.imported).length})
-                    </>
-                  )}
-                </button>
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    Suchen
+                  </button>
+                </div>
               </div>
 
-              <div className="divide-y divide-border rounded-xl border overflow-hidden max-h-96 overflow-y-auto">
-                {bulkSearchResults.map((result, index) => (
-                  <div 
-                    key={result.google_place_id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 transition-colors",
-                      result.imported ? "bg-success/10" : result.selected ? "bg-accent/5" : "bg-card hover:bg-muted/50",
-                      result.importing && "opacity-50"
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={result.selected || result.imported}
-                      disabled={result.imported || result.importing}
-                      onChange={() => toggleBulkSelection(index)}
-                      className="h-5 w-5 rounded"
-                    />
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted flex-shrink-0">
-                      <Store className="h-5 w-5 text-muted-foreground" />
+              {/* Google Places Results */}
+              {bulkSearchResults.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={toggleSelectAll}
+                        className="btn-ghost text-sm"
+                      >
+                        {bulkSearchResults.every(r => r.selected) ? 'Keine auswählen' : 'Alle auswählen'}
+                      </button>
+                      <span className="text-sm text-muted-foreground">
+                        {bulkSearchResults.filter(r => r.selected).length} von {bulkSearchResults.length} ausgewählt
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold truncate flex items-center gap-2">
-                        {result.name}
-                        {result.imported && <CheckCircle2 className="h-4 w-4 text-success" />}
-                        {result.importing && <Loader2 className="h-4 w-4 animate-spin" />}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="px-2 py-0.5 rounded bg-muted">{result.category}</span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {result.city}
-                        </span>
-                        {result.rating && (
-                          <span className="flex items-center gap-1">
-                            <Star className="h-3 w-3 text-accent fill-accent" />
-                            {result.rating.toFixed(1)} ({result.review_count})
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <button
+                      onClick={handleBulkImport}
+                      disabled={isBulkImporting || bulkSearchResults.filter(r => r.selected && !r.imported).length === 0}
+                      className="btn-primary"
+                    >
+                      {isBulkImporting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {bulkImportProgress.current}/{bulkImportProgress.total}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          Importieren ({bulkSearchResults.filter(r => r.selected && !r.imported).length})
+                        </>
+                      )}
+                    </button>
                   </div>
-                ))}
+
+                  <div className="divide-y divide-border rounded-xl border overflow-hidden max-h-96 overflow-y-auto">
+                    {bulkSearchResults.map((result, index) => (
+                      <div 
+                        key={result.google_place_id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 transition-colors",
+                          result.imported ? "bg-success/10" : result.selected ? "bg-accent/5" : "bg-card hover:bg-muted/50",
+                          result.importing && "opacity-50"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={result.selected || result.imported}
+                          disabled={result.imported || result.importing}
+                          onChange={() => toggleBulkSelection(index)}
+                          className="h-5 w-5 rounded"
+                        />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted flex-shrink-0">
+                          <Store className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold truncate flex items-center gap-2">
+                            {result.name}
+                            {result.imported && <CheckCircle2 className="h-4 w-4 text-success" />}
+                            {result.importing && <Loader2 className="h-4 w-4 animate-spin" />}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="px-2 py-0.5 rounded bg-muted">{result.category}</span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {result.city}
+                            </span>
+                            {result.rating && (
+                              <span className="flex items-center gap-1">
+                                <Star className="h-3 w-3 text-accent fill-accent" />
+                                {result.rating.toFixed(1)} ({result.review_count})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* CSV Import */}
+          {showCsvImport && (
+            <div className="space-y-4">
+              {/* Upload Area */}
+              <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
+                <FileSpreadsheet className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                <p className="font-medium mb-1">CSV-Datei hochladen</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Spalten: name, kategorie, strasse, hausnummer, plz, stadt, website, beschreibung
+                </p>
+                <div className="flex justify-center gap-3">
+                  <label className="btn-primary cursor-pointer">
+                    <Upload className="h-4 w-4" />
+                    CSV auswählen
+                    <input
+                      type="file"
+                      accept=".csv,.txt"
+                      onChange={handleCsvUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <button
+                    onClick={downloadCsvTemplate}
+                    className="btn-ghost"
+                  >
+                    <Download className="h-4 w-4" />
+                    Vorlage herunterladen
+                  </button>
+                </div>
+                {csvFileName && (
+                  <p className="text-sm text-accent mt-3">
+                    Geladen: {csvFileName}
+                  </p>
+                )}
               </div>
+
+              {/* CSV Data Preview */}
+              {csvData.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={toggleCsvSelectAll}
+                        className="btn-ghost text-sm"
+                      >
+                        {csvData.every(r => r.selected) ? 'Keine auswählen' : 'Alle auswählen'}
+                      </button>
+                      <span className="text-sm text-muted-foreground">
+                        {csvData.filter(r => r.selected).length} von {csvData.length} ausgewählt
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleCsvImport}
+                      disabled={isBulkImporting || csvData.filter(r => r.selected && !r.imported).length === 0}
+                      className="btn-primary"
+                    >
+                      {isBulkImporting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {bulkImportProgress.current}/{bulkImportProgress.total}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          Importieren ({csvData.filter(r => r.selected && !r.imported).length})
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="divide-y divide-border rounded-xl border overflow-hidden max-h-96 overflow-y-auto">
+                    {csvData.map((result, index) => (
+                      <div 
+                        key={result.google_place_id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 transition-colors",
+                          result.imported ? "bg-success/10" : result.selected ? "bg-accent/5" : "bg-card hover:bg-muted/50",
+                          result.importing && "opacity-50"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={result.selected || result.imported}
+                          disabled={result.imported || result.importing}
+                          onChange={() => toggleCsvSelection(index)}
+                          className="h-5 w-5 rounded"
+                        />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted flex-shrink-0">
+                          <Store className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold truncate flex items-center gap-2">
+                            {result.name}
+                            {result.imported && <CheckCircle2 className="h-4 w-4 text-success" />}
+                            {result.importing && <Loader2 className="h-4 w-4 animate-spin" />}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="px-2 py-0.5 rounded bg-muted">{result.category}</span>
+                            {result.city && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {result.city}
+                              </span>
+                            )}
+                            {result.website && (
+                              <span className="flex items-center gap-1">
+                                <Globe className="h-3 w-3" />
+                                Website
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
