@@ -5,13 +5,15 @@ import {
   QrCode,
   ArrowLeft,
   Store,
-  Star
+  Star,
+  ScanLine
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePartner } from './PartnerGuard';
 
 const navItems = [
   { path: '/partner-portal', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+  { path: '/partner-portal/scan', icon: ScanLine, label: 'Kunden scannen' },
   { path: '/partner-portal/rewards', icon: Gift, label: 'Gutscheine' },
   { path: '/partner-portal/redemptions', icon: QrCode, label: 'Einlösungen' },
   { path: '/partner-portal/reviews', icon: Star, label: 'Bewertungen' },

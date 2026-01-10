@@ -24,6 +24,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
 import MyRedemptionsPage from "./pages/MyRedemptionsPage";
+import MyQRPage from "./pages/MyQRPage";
 import RedemptionDetailPage from "./pages/RedemptionDetailPage";
 import ReferralPage from "./pages/ReferralPage";
 import NotFound from "./pages/NotFound";
@@ -42,6 +43,7 @@ import AdminRadioTiers from "./pages/admin/AdminRadioTiers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminPartnerApplications from "./pages/admin/AdminPartnerApplications";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
+import PartnerScanPage from "./pages/partner/PartnerScanPage";
 import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
 import PartnerReviews from "./pages/partner/PartnerReviews";
@@ -130,6 +132,7 @@ function AppContent() {
         {/* Partner portal with partner layout and guard */}
         <Route path="/partner-portal" element={<PartnerGuard><PartnerLayout /></PartnerGuard>}>
           <Route index element={<PartnerDashboard />} />
+          <Route path="scan" element={<PartnerScanPage />} />
           <Route path="rewards" element={<PartnerRewards />} />
           <Route path="redemptions" element={<PartnerRedemptions />} />
           <Route path="reviews" element={<PartnerReviews />} />
@@ -177,6 +180,7 @@ function AppContent() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
           <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
+          <Route path="/my-qr" element={<MyQRPage />} />
           <Route path="/referral" element={<ReferralPage />} />
           <Route path="/badges" element={<BadgesPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
