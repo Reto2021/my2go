@@ -355,10 +355,13 @@ export default function RedemptionDetailPage() {
     );
   }
 
-  const config = statusConfig[redemption.status];
-  const StatusIcon = config.icon;
-  const isPending = redemption.status === 'pending';
   const expiresAt = new Date(redemption.expires_at);
+  const isExpired = expiresAt.getTime() < Date.now();
+  // Show as expired if expires_at has passed and status is still pending
+  const effectiveStatus = (redemption.status === 'pending' && isExpired) ? 'expired' : redemption.status;
+  const config = statusConfig[effectiveStatus];
+  const StatusIcon = config.icon;
+  const isPending = effectiveStatus === 'pending';
   const isExpiringSoon = isPending && expiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000;
 
   const partnerAddress = [
