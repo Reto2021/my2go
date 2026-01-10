@@ -138,7 +138,7 @@ export interface Region {
 // AUTH
 // ============================================================================
 
-export async function signUp(email: string, password: string, displayName?: string, phone?: string) {
+export async function signUp(email: string, password: string, firstName?: string, phone?: string, marketingConsent?: boolean) {
   const redirectUrl = `${window.location.origin}/`;
   
   const { data, error } = await supabase.auth.signUp({
@@ -147,8 +147,9 @@ export async function signUp(email: string, password: string, displayName?: stri
     options: {
       emailRedirectTo: redirectUrl,
       data: {
-        display_name: displayName || email.split('@')[0],
+        first_name: firstName || email.split('@')[0],
         phone: phone || null,
+        marketing_consent: marketingConsent || false,
       },
     },
   });
