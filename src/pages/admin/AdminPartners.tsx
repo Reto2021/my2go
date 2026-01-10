@@ -22,7 +22,8 @@ import {
   CheckCircle2,
   Globe,
   Sparkles,
-  Loader2
+  Loader2,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -793,6 +794,15 @@ export default function AdminPartners() {
               </div>
               
               <div className="flex items-center gap-2">
+                <a
+                  href={`/partner/dashboard?partner_id=${partner.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                  title="Partner-Dashboard öffnen"
+                >
+                  <ExternalLink className="h-4 w-4 text-primary" />
+                </a>
                 <button
                   onClick={() => openEditForm(partner)}
                   className="p-2 rounded-lg hover:bg-muted transition-colors"
