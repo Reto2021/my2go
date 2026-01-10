@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Radio, Users } from 'lucide-react';
+import { Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLiveListeners } from '@/hooks/useLiveListeners';
 
@@ -9,7 +9,11 @@ interface LiveListenerCountProps {
   size?: 'sm' | 'md';
 }
 
-export function LiveListenerCount({ className, showLabel = true, size = 'md' }: LiveListenerCountProps) {
+export function LiveListenerCount({ 
+  className, 
+  showLabel = true, 
+  size = 'md' 
+}: LiveListenerCountProps) {
   const { formattedCount, isConnected } = useLiveListeners();
 
   if (!isConnected) {
@@ -41,7 +45,6 @@ export function LiveListenerCount({ className, showLabel = true, size = 'md' }: 
         className
       )}
     >
-      {/* Pulsing indicator */}
       <span className="relative flex">
         <span 
           className={cn(
@@ -57,7 +60,6 @@ export function LiveListenerCount({ className, showLabel = true, size = 'md' }: 
         />
       </span>
 
-      {/* Listener count with animation */}
       <motion.span
         key={formattedCount}
         initial={{ y: -10, opacity: 0 }}
