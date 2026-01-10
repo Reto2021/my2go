@@ -14,6 +14,10 @@ import {
   Edit, 
   Trash2, 
   X,
+  Square,
+  CheckSquare,
+  ToggleLeft,
+  ToggleRight,
   Check,
   MapPin,
   Star,
@@ -130,6 +134,10 @@ export default function AdminPartners() {
   const [rewardSuggestions, setRewardSuggestions] = useState<RewardSuggestion[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
   const [showRewardSuggestions, setShowRewardSuggestions] = useState(false);
+  
+  // Bulk selection state for mass mutations
+  const [selectedPartnerIds, setSelectedPartnerIds] = useState<Set<string>>(new Set());
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   
   // Partner field definitions for mapping
   const PARTNER_FIELDS = [
@@ -389,6 +397,132 @@ export default function AdminPartners() {
     }
   };
   
+  // Bulk selection helpers
+  const togglePartnerSelection = (partnerId: string) => {
+    setSelectedPartnerIds(prev => {
+      const next = new Set(prev);
+      if (next.has(partnerId)) {
+        next.delete(partnerId);
+      } else {
+        next.add(partnerId);
+      }
+      return next;
+    });
+  };
+  
+  const toggleSelectAllPartners = (partnerList: Partner[]) => {
+    if (selectedPartnerIds.size === partnerList.length && partnerList.length > 0) {
+      setSelectedPartnerIds(new Set());
+    } else {
+      setSelectedPartnerIds(new Set(partnerList.map(p => p.id)));
+    }
+  };
+  
+  const clearSelection = () => {
+    setSelectedPartnerIds(new Set());
+  };
+  
+  // Bulk update functions
+  const handleBulkActivate = async () => {
+    if (selectedPartnerIds.size === 0) return;
+    setIsBulkUpdating(true);
+    
+    try {
+      const ids = Array.from(selectedPartnerIds);
+      const { error } = await supabase
+        .from('partners')
+        .update({ is_active: true })
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      setPartners(prev => prev.map(p => 
+        selectedPartnerIds.has(p.id) ? { ...p, is_active: true } : p
+      ));
+      toast.success(`${ids.length} Partner aktiviert`);
+      clearSelection();
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Aktivieren');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+  
+  const handleBulkDeactivate = async () => {
+    if (selectedPartnerIds.size === 0) return;
+    setIsBulkUpdating(true);
+    
+    try {
+      const ids = Array.from(selectedPartnerIds);
+      const { error } = await supabase
+        .from('partners')
+        .update({ is_active: false })
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      setPartners(prev => prev.map(p => 
+        selectedPartnerIds.has(p.id) ? { ...p, is_active: false } : p
+      ));
+      toast.success(`${ids.length} Partner deaktiviert`);
+      clearSelection();
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Deaktivieren');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+  
+  const handleBulkFeature = async () => {
+    if (selectedPartnerIds.size === 0) return;
+    setIsBulkUpdating(true);
+    
+    try {
+      const ids = Array.from(selectedPartnerIds);
+      const { error } = await supabase
+        .from('partners')
+        .update({ is_featured: true })
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      setPartners(prev => prev.map(p => 
+        selectedPartnerIds.has(p.id) ? { ...p, is_featured: true } : p
+      ));
+      toast.success(`${ids.length} Partner als Featured markiert`);
+      clearSelection();
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Featuren');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+  
+  const handleBulkUnfeature = async () => {
+    if (selectedPartnerIds.size === 0) return;
+    setIsBulkUpdating(true);
+    
+    try {
+      const ids = Array.from(selectedPartnerIds);
+      const { error } = await supabase
+        .from('partners')
+        .update({ is_featured: false })
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      setPartners(prev => prev.map(p => 
+        selectedPartnerIds.has(p.id) ? { ...p, is_featured: false } : p
+      ));
+      toast.success(`${ids.length} Partner Featured entfernt`);
+      clearSelection();
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Entfernen');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
   const openEditForm = (partner: Partner) => {
     setEditingPartner(partner);
     setFormData({
@@ -2429,8 +2563,75 @@ export default function AdminPartners() {
         </div>
       )}
       
+      {/* Bulk Action Bar */}
+      {selectedPartnerIds.size > 0 && (
+        <div className="card-base p-4 flex items-center justify-between gap-4 bg-accent/10 border-accent/30 sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={clearSelection}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <span className="font-semibold">{selectedPartnerIds.size} Partner ausgewählt</span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleBulkActivate}
+              disabled={isBulkUpdating}
+              className="btn-primary text-sm gap-1"
+            >
+              {isBulkUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ToggleRight className="h-4 w-4" />}
+              Aktivieren
+            </button>
+            <button
+              onClick={handleBulkDeactivate}
+              disabled={isBulkUpdating}
+              className="btn-ghost text-sm gap-1"
+            >
+              {isBulkUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ToggleLeft className="h-4 w-4" />}
+              Deaktivieren
+            </button>
+            <button
+              onClick={handleBulkFeature}
+              disabled={isBulkUpdating}
+              className="btn-ghost text-sm gap-1"
+            >
+              {isBulkUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+              Featured
+            </button>
+            <button
+              onClick={handleBulkUnfeature}
+              disabled={isBulkUpdating}
+              className="btn-ghost text-sm gap-1 text-muted-foreground"
+            >
+              Featured entfernen
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Partners List */}
       <div className="space-y-3">
+        {/* Select All Header */}
+        {!isLoading && filteredPartners.length > 0 && (
+          <div className="flex items-center gap-3 px-2">
+            <button
+              onClick={() => toggleSelectAllPartners(filteredPartners)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {selectedPartnerIds.size === filteredPartners.length && filteredPartners.length > 0 ? (
+                <CheckSquare className="h-5 w-5 text-accent" />
+              ) : (
+                <Square className="h-5 w-5" />
+              )}
+              {selectedPartnerIds.size === filteredPartners.length && filteredPartners.length > 0 
+                ? 'Alle abwählen' 
+                : `Alle auswählen (${filteredPartners.length})`}
+            </button>
+          </div>
+        )}
+        
         {isLoading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-24 rounded-2xl bg-muted animate-pulse" />
@@ -2444,8 +2645,23 @@ export default function AdminPartners() {
           filteredPartners.map(partner => (
             <div
               key={partner.id}
-              className="card-base p-4 flex items-center gap-4"
+              className={cn(
+                "card-base p-4 flex items-center gap-4 transition-all",
+                selectedPartnerIds.has(partner.id) && "ring-2 ring-accent bg-accent/5"
+              )}
             >
+              {/* Checkbox */}
+              <button
+                onClick={() => togglePartnerSelection(partner.id)}
+                className="flex-shrink-0 p-1 rounded hover:bg-muted transition-colors"
+              >
+                {selectedPartnerIds.has(partner.id) ? (
+                  <CheckSquare className="h-5 w-5 text-accent" />
+                ) : (
+                  <Square className="h-5 w-5 text-muted-foreground" />
+                )}
+              </button>
+              
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 flex-shrink-0">
                 {partner.logo_url ? (
                   <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover rounded-2xl" />
