@@ -36,22 +36,26 @@ interface Redemption {
 
 const statusConfig = {
   pending: {
-    label: 'Aktiv',
+    label: 'Offen',
+    description: 'Beim Partner vorzeigen',
     icon: Clock,
     className: 'bg-accent/15 text-accent border-accent/30',
   },
   used: {
-    label: 'Eingelöst',
+    label: 'Verwendet',
+    description: 'Erfolgreich eingelöst',
     icon: CheckCircle,
     className: 'bg-success/15 text-success border-success/30',
   },
   expired: {
     label: 'Abgelaufen',
+    description: 'Gültigkeit überschritten',
     icon: AlertCircle,
     className: 'bg-muted text-muted-foreground border-border',
   },
   cancelled: {
     label: 'Storniert',
+    description: 'Wurde zurückgezogen',
     icon: XCircle,
     className: 'bg-destructive/15 text-destructive border-destructive/30',
   },
@@ -126,30 +130,40 @@ export default function MyRedemptionsPage() {
     <div className="container pb-24">
       {/* Header */}
       <div className="py-6">
-        <h1 className="text-2xl font-bold text-foreground">Meine Einlösungen</h1>
+        <h1 className="text-2xl font-bold text-foreground">Meine Gutscheine</h1>
         <p className="text-muted-foreground mt-1">
-          Übersicht deiner eingelösten Gutscheine
+          Aktivierte Gutscheine und deren Status
         </p>
       </div>
+
+      {/* Info Box explaining the flow */}
+      <Card className="mb-6 bg-muted/30 border-border/50">
+        <CardContent className="p-4">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">So funktioniert's:</strong> Aktiviere einen Gutschein mit deinen Taler. 
+            Zeige den Code beim Partner vor – nach Bestätigung wird er als <span className="text-success font-medium">verwendet</span> markiert.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <Card className="bg-card border-border/50">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Gesamt</p>
+            <p className="text-xs text-muted-foreground">Aktiviert</p>
           </CardContent>
         </Card>
         <Card className="bg-accent/10 border-accent/30">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-accent">{stats.pending}</p>
-            <p className="text-xs text-muted-foreground">Aktiv</p>
+            <p className="text-xs text-muted-foreground">Offen</p>
           </CardContent>
         </Card>
         <Card className="bg-success/10 border-success/30">
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-success">{stats.used}</p>
-            <p className="text-xs text-muted-foreground">Eingelöst</p>
+            <p className="text-xs text-muted-foreground">Verwendet</p>
           </CardContent>
         </Card>
       </div>
@@ -158,8 +172,8 @@ export default function MyRedemptionsPage() {
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
         {[
           { key: 'all', label: 'Alle' },
-          { key: 'pending', label: 'Aktiv' },
-          { key: 'used', label: 'Eingelöst' },
+          { key: 'pending', label: 'Offen' },
+          { key: 'used', label: 'Verwendet' },
           { key: 'expired', label: 'Abgelaufen' },
         ].map((tab) => (
           <Button
@@ -181,11 +195,11 @@ export default function MyRedemptionsPage() {
       {filteredRedemptions.length === 0 ? (
         <EmptyState
           icon={Gift}
-          title={filter === 'all' ? 'Noch keine Einlösungen' : 'Keine Ergebnisse'}
+          title={filter === 'all' ? 'Noch keine Gutscheine aktiviert' : 'Keine Ergebnisse'}
           description={
             filter === 'all'
-              ? 'Löse deinen ersten Gutschein ein und er erscheint hier.'
-              : 'Keine Einlösungen mit diesem Status gefunden.'
+              ? 'Aktiviere deinen ersten Gutschein mit Taler und er erscheint hier.'
+              : 'Keine Gutscheine mit diesem Status gefunden.'
           }
           action={
             filter === 'all'
@@ -283,7 +297,7 @@ export default function MyRedemptionsPage() {
                       {/* Redeemed info */}
                       {redemption.status === 'used' && redemption.redeemed_at && (
                         <p className="text-xs text-muted-foreground mt-2">
-                          Eingelöst am {format(new Date(redemption.redeemed_at), 'dd.MM.yyyy, HH:mm', { locale: de })}
+                          Verwendet am {format(new Date(redemption.redeemed_at), 'dd.MM.yyyy, HH:mm', { locale: de })}
                         </p>
                       )}
                     </div>

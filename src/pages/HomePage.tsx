@@ -407,7 +407,7 @@ function SessionModeHome({
         <h2 className="section-title mb-5">Schnellzugriff</h2>
         <div className="grid grid-cols-6 gap-2 stagger-children">
           <QuickAction to="/code" icon={Music} label="Code eingeben" color="accent" />
-          <QuickAction to="/my-redemptions" icon={Ticket} label="Meine Codes" color="primary" />
+          <QuickAction to="/my-redemptions" icon={Ticket} label="Gutscheine" color="primary" />
           <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="primary" />
           <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
           <QuickAction to="/referral" icon={Users} label="Einladen" color="accent" />

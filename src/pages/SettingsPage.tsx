@@ -182,9 +182,9 @@ export default function SettingsPage() {
                     <Gift className="h-5 w-5 text-success" />
                   </div>
                   <div className="text-left">
-                    <p className="font-medium">Meine Einlösungen</p>
+                    <p className="font-medium">Meine Gutscheine</p>
                     <p className="text-sm text-muted-foreground">
-                      Alle eingelösten Gutscheine ansehen
+                      Aktivierte Gutscheine und Status
                     </p>
                   </div>
                 </div>
