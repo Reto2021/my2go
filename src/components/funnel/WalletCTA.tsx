@@ -128,9 +128,9 @@ export function WalletCTA({
     onDismiss?.();
   };
 
-  if (dismissed || isPWAInstalled) {
-    return null;
-  }
+  // Wallet-Integration vorübergehend deaktiviert - immer null zurückgeben
+  // TODO: Aktivieren wenn Apple/Google Wallet Credentials eingerichtet sind
+  return null;
 
   // Show success state briefly after adding wallet
   if (walletAdded) {
