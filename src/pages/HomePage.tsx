@@ -294,6 +294,30 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         </div>
       </section>
       
+      {/* Partner Section */}
+      <section className="container pb-8">
+        <div className="p-5 rounded-2xl bg-accent/10 border border-accent/20">
+          <h3 className="font-bold text-secondary text-center mb-2">Für Geschäftspartner</h3>
+          <p className="text-sm text-muted-foreground text-center mb-4">
+            Werde Teil des 2Go Taler Netzwerks und erreiche neue Kunden.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Link 
+              to="/go" 
+              className="btn-primary text-sm py-2.5 px-5"
+            >
+              Partner werden
+            </Link>
+            <Link 
+              to="/auth?partner=true" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-secondary/20 text-secondary font-semibold text-sm hover:bg-secondary/5 transition-colors"
+            >
+              Partner Login
+            </Link>
+          </div>
+        </div>
+      </section>
+      
       {/* Info */}
       <section className="container pb-28">
         <div className="p-5 rounded-2xl bg-secondary/5 border border-secondary/10">
