@@ -24,6 +24,21 @@ const formatDuration = (seconds: number): string => {
   return `${minutes} Min.`;
 };
 
+const formatRemainingTime = (seconds: number): string => {
+  if (seconds <= 0) return '0s';
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+  if (seconds >= 60) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  }
+  return `${seconds}s`;
+};
+
 export function RadioPlayer({ className }: { className?: string }) {
   const { 
     isPlaying, 
@@ -321,48 +336,96 @@ export function RadioPlayer({ className }: { className?: string }) {
                     <div className="px-4 pb-4 pt-2 space-y-2">
                       {tiers.map((tier, index) => {
                         const isReached = currentSessionDuration >= tier.min_duration_seconds;
-                        const isNext = !isReached && (index === 0 || currentSessionDuration >= tiers[index - 1].min_duration_seconds);
+                        const previousTierDuration = index > 0 ? tiers[index - 1].min_duration_seconds : 0;
+                        const isNext = !isReached && currentSessionDuration >= previousTierDuration;
+                        const remainingSeconds = tier.min_duration_seconds - currentSessionDuration;
+                        
+                        // Calculate progress for this specific tier
+                        let tierProgress = 0;
+                        if (isReached) {
+                          tierProgress = 100;
+                        } else if (isNext) {
+                          const range = tier.min_duration_seconds - previousTierDuration;
+                          const elapsed = currentSessionDuration - previousTierDuration;
+                          tierProgress = Math.min(100, Math.max(0, (elapsed / range) * 100));
+                        }
+                        
+                        const isAlmostReached = isNext && tierProgress >= 80 && isPlaying;
+                        
                         return (
                           <motion.div
                             key={tier.id}
                             initial={{ x: -10, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: index * 0.05 }}
+                            animate={{ 
+                              x: 0, 
+                              opacity: 1,
+                              scale: isAlmostReached ? [1, 1.02, 1] : 1,
+                            }}
+                            transition={{ 
+                              delay: index * 0.05,
+                              scale: isAlmostReached ? { duration: 1, repeat: Infinity } : undefined
+                            }}
                             className={cn(
-                              "flex items-center gap-3 p-2.5 rounded-xl transition-all",
+                              "flex items-center gap-3 p-2.5 rounded-xl transition-all relative overflow-hidden",
                               isReached 
                                 ? "bg-accent/20 border border-accent/30" 
                                 : isNext
                                   ? "bg-white/10 border border-white/20"
-                                  : "bg-white/5"
+                                  : "bg-white/5",
+                              isAlmostReached && "border-accent/50 shadow-[0_0_15px_rgba(var(--accent),0.3)]"
                             )}
                           >
+                            {/* Progress background for next tier */}
+                            {isNext && !isReached && (
+                              <motion.div
+                                className="absolute inset-0 bg-accent/10"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${tierProgress}%` }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            )}
+                            
                             <div className={cn(
-                              "h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0",
-                              isReached ? "bg-accent" : "bg-white/10"
+                              "h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 relative z-10",
+                              isReached ? "bg-accent" : isAlmostReached ? "bg-accent/50" : "bg-white/10"
                             )}>
                               {isReached ? (
                                 <span className="text-sm">✓</span>
+                              ) : isAlmostReached ? (
+                                <motion.div
+                                  animate={{ scale: [1, 1.2, 1] }}
+                                  transition={{ duration: 0.5, repeat: Infinity }}
+                                >
+                                  <Clock className="h-3.5 w-3.5 text-accent" />
+                                </motion.div>
                               ) : (
                                 <Clock className="h-3.5 w-3.5 text-white/50" />
                               )}
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 relative z-10">
                               <p className={cn(
                                 "text-xs font-semibold",
-                                isReached ? "text-accent" : "text-white/80"
+                                isReached ? "text-accent" : isAlmostReached ? "text-accent" : "text-white/80"
                               )}>
                                 {tier.name}
                               </p>
                               <p className="text-xs text-white/50">
-                                {formatDuration(tier.min_duration_seconds)} hören
+                                {isReached ? (
+                                  'Erreicht!'
+                                ) : isNext && isPlaying ? (
+                                  <span className="text-accent/80">
+                                    noch {formatRemainingTime(remainingSeconds)}
+                                  </span>
+                                ) : (
+                                  `${formatDuration(tier.min_duration_seconds)} hören`
+                                )}
                               </p>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 relative z-10">
                               <TalerIcon size={14} />
                               <span className={cn(
                                 "text-sm font-bold",
-                                isReached ? "text-accent" : "text-white/70"
+                                isReached ? "text-accent" : isAlmostReached ? "text-accent" : "text-white/70"
                               )}>
                                 +{tier.taler_reward}
                               </span>
