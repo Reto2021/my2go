@@ -29,7 +29,7 @@ export default function PartnerThankYouPage() {
 
   return (
     <div className="py-12 md:py-20 min-h-[80vh] flex items-center">
-      {showConfetti && <Confetti />}
+      <Confetti isActive={showConfetti} playSound={false} />
       
       <div className="container max-w-2xl mx-auto px-4">
         <motion.div
