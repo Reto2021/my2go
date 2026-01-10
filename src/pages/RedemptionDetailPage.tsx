@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +19,9 @@ import {
   Phone,
   ExternalLink,
   Share2,
-  MessageCircle
+  MessageCircle,
+  Instagram,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
@@ -27,6 +29,14 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import talerCoin from '@/assets/taler-coin.png';
+import html2canvas from 'html2canvas';
+import { InstagramShareCard } from '@/components/ui/instagram-share-card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface RedemptionDetail {
   id: string;
@@ -98,6 +108,9 @@ export default function RedemptionDetailPage() {
   const [redemption, setRedemption] = useState<RedemptionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showInstagramDialog, setShowInstagramDialog] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -250,6 +263,60 @@ export default function RedemptionDetailPage() {
       toast.success('Text kopiert!');
     } catch {
       toast.error('Kopieren fehlgeschlagen');
+    }
+  };
+
+  const handleInstagramShare = () => {
+    setShowInstagramDialog(true);
+  };
+
+  const handleDownloadShareCard = async () => {
+    if (!shareCardRef.current) return;
+    
+    setGeneratingImage(true);
+    try {
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+      });
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      // Try native share with file (mobile)
+      if (navigator.share && navigator.canShare) {
+        try {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], 'radio2go-share.png', { type: 'image/png' });
+          
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: 'Radio 2Go Gutschein',
+              text: 'Schau mal, was ich bei Radio 2Go gespart habe! 🎧💰',
+            });
+            setShowInstagramDialog(false);
+            return;
+          }
+        } catch (shareError) {
+          console.log('Native share failed, falling back to download');
+        }
+      }
+      
+      // Fallback: download the image
+      const link = document.createElement('a');
+      link.download = 'radio2go-story.png';
+      link.href = dataUrl;
+      link.click();
+      
+      toast.success('Bild heruntergeladen! Öffne Instagram und teile es in deiner Story.');
+    } catch (err) {
+      console.error('Error generating share card:', err);
+      toast.error('Fehler beim Erstellen des Bildes');
+    } finally {
+      setGeneratingImage(false);
     }
   };
 
@@ -483,7 +550,7 @@ export default function RedemptionDetailPage() {
               Teile deine Ersparnis mit Freunden und lade sie zu Radio 2Go ein!
             </p>
             
-            <div className="flex gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Button
                 variant="outline"
                 className="flex-1 bg-[#25D366]/10 border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/20"
@@ -491,6 +558,15 @@ export default function RedemptionDetailPage() {
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 WhatsApp
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="flex-1 bg-gradient-to-r from-[#833AB4]/10 via-[#FD1D1D]/10 to-[#FCAF45]/10 border-[#E1306C]/30 text-[#E1306C] hover:from-[#833AB4]/20 hover:via-[#FD1D1D]/20 hover:to-[#FCAF45]/20"
+                onClick={handleInstagramShare}
+              >
+                <Instagram className="w-4 h-4 mr-2" />
+                Story
               </Button>
               
               <Button
@@ -514,6 +590,57 @@ export default function RedemptionDetailPage() {
           Zurück zur Übersicht
         </Button>
       </div>
+
+      {/* Instagram Share Dialog */}
+      <Dialog open={showInstagramDialog} onOpenChange={setShowInstagramDialog}>
+        <DialogContent className="max-w-[400px] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Instagram className="w-5 h-5 text-[#E1306C]" />
+              Instagram Story erstellen
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="p-4 space-y-4">
+            {/* Preview Card */}
+            <div className="flex justify-center overflow-hidden rounded-2xl shadow-lg">
+              <div className="transform scale-[0.55] origin-top -mb-[288px]">
+                <InstagramShareCard
+                  ref={shareCardRef}
+                  rewardTitle={redemption.reward?.title || 'Gutschein'}
+                  partnerName={redemption.partner?.name || 'Partner'}
+                  partnerLogo={redemption.partner?.logo_url}
+                  savedAmount={redemption.reward?.value_amount}
+                  savedPercent={redemption.reward?.value_percent}
+                  talerSpent={redemption.taler_spent}
+                  isRedeemed={redemption.status === 'used'}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <Button
+                className="w-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45] hover:opacity-90"
+                onClick={handleDownloadShareCard}
+                disabled={generatingImage}
+              >
+                {generatingImage ? (
+                  <LoadingSpinner />
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Bild speichern & in Story teilen
+                  </>
+                )}
+              </Button>
+              
+              <p className="text-xs text-center text-muted-foreground">
+                Das Bild wird gespeichert. Öffne dann Instagram und teile es in deiner Story!
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
