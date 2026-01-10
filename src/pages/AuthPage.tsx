@@ -10,7 +10,8 @@ import { TalerIcon } from '@/components/icons/TalerIcon';
 
 const emailSchema = z.string().email('Ungültige E-Mail-Adresse');
 const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
-const phoneSchema = z.string().regex(/^(\+41|0)?[0-9]{9,10}$/, 'Ungültige Telefonnummer').optional().or(z.literal(''));
+const firstNameSchema = z.string().min(1, 'Vorname ist erforderlich').max(50, 'Maximal 50 Zeichen');
+const phoneSchema = z.string().regex(/^(\+41|0)?[0-9]{9,10}$/, 'Ungültige Telefonnummer (z.B. +41791234567)');
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -20,11 +21,12 @@ export default function AuthPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string; firstName?: string }>({});
   
   // Check for referral code in URL
   const referralCode = searchParams.get('ref') || '';
@@ -78,7 +80,7 @@ export default function AuthPage() {
   };
   
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string; phone?: string } = {};
+    const newErrors: { email?: string; password?: string; phone?: string; firstName?: string } = {};
     
     try {
       emailSchema.parse(email);
@@ -96,7 +98,15 @@ export default function AuthPage() {
       }
     }
     
-    if (mode === 'signup' && phone) {
+    if (mode === 'signup') {
+      try {
+        firstNameSchema.parse(firstName);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.firstName = e.errors[0].message;
+        }
+      }
+      
       try {
         phoneSchema.parse(phone);
       } catch (e) {
@@ -148,7 +158,7 @@ export default function AuthPage() {
     
     try {
       if (mode === 'signup') {
-        const { data, error } = await signUp(email, password, displayName || undefined, phone || undefined);
+        const { data, error } = await signUp(email, password, firstName, phone, marketingConsent);
         
         if (error) {
           if (error.message.includes('already registered')) {
@@ -287,38 +297,45 @@ export default function AuthPage() {
           
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4 animate-in-delayed">
-            {/* Display Name (only for signup) */}
+            {/* First Name (required for signup) */}
             {mode === 'signup' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Name (optional)</label>
+                <label className="text-sm font-medium">Vorname *</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Dein Name"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Dein Vorname"
+                    value={firstName}
+                    onChange={(e) => {
+                      setFirstName(e.target.value);
+                      setErrors(prev => ({ ...prev, firstName: undefined }));
+                    }}
                     className={cn(
                       'w-full h-12 pl-12 pr-4 rounded-2xl',
-                      'bg-muted border-2 border-transparent',
+                      'bg-muted border-2',
+                      errors.firstName ? 'border-destructive' : 'border-transparent',
                       'placeholder:text-muted-foreground/60',
                       'focus:outline-none focus:border-accent focus:bg-background',
                       'transition-all duration-200'
                     )}
                   />
                 </div>
+                {errors.firstName && (
+                  <p className="text-sm text-destructive">{errors.firstName}</p>
+                )}
               </div>
             )}
             
-            {/* Phone (only for signup) */}
+            {/* Phone (required for signup) */}
             {mode === 'signup' && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Telefon (optional)</label>
+                <label className="text-sm font-medium">Telefon *</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <input
                     type="tel"
-                    placeholder="+41 79 123 45 67"
+                    placeholder="+41791234567"
                     value={phone}
                     onChange={(e) => {
                       setPhone(e.target.value);
@@ -337,6 +354,24 @@ export default function AuthPage() {
                 {errors.phone && (
                   <p className="text-sm text-destructive">{errors.phone}</p>
                 )}
+              </div>
+            )}
+            
+            {/* Marketing Opt-in (only for signup) */}
+            {mode === 'signup' && (
+              <div className="flex items-start gap-3 p-4 rounded-2xl bg-muted/50">
+                <input
+                  type="checkbox"
+                  id="marketingConsent"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                />
+                <label htmlFor="marketingConsent" className="text-sm text-muted-foreground cursor-pointer">
+                  Ich möchte per E-Mail und SMS über Aktionen, Angebote und Neuigkeiten informiert werden. 
+                  Details in den{' '}
+                  <a href="/agb" className="text-secondary hover:underline">Nutzungsbedingungen</a>.
+                </label>
               </div>
             )}
             
