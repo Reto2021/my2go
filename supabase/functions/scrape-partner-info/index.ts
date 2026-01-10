@@ -220,7 +220,7 @@ serve(async (req) => {
         url: targetUrl,
         formats: ['markdown', 'extract'],
         extract: {
-          prompt: `Extrahiere Geschäftsinformationen von dieser Website. WICHTIG: Alle Beschreibungen müssen auf DEUTSCH sein!
+          prompt: `Extrahiere Geschäftsinformationen von dieser Website. WICHTIG: Alle Beschreibungen müssen auf DEUTSCH sein und in SCHWEIZER HOCHDEUTSCH geschrieben werden (immer "ss" statt "ß", z.B. "Strasse" nicht "Straße", "gross" nicht "groß").
           
           Gib ein JSON-Objekt mit diesen Feldern zurück:
             - name: der Geschäfts-/Firmenname
@@ -239,7 +239,7 @@ serve(async (req) => {
             - facebook: Facebook-Seiten-URL
           
           Nur Felder einfügen, wenn die Information gefunden wird. Für fehlende Felder null zurückgeben.
-          WICHTIG: description und short_description MÜSSEN auf Deutsch sein!`
+          WICHTIG: description und short_description MÜSSEN auf Deutsch sein und IMMER "ss" statt "ß" verwenden!`
         },
         onlyMainContent: false,
       }),
