@@ -39,6 +39,8 @@ import AdminRadioTiers from "./pages/admin/AdminRadioTiers";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
+import PartnerReviews from "./pages/partner/PartnerReviews";
+import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ReviewRequestTrigger />
           <Routes>
             {/* Auth pages with layout but no login required */}
             <Route element={<AppLayout />}>
@@ -72,6 +75,7 @@ const App = () => (
               <Route index element={<PartnerDashboard />} />
               <Route path="rewards" element={<PartnerRewards />} />
               <Route path="redemptions" element={<PartnerRedemptions />} />
+              <Route path="reviews" element={<PartnerReviews />} />
             </Route>
             {/* All other pages with layout */}
             <Route element={<AppLayout />}>

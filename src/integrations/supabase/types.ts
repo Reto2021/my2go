@@ -194,6 +194,7 @@ export type Database = {
           description: string | null
           email: string | null
           facebook: string | null
+          google_place_id: string | null
           id: string
           instagram: string | null
           is_active: boolean | null
@@ -206,6 +207,8 @@ export type Database = {
           opening_hours: Json | null
           phone: string | null
           postal_code: string | null
+          review_request_delay_minutes: number | null
+          review_request_enabled: boolean | null
           short_description: string | null
           slug: string
           special_hours: Json | null
@@ -230,6 +233,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook?: string | null
+          google_place_id?: string | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
@@ -242,6 +246,8 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           postal_code?: string | null
+          review_request_delay_minutes?: number | null
+          review_request_enabled?: boolean | null
           short_description?: string | null
           slug: string
           special_hours?: Json | null
@@ -266,6 +272,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook?: string | null
+          google_place_id?: string | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
@@ -278,6 +285,8 @@ export type Database = {
           opening_hours?: Json | null
           phone?: string | null
           postal_code?: string | null
+          review_request_delay_minutes?: number | null
+          review_request_enabled?: boolean | null
           short_description?: string | null
           slug?: string
           special_hours?: Json | null
@@ -595,6 +604,60 @@ export type Database = {
           slug?: string
         }
         Relationships: []
+      }
+      review_requests: {
+        Row: {
+          created_at: string
+          feedback_submitted_at: string | null
+          feedback_text: string | null
+          id: string
+          in_app_rating: number | null
+          partner_id: string
+          redemption_id: string | null
+          review_clicked: boolean | null
+          review_clicked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_submitted_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          in_app_rating?: number | null
+          partner_id: string
+          redemption_id?: string | null
+          review_clicked?: boolean | null
+          review_clicked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_submitted_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          in_app_rating?: number | null
+          partner_id?: string
+          redemption_id?: string | null
+          review_clicked?: boolean | null
+          review_clicked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_requests_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "redemptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rewards: {
         Row: {
