@@ -196,7 +196,7 @@ export function SessionSummarySheet({ isOpen, onClose, sessionData }: SessionSum
 
             {/* Branding Footer */}
             <p className="text-center text-xs text-white/30">
-              radio2go.at • Hören lohnt sich!
+              my2go.app • Hören lohnt sich!
             </p>
           </div>
 
