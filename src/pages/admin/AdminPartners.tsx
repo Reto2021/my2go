@@ -31,7 +31,10 @@ import {
   Upload,
   FileSpreadsheet,
   ArrowRight,
-  Settings2
+  Settings2,
+  UserPlus,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -151,6 +154,10 @@ export default function AdminPartners() {
     is_active: false,
     is_featured: false,
     google_place_id: '',
+    contact_first_name: '',
+    contact_last_name: '',
+    contact_email: '',
+    contact_phone: '',
   });
   
   const loadPartners = async () => {
@@ -228,6 +235,10 @@ export default function AdminPartners() {
       is_active: false,
       is_featured: false,
       google_place_id: '',
+      contact_first_name: '',
+      contact_last_name: '',
+      contact_email: '',
+      contact_phone: '',
     });
   };
   
@@ -317,6 +328,10 @@ export default function AdminPartners() {
       is_active: partner.is_active,
       is_featured: partner.is_featured,
       google_place_id: partner.google_place_id || '',
+      contact_first_name: (partner as any).contact_first_name || '',
+      contact_last_name: (partner as any).contact_last_name || '',
+      contact_email: (partner as any).contact_email || '',
+      contact_phone: (partner as any).contact_phone || '',
     });
     setShowCreateForm(false);
   };
@@ -1591,6 +1606,56 @@ export default function AdminPartners() {
                 className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all"
                 placeholder="https://www.beispiel.ch"
               />
+            </div>
+            
+            {/* Contact Person */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <label className="block text-sm font-bold mb-3 flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-primary" />
+                Kontaktperson
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground">Vorname</label>
+                  <input
+                    type="text"
+                    value={formData.contact_first_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_first_name: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-lg bg-background border border-border focus:outline-none focus:border-primary/30 transition-all"
+                    placeholder="Max"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground">Nachname</label>
+                  <input
+                    type="text"
+                    value={formData.contact_last_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_last_name: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-lg bg-background border border-border focus:outline-none focus:border-primary/30 transition-all"
+                    placeholder="Muster"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground">E-Mail</label>
+                  <input
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-lg bg-background border border-border focus:outline-none focus:border-primary/30 transition-all"
+                    placeholder="max.muster@firma.ch"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1 text-muted-foreground">Telefon</label>
+                  <input
+                    type="tel"
+                    value={formData.contact_phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_phone: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-lg bg-background border border-border focus:outline-none focus:border-primary/30 transition-all"
+                    placeholder="+41 79 123 45 67"
+                  />
+                </div>
+              </div>
             </div>
             
             <div className="flex items-center gap-6">

@@ -405,8 +405,50 @@ export default function AdminPartnerApplications() {
               Schliessen
             </Button>
             {selectedApplication?.status === 'approved' && (
-              <Button onClick={() => {
-                toast.info("Diese Funktion wird in Kürze verfügbar sein.");
+              <Button onClick={async () => {
+                if (!selectedApplication) return;
+                
+                // Parse contact name into first and last name
+                const nameParts = selectedApplication.contact_name.trim().split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
+                
+                // Generate slug from company name
+                const slug = selectedApplication.company_name
+                  .toLowerCase()
+                  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+                  .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                
+                try {
+                  const { data, error } = await supabase
+                    .from('partners')
+                    .insert({
+                      name: selectedApplication.company_name,
+                      slug,
+                      category: selectedApplication.industry,
+                      address_street: selectedApplication.address_street,
+                      address_number: selectedApplication.address_number,
+                      postal_code: selectedApplication.postal_code,
+                      city: selectedApplication.city,
+                      website: selectedApplication.website,
+                      contact_first_name: firstName,
+                      contact_last_name: lastName,
+                      contact_email: selectedApplication.contact_email,
+                      contact_phone: selectedApplication.contact_phone,
+                      is_active: false, // Start inactive
+                      is_featured: false,
+                    })
+                    .select()
+                    .single();
+                  
+                  if (error) throw error;
+                  
+                  toast.success(`Partner "${selectedApplication.company_name}" wurde erfolgreich erstellt!`);
+                  setSelectedApplication(null);
+                } catch (error: any) {
+                  console.error('Error creating partner:', error);
+                  toast.error(error.message || 'Fehler beim Erstellen des Partners');
+                }
               }}>
                 <UserPlus className="w-4 h-4 mr-2" />
                 Als Partner anlegen
