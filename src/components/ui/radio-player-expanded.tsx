@@ -26,7 +26,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { TalerIcon } from '@/components/icons/TalerIcon';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthSafe } from '@/contexts/AuthContext';
 
 interface ListeningTier {
   id: string;
@@ -43,7 +43,8 @@ interface ExpandedRadioPlayerProps {
 }
 
 export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProps) {
-  const { user } = useAuth();
+  const auth = useAuthSafe();
+  const user = auth?.user ?? null;
   const isAuthenticated = !!user;
   
   const { 
