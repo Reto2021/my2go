@@ -85,7 +85,7 @@ export function Confetti({
   particleCount = 50,
   showMessage = false,
   message = '🎉 Erfolgreich eingelöst!',
-  subMessage = 'Genieße deinen Vorteil!',
+  subMessage = 'Geniesse deinen Vorteil!',
   playSound = true,
 }: ConfettiProps) {
   const [pieces, setPieces] = useState<ConfettiPiece[]>([]);

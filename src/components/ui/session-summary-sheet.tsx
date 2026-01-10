@@ -208,7 +208,7 @@ export function SessionSummarySheet({ isOpen, onClose, sessionData }: SessionSum
               className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
             >
               <X className="h-4 w-4 mr-2" />
-              Schließen
+              Schliessen
             </Button>
             <Button
               onClick={handleShare}
