@@ -6,6 +6,7 @@ import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { PartnerMap } from '@/components/PartnerMap';
+import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
 import { cn } from '@/lib/utils';
 import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -430,17 +431,27 @@ function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceP
           {partner.category || 'Partner'}
         </p>
         
-        {/* Distance */}
-        {distance !== undefined && (
-          <div className="flex items-center gap-1.5 mt-1">
-            <Navigation className="h-3.5 w-3.5 text-accent" />
-            <span className="text-sm font-semibold text-accent">
-              {distance < 1 
-                ? `${Math.round(distance * 1000)} m` 
-                : `${distance.toFixed(1)} km`}
-            </span>
-          </div>
-        )}
+        {/* Distance & Rating */}
+        <div className="flex items-center gap-3 mt-1 flex-wrap">
+          {distance !== undefined && (
+            <div className="flex items-center gap-1.5">
+              <Navigation className="h-3.5 w-3.5 text-accent" />
+              <span className="text-sm font-semibold text-accent">
+                {distance < 1 
+                  ? `${Math.round(distance * 1000)} m` 
+                  : `${distance.toFixed(1)} km`}
+              </span>
+            </div>
+          )}
+          {partner.google_rating && (
+            <GoogleReviewBadge
+              rating={partner.google_rating}
+              reviewCount={partner.google_review_count}
+              googlePlaceId={partner.google_place_id}
+              size="sm"
+            />
+          )}
+        </div>
       </div>
       
       {/* Arrow */}

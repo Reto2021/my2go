@@ -58,6 +58,9 @@ export interface Partner {
   opening_hours: unknown;
   is_active: boolean;
   is_featured: boolean;
+  google_place_id: string | null;
+  google_rating: number | null;
+  google_review_count: number | null;
 }
 
 export interface Reward {

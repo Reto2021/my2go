@@ -195,6 +195,8 @@ export type Database = {
           email: string | null
           facebook: string | null
           google_place_id: string | null
+          google_rating: number | null
+          google_review_count: number | null
           id: string
           instagram: string | null
           is_active: boolean | null
@@ -234,6 +236,8 @@ export type Database = {
           email?: string | null
           facebook?: string | null
           google_place_id?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null
@@ -273,6 +277,8 @@ export type Database = {
           email?: string | null
           facebook?: string | null
           google_place_id?: string | null
+          google_rating?: number | null
+          google_review_count?: number | null
           id?: string
           instagram?: string | null
           is_active?: boolean | null

@@ -5,6 +5,7 @@ import { RewardCard } from '@/components/ui/reward-card';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { GoogleReviewCard } from '@/components/partner/GoogleReviewBadge';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -159,6 +160,16 @@ export default function PartnerDetailPage() {
             </Link>
           )}
         </div>
+        
+        {/* Google Reviews */}
+        {partner.google_rating && (
+          <GoogleReviewCard
+            rating={partner.google_rating}
+            reviewCount={partner.google_review_count}
+            googlePlaceId={partner.google_place_id}
+            className="mb-4"
+          />
+        )}
         
         {/* Address */}
         {address && (
