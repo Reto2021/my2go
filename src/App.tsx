@@ -24,6 +24,9 @@ import ReferralPage from "./pages/ReferralPage";
 import NotFound from "./pages/NotFound";
 import BadgesPage from "./pages/BadgesPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import LegalTermsPage from "./pages/LegalTermsPage";
+import ImpressumPage from "./pages/ImpressumPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminCustomers from "./pages/admin/AdminCustomers";
@@ -76,6 +79,9 @@ const App = () => (
               <Route path="/referral" element={<ReferralPage />} />
               <Route path="/badges" element={<BadgesPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/agb" element={<LegalTermsPage />} />
+              <Route path="/impressum" element={<ImpressumPage />} />
+              <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
             </Route>
             
             {/* Catch-all */}

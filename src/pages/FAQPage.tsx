@@ -395,17 +395,12 @@ export default function FAQPage() {
                 <Shield className="h-5 w-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-sm">Datenschutz</h3>
-                <p className="text-sm text-muted-foreground">
-                <a 
-                    href="https://radio2go.fm/datenschutz" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-secondary font-medium hover:underline"
-                  >
-                    Datenschutzerklärung lesen
-                  </a>
-                </p>
+                <h3 className="font-semibold text-sm">Rechtliches</h3>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                  <a href="/agb" className="text-secondary font-medium hover:underline">AGB</a>
+                  <a href="/datenschutz" className="text-secondary font-medium hover:underline">Datenschutz</a>
+                  <a href="/impressum" className="text-secondary font-medium hover:underline">Impressum</a>
+                </div>
               </div>
             </div>
           </div>
@@ -417,7 +412,7 @@ export default function FAQPage() {
             2Go Taler sind Bonuspunkte und nicht gegen Bargeld eintauschbar.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            © {new Date().getFullYear()} Radio 2Go
+            © {new Date().getFullYear()} <a href="/impressum" className="hover:underline">2Go Media AG</a>
           </p>
         </div>
       </div>

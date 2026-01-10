@@ -333,9 +333,15 @@ export default function AuthPage() {
       </div>
       
       {/* Footer */}
-      <footer className="container pb-8">
+      <footer className="container pb-8 space-y-2">
         <p className="text-xs text-muted-foreground text-center">
-          Mit der Registrierung akzeptierst du unsere Nutzungsbedingungen.
+          Mit der Registrierung akzeptierst du unsere{' '}
+          <a href="/agb" className="text-secondary hover:underline">Nutzungsbedingungen</a>
+          {' '}und{' '}
+          <a href="/datenschutz" className="text-secondary hover:underline">Datenschutzerklärung</a>.
+        </p>
+        <p className="text-xs text-muted-foreground text-center">
+          <a href="/impressum" className="hover:underline">Impressum</a>
         </p>
       </footer>
     </div>
