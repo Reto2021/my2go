@@ -49,8 +49,8 @@ const rewardTypeLabels = {
   topup_bonus: 'Bonus',
 };
 
-// RAILGUARD: Redemption expires after 10 minutes
-const REDEMPTION_EXPIRY_MINUTES = 10;
+// RAILGUARD: Redemption expires after 60 minutes
+const REDEMPTION_EXPIRY_MINUTES = 60;
 
 export default function RewardDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -591,7 +591,10 @@ export default function RewardDetailPage() {
           
           {/* Partner Info */}
           {reward.partner && (
-            <div className="card-base p-4 mb-6">
+            <button 
+              className="card-base p-4 mb-6 w-full text-left hover:bg-muted/50 transition-colors cursor-pointer group"
+              onClick={() => navigate(`/partner/${reward.partner!.slug || reward.partner!.id}`)}
+            >
               <div className="flex items-center gap-4">
                 {reward.partner.logo_url ? (
                   <img 
@@ -604,15 +607,16 @@ export default function RewardDetailPage() {
                     <MapPin className="h-6 w-6 text-secondary" />
                   </div>
                 )}
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Einlösbar bei</p>
                   <p className="font-semibold">{reward.partner.name}</p>
                   {reward.partner.city && (
                     <p className="text-sm text-muted-foreground">{reward.partner.city}</p>
                   )}
                 </div>
+                <ArrowLeft className="h-5 w-5 text-muted-foreground rotate-180 group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
+            </button>
           )}
           
           {/* Stock Info */}
