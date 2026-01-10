@@ -5,6 +5,94 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to check if input looks like a URL
+function isLikelyUrl(input: string): boolean {
+  const trimmed = input.trim().toLowerCase();
+  // Check if it starts with http/https or looks like a domain
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return true;
+  }
+  // Check if it looks like a domain (e.g., www.example.com or example.ch)
+  const domainPattern = /^(www\.)?[a-z0-9-]+\.[a-z]{2,}(\/.*)?$/i;
+  if (domainPattern.test(trimmed) && !trimmed.includes(' ')) {
+    return true;
+  }
+  return false;
+}
+
+// Helper function to search for business website using Firecrawl search
+async function searchForBusinessWebsite(searchQuery: string, apiKey: string): Promise<string | null> {
+  try {
+    console.log(`Searching for business website: ${searchQuery}`);
+    
+    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `${searchQuery} official website`,
+        limit: 5,
+        lang: 'de',
+        country: 'ch',
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Firecrawl search error:', await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    console.log('Search results:', JSON.stringify(data));
+
+    // Get the search results
+    const results = data.data || [];
+    
+    if (results.length === 0) {
+      console.log('No search results found');
+      return null;
+    }
+
+    // Filter out common non-business sites and prefer official websites
+    const excludeDomains = [
+      'facebook.com', 'instagram.com', 'twitter.com', 'linkedin.com',
+      'tripadvisor.', 'yelp.', 'google.com/maps', 'google.ch/maps',
+      'youtube.com', 'wikipedia.org', 'local.ch', 'search.ch',
+      'gastrogate.com', 'lunchgate.ch', 'qype.ch'
+    ];
+
+    // Find the first result that looks like an official business website
+    for (const result of results) {
+      const url = result.url || '';
+      const lowerUrl = url.toLowerCase();
+      
+      // Skip excluded domains
+      const isExcluded = excludeDomains.some(domain => lowerUrl.includes(domain));
+      if (isExcluded) {
+        console.log(`Skipping excluded domain: ${url}`);
+        continue;
+      }
+
+      console.log(`Found potential business website: ${url}`);
+      return url;
+    }
+
+    // If no official site found, return the first non-social result
+    const firstResult = results[0]?.url;
+    if (firstResult) {
+      console.log(`Using first result as fallback: ${firstResult}`);
+      return firstResult;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error searching for business:', error);
+    return null;
+  }
+}
+
 // Helper function to search for Google Place ID using Perplexity
 async function findGooglePlaceId(businessName: string, city: string, perplexityKey: string): Promise<string | null> {
   if (!perplexityKey || !businessName) return null;
@@ -68,7 +156,7 @@ serve(async (req) => {
 
     if (!url) {
       return new Response(
-        JSON.stringify({ success: false, error: 'URL is required' }),
+        JSON.stringify({ success: false, error: 'URL oder Suchbegriff erforderlich' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -84,26 +172,38 @@ serve(async (req) => {
       );
     }
 
-    // Format URL
-    let formattedUrl = url.trim();
-    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
-      formattedUrl = `https://${formattedUrl}`;
+    let targetUrl: string;
+    const inputTrimmed = url.trim();
+
+    // Check if input is a URL or a search term
+    if (isLikelyUrl(inputTrimmed)) {
+      // It's a URL, format it properly
+      targetUrl = inputTrimmed;
+      if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        targetUrl = `https://${targetUrl}`;
+      }
+      console.log('Input recognized as URL:', targetUrl);
+    } else {
+      // It's a search term, do a web search first
+      console.log('Input recognized as search term:', inputTrimmed);
+      
+      const foundUrl = await searchForBusinessWebsite(inputTrimmed, apiKey);
+      
+      if (!foundUrl) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Keine Website für "${inputTrimmed}" gefunden. Versuche einen genaueren Suchbegriff oder gib die URL direkt ein.` 
+          }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      targetUrl = foundUrl;
+      console.log('Found website via search:', targetUrl);
     }
 
-    // Validate URL - must have a valid domain (no spaces, must have a dot)
-    const urlPattern = /^https?:\/\/[^\s]+\.[^\s]+$/;
-    if (!urlPattern.test(formattedUrl) || formattedUrl.includes(' ')) {
-      console.error('Invalid URL format:', formattedUrl);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Bitte gib eine gültige Website-URL ein (z.B. www.beispiel.ch). Suchbegriffe wie "restaurant brugg" funktionieren nicht.' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Scraping partner info from:', formattedUrl);
+    console.log('Scraping partner info from:', targetUrl);
 
     // Use Firecrawl with extract for structured data
     const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -113,7 +213,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        url: formattedUrl,
+        url: targetUrl,
         formats: ['markdown', 'extract'],
         extract: {
           prompt: `Extrahiere Geschäftsinformationen von dieser Website. WICHTIG: Alle Beschreibungen müssen auf DEUTSCH sein!
@@ -182,7 +282,7 @@ serve(async (req) => {
       phone: extractedData.phone || null,
       email: extractedData.email || null,
       contact_name: extractedData.contact_name || null,
-      website: formattedUrl,
+      website: targetUrl,
       instagram: extractedData.instagram || null,
       facebook: extractedData.facebook || null,
       google_place_id: googlePlaceId,
