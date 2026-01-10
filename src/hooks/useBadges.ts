@@ -84,30 +84,42 @@ export function useBadges() {
   const { data: progress } = useQuery({
     queryKey: ["badge-progress", user?.id],
     queryFn: async () => {
-      if (!user) return { lifetime_earned: 0, redemption_count: 0, referral_count: 0 };
+      if (!user) return { 
+        lifetime_earned: 0, 
+        redemption_count: 0, 
+        referral_count: 0,
+        streak_days: 0,
+        leaderboard_rank: 999
+      };
       
       // Get balance info
       const { data: balanceData } = await supabase
         .rpc("get_user_balance", { _user_id: user.id });
       
-      // Get redemption count
+      // Get redemption count (used status only)
       const { count: redemptionCount } = await supabase
         .from("redemptions")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("status", "used");
       
-      // Get referral count from profile
+      // Get profile data including streak and referrals
       const { data: profile } = await supabase
         .from("profiles")
-        .select("referral_count")
+        .select("referral_count, current_streak, longest_streak")
         .eq("id", user.id)
         .single();
+      
+      // Get leaderboard rank
+      const { data: rankData } = await supabase
+        .rpc("get_user_weekly_rank", { _user_id: user.id });
       
       return {
         lifetime_earned: balanceData?.[0]?.lifetime_earned || 0,
         redemption_count: redemptionCount || 0,
         referral_count: profile?.referral_count || 0,
+        streak_days: Math.max(profile?.current_streak || 0, profile?.longest_streak || 0),
+        leaderboard_rank: rankData?.[0]?.rank || 999,
       };
     },
     enabled: !!user,
@@ -124,6 +136,12 @@ export function useBadges() {
         return progress.redemption_count;
       case "referral_count":
         return progress.referral_count;
+      case "streak_days":
+        return progress.streak_days;
+      case "leaderboard_rank":
+        // For leaderboard, lower rank is better, so we show if user has achieved it
+        // Return the criteria value if user's rank is <= required rank, else show current rank as "negative progress"
+        return progress.leaderboard_rank <= badge.criteria_value ? badge.criteria_value : 0;
       default:
         return 0;
     }

@@ -8,29 +8,29 @@ import { Link } from "react-router-dom";
 
 const categoryInfo: Record<string, { title: string; icon: React.ElementType; description: string }> = {
   earning: {
-    title: "Taler Sammeln",
+    title: "Taler sammeln",
     icon: Coins,
-    description: "Sammle Taler und werde zum Meister!",
+    description: "Sammle Taler durch Radio hören & Aktionen",
   },
   redemption: {
-    title: "Einlösungen",
+    title: "Gutscheine nutzen",
     icon: Gift,
-    description: "Löse Gutscheine ein und spare!",
+    description: "Nutze Gutscheine bei unseren Partnern",
   },
   referral: {
-    title: "Freunde werben",
+    title: "Freunde einladen",
     icon: Users,
-    description: "Teile die App mit Freunden!",
+    description: "Lade Freunde ein und profitiert beide",
   },
   leaderboard: {
-    title: "Leaderboard",
+    title: "Rangliste",
     icon: Trophy,
-    description: "Erreiche die Top-Platzierungen!",
+    description: "Erreiche Top-Platzierungen in der Woche",
   },
   streak: {
-    title: "Login-Streak",
+    title: "Treue-Serie",
     icon: Flame,
-    description: "Logge dich täglich ein!",
+    description: "Sammle Taler an aufeinanderfolgenden Tagen",
   },
 };
 
