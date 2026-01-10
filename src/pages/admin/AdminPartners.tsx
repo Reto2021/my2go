@@ -6,6 +6,7 @@ import {
   deletePartner 
 } from '@/lib/admin-helpers';
 import { Partner } from '@/lib/supabase-helpers';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Store, 
   Plus, 
@@ -15,7 +16,10 @@ import {
   X,
   Check,
   MapPin,
-  Star
+  Star,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -26,6 +30,8 @@ export default function AdminPartners() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showReviewsOverview, setShowReviewsOverview] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -156,6 +162,26 @@ export default function AdminPartners() {
     p.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.category?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleSyncGoogleReviews = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-reviews');
+      
+      if (error) throw error;
+      
+      toast.success(`Google Reviews synchronisiert: ${data?.updated || 0} Partner aktualisiert`);
+      loadPartners(); // Reload to show updated data
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast.error('Fehler beim Synchronisieren der Google Reviews');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const partnersWithReviews = partners.filter(p => p.google_place_id);
+  const partnersWithoutReviews = partners.filter(p => !p.google_place_id);
   
   return (
     <div className="space-y-6 animate-in">
@@ -165,18 +191,162 @@ export default function AdminPartners() {
           <h1 className="text-2xl font-bold">Partner verwalten</h1>
           <p className="text-muted-foreground">{partners.length} Partner insgesamt</p>
         </div>
-        <button
-          onClick={() => {
-            setShowCreateForm(true);
-            setEditingPartner(null);
-            resetForm();
-          }}
-          className="btn-primary"
-        >
-          <Plus className="h-4 w-4" />
-          Partner hinzufügen
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowReviewsOverview(!showReviewsOverview)}
+            className={cn(
+              "btn-ghost",
+              showReviewsOverview && "bg-primary/10 text-primary"
+            )}
+          >
+            <Star className="h-4 w-4" />
+            Reviews
+          </button>
+          <button
+            onClick={() => {
+              setShowCreateForm(true);
+              setEditingPartner(null);
+              resetForm();
+            }}
+            className="btn-primary"
+          >
+            <Plus className="h-4 w-4" />
+            Partner hinzufügen
+          </button>
+        </div>
       </div>
+
+      {/* Google Reviews Overview */}
+      {showReviewsOverview && (
+        <div className="card-base p-6 animate-in space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Star className="h-5 w-5 text-accent" />
+                Google Reviews Übersicht
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {partnersWithReviews.length} von {partners.length} Partnern mit Google Place ID
+              </p>
+            </div>
+            <button
+              onClick={handleSyncGoogleReviews}
+              disabled={isSyncing}
+              className="btn-secondary"
+            >
+              <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
+              {isSyncing ? 'Synchronisiere...' : 'Jetzt synchronisieren'}
+            </button>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="p-4 rounded-xl bg-success/10 text-center">
+              <div className="text-2xl font-bold text-success">{partnersWithReviews.length}</div>
+              <div className="text-xs text-muted-foreground">Mit Place ID</div>
+            </div>
+            <div className="p-4 rounded-xl bg-warning/10 text-center">
+              <div className="text-2xl font-bold text-warning">{partnersWithoutReviews.length}</div>
+              <div className="text-xs text-muted-foreground">Ohne Place ID</div>
+            </div>
+            <div className="p-4 rounded-xl bg-primary/10 text-center">
+              <div className="text-2xl font-bold text-primary">
+                {partnersWithReviews.filter(p => p.google_rating).length > 0
+                  ? (partnersWithReviews.reduce((sum, p) => sum + (p.google_rating || 0), 0) / 
+                     partnersWithReviews.filter(p => p.google_rating).length).toFixed(1)
+                  : '-'}
+              </div>
+              <div className="text-xs text-muted-foreground">Ø Rating</div>
+            </div>
+            <div className="p-4 rounded-xl bg-accent/10 text-center">
+              <div className="text-2xl font-bold text-accent">
+                {partnersWithReviews.reduce((sum, p) => sum + (p.google_review_count || 0), 0)}
+              </div>
+              <div className="text-xs text-muted-foreground">Total Reviews</div>
+            </div>
+          </div>
+
+          {/* Partners with Reviews */}
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+              Partner mit Google Reviews
+            </h3>
+            {partnersWithReviews.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Noch keine Partner mit Google Place ID konfiguriert
+              </p>
+            ) : (
+              <div className="divide-y divide-border rounded-xl border overflow-hidden">
+                {partnersWithReviews.map(partner => (
+                  <div key={partner.id} className="flex items-center gap-4 p-3 bg-card hover:bg-muted/50 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
+                      {partner.logo_url ? (
+                        <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover rounded-xl" />
+                      ) : (
+                        <Store className="h-5 w-5 text-secondary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate">{partner.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {partner.google_place_id}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      {partner.google_rating ? (
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 text-accent fill-accent" />
+                          <span className="font-bold">{partner.google_rating.toFixed(1)}</span>
+                          <span className="text-sm text-muted-foreground">
+                            ({partner.google_review_count || 0})
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Keine Daten</span>
+                      )}
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Partners without Reviews */}
+          {partnersWithoutReviews.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                Partner ohne Google Place ID
+              </h3>
+              <div className="divide-y divide-border rounded-xl border overflow-hidden">
+                {partnersWithoutReviews.map(partner => (
+                  <div key={partner.id} className="flex items-center gap-4 p-3 bg-card hover:bg-muted/50 transition-colors">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted flex-shrink-0">
+                      {partner.logo_url ? (
+                        <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover rounded-xl" />
+                      ) : (
+                        <Store className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold truncate">{partner.name}</div>
+                      <div className="text-xs text-warning">Google Place ID fehlt</div>
+                    </div>
+                    <button
+                      onClick={() => openEditForm(partner)}
+                      className="btn-ghost text-sm"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Bearbeiten
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Search */}
       <div className="relative">
