@@ -8,7 +8,7 @@ export default function GoImpressumPage() {
   return (
     <div className="overflow-hidden bg-background">
       {/* Hero Section */}
-      <section className="relative py-10 md:py-14 overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background">
+      <section className="relative pt-20 pb-10 md:pt-24 md:pb-14 overflow-hidden bg-gradient-to-b from-primary/10 via-primary/5 to-background">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
         </div>
