@@ -24,6 +24,8 @@ export interface UserProfile {
   created_at: string;
   referred_by: string | null;
   referral_count: number;
+  leaderboard_nickname: string | null;
+  show_on_leaderboard: boolean | null;
 }
 
 export interface UserBalance {
@@ -126,7 +128,7 @@ export interface Region {
 // AUTH
 // ============================================================================
 
-export async function signUp(email: string, password: string, displayName?: string) {
+export async function signUp(email: string, password: string, displayName?: string, phone?: string) {
   const redirectUrl = `${window.location.origin}/`;
   
   const { data, error } = await supabase.auth.signUp({
@@ -136,6 +138,7 @@ export async function signUp(email: string, password: string, displayName?: stri
       emailRedirectTo: redirectUrl,
       data: {
         display_name: displayName || email.split('@')[0],
+        phone: phone || null,
       },
     },
   });

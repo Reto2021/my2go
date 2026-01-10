@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
+import { signOut } from '@/lib/supabase-helpers';
 import { 
   isPushSupported, 
   getPushSubscriptionStatus, 
@@ -16,7 +17,7 @@ import { BadgeProgressRing } from '@/components/badges/BadgeProgressRing';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { 
     soundEnabled, 
     vibrationEnabled, 
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   useEffect(() => {
     const checkPushStatus = async () => {
@@ -80,6 +82,19 @@ export default function SettingsPage() {
       toast.error('Fehler bei der Einstellung');
     } finally {
       setPushLoading(false);
+    }
+  };
+  
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+      toast.success('Erfolgreich abgemeldet');
+      navigate('/auth');
+    } catch (error) {
+      toast.error('Fehler beim Abmelden');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
   
@@ -269,6 +284,43 @@ export default function SettingsPage() {
             </p>
           </div>
         </section>
+        
+        {/* Logout Section - only show if logged in */}
+        {user && (
+          <section className="animate-in-delayed">
+            <button 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors font-medium"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <LogOut className="h-5 w-5" />
+                  Abmelden
+                </>
+              )}
+            </button>
+          </section>
+        )}
+        
+        {/* Account Info */}
+        {user && profile && (
+          <section className="animate-in-delayed">
+            <div className="p-4 rounded-2xl bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-secondary" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">{profile.display_name || profile.email}</p>
+                  <p className="text-xs text-muted-foreground">{profile.email}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
         
         {/* Legal Links */}
         <section className="animate-in-delayed">
