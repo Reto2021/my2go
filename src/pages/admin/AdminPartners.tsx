@@ -19,7 +19,8 @@ import {
   Star,
   RefreshCw,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -45,6 +46,7 @@ export default function AdminPartners() {
     address_number: '',
     postal_code: '',
     city: '',
+    website: '',
     is_active: true,
     is_featured: false,
     google_place_id: '',
@@ -95,6 +97,7 @@ export default function AdminPartners() {
       address_number: '',
       postal_code: '',
       city: '',
+      website: '',
       is_active: true,
       is_featured: false,
       google_place_id: '',
@@ -171,6 +174,7 @@ export default function AdminPartners() {
       address_number: partner.address_number || '',
       postal_code: partner.postal_code || '',
       city: partner.city || '',
+      website: partner.website || '',
       is_active: partner.is_active,
       is_featured: partner.is_featured,
       google_place_id: partner.google_place_id || '',
@@ -554,6 +558,21 @@ export default function AdminPartners() {
               </p>
             </div>
             
+            {/* Website */}
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-primary" />
+                Website
+              </label>
+              <input
+                type="url"
+                value={formData.website}
+                onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all"
+                placeholder="https://www.beispiel.ch"
+              />
+            </div>
+            
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -639,6 +658,18 @@ export default function AdminPartners() {
                       <MapPin className="h-3 w-3" />
                       {partner.city}
                     </span>
+                  )}
+                  {partner.website && (
+                    <a
+                      href={partner.website.startsWith('http') ? partner.website : `https://${partner.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <Globe className="h-3 w-3" />
+                      Website
+                    </a>
                   )}
                 </div>
               </div>
