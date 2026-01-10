@@ -34,7 +34,9 @@ import {
   Settings2,
   UserPlus,
   Phone,
-  Mail
+  Mail,
+  Gift,
+  Percent
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -60,6 +62,17 @@ interface BulkSearchResult {
   website?: string;
   description?: string;
   short_description?: string;
+}
+
+interface RewardSuggestion {
+  title: string;
+  description: string;
+  reward_type: 'fixed_discount' | 'percent_discount' | 'free_item' | 'experience';
+  taler_cost: number;
+  value_amount?: number;
+  value_percent?: number;
+  terms: string;
+  selected?: boolean;
 }
 
 export default function AdminPartners() {
@@ -91,6 +104,11 @@ export default function AdminPartners() {
   const [csvRawData, setCsvRawData] = useState<Record<string, string>[]>([]);
   const [showColumnMapping, setShowColumnMapping] = useState(false);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  
+  // Reward suggestions state
+  const [rewardSuggestions, setRewardSuggestions] = useState<RewardSuggestion[]>([]);
+  const [isLoadingRewards, setIsLoadingRewards] = useState(false);
+  const [showRewardSuggestions, setShowRewardSuggestions] = useState(false);
   
   // Partner field definitions for mapping
   const PARTNER_FIELDS = [
@@ -240,6 +258,8 @@ export default function AdminPartners() {
       contact_email: '',
       contact_phone: '',
     });
+    setRewardSuggestions([]);
+    setShowRewardSuggestions(false);
   };
   
   const handleCreatePartner = async (e: React.FormEvent) => {
@@ -287,6 +307,11 @@ export default function AdminPartners() {
         }
       } catch (appErr) {
         console.error('Error creating partner application:', appErr);
+      }
+      
+      // Save reward suggestions if any selected
+      if (rewardSuggestions.filter(r => r.selected).length > 0) {
+        await saveRewardsForPartner(partner.id);
       }
       
       setShowCreateForm(false);
@@ -429,6 +454,81 @@ export default function AdminPartners() {
     } finally {
       setIsAiLoading(false);
     }
+  };
+
+  // Generate AI reward suggestions
+  const handleGenerateRewardSuggestions = async () => {
+    if (!formData.name || !formData.category) {
+      toast.error('Bitte zuerst Name und Kategorie angeben');
+      return;
+    }
+    
+    setIsLoadingRewards(true);
+    setShowRewardSuggestions(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-rewards', {
+        body: {
+          partnerName: formData.name,
+          category: formData.category,
+          description: formData.description || formData.short_description
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success && data?.rewards) {
+        setRewardSuggestions(data.rewards.map((r: RewardSuggestion) => ({ ...r, selected: true })));
+        toast.success(`${data.rewards.length} Gutschein-Vorschläge generiert!`);
+      } else {
+        toast.error(data?.error || 'Keine Vorschläge generiert');
+      }
+    } catch (error) {
+      console.error('Error generating reward suggestions:', error);
+      toast.error('Fehler beim Generieren der Vorschläge');
+    } finally {
+      setIsLoadingRewards(false);
+    }
+  };
+
+  // Update a reward suggestion
+  const updateRewardSuggestion = (index: number, updates: Partial<RewardSuggestion>) => {
+    setRewardSuggestions(prev => prev.map((r, i) => i === index ? { ...r, ...updates } : r));
+  };
+
+  // Save selected rewards after partner is created
+  const saveRewardsForPartner = async (partnerId: string) => {
+    const selectedRewards = rewardSuggestions.filter(r => r.selected);
+    if (selectedRewards.length === 0) return;
+    
+    const now = new Date();
+    const endOfYear = new Date(now.getFullYear(), 11, 31);
+    
+    for (const reward of selectedRewards) {
+      const { error } = await supabase
+        .from('rewards')
+        .insert({
+          partner_id: partnerId,
+          title: reward.title,
+          description: reward.description,
+          reward_type: reward.reward_type,
+          taler_cost: reward.taler_cost,
+          value_amount: reward.value_amount || null,
+          value_percent: reward.value_percent || null,
+          terms: reward.terms,
+          is_active: true,
+          valid_from: now.toISOString().split('T')[0],
+          valid_until: endOfYear.toISOString().split('T')[0],
+        });
+      
+      if (error) {
+        console.error('Error saving reward:', error);
+      }
+    }
+    
+    toast.success(`${selectedRewards.length} Gutscheine gespeichert!`);
+    setRewardSuggestions([]);
+    setShowRewardSuggestions(false);
   };
 
   // Bulk search function
@@ -1703,6 +1803,115 @@ export default function AdminPartners() {
                 </div>
               </div>
             </div>
+            
+            {/* AI Reward Suggestions */}
+            {!editingPartner && (
+              <div className="p-4 rounded-xl bg-gradient-to-r from-success/10 to-accent/10 border border-success/20">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Gift className="h-5 w-5 text-success" />
+                    <span className="font-semibold">Gutschein-Vorschläge</span>
+                    <span className="text-xs text-muted-foreground">– KI generiert passende Angebote</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGenerateRewardSuggestions}
+                    disabled={isLoadingRewards || !formData.name || !formData.category}
+                    className="btn-ghost text-sm"
+                  >
+                    {isLoadingRewards ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Vorschläge generieren
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {showRewardSuggestions && rewardSuggestions.length > 0 && (
+                  <div className="space-y-3 mt-3">
+                    {rewardSuggestions.map((reward, index) => (
+                      <div 
+                        key={index}
+                        className={cn(
+                          "p-3 rounded-lg border transition-all",
+                          reward.selected 
+                            ? "bg-success/5 border-success/30" 
+                            : "bg-muted/50 border-transparent opacity-60"
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={reward.selected}
+                            onChange={(e) => updateRewardSuggestion(index, { selected: e.target.checked })}
+                            className="h-5 w-5 mt-1 rounded"
+                          />
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={reward.title}
+                                onChange={(e) => updateRewardSuggestion(index, { title: e.target.value })}
+                                className="flex-1 h-9 px-3 rounded-lg bg-background border border-border focus:outline-none focus:border-success/30 font-medium"
+                              />
+                              <span className={cn(
+                                "px-2 py-1 rounded text-xs font-medium",
+                                reward.reward_type === 'fixed_discount' && "bg-accent/20 text-accent",
+                                reward.reward_type === 'percent_discount' && "bg-primary/20 text-primary",
+                                reward.reward_type === 'free_item' && "bg-success/20 text-success",
+                                reward.reward_type === 'experience' && "bg-purple-500/20 text-purple-500"
+                              )}>
+                                {reward.reward_type === 'fixed_discount' && `CHF ${reward.value_amount}`}
+                                {reward.reward_type === 'percent_discount' && `${reward.value_percent}%`}
+                                {reward.reward_type === 'free_item' && 'Gratis'}
+                                {reward.reward_type === 'experience' && 'Erlebnis'}
+                              </span>
+                            </div>
+                            <input
+                              type="text"
+                              value={reward.description}
+                              onChange={(e) => updateRewardSuggestion(index, { description: e.target.value })}
+                              className="w-full h-8 px-3 text-sm rounded-lg bg-background border border-border focus:outline-none focus:border-success/30"
+                              placeholder="Beschreibung"
+                            />
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-muted-foreground">Taler:</span>
+                                <input
+                                  type="number"
+                                  value={reward.taler_cost}
+                                  onChange={(e) => updateRewardSuggestion(index, { taler_cost: parseInt(e.target.value) || 0 })}
+                                  className="w-20 h-7 px-2 text-sm rounded bg-background border border-border focus:outline-none focus:border-success/30"
+                                />
+                              </div>
+                              <input
+                                type="text"
+                                value={reward.terms}
+                                onChange={(e) => updateRewardSuggestion(index, { terms: e.target.value })}
+                                className="flex-1 h-7 px-2 text-xs rounded bg-background border border-border focus:outline-none focus:border-success/30"
+                                placeholder="Bedingungen"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-xs text-muted-foreground">
+                      {rewardSuggestions.filter(r => r.selected).length} Gutscheine werden beim Erstellen gespeichert
+                    </p>
+                  </div>
+                )}
+                
+                {showRewardSuggestions && rewardSuggestions.length === 0 && !isLoadingRewards && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Keine Vorschläge generiert. Klicke auf "Vorschläge generieren".
+                  </p>
+                )}
+              </div>
+            )}
             
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
