@@ -522,16 +522,4 @@
     0%, 100% { transform: translateX(-100%); }
     50% { transform: translateX(100%); }
   }
-
-  /* Lightning flash animation for thunderstorm */
-  @keyframes lightning {
-    0%, 94%, 100% { background-color: transparent; }
-    95% { background-color: rgba(255, 255, 255, 0.25); }
-    96% { background-color: transparent; }
-    97% { background-color: rgba(255, 255, 255, 0.15); }
-  }
-
-  .animate-lightning {
-    animation: lightning 6s infinite;
-  }
 }
