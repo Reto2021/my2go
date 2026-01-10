@@ -141,6 +141,10 @@ export default {
           "0%": { transform: "translate(-30%, -30%) rotate(0deg)" },
           "100%": { transform: "translate(-30%, -30%) rotate(360deg)" },
         },
+        "brush-stroke": {
+          "0%": { transform: "scaleX(0)", transformOrigin: "left" },
+          "100%": { transform: "scaleX(1)", transformOrigin: "left" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -157,6 +161,7 @@ export default {
         "marquee": "marquee 12s linear infinite",
         "marquee-slow": "marquee 25s linear infinite",
         "gradient-shift": "gradient-shift 30s linear infinite",
+        "brush-stroke": "brush-stroke 0.6s ease-out forwards",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
