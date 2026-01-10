@@ -956,6 +956,10 @@ export type Database = {
     }
     Functions: {
       award_leaderboard_badges: { Args: never; Returns: undefined }
+      award_review_bonus: {
+        Args: { _review_request_id: string; _user_id: string }
+        Returns: Json
+      }
       check_and_award_badges: {
         Args: { _user_id: string }
         Returns: {

@@ -92,13 +92,20 @@ export function ReviewRequestSheet({
         })
         .eq('id', reviewRequestId);
 
-      // Award bonus Taler
+      // Award bonus Taler via RPC
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // We'll use an RPC or trigger for the actual bonus
-        toast.success('+5 Taler für dein Feedback!', {
-          icon: <Gift className="h-4 w-4 text-accent" />
+        const { data: bonusResult, error: bonusError } = await supabase.rpc('award_review_bonus', {
+          _user_id: user.id,
+          _review_request_id: reviewRequestId,
         });
+
+        const result = bonusResult as { success?: boolean; bonus?: number } | null;
+        if (!bonusError && result?.success) {
+          toast.success(`+${result.bonus} Taler für dein Feedback!`, {
+            icon: <Gift className="h-4 w-4 text-accent" />
+          });
+        }
       }
 
       // Open Google Review
@@ -129,9 +136,25 @@ export function ReviewRequestSheet({
         })
         .eq('id', reviewRequestId);
 
-      toast.success('Danke für dein Feedback!', {
-        description: 'Wir leiten es an den Partner weiter.'
-      });
+      // Award bonus Taler for feedback too
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: bonusResult, error: bonusError } = await supabase.rpc('award_review_bonus', {
+          _user_id: user.id,
+          _review_request_id: reviewRequestId,
+        });
+
+        const result = bonusResult as { success?: boolean; bonus?: number } | null;
+        if (!bonusError && result?.success) {
+          toast.success(`Danke für dein Feedback! +${result.bonus} Taler`, {
+            description: 'Wir leiten es an den Partner weiter.'
+          });
+        } else {
+          toast.success('Danke für dein Feedback!', {
+            description: 'Wir leiten es an den Partner weiter.'
+          });
+        }
+      }
 
       setHasSubmitted(true);
       setTimeout(onClose, 2000);

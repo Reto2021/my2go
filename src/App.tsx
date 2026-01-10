@@ -37,6 +37,7 @@ import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAirDrops from "./pages/admin/AdminAirDrops";
 import AdminBadges from "./pages/admin/AdminBadges";
 import AdminRadioTiers from "./pages/admin/AdminRadioTiers";
+import AdminSettings from "./pages/admin/AdminSettings";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
@@ -94,6 +95,7 @@ function AppContent() {
           <Route path="badges" element={<AdminBadges />} />
           <Route path="radio" element={<AdminRadioTiers />} />
           <Route path="airdrops" element={<AdminAirDrops />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
         
         {/* Partner portal with partner layout and guard */}
