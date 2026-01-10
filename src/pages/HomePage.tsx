@@ -211,9 +211,11 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
               Hör 2Go.<br />
               Sammle Taler.<br />
-              <span className="relative inline-block">
-                <span className="absolute inset-0 bg-accent/90 -skew-x-3 -skew-y-1 scale-x-105 rounded-sm" />
-                <span className="relative text-secondary-foreground font-extrabold px-2">Lös Gutscheine ein.</span>
+              <span className="relative inline-block my-1">
+                {/* Brush stroke layers for hand-painted effect */}
+                <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-[4px_12px_8px_16px] -rotate-1 scale-y-110" />
+                <span className="absolute -inset-x-2 -inset-y-0.5 bg-accent/80 rounded-[8px_4px_12px_6px] rotate-[0.5deg] scale-x-[1.02]" />
+                <span className="relative text-secondary font-extrabold px-1">Lös Gutscheine ein.</span>
               </span>
             </h1>
             
