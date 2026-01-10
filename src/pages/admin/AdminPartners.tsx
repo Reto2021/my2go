@@ -105,6 +105,18 @@ export default function AdminPartners() {
   const [showColumnMapping, setShowColumnMapping] = useState(false);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   
+  // Bulk search terms state (new feature)
+  const [bulkImportMode, setBulkImportMode] = useState<'google' | 'csv' | 'terms'>('terms');
+  const [bulkSearchTerms, setBulkSearchTerms] = useState('');
+  const [bulkTermResults, setBulkTermResults] = useState<Array<{
+    searchTerm: string;
+    status: 'pending' | 'searching' | 'found' | 'error' | 'imported';
+    data?: Partial<BulkSearchResult>;
+    error?: string;
+    selected?: boolean;
+  }>>([]);
+  const [isSearchingTerms, setIsSearchingTerms] = useState(false);
+  
   // Reward suggestions state
   const [rewardSuggestions, setRewardSuggestions] = useState<RewardSuggestion[]>([]);
   const [isLoadingRewards, setIsLoadingRewards] = useState(false);
@@ -916,6 +928,170 @@ export default function AdminPartners() {
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  // Bulk search by terms (new feature)
+  const handleBulkTermSearch = async () => {
+    const terms = bulkSearchTerms
+      .split('\n')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+    
+    if (terms.length === 0) {
+      toast.error('Bitte mindestens einen Suchbegriff eingeben');
+      return;
+    }
+    
+    // Initialize results
+    setBulkTermResults(terms.map(term => ({
+      searchTerm: term,
+      status: 'pending',
+      selected: false,
+    })));
+    
+    setIsSearchingTerms(true);
+    
+    // Process each term sequentially to avoid rate limiting
+    for (let i = 0; i < terms.length; i++) {
+      const term = terms[i];
+      
+      // Update status to searching
+      setBulkTermResults(prev => prev.map((r, idx) => 
+        idx === i ? { ...r, status: 'searching' } : r
+      ));
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('scrape-partner-info', {
+          body: { url: term }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.success && data?.data) {
+          const scraped = data.data;
+          setBulkTermResults(prev => prev.map((r, idx) => 
+            idx === i ? {
+              ...r,
+              status: 'found',
+              selected: true,
+              data: {
+                name: scraped.name,
+                website: scraped.website,
+                category: scraped.category || 'Sonstiges',
+                address_street: scraped.address_street,
+                address_number: scraped.address_number,
+                postal_code: scraped.postal_code,
+                city: scraped.city,
+                description: scraped.description,
+                short_description: scraped.short_description,
+                google_place_id: scraped.google_place_id || '',
+              }
+            } : r
+          ));
+        } else {
+          setBulkTermResults(prev => prev.map((r, idx) => 
+            idx === i ? { ...r, status: 'error', error: data?.error || 'Keine Daten gefunden' } : r
+          ));
+        }
+      } catch (error) {
+        console.error(`Error searching for ${term}:`, error);
+        setBulkTermResults(prev => prev.map((r, idx) => 
+          idx === i ? { ...r, status: 'error', error: 'Suche fehlgeschlagen' } : r
+        ));
+      }
+      
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    setIsSearchingTerms(false);
+    const foundCount = bulkTermResults.filter(r => r.status === 'found').length;
+    toast.success(`Suche abgeschlossen: ${foundCount} von ${terms.length} gefunden`);
+  };
+
+  // Toggle term result selection
+  const toggleTermSelection = (index: number) => {
+    setBulkTermResults(prev => prev.map((r, i) => 
+      i === index ? { ...r, selected: !r.selected } : r
+    ));
+  };
+
+  // Toggle all term results
+  const toggleTermSelectAll = () => {
+    const foundResults = bulkTermResults.filter(r => r.status === 'found');
+    const allSelected = foundResults.every(r => r.selected);
+    setBulkTermResults(prev => prev.map(r => 
+      r.status === 'found' ? { ...r, selected: !allSelected } : r
+    ));
+  };
+
+  // Import selected term results
+  const handleTermImport = async () => {
+    const selected = bulkTermResults.filter(r => r.selected && r.status === 'found' && r.data);
+    if (selected.length === 0) {
+      toast.error('Keine Partner ausgewählt');
+      return;
+    }
+    
+    setIsBulkImporting(true);
+    setBulkImportProgress({ current: 0, total: selected.length });
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < selected.length; i++) {
+      const result = selected[i];
+      setBulkImportProgress({ current: i + 1, total: selected.length });
+      
+      // Find the index in the original array
+      const originalIndex = bulkTermResults.findIndex(r => r.searchTerm === result.searchTerm);
+      
+      try {
+        const data = result.data!;
+        
+        // Generate slug
+        const slug = (data.name || result.searchTerm)
+          .toLowerCase()
+          .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+          .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        
+        // Create partner
+        const { partner, error } = await createPartner({
+          name: data.name || result.searchTerm,
+          slug,
+          description: data.description,
+          short_description: data.short_description,
+          category: data.category || 'Sonstiges',
+          address_street: data.address_street,
+          address_number: data.address_number,
+          postal_code: data.postal_code,
+          city: data.city,
+          website: data.website,
+          google_place_id: data.google_place_id || undefined,
+          is_active: false,
+          is_featured: false,
+        });
+        
+        if (error) {
+          console.error(`Error importing ${result.searchTerm}:`, error);
+        } else {
+          successCount++;
+          if (partner) {
+            setPartners(prev => [partner, ...prev]);
+          }
+          setBulkTermResults(prev => prev.map((r, idx) => 
+            idx === originalIndex ? { ...r, status: 'imported', selected: false } : r
+          ));
+        }
+      } catch (error) {
+        console.error(`Error importing ${result.searchTerm}:`, error);
+      }
+      
+      // Small delay between imports
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    setIsBulkImporting(false);
+    toast.success(`${successCount} Partner erfolgreich importiert`);
+  };
   
   const filteredPartners = partners.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1017,7 +1193,7 @@ export default function AdminPartners() {
                 Massenerfassung
               </h2>
               <p className="text-sm text-muted-foreground">
-                Suche Geschäfte via Google Places oder importiere aus CSV
+                Suche Geschäfte mit Suchbegriffen, via Google Places oder importiere aus CSV
               </p>
             </div>
             <button
@@ -1028,23 +1204,33 @@ export default function AdminPartners() {
             </button>
           </div>
 
-          {/* Tabs for Google Places vs CSV */}
+          {/* Tabs for Search Terms vs Google Places vs CSV */}
           <div className="flex gap-2 border-b border-border pb-3">
             <button
-              onClick={() => setShowCsvImport(false)}
+              onClick={() => setBulkImportMode('terms')}
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                !showCsvImport ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+                bulkImportMode === 'terms' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <Sparkles className="h-4 w-4 inline mr-2" />
+              Suchbegriffe (KI)
+            </button>
+            <button
+              onClick={() => setBulkImportMode('google')}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                bulkImportMode === 'google' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
               )}
             >
               <Search className="h-4 w-4 inline mr-2" />
               Google Places
             </button>
             <button
-              onClick={() => setShowCsvImport(true)}
+              onClick={() => setBulkImportMode('csv')}
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                showCsvImport ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+                bulkImportMode === 'csv' ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
               )}
             >
               <FileSpreadsheet className="h-4 w-4 inline mr-2" />
@@ -1052,8 +1238,163 @@ export default function AdminPartners() {
             </button>
           </div>
 
+          {/* Search Terms Mode (NEW) */}
+          {bulkImportMode === 'terms' && (
+            <>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Geschäfte suchen (ein Suchbegriff pro Zeile)
+                  </label>
+                  <textarea
+                    value={bulkSearchTerms}
+                    onChange={(e) => setBulkSearchTerms(e.target.value)}
+                    placeholder={`z.B.:\nRestaurant Casino Brugg\nCafé Merkur Baden\nPizza Napoli Aarau\nCoiffeur Style Zürich`}
+                    className="w-full h-40 p-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-accent/30 focus:bg-background transition-all resize-none font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Gib Geschäftsnamen mit Ort ein. Die KI sucht automatisch die Website und füllt alle Daten aus.
+                  </p>
+                </div>
+                <button
+                  onClick={handleBulkTermSearch}
+                  disabled={isSearchingTerms || !bulkSearchTerms.trim()}
+                  className="btn-primary"
+                >
+                  {isSearchingTerms ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Suche läuft...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Alle suchen
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Term Search Results */}
+              {bulkTermResults.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={toggleTermSelectAll}
+                        className="btn-ghost text-sm"
+                        disabled={bulkTermResults.filter(r => r.status === 'found').length === 0}
+                      >
+                        {bulkTermResults.filter(r => r.status === 'found').every(r => r.selected) ? 'Keine auswählen' : 'Alle auswählen'}
+                      </button>
+                      <span className="text-sm text-muted-foreground">
+                        {bulkTermResults.filter(r => r.selected).length} ausgewählt, 
+                        {' '}{bulkTermResults.filter(r => r.status === 'found').length} gefunden,
+                        {' '}{bulkTermResults.filter(r => r.status === 'error').length} fehlgeschlagen
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleTermImport}
+                      disabled={isBulkImporting || bulkTermResults.filter(r => r.selected && r.status === 'found').length === 0}
+                      className="btn-primary"
+                    >
+                      {isBulkImporting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {bulkImportProgress.current}/{bulkImportProgress.total}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          Importieren ({bulkTermResults.filter(r => r.selected && r.status === 'found').length})
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="divide-y divide-border rounded-xl border overflow-hidden max-h-96 overflow-y-auto">
+                    {bulkTermResults.map((result, index) => (
+                      <div 
+                        key={`${result.searchTerm}-${index}`}
+                        className={cn(
+                          "flex items-center gap-3 p-3 transition-colors",
+                          result.status === 'imported' ? "bg-success/10" : 
+                          result.status === 'error' ? "bg-destructive/5" :
+                          result.selected ? "bg-accent/5" : "bg-card hover:bg-muted/50",
+                          result.status === 'searching' && "opacity-70"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={result.selected || result.status === 'imported'}
+                          disabled={result.status !== 'found'}
+                          onChange={() => toggleTermSelection(index)}
+                          className="h-5 w-5 rounded"
+                        />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted flex-shrink-0">
+                          {result.status === 'searching' ? (
+                            <Loader2 className="h-5 w-5 text-accent animate-spin" />
+                          ) : result.status === 'found' ? (
+                            <CheckCircle2 className="h-5 w-5 text-success" />
+                          ) : result.status === 'imported' ? (
+                            <Check className="h-5 w-5 text-success" />
+                          ) : result.status === 'error' ? (
+                            <AlertTriangle className="h-5 w-5 text-destructive" />
+                          ) : (
+                            <Store className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold truncate flex items-center gap-2">
+                            {result.data?.name || result.searchTerm}
+                            {result.status === 'imported' && <span className="text-xs text-success">(importiert)</span>}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            {result.status === 'found' && result.data && (
+                              <>
+                                {result.data.category && (
+                                  <span className="px-2 py-0.5 rounded bg-muted">{result.data.category}</span>
+                                )}
+                                {result.data.city && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {result.data.city}
+                                  </span>
+                                )}
+                                {result.data.website && (
+                                  <a 
+                                    href={result.data.website} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-accent hover:underline"
+                                  >
+                                    <Globe className="h-3 w-3" />
+                                    Website
+                                  </a>
+                                )}
+                              </>
+                            )}
+                            {result.status === 'error' && (
+                              <span className="text-destructive">{result.error}</span>
+                            )}
+                            {result.status === 'pending' && (
+                              <span className="text-muted-foreground">Warte auf Suche...</span>
+                            )}
+                            {result.status === 'searching' && (
+                              <span className="text-accent">Suche Website & Daten...</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Google Places Search */}
-          {!showCsvImport && (
+          {bulkImportMode === 'google' && (
             <>
               <div className="flex flex-wrap gap-3">
                 <div className="flex-1 min-w-[200px]">
@@ -1184,7 +1525,7 @@ export default function AdminPartners() {
           )}
 
           {/* CSV Import */}
-          {showCsvImport && (
+          {bulkImportMode === 'csv' && (
             <div className="space-y-4">
               {/* Column Mapping Dialog */}
               {showColumnMapping && csvRawHeaders.length > 0 && (
