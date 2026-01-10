@@ -11,7 +11,7 @@ import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode } 
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import talerCoin from '@/assets/taler-coin.png';
+import { TalerIcon } from '@/components/icons/TalerIcon';
 
 interface Redemption {
   id: string;
@@ -106,16 +106,22 @@ export default function MyRedemptionsPage() {
     }
   };
 
+  // Helper to compute effective status for filtering
+  const getEffectiveStatus = (r: Redemption) => {
+    const isExpired = new Date(r.expires_at).getTime() < Date.now();
+    return (r.status === 'pending' && isExpired) ? 'expired' : r.status;
+  };
+
   const filteredRedemptions = redemptions.filter((r) => {
     if (filter === 'all') return true;
-    return r.status === filter;
+    return getEffectiveStatus(r) === filter;
   });
 
   const stats = {
     total: redemptions.length,
-    pending: redemptions.filter((r) => r.status === 'pending').length,
-    used: redemptions.filter((r) => r.status === 'used').length,
-    totalSpent: redemptions.filter((r) => r.status === 'used').reduce((sum, r) => sum + r.taler_spent, 0),
+    pending: redemptions.filter((r) => getEffectiveStatus(r) === 'pending').length,
+    used: redemptions.filter((r) => getEffectiveStatus(r) === 'used').length,
+    totalSpent: redemptions.filter((r) => getEffectiveStatus(r) === 'used').reduce((sum, r) => sum + r.taler_spent, 0),
   };
 
   if (authLoading || loading) {
@@ -273,7 +279,7 @@ export default function MyRedemptionsPage() {
                         </Badge>
                         
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <img src={talerCoin} alt="Taler" className="w-3.5 h-3.5" />
+                          <TalerIcon size={14} />
                           <span>{redemption.taler_spent}</span>
                         </div>
 
@@ -318,7 +324,7 @@ export default function MyRedemptionsPage() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Insgesamt eingelöst</span>
             <div className="flex items-center gap-2">
-              <img src={talerCoin} alt="Taler" className="w-5 h-5" />
+              <TalerIcon size={20} />
               <span className="text-lg font-bold text-secondary">{stats.totalSpent} Taler</span>
             </div>
           </div>
