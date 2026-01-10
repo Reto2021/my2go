@@ -64,7 +64,6 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
-  const [showTiers, setShowTiers] = useState(false);
   const [showVideo, setShowVideo] = useState(true); // Default to video when available
 
   // Update session duration every second
@@ -362,57 +361,13 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               )}
             </motion.button>
             
-            {/* Reward Tiers Toggle - only show if tiers are available */}
-            {tiers.length > 0 && !isFullscreen && (
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                onClick={() => setShowTiers(!showTiers)}
-                className="mt-4 sm:mt-6 mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <Gift className="h-4 w-4 text-accent" />
-                <span className="text-xs sm:text-sm font-medium text-white">
-                  {showTiers ? 'Zuletzt gespielt anzeigen' : 'Hör-Belohnungen anzeigen'}
-                </span>
-              </motion.button>
-            )}
-
-            {/* Reward Tiers Section - shown when toggle is active */}
-            <AnimatePresence>
-              {showTiers && !isFullscreen && tiers.length > 0 && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-full max-w-sm overflow-hidden"
-                >
-                  <div className="pb-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Coins className="h-4 w-4 text-accent" />
-                      <span className="text-sm font-semibold text-white/80">Taler verdienen beim Hören</span>
-                    </div>
-                    <div className="grid gap-2">
-                      {tiers.map((tier, index) => (
-                        <RewardTierRow key={tier.id} tier={tier} index={index} />
-                      ))}
-                    </div>
-                    <p className="text-xs text-white/40 mt-3 text-center">
-                      Du erhältst die Taler der höchsten erreichten Stufe beim Stoppen.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Song History - shown when tiers toggle is off OR when no tiers available */}
-            {songHistory.length > 0 && !isFullscreen && (!showTiers || tiers.length === 0) && (
+            {/* Song History - always show if available */}
+            {songHistory.length > 0 && !isFullscreen && (
               <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="w-full max-w-sm pb-4"
+                className="w-full max-w-sm pb-4 mt-6"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="h-4 w-4 text-white/40" />
