@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { RadioHeader } from "@/components/ui/radio-header";
 
 export function GoLayout() {
   const location = useLocation();
@@ -7,56 +7,61 @@ export function GoLayout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between max-w-6xl mx-auto px-4">
-          <Link to="/go/partner" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">2G</span>
+      {/* Radio Header - same as consumer app */}
+      <RadioHeader />
+      
+      {/* Secondary Navigation for Go */}
+      <nav className="sticky top-[52px] sm:top-[60px] z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-12 items-center justify-between max-w-6xl mx-auto px-4">
+          <Link to="/go" className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-xs">2G</span>
             </div>
-            <span className="font-bold text-lg">My 2Go</span>
+            <span className="font-bold text-base">My 2Go Business</span>
           </Link>
           
-          <nav className="hidden md:flex items-center gap-6">
-            <Link 
-              to="/go/partner" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Übersicht
-            </Link>
-            <Link 
-              to="/go/partner/pricing" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Preise
-            </Link>
-            <Link 
-              to="/go/partner/faq" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              FAQ
-            </Link>
-          </nav>
+          <div className="flex items-center gap-4">
+            <nav className="hidden md:flex items-center gap-5">
+              <Link 
+                to="/go" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Übersicht
+              </Link>
+              <Link 
+                to="/go/partner/pricing" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Preise
+              </Link>
+              <Link 
+                to="/go/partner/faq" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                FAQ
+              </Link>
+            </nav>
 
-          <div className="flex items-center gap-3">
-            <Link 
-              to="/auth" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
-            >
-              Partner-Login
-            </Link>
-            <Link 
-              to="/go/partner/pricing"
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Jetzt starten
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link 
+                to="/auth" 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/go/partner/pricing"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Jetzt starten
+              </Link>
+            </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Main Content */}
-      <main className="flex-1">
+      {/* Main Content - with proper top padding for headers */}
+      <main className="flex-1 pt-[100px] sm:pt-[108px]">
         <Outlet />
       </main>
 
@@ -79,7 +84,7 @@ export function GoLayout() {
             <div>
               <h4 className="font-semibold mb-4">Produkt</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/go/partner" className="hover:text-foreground transition-colors">Für Partner</Link></li>
+                <li><Link to="/go" className="hover:text-foreground transition-colors">Für Partner</Link></li>
                 <li><Link to="/go/partner/pricing" className="hover:text-foreground transition-colors">Preise</Link></li>
                 <li><Link to="/go/partner/pos" className="hover:text-foreground transition-colors">POS Kits</Link></li>
                 <li><Link to="/go/partner/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
