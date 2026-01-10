@@ -299,7 +299,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         <div className="p-5 rounded-2xl bg-accent/10 border border-accent/20">
           <h3 className="font-bold text-secondary text-center mb-2">Für Geschäftspartner</h3>
           <p className="text-sm text-muted-foreground text-center mb-4">
-            Werde Teil des 2Go Taler Netzwerks und erreiche neue Kunden.
+            Werde Teil des My 2Go Netzwerks und erreiche neue Kunden.
           </p>
           <div className="flex gap-3 justify-center">
             <Link 
