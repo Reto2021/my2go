@@ -13,6 +13,11 @@ import {
   Flame,
   Zap,
   Medal,
+  Heart,
+  Sparkles,
+  Gem,
+  Shield,
+  Target,
   LucideIcon
 } from "lucide-react";
 
@@ -31,17 +36,32 @@ const iconMap: Record<string, LucideIcon> = {
   flame: Flame,
   zap: Zap,
   medal: Medal,
+  heart: Heart,
+  sparkles: Sparkles,
+  gem: Gem,
+  shield: Shield,
+  target: Target,
 };
 
 interface BadgeIconProps {
   icon: string;
   color: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | number;
   earned?: boolean;
 }
 
 export function BadgeIcon({ icon, color, size = "md", earned = true }: BadgeIconProps) {
   const Icon = iconMap[icon] || Award;
+  
+  // Handle numeric size
+  if (typeof size === "number") {
+    return (
+      <Icon 
+        size={size} 
+        style={{ color }} 
+      />
+    );
+  }
   
   const sizeClasses = {
     sm: "w-8 h-8",

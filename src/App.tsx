@@ -28,6 +28,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAirDrops from "./pages/admin/AdminAirDrops";
+import AdminBadges from "./pages/admin/AdminBadges";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerRewards from "./pages/partner/PartnerRewards";
 import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
@@ -50,6 +51,7 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="partners" element={<AdminPartners />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="badges" element={<AdminBadges />} />
               <Route path="airdrops" element={<AdminAirDrops />} />
             </Route>
             

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, 
   Store, 
   Users, 
-  Gift, 
+  Award, 
   QrCode,
   ArrowLeft,
   Shield
@@ -14,6 +14,7 @@ const navItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/admin/partners', icon: Store, label: 'Partner' },
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
+  { path: '/admin/badges', icon: Award, label: 'Badges' },
   { path: '/admin/airdrops', icon: QrCode, label: 'Air Drops' },
 ];
 
