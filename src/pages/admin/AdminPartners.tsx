@@ -114,6 +114,32 @@ export default function AdminPartners() {
       // Setting might not exist yet
     }
   };
+
+  // Sync Google Reviews for a single partner
+  const syncSinglePartnerReviews = async (partnerId: string) => {
+    try {
+      toast.info('Google Reviews werden synchronisiert...');
+      const { data, error } = await supabase.functions.invoke('sync-google-reviews');
+      
+      if (error) throw error;
+      
+      // Find and update the specific partner in state
+      const result = data?.results?.find((r: any) => r.partnerId === partnerId);
+      if (result?.success) {
+        setPartners(prev => prev.map(p => 
+          p.id === partnerId 
+            ? { ...p, google_rating: result.rating, google_review_count: result.reviewCount }
+            : p
+        ));
+        toast.success(`Google Reviews aktualisiert: ${result.rating?.toFixed(1) || '-'}★ (${result.reviewCount || 0} Bewertungen)`);
+      }
+      
+      loadPartners(); // Reload to get fresh data
+    } catch (error) {
+      console.error('Sync error:', error);
+      toast.error('Google Reviews konnten nicht synchronisiert werden');
+    }
+  };
   
   useEffect(() => {
     loadPartners();
@@ -156,12 +182,19 @@ export default function AdminPartners() {
       toast.success('Partner erfolgreich erstellt');
       setShowCreateForm(false);
       resetForm();
+      
+      // Auto-sync Google Reviews if Place ID was provided
+      if (formData.google_place_id) {
+        syncSinglePartnerReviews(partner.id);
+      }
     }
   };
   
   const handleUpdatePartner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPartner) return;
+    
+    const placeIdChanged = formData.google_place_id !== editingPartner.google_place_id;
     
     const { success, error } = await updatePartner(editingPartner.id, formData);
     
@@ -177,6 +210,11 @@ export default function AdminPartners() {
       toast.success('Partner erfolgreich aktualisiert');
       setEditingPartner(null);
       resetForm();
+      
+      // Auto-sync Google Reviews if Place ID was added or changed
+      if (placeIdChanged && formData.google_place_id) {
+        syncSinglePartnerReviews(editingPartner.id);
+      }
     }
   };
   
