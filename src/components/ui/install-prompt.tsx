@@ -11,8 +11,10 @@ interface BeforeInstallPromptEvent extends Event {
 const VISIT_COUNT_KEY = 'pwa-visit-count';
 const LAST_VISIT_KEY = 'pwa-last-visit';
 const INSTALL_DISMISSED_KEY = 'pwa-install-dismissed';
+const REMIND_LATER_KEY = 'pwa-remind-later';
 const MIN_VISITS_TO_SHOW = 3; // Show prompt after 3 visits
 const DISMISS_COOLDOWN_DAYS = 7; // Don't show again for 7 days after dismiss
+const REMIND_LATER_DAYS = 1; // Show again after 1 day if "remind later" clicked
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -50,11 +52,18 @@ export function InstallPrompt() {
     
     setVisitCount(currentVisitCount);
 
-    // Check if user dismissed before
+    // Check if user dismissed or clicked remind later
     const dismissed = localStorage.getItem(INSTALL_DISMISSED_KEY);
     const dismissedTime = dismissed ? parseInt(dismissed) : 0;
     const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
-    const canShowPrompt = daysSinceDismissed > DISMISS_COOLDOWN_DAYS && currentVisitCount >= MIN_VISITS_TO_SHOW;
+    
+    const remindLater = localStorage.getItem(REMIND_LATER_KEY);
+    const remindLaterTime = remindLater ? parseInt(remindLater) : 0;
+    const daysSinceRemindLater = (Date.now() - remindLaterTime) / (1000 * 60 * 60 * 24);
+    
+    const canShowPrompt = currentVisitCount >= MIN_VISITS_TO_SHOW && 
+      daysSinceDismissed > DISMISS_COOLDOWN_DAYS && 
+      daysSinceRemindLater > REMIND_LATER_DAYS;
 
     // Listen for install prompt (Android/Chrome)
     const handleBeforeInstall = (e: Event) => {
@@ -93,6 +102,11 @@ export function InstallPrompt() {
   const handleDismiss = () => {
     setShowPrompt(false);
     localStorage.setItem(INSTALL_DISMISSED_KEY, Date.now().toString());
+  };
+
+  const handleRemindLater = () => {
+    setShowPrompt(false);
+    localStorage.setItem(REMIND_LATER_KEY, Date.now().toString());
   };
 
   // Don't show if already installed
@@ -145,41 +159,49 @@ export function InstallPrompt() {
               </span>
             </div>
 
-            {/* Actions */}
-            <div className="mt-4">
-              {isIOS ? (
-                // iOS instructions
-                <div className="bg-muted/50 rounded-xl p-3">
-                  <div className="flex items-center gap-2 text-xs text-foreground font-medium mb-2">
-                    <Share className="h-4 w-4 text-primary" />
-                    So installierst du My 2Go:
+              {/* Actions */}
+              <div className="mt-4 space-y-2">
+                {isIOS ? (
+                  // iOS instructions
+                  <div className="bg-muted/50 rounded-xl p-3">
+                    <div className="flex items-center gap-2 text-xs text-foreground font-medium mb-2">
+                      <Share className="h-4 w-4 text-primary" />
+                      So installierst du My 2Go:
+                    </div>
+                    <ol className="text-xs text-muted-foreground space-y-1.5 ml-6">
+                      <li className="flex items-center gap-2">
+                        <span className="font-medium">1.</span> Tippe auf 
+                        <Share className="h-3.5 w-3.5 inline" /> (Teilen)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="font-medium">2.</span> Wähle
+                        <Plus className="h-3.5 w-3.5 inline" /> "Zum Home-Bildschirm"
+                      </li>
+                    </ol>
                   </div>
-                  <ol className="text-xs text-muted-foreground space-y-1.5 ml-6">
-                    <li className="flex items-center gap-2">
-                      <span className="font-medium">1.</span> Tippe auf 
-                      <Share className="h-3.5 w-3.5 inline" /> (Teilen)
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="font-medium">2.</span> Wähle
-                      <Plus className="h-3.5 w-3.5 inline" /> "Zum Home-Bildschirm"
-                    </li>
-                  </ol>
-                </div>
-              ) : (
-                // Android/Chrome install button
+                ) : (
+                  // Android/Chrome install button
+                  <button
+                    onClick={handleInstall}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-2 rounded-xl py-3",
+                      "bg-accent text-accent-foreground font-semibold text-sm",
+                      "hover:bg-accent/90 transition-colors"
+                    )}
+                  >
+                    <Download className="h-4 w-4" />
+                    Jetzt installieren
+                  </button>
+                )}
+                
+                {/* Remind Later Button */}
                 <button
-                  onClick={handleInstall}
-                  className={cn(
-                    "w-full flex items-center justify-center gap-2 rounded-xl py-3",
-                    "bg-accent text-accent-foreground font-semibold text-sm",
-                    "hover:bg-accent/90 transition-colors"
-                  )}
+                  onClick={handleRemindLater}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors py-2"
                 >
-                  <Download className="h-4 w-4" />
-                  Jetzt installieren
+                  Später erinnern
                 </button>
-              )}
-            </div>
+              </div>
           </div>
         </motion.div>
       )}
