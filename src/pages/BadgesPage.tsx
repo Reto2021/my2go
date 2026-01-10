@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Award, Coins, Gift, Users } from "lucide-react";
+import { Award, Coins, Gift, Users, Trophy } from "lucide-react";
 import { useBadges } from "@/hooks/useBadges";
 import { BadgeCard } from "@/components/badges/BadgeCard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -21,6 +21,11 @@ const categoryInfo: Record<string, { title: string; icon: React.ElementType; des
     title: "Freunde werben",
     icon: Users,
     description: "Teile die App mit Freunden!",
+  },
+  leaderboard: {
+    title: "Leaderboard",
+    icon: Trophy,
+    description: "Erreiche die Top-Platzierungen!",
   },
 };
 

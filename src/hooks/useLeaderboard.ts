@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 interface LeaderboardEntry {
   rank: number;
@@ -41,6 +42,23 @@ export function useLeaderboard() {
     },
     enabled: !!user,
   });
+
+  // Check for leaderboard badge when user views leaderboard and is in top 3
+  useEffect(() => {
+    async function checkBadge() {
+      if (user && userRank?.is_participating && userRank?.rank && userRank.rank <= 3) {
+        try {
+          await supabase.rpc("check_leaderboard_badge_for_user", { _user_id: user.id });
+          // Invalidate badges query to show new badge
+          queryClient.invalidateQueries({ queryKey: ["user-badges"] });
+          queryClient.invalidateQueries({ queryKey: ["unseen-badges"] });
+        } catch (error) {
+          console.error("Failed to check leaderboard badge:", error);
+        }
+      }
+    }
+    checkBadge();
+  }, [user, userRank, queryClient]);
 
   // Update leaderboard settings
   const updateSettings = useMutation({

@@ -778,6 +778,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_leaderboard_badges: { Args: never; Returns: undefined }
       check_and_award_badges: {
         Args: { _user_id: string }
         Returns: {
@@ -793,6 +794,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      check_leaderboard_badge_for_user: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
       generate_redemption_code: { Args: never; Returns: string }
       generate_unique_code: { Args: { prefix?: string }; Returns: string }
