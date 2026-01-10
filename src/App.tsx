@@ -46,8 +46,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Auth page without layout */}
-            <Route path="/auth" element={<AuthPage />} />
+            {/* Auth page with layout but no login required */}
+            <Route element={<AppLayout />}>
+              <Route path="/auth" element={<AuthPage />} />
+            </Route>
             
             {/* Admin pages with admin layout and guard */}
             <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
