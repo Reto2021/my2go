@@ -10,10 +10,7 @@ interface LiveListenerCountProps {
 }
 
 export function LiveListenerCount({ className, showLabel = true, size = 'md' }: LiveListenerCountProps) {
-  const { count, isConnected } = useLiveListeners();
-
-  // Always show at least 1 when connected and playing
-  const displayCount = Math.max(1, count);
+  const { formattedCount, isConnected } = useLiveListeners();
 
   if (!isConnected) {
     return null;
@@ -62,18 +59,16 @@ export function LiveListenerCount({ className, showLabel = true, size = 'md' }: 
 
       {/* Listener count with animation */}
       <motion.span
-        key={displayCount}
+        key={formattedCount}
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         className="font-bold tabular-nums"
       >
-        {displayCount}
+        {formattedCount}
       </motion.span>
 
       {showLabel && (
-        <span className="text-accent/80">
-          {displayCount === 1 ? 'Hörer' : 'Hörer'}
-        </span>
+        <span className="text-accent/80">Hörer</span>
       )}
 
       <Radio className={cn(iconSizes[size], 'text-accent')} />
