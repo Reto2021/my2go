@@ -12,6 +12,7 @@ import {
   getNotificationPermission 
 } from '@/lib/push-notifications';
 import { toast } from 'sonner';
+import { BadgeProgressRing } from '@/components/badges/BadgeProgressRing';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -95,6 +96,13 @@ export default function SettingsPage() {
       </header>
       
       <div className="container py-6 space-y-6">
+        {/* Badge Progress Ring - only show if logged in */}
+        {user && (
+          <section className="animate-in">
+            <BadgeProgressRing />
+          </section>
+        )}
+        
         {/* Account Section - only show if logged in */}
         {user && (
           <section className="animate-in">
