@@ -11,13 +11,25 @@ import {
   Minimize2, 
   ChevronDown,
   Clock,
-  X
+  Gift,
+  Coins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
 import { Slider } from '@/components/ui/slider';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { TalerIcon } from '@/components/icons/TalerIcon';
+
+interface ListeningTier {
+  id: string;
+  name: string;
+  description: string | null;
+  min_duration_seconds: number;
+  taler_reward: number;
+  sort_order: number;
+}
 
 interface ExpandedRadioPlayerProps {
   isOpen: boolean;
@@ -38,6 +50,22 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   } = useRadioStore();
   
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [tiers, setTiers] = useState<ListeningTier[]>([]);
+  const [showTiers, setShowTiers] = useState(false);
+
+  // Fetch listening tiers
+  useEffect(() => {
+    if (isOpen && tiers.length === 0) {
+      supabase
+        .from('radio_listening_tiers')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .then(({ data }) => {
+          if (data) setTiers(data);
+        });
+    }
+  }, [isOpen, tiers.length]);
 
   // Handle fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -232,10 +260,51 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 <Play className="h-8 w-8 ml-1" />
               )}
             </motion.button>
+            {/* Reward Tiers Toggle */}
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              onClick={() => setShowTiers(!showTiers)}
+              className="mt-6 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <Gift className="h-4 w-4 text-accent" />
+              <span className="text-sm font-medium text-white">
+                {showTiers ? 'Tiers ausblenden' : 'Hör-Belohnungen anzeigen'}
+              </span>
+            </motion.button>
           </div>
 
+          {/* Reward Tiers Section */}
+          <AnimatePresence>
+            {showTiers && !isFullscreen && tiers.length > 0 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden px-4"
+              >
+                <div className="pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Coins className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-semibold text-white/80">Taler verdienen beim Hören</span>
+                  </div>
+                  <div className="grid gap-2">
+                    {tiers.map((tier, index) => (
+                      <RewardTierRow key={tier.id} tier={tier} index={index} />
+                    ))}
+                  </div>
+                  <p className="text-xs text-white/40 mt-3 text-center">
+                    Du erhältst die Taler der höchsten erreichten Stufe beim Stoppen.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Song History */}
-          {songHistory.length > 0 && !isFullscreen && (
+          {songHistory.length > 0 && !isFullscreen && !showTiers && (
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -283,6 +352,38 @@ function SongHistoryRow({ song, index }: { song: SongHistoryItem; index: number 
       <span className="text-xs text-white/40 flex-shrink-0">
         {formatDistanceToNow(new Date(song.playedAt), { addSuffix: true, locale: de })}
       </span>
+    </motion.div>
+  );
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds >= 3600) {
+    const hours = Math.floor(seconds / 3600);
+    return `${hours} Std.`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes} Min.`;
+}
+
+function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) {
+  return (
+    <motion.div
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ delay: 0.1 + index * 0.05 }}
+      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10"
+    >
+      <div className="h-10 w-10 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
+        <TalerIcon size={20} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white">{tier.name}</p>
+        <p className="text-xs text-white/50">ab {formatDuration(tier.min_duration_seconds)}</p>
+      </div>
+      <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-accent/20">
+        <span className="text-sm font-bold text-accent">+{tier.taler_reward}</span>
+        <TalerIcon size={14} />
+      </div>
     </motion.div>
   );
 }
