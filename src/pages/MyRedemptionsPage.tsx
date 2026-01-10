@@ -7,12 +7,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode } from 'lucide-react';
+import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode, Coins } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { TalerIcon } from '@/components/icons/TalerIcon';
-// TalerIcon replaces talerCoin image
 
 interface Redemption {
   id: string;
@@ -279,10 +277,10 @@ export default function MyRedemptionsPage() {
                           {config.label}
                         </Badge>
                         
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <TalerIcon size={14} />
-                          <span>{redemption.taler_spent}</span>
-                        </div>
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Coins className="h-3.5 w-3.5" />
+                          {redemption.taler_spent}
+                        </span>
 
                         {isPending && (
                           <span className={cn(
@@ -322,12 +320,12 @@ export default function MyRedemptionsPage() {
       {/* Total Spent Footer */}
       {stats.totalSpent > 0 && (
         <div className="mt-8 p-4 bg-secondary/5 rounded-2xl border border-secondary/20">
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Insgesamt eingelöst</span>
-            <div className="flex items-center gap-2">
-              <TalerIcon size={20} />
-              <span className="text-lg font-bold text-secondary">{stats.totalSpent} Taler</span>
-            </div>
+            <span className="inline-flex items-center gap-1.5 text-lg font-bold text-secondary">
+              <Coins className="h-5 w-5" />
+              {stats.totalSpent} Taler
+            </span>
           </div>
         </div>
       )}
