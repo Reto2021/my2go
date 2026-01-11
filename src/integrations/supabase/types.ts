@@ -842,6 +842,7 @@ export type Database = {
         Row: {
           description: string | null
           id: string
+          is_public: boolean | null
           key: string
           updated_at: string
           updated_by: string | null
@@ -850,6 +851,7 @@ export type Database = {
         Insert: {
           description?: string | null
           id?: string
+          is_public?: boolean | null
           key: string
           updated_at?: string
           updated_by?: string | null
@@ -858,6 +860,7 @@ export type Database = {
         Update: {
           description?: string | null
           id?: string
+          is_public?: boolean | null
           key?: string
           updated_at?: string
           updated_by?: string | null
@@ -1156,6 +1159,37 @@ export type Database = {
           website: string
         }[]
       }
+      get_public_partner_safe: {
+        Args: { partner_slug: string }
+        Returns: {
+          address_number: string
+          address_street: string
+          brand_color: string
+          category: string
+          city: string
+          country: string
+          cover_image_url: string
+          description: string
+          facebook: string
+          google_place_id: string
+          google_rating: number
+          google_review_count: number
+          id: string
+          instagram: string
+          is_featured: boolean
+          lat: number
+          lng: number
+          logo_url: string
+          name: string
+          opening_hours: Json
+          postal_code: string
+          short_description: string
+          slug: string
+          special_hours: Json
+          tags: string[]
+          website: string
+        }[]
+      }
       get_public_partners: {
         Args: never
         Returns: {
@@ -1184,6 +1218,55 @@ export type Database = {
           special_hours: Json
           tags: string[]
           website: string
+        }[]
+      }
+      get_public_partners_safe: {
+        Args: never
+        Returns: {
+          address_number: string
+          address_street: string
+          brand_color: string
+          category: string
+          city: string
+          country: string
+          cover_image_url: string
+          description: string
+          facebook: string
+          google_place_id: string
+          google_rating: number
+          google_review_count: number
+          id: string
+          instagram: string
+          is_featured: boolean
+          lat: number
+          lng: number
+          logo_url: string
+          name: string
+          opening_hours: Json
+          postal_code: string
+          short_description: string
+          slug: string
+          special_hours: Json
+          tags: string[]
+          website: string
+        }[]
+      }
+      get_public_rewards_safe: {
+        Args: never
+        Returns: {
+          description: string
+          id: string
+          image_url: string
+          is_available: boolean
+          partner_id: string
+          reward_type: string
+          taler_cost: number
+          terms: string
+          title: string
+          valid_from: string
+          valid_until: string
+          value_amount: number
+          value_percent: number
         }[]
       }
       get_streak_status: { Args: { _user_id: string }; Returns: Json }
