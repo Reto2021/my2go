@@ -13,6 +13,7 @@ interface GHLSubAccount {
   phone?: string;
   address?: string;
   city?: string;
+  state?: string;
   country?: string;
   postalCode?: string;
   website?: string;
@@ -21,23 +22,14 @@ interface GHLSubAccount {
 
 interface CreateSubAccountRequest {
   partnerId: string;
-  name: string;
+  partnerName: string;
   email: string;
   phone?: string;
   address?: string;
   city?: string;
   postalCode?: string;
   website?: string;
-}
-
-interface SyncContactRequest {
-  locationId: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  tags?: string[];
-  customFields?: Record<string, string>;
+  country?: string;
 }
 
 serve(async (req) => {
@@ -53,33 +45,41 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!GHL_API_KEY || !GHL_AGENCY_ID) {
-      console.error('Missing GHL credentials');
+      console.error('Missing GoHighLevel credentials');
       return new Response(
-        JSON.stringify({ success: false, error: 'GHL credentials not configured' }),
+        JSON.stringify({ error: 'GoHighLevel not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const { action, payload } = await req.json();
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing Supabase credentials');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    console.log(`GHL Sync action: ${action}`, JSON.stringify(payload));
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { action, ...payload } = await req.json();
+
+    console.log(`GHL Sync Action: ${action}`, { partnerId: payload.partnerId });
 
     switch (action) {
       case 'create-subaccount': {
-        const { partnerId, name, email, phone, address, city, postalCode, website } = payload as CreateSubAccountRequest;
-
+        const data = payload as CreateSubAccountRequest;
+        
         // Check if partner already has a GHL location
-        const { data: partner, error: partnerError } = await supabase
+        const { data: partner, error: fetchError } = await supabase
           .from('partners')
-          .select('ghl_location_id, name')
-          .eq('id', partnerId)
+          .select('id, name, ghl_location_id, ghl_sync_status')
+          .eq('id', data.partnerId)
           .single();
 
-        if (partnerError) {
-          console.error('Partner fetch error:', partnerError);
+        if (fetchError) {
+          console.error('Error fetching partner:', fetchError);
           return new Response(
-            JSON.stringify({ success: false, error: 'Partner not found' }),
+            JSON.stringify({ error: 'Partner not found' }),
             { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -87,12 +87,18 @@ serve(async (req) => {
         if (partner.ghl_location_id) {
           console.log('Partner already has GHL location:', partner.ghl_location_id);
           return new Response(
-            JSON.stringify({ success: true, locationId: partner.ghl_location_id, existing: true }),
+            JSON.stringify({ 
+              success: true, 
+              locationId: partner.ghl_location_id,
+              message: 'Sub-Account already exists' 
+            }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Create sub-account in GHL
+        // Create sub-account in GoHighLevel
+        console.log('Creating GHL sub-account for:', data.partnerName);
+        
         const ghlResponse = await fetch('https://services.leadconnectorhq.com/locations/', {
           method: 'POST',
           headers: {
@@ -102,33 +108,36 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             companyId: GHL_AGENCY_ID,
-            name: name,
-            email: email,
-            phone: phone || '',
-            address: address || '',
-            city: city || '',
-            country: 'CH',
-            postalCode: postalCode || '',
-            website: website || '',
+            name: data.partnerName,
+            email: data.email,
+            phone: data.phone || '',
+            address: data.address || '',
+            city: data.city || '',
+            country: data.country || 'CH',
+            postalCode: data.postalCode || '',
+            website: data.website || '',
             timezone: 'Europe/Zurich',
           }),
         });
 
         if (!ghlResponse.ok) {
           const errorText = await ghlResponse.text();
-          console.error('GHL API error:', errorText);
+          console.error('GHL API Error:', ghlResponse.status, errorText);
           
-          // Update partner with error status
+          // Update partner sync status to error
           await supabase
             .from('partners')
             .update({ 
               ghl_sync_status: 'error',
               ghl_synced_at: new Date().toISOString()
             })
-            .eq('id', partnerId);
+            .eq('id', data.partnerId);
 
           return new Response(
-            JSON.stringify({ success: false, error: 'GHL API error', details: errorText }),
+            JSON.stringify({ 
+              error: 'Failed to create GoHighLevel sub-account',
+              details: errorText 
+            }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -141,219 +150,74 @@ serve(async (req) => {
         // Update partner with GHL location ID
         const { error: updateError } = await supabase
           .from('partners')
-          .update({ 
+          .update({
             ghl_location_id: locationId,
             ghl_sync_status: 'synced',
-            ghl_synced_at: new Date().toISOString()
+            ghl_synced_at: new Date().toISOString(),
           })
-          .eq('id', partnerId);
+          .eq('id', data.partnerId);
 
         if (updateError) {
-          console.error('Partner update error:', updateError);
+          console.error('Error updating partner:', updateError);
         }
-
-        return new Response(
-          JSON.stringify({ success: true, locationId, existing: false }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      case 'sync-contact': {
-        const { locationId, email, firstName, lastName, phone, tags, customFields } = payload as SyncContactRequest;
-
-        if (!locationId || !email) {
-          return new Response(
-            JSON.stringify({ success: false, error: 'locationId and email are required' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // First check if contact exists
-        const searchResponse = await fetch(
-          `https://services.leadconnectorhq.com/contacts/search/duplicate?locationId=${locationId}&email=${encodeURIComponent(email)}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${GHL_API_KEY}`,
-              'Content-Type': 'application/json',
-              'Version': '2021-07-28',
-            },
-          }
-        );
-
-        let contactId: string | null = null;
-        
-        if (searchResponse.ok) {
-          const searchData = await searchResponse.json();
-          if (searchData.contact?.id) {
-            contactId = searchData.contact.id;
-            console.log('Existing contact found:', contactId);
-          }
-        }
-
-        const contactPayload = {
-          locationId,
-          email,
-          firstName: firstName || '',
-          lastName: lastName || '',
-          phone: phone || '',
-          tags: tags || ['radio2go-app', 'signup'],
-          customField: customFields || {},
-          source: 'Radio2Go App',
-        };
-
-        let ghlResponse;
-        
-        if (contactId) {
-          // Update existing contact
-          ghlResponse = await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${GHL_API_KEY}`,
-              'Content-Type': 'application/json',
-              'Version': '2021-07-28',
-            },
-            body: JSON.stringify(contactPayload),
-          });
-        } else {
-          // Create new contact
-          ghlResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${GHL_API_KEY}`,
-              'Content-Type': 'application/json',
-              'Version': '2021-07-28',
-            },
-            body: JSON.stringify(contactPayload),
-          });
-        }
-
-        if (!ghlResponse.ok) {
-          const errorText = await ghlResponse.text();
-          console.error('GHL contact sync error:', errorText);
-          return new Response(
-            JSON.stringify({ success: false, error: 'Contact sync failed', details: errorText }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        const contactData = await ghlResponse.json();
-        console.log('Contact synced successfully:', contactData.contact?.id || contactId);
 
         return new Response(
           JSON.stringify({ 
             success: true, 
-            contactId: contactData.contact?.id || contactId,
-            updated: !!contactId
+            locationId,
+            message: 'Sub-Account erfolgreich erstellt!' 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      case 'sync-signup': {
-        // Sync a new user signup to ALL active partner locations
-        const { email, firstName, lastName, phone, userId } = payload;
+      case 'sync-contact': {
+        // Sync a customer/user to GHL location as a contact
+        const { locationId, contact } = payload;
 
-        if (!email) {
+        if (!locationId) {
           return new Response(
-            JSON.stringify({ success: false, error: 'email is required' }),
+            JSON.stringify({ error: 'No GHL location ID provided' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        // Get all active partners with GHL location IDs
-        const { data: partners, error: partnersError } = await supabase
-          .from('partners')
-          .select('id, name, ghl_location_id')
-          .eq('is_active', true)
-          .not('ghl_location_id', 'is', null);
+        console.log('Syncing contact to GHL location:', locationId);
 
-        if (partnersError) {
-          console.error('Error fetching partners:', partnersError);
+        const ghlResponse = await fetch(`https://services.leadconnectorhq.com/contacts/`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GHL_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Version': '2021-07-28',
+          },
+          body: JSON.stringify({
+            locationId,
+            firstName: contact.firstName || '',
+            lastName: contact.lastName || '',
+            email: contact.email,
+            phone: contact.phone || '',
+            source: 'My 2Go App',
+            tags: ['my2go', 'reward-customer'],
+          }),
+        });
+
+        if (!ghlResponse.ok) {
+          const errorText = await ghlResponse.text();
+          console.error('GHL contact sync error:', errorText);
           return new Response(
-            JSON.stringify({ success: false, error: 'Failed to fetch partners' }),
+            JSON.stringify({ error: 'Failed to sync contact', details: errorText }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        console.log(`Syncing signup to ${partners?.length || 0} GHL locations`);
-
-        const syncResults = [];
-
-        for (const partner of partners || []) {
-          if (!partner.ghl_location_id) continue;
-
-          try {
-            const contactPayload = {
-              locationId: partner.ghl_location_id,
-              email,
-              firstName: firstName || '',
-              lastName: lastName || '',
-              phone: phone || '',
-              tags: ['radio2go-app', 'signup', 'new-user'],
-              source: 'Radio2Go App Signup',
-            };
-
-            // Create contact in this location
-            const ghlResponse = await fetch('https://services.leadconnectorhq.com/contacts/', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${GHL_API_KEY}`,
-                'Content-Type': 'application/json',
-                'Version': '2021-07-28',
-              },
-              body: JSON.stringify(contactPayload),
-            });
-
-            if (ghlResponse.ok) {
-              const data = await ghlResponse.json();
-              syncResults.push({ 
-                partnerId: partner.id, 
-                partnerName: partner.name,
-                success: true, 
-                contactId: data.contact?.id 
-              });
-              console.log(`Contact synced to ${partner.name}: ${data.contact?.id}`);
-            } else {
-              const errorText = await ghlResponse.text();
-              // Check if it's a duplicate error (contact already exists)
-              if (errorText.includes('duplicate') || errorText.includes('already exists')) {
-                syncResults.push({ 
-                  partnerId: partner.id, 
-                  partnerName: partner.name,
-                  success: true, 
-                  existing: true 
-                });
-              } else {
-                console.error(`Failed to sync to ${partner.name}:`, errorText);
-                syncResults.push({ 
-                  partnerId: partner.id, 
-                  partnerName: partner.name,
-                  success: false, 
-                  error: errorText 
-                });
-              }
-            }
-          } catch (err) {
-            console.error(`Error syncing to ${partner.name}:`, err);
-            syncResults.push({ 
-              partnerId: partner.id, 
-              partnerName: partner.name,
-              success: false, 
-              error: String(err) 
-            });
-          }
-        }
-
-        const successCount = syncResults.filter(r => r.success).length;
-        console.log(`Signup sync complete: ${successCount}/${syncResults.length} successful`);
+        const contactData = await ghlResponse.json();
+        console.log('Contact synced to GHL:', contactData.contact?.id);
 
         return new Response(
           JSON.stringify({ 
             success: true, 
-            syncedCount: successCount,
-            totalPartners: syncResults.length,
-            results: syncResults
+            contactId: contactData.contact?.id 
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
@@ -362,26 +226,30 @@ serve(async (req) => {
       case 'get-location': {
         const { locationId } = payload;
 
+        if (!locationId) {
+          return new Response(
+            JSON.stringify({ error: 'No location ID provided' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const ghlResponse = await fetch(`https://services.leadconnectorhq.com/locations/${locationId}`, {
-          method: 'GET',
           headers: {
             'Authorization': `Bearer ${GHL_API_KEY}`,
-            'Content-Type': 'application/json',
             'Version': '2021-07-28',
           },
         });
 
         if (!ghlResponse.ok) {
           const errorText = await ghlResponse.text();
-          console.error('GHL location fetch error:', errorText);
+          console.error('GHL get location error:', errorText);
           return new Response(
-            JSON.stringify({ success: false, error: 'Location fetch failed' }),
+            JSON.stringify({ error: 'Failed to get location' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
         const locationData = await ghlResponse.json();
-
         return new Response(
           JSON.stringify({ success: true, location: locationData }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -390,14 +258,14 @@ serve(async (req) => {
 
       default:
         return new Response(
-          JSON.stringify({ success: false, error: 'Unknown action' }),
+          JSON.stringify({ error: 'Unknown action' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
   } catch (error) {
-    console.error('GHL Sync error:', error);
+    console.error('GHL Sync Error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: String(error) }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
