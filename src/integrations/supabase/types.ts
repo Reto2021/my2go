@@ -1098,6 +1098,44 @@ export type Database = {
       end_listening_session: { Args: { _session_id: string }; Returns: Json }
       generate_redemption_code: { Args: never; Returns: string }
       generate_unique_code: { Args: { prefix?: string }; Returns: string }
+      get_leaderboard_profile_safe: {
+        Args: { profile_id: string }
+        Returns: {
+          avatar_url: string
+          leaderboard_nickname: string
+          show_on_leaderboard: boolean
+        }[]
+      }
+      get_partner_public_info: {
+        Args: { partner_id: string }
+        Returns: {
+          address_number: string
+          address_street: string
+          brand_color: string
+          category: string
+          city: string
+          cover_image_url: string
+          description: string
+          facebook: string
+          google_place_id: string
+          google_rating: number
+          google_review_count: number
+          id: string
+          instagram: string
+          is_featured: boolean
+          lat: number
+          lng: number
+          logo_url: string
+          name: string
+          opening_hours: Json
+          postal_code: string
+          short_description: string
+          slug: string
+          special_hours: Json
+          tags: string[]
+          website: string
+        }[]
+      }
       get_public_partner_by_id: {
         Args: { partner_id: string }
         Returns: {
