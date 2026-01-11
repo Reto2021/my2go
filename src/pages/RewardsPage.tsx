@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useOfflineRewards } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
 import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucide-react';
@@ -145,7 +146,12 @@ export default function RewardsPage() {
     navigate('/auth');
   };
   
+  const handleRefresh = useCallback(async () => {
+    await loadRewards();
+  }, [loadRewards]);
+  
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
@@ -356,5 +362,6 @@ export default function RewardsPage() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }
