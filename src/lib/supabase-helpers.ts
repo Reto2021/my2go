@@ -465,13 +465,14 @@ export async function redeemReward(
  * Syncs the user as a contact to the partner's GoHighLevel location.
  * This is called automatically after a successful redemption.
  * Non-blocking - failures are logged but don't affect the redemption.
+ * Includes partner info for email notifications on failure.
  */
 async function syncContactToGHLOnRedemption(userId: string, partnerId: string): Promise<void> {
   try {
-    // 1. Get partner's GHL location ID
+    // 1. Get partner's GHL location ID and name
     const { data: partner, error: partnerError } = await supabase
       .from('partners')
-      .select('ghl_location_id, name')
+      .select('ghl_location_id, name, id')
       .eq('id', partnerId)
       .single();
     
@@ -493,11 +494,13 @@ async function syncContactToGHLOnRedemption(userId: string, partnerId: string): 
       return;
     }
     
-    // 3. Call GHL sync edge function
+    // 3. Call GHL sync edge function with partner info for error notifications
     const { error: syncError } = await supabase.functions.invoke('ghl-sync', {
       body: {
         action: 'sync-contact',
         locationId: partner.ghl_location_id,
+        partnerId: partner.id,
+        partnerName: partner.name,
         contact: {
           email: profile.email,
           firstName: profile.first_name || '',
