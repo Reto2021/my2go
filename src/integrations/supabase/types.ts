@@ -1316,6 +1316,7 @@ export type Database = {
         Returns: Json
       }
       start_listening_session: { Args: { _user_id: string }; Returns: string }
+      validate_air_drop_code: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       partner_admin_role: "owner" | "manager" | "staff"
