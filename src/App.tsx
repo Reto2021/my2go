@@ -52,6 +52,7 @@ const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
 // Admin pages - lazy loaded (rarely accessed)
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
+const AdminGHLStatus = lazy(() => import("./pages/admin/AdminGHLStatus"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminAirDrops = lazy(() => import("./pages/admin/AdminAirDrops"));
 const AdminBadges = lazy(() => import("./pages/admin/AdminBadges"));
@@ -138,6 +139,7 @@ function AppContent() {
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
             <Route index element={<AdminDashboard />} />
             <Route path="partners" element={<AdminPartners />} />
+            <Route path="ghl" element={<AdminGHLStatus />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="badges" element={<AdminBadges />} />
             <Route path="radio" element={<AdminRadioTiers />} />
