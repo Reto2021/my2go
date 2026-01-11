@@ -5,6 +5,7 @@ import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
 import { SessionSummarySheet } from '@/components/ui/session-summary-sheet';
+import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 
 interface AppLayoutProps {
@@ -18,6 +19,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <BadgeNotificationProvider>
       <div className="min-h-screen bg-background">
+        <OfflineIndicator />
         <RadioHeader />
         <main className="pt-20 pb-24">
           {children || <Outlet />}
