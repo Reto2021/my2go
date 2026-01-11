@@ -119,8 +119,8 @@ export default {
           "50%": { opacity: "0.7" },
         },
         "shimmer": {
-          from: { backgroundPosition: "200% 0" },
-          to: { backgroundPosition: "-200% 0" },
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
         },
         "equalizer-1": {
           "0%, 100%": { height: "4px" },

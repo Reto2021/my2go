@@ -16,7 +16,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useAuth } from "@/contexts/AuthContext";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Skeleton, SkeletonLeaderboardRow, SkeletonLeaderboardPodium, SkeletonBalanceCard } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -86,8 +86,25 @@ export default function LeaderboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner />
+      <div className="min-h-screen pb-24 bg-background">
+        <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+          <div className="container py-4 flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <div className="space-y-1">
+              <Skeleton className="h-5 w-32 rounded" />
+              <Skeleton className="h-3 w-24 rounded" />
+            </div>
+          </div>
+        </header>
+        <div className="container py-6 space-y-6">
+          <SkeletonBalanceCard />
+          <SkeletonLeaderboardPodium />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonLeaderboardRow key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

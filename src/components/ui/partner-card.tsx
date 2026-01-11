@@ -83,17 +83,5 @@ export function PartnerCard({ partner, className, showArrow = true, redemptionCo
   );
 }
 
-export function PartnerCardSkeleton({ className }: { className?: string }) {
-  return (
-    <div className={cn('card-base p-4', className)}>
-      <div className="flex gap-4">
-        <div className="h-16 w-16 shrink-0 rounded-2xl bg-muted animate-pulse" />
-        <div className="flex-1 space-y-2">
-          <div className="h-5 w-3/4 rounded bg-muted animate-pulse" />
-          <div className="h-4 w-1/2 rounded bg-muted animate-pulse" />
-          <div className="h-4 w-1/3 rounded bg-muted animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-}
+// Re-export the content-aware skeleton
+export { SkeletonPartnerCard as PartnerCardSkeleton } from '@/components/ui/skeleton';
