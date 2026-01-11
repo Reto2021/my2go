@@ -1,6 +1,8 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Gift, QrCode, Store, Music } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { prefetchRoute } from '@/lib/route-prefetch';
+import { useCallback } from 'react';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
@@ -25,6 +27,11 @@ export function BottomNav() {
     }
   };
   
+  // Prefetch on hover/touch
+  const handlePrefetch = useCallback((path: string) => {
+    prefetchRoute(path);
+  }, []);
+  
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50" data-onboarding="bottom-nav">
       {/* Background blur */}
@@ -41,6 +48,8 @@ export function BottomNav() {
             <button
               key={item.path}
               onClick={(e) => handleNavClick(e, item.path)}
+              onMouseEnter={() => handlePrefetch(item.path)}
+              onTouchStart={() => handlePrefetch(item.path)}
               className={cn(
                 'flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200',
                 isActive

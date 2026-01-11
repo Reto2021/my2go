@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
 import { getRewards, getPartners, Reward, Partner } from '@/lib/supabase-helpers';
+import { prefetchCommonRoutes } from '@/lib/route-prefetch';
 import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
@@ -32,6 +33,11 @@ import {
   Trophy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Prefetch common routes after initial load
+if (typeof window !== 'undefined') {
+  prefetchCommonRoutes();
+}
 
 export default function HomePage() {
   const { user, profile, balance, isLoading } = useAuth();
