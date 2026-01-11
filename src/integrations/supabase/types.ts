@@ -291,6 +291,9 @@ export type Database = {
           description: string | null
           email: string | null
           facebook: string | null
+          ghl_location_id: string | null
+          ghl_sync_status: string | null
+          ghl_synced_at: string | null
           google_place_id: string | null
           google_rating: number | null
           google_review_count: number | null
@@ -336,6 +339,9 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook?: string | null
+          ghl_location_id?: string | null
+          ghl_sync_status?: string | null
+          ghl_synced_at?: string | null
           google_place_id?: string | null
           google_rating?: number | null
           google_review_count?: number | null
@@ -381,6 +387,9 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook?: string | null
+          ghl_location_id?: string | null
+          ghl_sync_status?: string | null
+          ghl_synced_at?: string | null
           google_place_id?: string | null
           google_rating?: number | null
           google_review_count?: number | null
