@@ -1,5 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,6 +33,74 @@ interface CreateSubAccountRequest {
   country?: string;
 }
 
+// Admin email for receiving sync failure notifications
+const ADMIN_NOTIFICATION_EMAIL = 'admin@my2go.app';
+
+/**
+ * Send email notification for GHL sync failures
+ */
+async function sendSyncFailureNotification(
+  resend: Resend,
+  partnerName: string,
+  partnerId: string,
+  action: string,
+  errorDetails: string
+): Promise<void> {
+  try {
+    const { error } = await resend.emails.send({
+      from: 'My 2Go System <notifications@my2go.app>',
+      to: [ADMIN_NOTIFICATION_EMAIL],
+      subject: `⚠️ GHL Sync Fehler: ${partnerName}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ GoHighLevel Sync Fehler</h1>
+          </div>
+          
+          <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <h2 style="color: #1e293b; margin-top: 0;">Partner Details</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; color: #64748b; width: 120px;">Partner:</td>
+                <td style="padding: 8px 0; color: #1e293b; font-weight: 600;">${partnerName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Partner ID:</td>
+                <td style="padding: 8px 0; color: #1e293b; font-family: monospace; font-size: 12px;">${partnerId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Aktion:</td>
+                <td style="padding: 8px 0; color: #1e293b;">${action}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #64748b;">Zeitpunkt:</td>
+                <td style="padding: 8px 0; color: #1e293b;">${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Zurich' })}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+            <h3 style="color: #dc2626; margin-top: 0;">Fehlerdetails</h3>
+            <pre style="background: #1e293b; color: #f1f5f9; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px; white-space: pre-wrap;">${errorDetails}</pre>
+          </div>
+          
+          <div style="text-align: center; color: #94a3b8; font-size: 12px;">
+            <p>Diese E-Mail wurde automatisch vom My 2Go System generiert.</p>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send notification email:', error);
+    } else {
+      console.log('Sync failure notification sent successfully');
+    }
+  } catch (emailError) {
+    console.error('Error sending notification email:', emailError);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -43,6 +112,7 @@ serve(async (req) => {
     const GHL_AGENCY_ID = Deno.env.get('GOHIGHLEVEL_AGENCY_ID');
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
     if (!GHL_API_KEY || !GHL_AGENCY_ID) {
       console.error('Missing GoHighLevel credentials');
@@ -61,6 +131,7 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
     const { action, ...payload } = await req.json();
 
     console.log(`GHL Sync Action: ${action}`, { partnerId: payload.partnerId });
@@ -133,6 +204,17 @@ serve(async (req) => {
             })
             .eq('id', data.partnerId);
 
+          // Send email notification for sync failure
+          if (resend) {
+            await sendSyncFailureNotification(
+              resend,
+              data.partnerName,
+              data.partnerId,
+              'Sub-Account erstellen',
+              `Status: ${ghlResponse.status}\n\n${errorText}`
+            );
+          }
+
           return new Response(
             JSON.stringify({ 
               error: 'Failed to create GoHighLevel sub-account',
@@ -173,7 +255,7 @@ serve(async (req) => {
 
       case 'sync-contact': {
         // Sync a customer/user to GHL location as a contact
-        const { locationId, contact } = payload;
+        const { locationId, contact, partnerId, partnerName } = payload;
 
         if (!locationId) {
           return new Response(
@@ -205,6 +287,18 @@ serve(async (req) => {
         if (!ghlResponse.ok) {
           const errorText = await ghlResponse.text();
           console.error('GHL contact sync error:', errorText);
+
+          // Send email notification for contact sync failure
+          if (resend && partnerId && partnerName) {
+            await sendSyncFailureNotification(
+              resend,
+              partnerName,
+              partnerId,
+              'Kontakt synchronisieren',
+              `Kontakt: ${contact.email}\nStatus: ${ghlResponse.status}\n\n${errorText}`
+            );
+          }
+
           return new Response(
             JSON.stringify({ error: 'Failed to sync contact', details: errorText }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
