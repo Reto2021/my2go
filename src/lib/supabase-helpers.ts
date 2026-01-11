@@ -453,7 +453,68 @@ export async function redeemReward(
     // Redemption was created, but transaction failed - should not happen with proper setup
   }
   
+  // 5. Trigger GHL contact sync (fire-and-forget, non-blocking)
+  syncContactToGHLOnRedemption(userId, partnerId).catch(err => {
+    console.warn('GHL contact sync failed (non-blocking):', err);
+  });
+  
   return { redemption, error: null };
+}
+
+/**
+ * Syncs the user as a contact to the partner's GoHighLevel location.
+ * This is called automatically after a successful redemption.
+ * Non-blocking - failures are logged but don't affect the redemption.
+ */
+async function syncContactToGHLOnRedemption(userId: string, partnerId: string): Promise<void> {
+  try {
+    // 1. Get partner's GHL location ID
+    const { data: partner, error: partnerError } = await supabase
+      .from('partners')
+      .select('ghl_location_id, name')
+      .eq('id', partnerId)
+      .single();
+    
+    if (partnerError || !partner?.ghl_location_id) {
+      // Partner doesn't have GHL integration - this is fine, just skip
+      console.log('Partner has no GHL location, skipping contact sync');
+      return;
+    }
+    
+    // 2. Get user profile for contact details
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, first_name, last_name, phone')
+      .eq('id', userId)
+      .single();
+    
+    if (profileError || !profile?.email) {
+      console.warn('Could not get user profile for GHL sync');
+      return;
+    }
+    
+    // 3. Call GHL sync edge function
+    const { error: syncError } = await supabase.functions.invoke('ghl-sync', {
+      body: {
+        action: 'sync-contact',
+        locationId: partner.ghl_location_id,
+        contact: {
+          email: profile.email,
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          phone: profile.phone || '',
+        },
+      },
+    });
+    
+    if (syncError) {
+      console.error('GHL contact sync error:', syncError);
+    } else {
+      console.log(`Contact synced to GHL for partner: ${partner.name}`);
+    }
+  } catch (err) {
+    console.error('GHL sync error (caught):', err);
+  }
 }
 
 export async function getRedemptions(userId: string): Promise<Redemption[]> {
