@@ -200,7 +200,7 @@ export function RadioHeader() {
         <ClockWeatherWidget className="flex-shrink-0 hidden xs:flex" />
         
         {/* Player area - compact on mobile */}
-        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0" data-onboarding="radio-player">
           {/* Play button - smaller on mobile */}
           <button
             onClick={togglePlay}

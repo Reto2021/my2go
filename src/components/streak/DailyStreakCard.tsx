@@ -102,6 +102,7 @@ export function DailyStreakCard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 via-card to-amber-500/5 border border-orange-500/20"
+        data-onboarding="streak-card"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

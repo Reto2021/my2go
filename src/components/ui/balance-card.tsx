@@ -9,10 +9,10 @@ interface BalanceCardProps {
 
 export function BalanceCard({ balance, className }: BalanceCardProps) {
   return (
-    <div className={cn(
-      'balance-display shine',
-      className
-    )}>
+    <div 
+      className={cn('balance-display shine', className)}
+      data-onboarding="balance-card"
+    >
       {/* Main Balance */}
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
