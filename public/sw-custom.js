@@ -1,5 +1,146 @@
-// Custom Service Worker for Push Notifications
+// Custom Service Worker for Push Notifications and Offline Support
 
+const OFFLINE_PAGE = '/offline.html';
+const CACHE_NAME = 'my2go-offline-v1';
+
+// Assets to cache immediately on install
+const PRECACHE_ASSETS = [
+  OFFLINE_PAGE,
+  '/pwa-192x192.png',
+  '/pwa-512x512.png',
+  '/favicon.png',
+];
+
+// Install event - precache offline assets
+self.addEventListener('install', function(event) {
+  console.log('[SW] Installing service worker...');
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(function(cache) {
+      console.log('[SW] Precaching offline assets');
+      return cache.addAll(PRECACHE_ASSETS);
+    }).then(function() {
+      return self.skipWaiting();
+    })
+  );
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', function(event) {
+  console.log('[SW] Activating service worker...');
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.filter(function(cacheName) {
+          return cacheName.startsWith('my2go-') && cacheName !== CACHE_NAME;
+        }).map(function(cacheName) {
+          console.log('[SW] Deleting old cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(function() {
+      return self.clients.claim();
+    })
+  );
+});
+
+// Fetch event - serve from cache or network with offline fallback
+self.addEventListener('fetch', function(event) {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
+  // Skip cross-origin requests except for fonts and CDN assets
+  const url = new URL(event.request.url);
+  const isNavigationRequest = event.request.mode === 'navigate';
+  const isSameOrigin = url.origin === location.origin;
+  const isAPIRequest = url.pathname.startsWith('/rest/') || 
+                       url.pathname.startsWith('/auth/') ||
+                       url.hostname.includes('supabase');
+  
+  // Don't cache API requests - let them fail naturally
+  if (isAPIRequest) return;
+  
+  // Handle navigation requests (HTML pages)
+  if (isNavigationRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then(function(response) {
+          // Clone and cache successful navigation responses
+          if (response.ok && isSameOrigin) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(function() {
+          // Offline - try to serve from cache first
+          return caches.match(event.request).then(function(cachedResponse) {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // If not in cache, serve offline page
+            return caches.match(OFFLINE_PAGE);
+          });
+        })
+    );
+    return;
+  }
+  
+  // Handle static assets with cache-first strategy
+  if (isSameOrigin && (
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.woff2') ||
+    url.pathname.endsWith('.ico')
+  )) {
+    event.respondWith(
+      caches.match(event.request).then(function(cachedResponse) {
+        if (cachedResponse) {
+          // Return cached version but also fetch fresh version in background
+          event.waitUntil(
+            fetch(event.request).then(function(response) {
+              if (response.ok) {
+                caches.open(CACHE_NAME).then(function(cache) {
+                  cache.put(event.request, response);
+                });
+              }
+            }).catch(function() {
+              // Silently fail - we have cached version
+            })
+          );
+          return cachedResponse;
+        }
+        
+        // Not in cache - fetch and cache
+        return fetch(event.request).then(function(response) {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        }).catch(function() {
+          // Return a placeholder for images
+          if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg)$/)) {
+            return new Response(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="#f1f5f9" width="100" height="100"/><text fill="#94a3b8" x="50" y="50" text-anchor="middle" dy=".3em" font-family="sans-serif" font-size="12">Offline</text></svg>',
+              { headers: { 'Content-Type': 'image/svg+xml' } }
+            );
+          }
+          throw new Error('Network error');
+        });
+      })
+    );
+    return;
+  }
+});
+
+// Push notification handler
 self.addEventListener('push', function(event) {
   console.log('[SW] Push received:', event);
   
@@ -34,6 +175,7 @@ self.addEventListener('push', function(event) {
   );
 });
 
+// Notification click handler
 self.addEventListener('notificationclick', function(event) {
   console.log('[SW] Notification clicked:', event.notification.tag);
   
@@ -70,4 +212,38 @@ self.addEventListener('notificationclick', function(event) {
 // Listen for messages from the main app
 self.addEventListener('message', function(event) {
   console.log('[SW] Message received:', event.data);
+  
+  // Handle skip waiting message
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  // Handle cache clear message
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then(function(cacheNames) {
+        return Promise.all(
+          cacheNames.map(function(cacheName) {
+            return caches.delete(cacheName);
+          })
+        );
+      })
+    );
+  }
+});
+
+// Background sync for offline actions (if supported)
+self.addEventListener('sync', function(event) {
+  console.log('[SW] Background sync:', event.tag);
+  
+  if (event.tag === 'sync-pending-actions') {
+    event.waitUntil(
+      // Sync pending actions when back online
+      self.clients.matchAll().then(function(clients) {
+        clients.forEach(function(client) {
+          client.postMessage({ type: 'SYNC_PENDING_ACTIONS' });
+        });
+      })
+    );
+  }
 });
