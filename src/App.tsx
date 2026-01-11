@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+import { OnboardingOverlay } from "@/components/onboarding/OnboardingOverlay";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AdminGuard } from "@/components/admin/AdminGuard";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -200,11 +202,14 @@ function AppContent() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AppContent />
-      </TooltipProvider>
+      <OnboardingProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <OnboardingOverlay />
+          <AppContent />
+        </TooltipProvider>
+      </OnboardingProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

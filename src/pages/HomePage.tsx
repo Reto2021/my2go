@@ -421,7 +421,7 @@ function SessionModeHome({
       {/* Quick Actions */}
       <section className="container section">
         <h2 className="section-title mb-5">Schnellzugriff</h2>
-        <div className="grid grid-cols-6 gap-2 stagger-children">
+        <div className="grid grid-cols-6 gap-2 stagger-children" data-onboarding="quick-actions">
           <QuickAction to="/code" icon={Music} label="Radio-Code" color="accent" />
           <QuickAction to="/my-redemptions" icon={Ticket} label="Einlösungen" color="primary" />
           <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="primary" />
@@ -432,7 +432,7 @@ function SessionModeHome({
       </section>
       
       {/* Rewards */}
-      <section className="container section">
+      <section className="container section" data-onboarding="rewards-section">
         <div className="section-header">
           <h2 className="section-title">
             {userLocation ? 'In deiner Nähe' : 'Für dich'}

@@ -26,7 +26,7 @@ export function BottomNav() {
   };
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 z-50" data-onboarding="bottom-nav">
       {/* Background blur */}
       <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-border/50" />
       

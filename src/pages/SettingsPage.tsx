@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2 } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ import {
 } from '@/lib/push-notifications';
 import { toast } from 'sonner';
 import { BadgeProgressRing } from '@/components/badges/BadgeProgressRing';
+import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 
 // Visit tracking keys (same as in install-prompt.tsx)
 const VISIT_COUNT_KEY = 'pwa-visit-count';
@@ -183,6 +184,24 @@ export default function SettingsPage() {
           </h2>
           
           <div className="card-base divide-y divide-border">
+            {/* Tutorial */}
+            {user && (
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">App-Tour</p>
+                    <p className="text-sm text-muted-foreground">
+                      Lerne die wichtigsten Funktionen kennen
+                    </p>
+                  </div>
+                </div>
+                <OnboardingTrigger />
+              </div>
+            )}
+            
             {/* FAQ */}
             <button 
               onClick={() => navigate('/faq')}
