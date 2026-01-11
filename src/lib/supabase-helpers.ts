@@ -68,6 +68,15 @@ export interface Partner {
   website?: string | null;
   instagram?: string | null;
   facebook?: string | null;
+  // Contact fields
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  contact_first_name?: string | null;
+  contact_last_name?: string | null;
+  // GHL integration
+  ghl_location_id?: string | null;
+  ghl_synced_at?: string | null;
+  ghl_sync_status?: string | null;
 }
 
 export interface Reward {
