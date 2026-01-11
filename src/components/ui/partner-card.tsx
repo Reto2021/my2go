@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
 import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
 import { usePartnerRedemptionCount } from '@/hooks/usePartnerRedemptionCount';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface PartnerCardProps {
   partner: Partner;
@@ -31,10 +32,12 @@ export function PartnerCard({ partner, className, showArrow = true, redemptionCo
       {/* Logo */}
       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
         {partner.logo_url ? (
-          <img 
-            src={partner.logo_url} 
-            alt={partner.name} 
-            className="h-full w-full object-cover"
+          <OptimizedImage
+            src={partner.logo_url}
+            alt={partner.name}
+            width={64}
+            height={64}
+            className="h-full w-full rounded-2xl"
           />
         ) : (
           <Store className="h-7 w-7 text-secondary" />

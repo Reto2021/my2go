@@ -31,6 +31,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 // Map reward_type to icons and labels
 const rewardTypeIcons = {
@@ -538,10 +539,12 @@ export default function RewardDetailPage() {
           <div className="flex justify-center mb-6">
             {reward.image_url ? (
               <div className="h-32 w-full max-w-xs rounded-2xl overflow-hidden bg-muted">
-                <img 
+                <OptimizedImage 
                   src={reward.image_url} 
                   alt={reward.title}
-                  className="h-full w-full object-cover"
+                  width={320}
+                  height={128}
+                  className="h-full w-full rounded-2xl"
                 />
               </div>
             ) : (
@@ -597,10 +600,12 @@ export default function RewardDetailPage() {
             >
               <div className="flex items-center gap-4">
                 {reward.partner.logo_url ? (
-                  <img 
+                  <OptimizedImage 
                     src={reward.partner.logo_url} 
                     alt={reward.partner.name}
-                    className="h-12 w-12 rounded-xl object-cover"
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 rounded-xl"
                   />
                 ) : (
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">

@@ -5,6 +5,7 @@ import { Partner } from '@/lib/supabase-helpers';
 import { useNavigate } from 'react-router-dom';
 import { Store, Navigation, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 
 interface PartnerMapProps {
   partners: Partner[];
@@ -206,7 +207,13 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
             <div className="flex items-center gap-4">
               <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
                 {selectedPartner.logo_url ? (
-                  <img src={selectedPartner.logo_url} alt={selectedPartner.name} className="h-full w-full object-cover" />
+                  <OptimizedImage 
+                    src={selectedPartner.logo_url} 
+                    alt={selectedPartner.name} 
+                    width={56}
+                    height={56}
+                    className="h-full w-full rounded-xl"
+                  />
                 ) : (
                   <Store className="h-6 w-6 text-secondary" />
                 )}
