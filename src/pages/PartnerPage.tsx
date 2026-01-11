@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { PartnerMap } from '@/components/PartnerMap';
 import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
 import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useOfflinePartners } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
 import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon } from 'lucide-react';
@@ -172,7 +173,12 @@ export default function PartnerPage() {
     return groups;
   }, [filteredPartners, userLocation, searchQuery, selectedCategory]);
   
+  const handleRefresh = useCallback(async () => {
+    await loadData();
+  }, [loadData]);
+  
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
@@ -413,6 +419,7 @@ export default function PartnerPage() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }
 
