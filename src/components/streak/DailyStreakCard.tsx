@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Zap, Gift, Check, Loader2, Snowflake, ShoppingCart } from "lucide-react";
+import { Flame, Zap, Gift, Check, Loader2, Snowflake, ShoppingCart, Coins } from "lucide-react";
 import { useStreak } from "@/hooks/useStreak";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
@@ -178,7 +178,7 @@ export function DailyStreakCard() {
                     animate={{ y: 0, opacity: 1 }}
                     className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 whitespace-nowrap"
                   >
-                    <TalerIcon size={12} className="drop-shadow-none" />
+                    <Coins className="h-3 w-3" />
                     +{day.bonus}
                   </motion.div>
                 )}
