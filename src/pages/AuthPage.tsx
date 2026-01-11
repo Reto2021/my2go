@@ -46,12 +46,18 @@ export default function AuthPage() {
       }
     });
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session) {
         // Process referral after signup
         if (event === 'SIGNED_IN' && referralCode) {
           processReferral(session.user.id, referralCode);
         }
+        
+        // Sync new signup to GHL
+        if (event === 'SIGNED_IN') {
+          syncToGHL(session.user);
+        }
+        
         navigate('/');
       }
     });
@@ -76,6 +82,30 @@ export default function AuthPage() {
       }
     } catch (error) {
       console.error('Referral processing error:', error);
+    }
+  };
+  
+  const syncToGHL = async (user: { id: string; email?: string; user_metadata?: Record<string, unknown> }) => {
+    try {
+      const metadata = user.user_metadata || {};
+      
+      await supabase.functions.invoke('ghl-sync', {
+        body: {
+          action: 'sync-signup',
+          payload: {
+            email: user.email,
+            firstName: metadata.first_name || metadata.display_name || '',
+            lastName: metadata.last_name || '',
+            phone: metadata.phone || '',
+            userId: user.id,
+          }
+        }
+      });
+      
+      console.log('GHL signup sync triggered');
+    } catch (error) {
+      // Silent fail - don't block user experience for GHL sync
+      console.error('GHL sync error:', error);
     }
   };
   
