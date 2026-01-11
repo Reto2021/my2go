@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { ArrowLeft, User, Mail, Phone, MapPin, Loader2, Save, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { Skeleton, SkeletonProfile } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateProfile } from '@/lib/supabase-helpers';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +36,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, isLoading: isAuthLoading } = useAuth();
   
   const [formData, setFormData] = useState<ProfileFormData>({
     display_name: '',
@@ -177,6 +178,11 @@ export default function ProfilePage() {
   };
   
   if (!user) return null;
+  
+  // Show skeleton while auth is loading
+  if (isAuthLoading) {
+    return <ProfilePageSkeleton />;
+  }
   
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -497,6 +503,99 @@ export default function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/**
+ * Full-page skeleton for ProfilePage loading
+ */
+function ProfilePageSkeleton() {
+  return (
+    <div className="min-h-screen pb-24 bg-background">
+      {/* Header */}
+      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+        <div className="container py-4 flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <Skeleton className="h-5 w-24 rounded" />
+        </div>
+      </header>
+      
+      <div className="container py-6 space-y-6">
+        {/* Avatar Section */}
+        <SkeletonProfile />
+        
+        {/* Email Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-24 rounded" />
+          </div>
+          <div className="card-base p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-40 rounded" />
+                <Skeleton className="h-4 w-28 rounded" />
+              </div>
+              <Skeleton className="h-9 w-20 rounded-lg" />
+            </div>
+          </div>
+        </section>
+        
+        {/* Personal Info Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-32 rounded" />
+          </div>
+          <div className="card-base p-4 space-y-4">
+            {/* Display name */}
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+            {/* First & Last name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16 rounded" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+            {/* Phone */}
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16 rounded" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+          </div>
+        </section>
+        
+        {/* Address Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-16 rounded" />
+          </div>
+          <div className="card-base p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-8 rounded" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-8 rounded" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Save Button */}
+        <Skeleton className="h-14 w-full rounded-2xl" />
+      </div>
     </div>
   );
 }

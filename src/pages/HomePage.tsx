@@ -6,7 +6,13 @@ import { getRewards, getPartners, Reward, Partner } from '@/lib/supabase-helpers
 import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
-import { PageLoader } from '@/components/ui/loading-spinner';
+import { 
+  Skeleton, 
+  SkeletonRewardCard, 
+  SkeletonPartnerCard, 
+  SkeletonBalanceCard,
+  SkeletonListItem 
+} from '@/components/ui/skeleton';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
@@ -111,7 +117,7 @@ export default function HomePage() {
   };
   
   if (isLoading) {
-    return <PageLoader />;
+    return <HomePageSkeleton />;
   }
   
   if (!isAuthenticated) {
@@ -256,7 +262,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
+              <SkeletonRewardCard key={i} />
             ))
           ) : rewards.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -282,7 +288,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
+              <SkeletonPartnerCard key={i} />
             ))
           ) : partners.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -460,7 +466,7 @@ function SessionModeHome({
         <div className="space-y-3 stagger-children">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-3xl bg-muted animate-pulse" />
+              <SkeletonRewardCard key={i} />
             ))
           ) : rewards.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -498,5 +504,72 @@ function QuickAction({ to, icon: Icon, label, color }: QuickActionProps) {
       </div>
       <span className="text-sm font-semibold text-center">{label}</span>
     </Link>
+  );
+}
+
+/**
+ * Full-page skeleton for initial HomePage loading
+ */
+function HomePageSkeleton() {
+  return (
+    <div className="min-h-screen pb-28 bg-background">
+      {/* Greeting skeleton */}
+      <header className="container pt-6 pb-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-16 rounded" />
+          <Skeleton className="h-5 w-24 rounded" />
+        </div>
+      </header>
+      
+      {/* Balance Card & Widgets */}
+      <section className="container py-4 space-y-3">
+        <SkeletonBalanceCard />
+        
+        {/* Streak Card skeleton */}
+        <div className="card-base p-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-14 w-14 rounded-2xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-5 w-32 rounded" />
+              <Skeleton className="h-4 w-48 rounded" />
+            </div>
+          </div>
+        </div>
+        
+        {/* Recent badges skeleton */}
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-12 rounded-full flex-shrink-0" />
+          ))}
+        </div>
+      </section>
+      
+      {/* Quick Actions skeleton */}
+      <section className="container section">
+        <Skeleton className="h-5 w-28 rounded mb-5" />
+        <div className="grid grid-cols-6 gap-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <Skeleton className="h-12 w-12 rounded-2xl" />
+              <Skeleton className="h-3 w-14 rounded" />
+            </div>
+          ))}
+        </div>
+      </section>
+      
+      {/* Rewards skeleton */}
+      <section className="container section">
+        <div className="flex justify-between items-center mb-4">
+          <Skeleton className="h-5 w-24 rounded" />
+          <Skeleton className="h-4 w-12 rounded" />
+        </div>
+        <Skeleton className="h-7 w-28 rounded-full mb-4" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonRewardCard key={i} />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
