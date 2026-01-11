@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,67 +14,80 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { PartnerGuard } from "@/components/partner/PartnerGuard";
 import { PartnerLayout } from "@/components/partner/PartnerLayout";
 import { GoLayout } from "@/components/go/GoLayout";
-import HomePage from "./pages/HomePage";
-import RewardsPage from "./pages/RewardsPage";
-import RewardDetailPage from "./pages/RewardDetailPage";
-import CodePage from "./pages/CodePage";
-import PartnerPage from "./pages/PartnerPage";
-import PartnerDetailPage from "./pages/PartnerDetailPage";
-import FAQPage from "./pages/FAQPage";
-import SettingsPage from "./pages/SettingsPage";
-import AuthPage from "./pages/AuthPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import ProfilePage from "./pages/ProfilePage";
-import MyRedemptionsPage from "./pages/MyRedemptionsPage";
-import MyQRPage from "./pages/MyQRPage";
-import RedemptionDetailPage from "./pages/RedemptionDetailPage";
-import ReferralPage from "./pages/ReferralPage";
-import NotFound from "./pages/NotFound";
-import BadgesPage from "./pages/BadgesPage";
-import InstallPage from "./pages/InstallPage";
-import LeaderboardPage from "./pages/LeaderboardPage";
-import LegalTermsPage from "./pages/LegalTermsPage";
-import ImpressumPage from "./pages/ImpressumPage";
-import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminPartners from "./pages/admin/AdminPartners";
-import AdminCustomers from "./pages/admin/AdminCustomers";
-import AdminAirDrops from "./pages/admin/AdminAirDrops";
-import AdminBadges from "./pages/admin/AdminBadges";
-import AdminRadioTiers from "./pages/admin/AdminRadioTiers";
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminPartnerApplications from "./pages/admin/AdminPartnerApplications";
-import PartnerDashboard from "./pages/partner/PartnerDashboard";
-import PartnerScanPage from "./pages/partner/PartnerScanPage";
-import PartnerRewards from "./pages/partner/PartnerRewards";
-import PartnerRedemptions from "./pages/partner/PartnerRedemptions";
-import PartnerReviews from "./pages/partner/PartnerReviews";
 import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger";
 import { InstallPrompt } from "./components/ui/install-prompt";
-// Go Funnel Pages (B2B Partner Sales)
-import PartnerLandingPage from "./pages/go/PartnerLandingPage";
-import PartnerPricingPage from "./pages/go/PartnerPricingPage";
-import PartnerCheckoutPage from "./pages/go/PartnerCheckoutPage";
-import PartnerThankYouPage from "./pages/go/PartnerThankYouPage";
-import PartnerOnboardingPage from "./pages/go/PartnerOnboardingPage";
-import PartnerFAQPage from "./pages/go/PartnerFAQPage";
-import PartnerPosPage from "./pages/go/PartnerPosPage";
-import PartnerRefundPage from "./pages/go/PartnerRefundPage";
-import GoAGBPage from "./pages/go/legal/GoAGBPage";
-import GoDatenschutzPage from "./pages/go/legal/GoDatenschutzPage";
-import GoImpressumPage from "./pages/go/legal/GoImpressumPage";
-// B2C Acquisition Funnel Pages
 import { FunnelLayout } from "./components/funnel/FunnelLayout";
-import FunnelEntryPage from "./pages/funnel/FunnelEntryPage";
-import FunnelDropPage from "./pages/funnel/FunnelDropPage";
-import FunnelWelcomePage from "./pages/funnel/FunnelWelcomePage";
-import FunnelPartnerPage from "./pages/funnel/FunnelPartnerPage";
-import FunnelCampaignPage from "./pages/funnel/FunnelCampaignPage";
-import FunnelInstallPage from "./pages/funnel/FunnelInstallPage";
-import FunnelTermsPage from "./pages/funnel/legal/FunnelTermsPage";
-import FunnelPrivacyPage from "./pages/funnel/legal/FunnelPrivacyPage";
-import FunnelImprintPage from "./pages/funnel/legal/FunnelImprintPage";
+import { RouteLoader } from "./components/ui/route-loader";
+
+// Core pages - loaded immediately
+import HomePage from "./pages/HomePage";
+import NotFound from "./pages/NotFound";
+
+// Auth pages - lazy loaded
+const AuthPage = lazy(() => import("./pages/AuthPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+
+// Main app pages - lazy loaded
+const RewardsPage = lazy(() => import("./pages/RewardsPage"));
+const RewardDetailPage = lazy(() => import("./pages/RewardDetailPage"));
+const CodePage = lazy(() => import("./pages/CodePage"));
+const PartnerPage = lazy(() => import("./pages/PartnerPage"));
+const PartnerDetailPage = lazy(() => import("./pages/PartnerDetailPage"));
+const FAQPage = lazy(() => import("./pages/FAQPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const MyRedemptionsPage = lazy(() => import("./pages/MyRedemptionsPage"));
+const MyQRPage = lazy(() => import("./pages/MyQRPage"));
+const RedemptionDetailPage = lazy(() => import("./pages/RedemptionDetailPage"));
+const ReferralPage = lazy(() => import("./pages/ReferralPage"));
+const BadgesPage = lazy(() => import("./pages/BadgesPage"));
+const InstallPage = lazy(() => import("./pages/InstallPage"));
+const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
+const LegalTermsPage = lazy(() => import("./pages/LegalTermsPage"));
+const ImpressumPage = lazy(() => import("./pages/ImpressumPage"));
+const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+
+// Admin pages - lazy loaded (rarely accessed)
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
+const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
+const AdminAirDrops = lazy(() => import("./pages/admin/AdminAirDrops"));
+const AdminBadges = lazy(() => import("./pages/admin/AdminBadges"));
+const AdminRadioTiers = lazy(() => import("./pages/admin/AdminRadioTiers"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminPartnerApplications = lazy(() => import("./pages/admin/AdminPartnerApplications"));
+
+// Partner portal pages - lazy loaded
+const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
+const PartnerScanPage = lazy(() => import("./pages/partner/PartnerScanPage"));
+const PartnerRewards = lazy(() => import("./pages/partner/PartnerRewards"));
+const PartnerRedemptions = lazy(() => import("./pages/partner/PartnerRedemptions"));
+const PartnerReviews = lazy(() => import("./pages/partner/PartnerReviews"));
+
+// Go Funnel Pages (B2B Partner Sales) - lazy loaded
+const PartnerLandingPage = lazy(() => import("./pages/go/PartnerLandingPage"));
+const PartnerPricingPage = lazy(() => import("./pages/go/PartnerPricingPage"));
+const PartnerCheckoutPage = lazy(() => import("./pages/go/PartnerCheckoutPage"));
+const PartnerThankYouPage = lazy(() => import("./pages/go/PartnerThankYouPage"));
+const PartnerOnboardingPage = lazy(() => import("./pages/go/PartnerOnboardingPage"));
+const PartnerFAQPage = lazy(() => import("./pages/go/PartnerFAQPage"));
+const PartnerPosPage = lazy(() => import("./pages/go/PartnerPosPage"));
+const PartnerRefundPage = lazy(() => import("./pages/go/PartnerRefundPage"));
+const GoAGBPage = lazy(() => import("./pages/go/legal/GoAGBPage"));
+const GoDatenschutzPage = lazy(() => import("./pages/go/legal/GoDatenschutzPage"));
+const GoImpressumPage = lazy(() => import("./pages/go/legal/GoImpressumPage"));
+
+// B2C Acquisition Funnel Pages - lazy loaded
+const FunnelEntryPage = lazy(() => import("./pages/funnel/FunnelEntryPage"));
+const FunnelDropPage = lazy(() => import("./pages/funnel/FunnelDropPage"));
+const FunnelWelcomePage = lazy(() => import("./pages/funnel/FunnelWelcomePage"));
+const FunnelPartnerPage = lazy(() => import("./pages/funnel/FunnelPartnerPage"));
+const FunnelCampaignPage = lazy(() => import("./pages/funnel/FunnelCampaignPage"));
+const FunnelInstallPage = lazy(() => import("./pages/funnel/FunnelInstallPage"));
+const FunnelTermsPage = lazy(() => import("./pages/funnel/legal/FunnelTermsPage"));
+const FunnelPrivacyPage = lazy(() => import("./pages/funnel/legal/FunnelPrivacyPage"));
+const FunnelImprintPage = lazy(() => import("./pages/funnel/legal/FunnelImprintPage"));
 
 const queryClient = new QueryClient();
 
@@ -86,7 +99,6 @@ function useServiceWorkerMessages() {
         console.log('[App] Message from SW:', event.data);
         
         if (event.data?.type === 'REVIEW_REQUEST_CLICKED') {
-          // Dispatch custom event that ReviewRequestTrigger listens to
           const customEvent = new CustomEvent('openReviewSheet', {
             detail: {
               redemptionId: event.data.redemptionId,
@@ -112,90 +124,92 @@ function AppContent() {
     <BrowserRouter>
       <InstallPrompt />
       <ReviewRequestTrigger />
-      <Routes>
-        {/* Auth pages with layout but no login required */}
-        <Route element={<AppLayout />}>
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-        </Route>
-        
-        {/* Admin pages with admin layout and guard */}
-        <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="partners" element={<AdminPartners />} />
-          <Route path="customers" element={<AdminCustomers />} />
-          <Route path="badges" element={<AdminBadges />} />
-          <Route path="radio" element={<AdminRadioTiers />} />
-          <Route path="airdrops" element={<AdminAirDrops />} />
-          <Route path="applications" element={<AdminPartnerApplications />} />
-          <Route path="settings" element={<AdminSettings />} />
-        </Route>
-        
-        {/* Partner portal with partner layout and guard */}
-        <Route path="/partner-portal" element={<PartnerGuard><PartnerLayout /></PartnerGuard>}>
-          <Route index element={<PartnerDashboard />} />
-          <Route path="scan" element={<PartnerScanPage />} />
-          <Route path="rewards" element={<PartnerRewards />} />
-          <Route path="redemptions" element={<PartnerRedemptions />} />
-          <Route path="reviews" element={<PartnerReviews />} />
-        </Route>
-        
-        {/* Go Partner Sales Funnel (B2B) */}
-        <Route path="/go" element={<GoLayout />}>
-          <Route index element={<PartnerLandingPage />} />
-          <Route path="partner" element={<PartnerLandingPage />} />
-          <Route path="partner/pricing" element={<PartnerPricingPage />} />
-          <Route path="partner/checkout" element={<PartnerCheckoutPage />} />
-          <Route path="partner/thank-you" element={<PartnerThankYouPage />} />
-          <Route path="partner/onboarding" element={<PartnerOnboardingPage />} />
-          <Route path="partner/faq" element={<PartnerFAQPage />} />
-          <Route path="partner/pos" element={<PartnerPosPage />} />
-          <Route path="partner/refund" element={<PartnerRefundPage />} />
-          <Route path="legal/agb" element={<GoAGBPage />} />
-          <Route path="legal/datenschutz" element={<GoDatenschutzPage />} />
-          <Route path="legal/impressum" element={<GoImpressumPage />} />
-        </Route>
-        
-        {/* B2C Acquisition Funnel */}
-        <Route path="/u" element={<FunnelLayout />}>
-          <Route index element={<FunnelEntryPage />} />
-          <Route path="drop" element={<FunnelDropPage />} />
-          <Route path="welcome" element={<FunnelWelcomePage />} />
-          <Route path="p/:partnerSlug" element={<FunnelPartnerPage />} />
-          <Route path="c/:campaignSlug" element={<FunnelCampaignPage />} />
-          <Route path="install" element={<FunnelInstallPage />} />
-          <Route path="legal/terms" element={<FunnelTermsPage />} />
-          <Route path="legal/privacy" element={<FunnelPrivacyPage />} />
-          <Route path="legal/imprint" element={<FunnelImprintPage />} />
-        </Route>
-        
-        {/* All other pages with layout */}
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/rewards" element={<RewardsPage />} />
-          <Route path="/rewards/:id" element={<RewardDetailPage />} />
-          <Route path="/code" element={<CodePage />} />
-          <Route path="/partner" element={<PartnerPage />} />
-          <Route path="/partner/:id" element={<PartnerDetailPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
-          <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
-          <Route path="/my-qr" element={<MyQRPage />} />
-          <Route path="/referral" element={<ReferralPage />} />
-          <Route path="/badges" element={<BadgesPage />} />
+      <Suspense fallback={<RouteLoader />}>
+        <Routes>
+          {/* Auth pages with layout but no login required */}
+          <Route element={<AppLayout />}>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+          </Route>
+          
+          {/* Admin pages with admin layout and guard */}
+          <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="partners" element={<AdminPartners />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="badges" element={<AdminBadges />} />
+            <Route path="radio" element={<AdminRadioTiers />} />
+            <Route path="airdrops" element={<AdminAirDrops />} />
+            <Route path="applications" element={<AdminPartnerApplications />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+          
+          {/* Partner portal with partner layout and guard */}
+          <Route path="/partner-portal" element={<PartnerGuard><PartnerLayout /></PartnerGuard>}>
+            <Route index element={<PartnerDashboard />} />
+            <Route path="scan" element={<PartnerScanPage />} />
+            <Route path="rewards" element={<PartnerRewards />} />
+            <Route path="redemptions" element={<PartnerRedemptions />} />
+            <Route path="reviews" element={<PartnerReviews />} />
+          </Route>
+          
+          {/* Go Partner Sales Funnel (B2B) */}
+          <Route path="/go" element={<GoLayout />}>
+            <Route index element={<PartnerLandingPage />} />
+            <Route path="partner" element={<PartnerLandingPage />} />
+            <Route path="partner/pricing" element={<PartnerPricingPage />} />
+            <Route path="partner/checkout" element={<PartnerCheckoutPage />} />
+            <Route path="partner/thank-you" element={<PartnerThankYouPage />} />
+            <Route path="partner/onboarding" element={<PartnerOnboardingPage />} />
+            <Route path="partner/faq" element={<PartnerFAQPage />} />
+            <Route path="partner/pos" element={<PartnerPosPage />} />
+            <Route path="partner/refund" element={<PartnerRefundPage />} />
+            <Route path="legal/agb" element={<GoAGBPage />} />
+            <Route path="legal/datenschutz" element={<GoDatenschutzPage />} />
+            <Route path="legal/impressum" element={<GoImpressumPage />} />
+          </Route>
+          
+          {/* B2C Acquisition Funnel */}
+          <Route path="/u" element={<FunnelLayout />}>
+            <Route index element={<FunnelEntryPage />} />
+            <Route path="drop" element={<FunnelDropPage />} />
+            <Route path="welcome" element={<FunnelWelcomePage />} />
+            <Route path="p/:partnerSlug" element={<FunnelPartnerPage />} />
+            <Route path="c/:campaignSlug" element={<FunnelCampaignPage />} />
+            <Route path="install" element={<FunnelInstallPage />} />
+            <Route path="legal/terms" element={<FunnelTermsPage />} />
+            <Route path="legal/privacy" element={<FunnelPrivacyPage />} />
+            <Route path="legal/imprint" element={<FunnelImprintPage />} />
+          </Route>
+          
+          {/* All other pages with layout */}
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/rewards" element={<RewardsPage />} />
+            <Route path="/rewards/:id" element={<RewardDetailPage />} />
+            <Route path="/code" element={<CodePage />} />
+            <Route path="/partner" element={<PartnerPage />} />
+            <Route path="/partner/:id" element={<PartnerDetailPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
+            <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
+            <Route path="/my-qr" element={<MyQRPage />} />
+            <Route path="/referral" element={<ReferralPage />} />
+            <Route path="/badges" element={<BadgesPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/install" element={<InstallPage />} />
-          <Route path="/agb" element={<LegalTermsPage />} />
-          <Route path="/impressum" element={<ImpressumPage />} />
-          <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
-        </Route>
-        
-        {/* Catch-all */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+            <Route path="/agb" element={<LegalTermsPage />} />
+            <Route path="/impressum" element={<ImpressumPage />} />
+            <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
+          </Route>
+          
+          {/* Catch-all */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
