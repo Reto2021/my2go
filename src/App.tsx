@@ -66,6 +66,7 @@ const PartnerScanPage = lazy(() => import("./pages/partner/PartnerScanPage"));
 const PartnerRewards = lazy(() => import("./pages/partner/PartnerRewards"));
 const PartnerRedemptions = lazy(() => import("./pages/partner/PartnerRedemptions"));
 const PartnerReviews = lazy(() => import("./pages/partner/PartnerReviews"));
+const PartnerSettingsPage = lazy(() => import("./pages/partner/PartnerSettings"));
 
 // Go Funnel Pages (B2B Partner Sales) - lazy loaded
 const PartnerLandingPage = lazy(() => import("./pages/go/PartnerLandingPage"));
@@ -155,6 +156,7 @@ function AppContent() {
             <Route path="rewards" element={<PartnerRewards />} />
             <Route path="redemptions" element={<PartnerRedemptions />} />
             <Route path="reviews" element={<PartnerReviews />} />
+            <Route path="settings" element={<PartnerSettingsPage />} />
           </Route>
           
           {/* Go Partner Sales Funnel (B2B) */}
