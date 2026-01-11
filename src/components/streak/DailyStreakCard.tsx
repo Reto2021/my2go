@@ -4,6 +4,7 @@ import { Flame, Zap, Gift, Check, Loader2, Snowflake, ShoppingCart } from "lucid
 import { useStreak } from "@/hooks/useStreak";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
+import { TalerIcon } from "@/components/icons/TalerIcon";
 import { toast } from "sonner";
 import talerCoin from "@/assets/taler-coin.png";
 import {
@@ -177,7 +178,7 @@ export function DailyStreakCard() {
                     animate={{ y: 0, opacity: 1 }}
                     className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 whitespace-nowrap"
                   >
-                    <img src={talerCoin} alt="" className="w-3 h-3" />
+                    <TalerIcon size={12} className="drop-shadow-none" />
                     +{day.bonus}
                   </motion.div>
                 )}
