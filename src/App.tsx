@@ -18,6 +18,7 @@ import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger"
 import { InstallPrompt } from "./components/ui/install-prompt";
 import { FunnelLayout } from "./components/funnel/FunnelLayout";
 import { RouteLoader } from "./components/ui/route-loader";
+import { OfflinePrefetchProvider } from "./hooks/useOfflinePrefetch";
 
 // Core pages - loaded immediately
 import HomePage from "./pages/HomePage";
@@ -218,14 +219,16 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <OnlineStatusProvider>
-        <OnboardingProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <OnboardingOverlay />
-            <AppContent />
-          </TooltipProvider>
-        </OnboardingProvider>
+        <OfflinePrefetchProvider>
+          <OnboardingProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <OnboardingOverlay />
+              <AppContent />
+            </TooltipProvider>
+          </OnboardingProvider>
+        </OfflinePrefetchProvider>
       </OnlineStatusProvider>
     </AuthProvider>
   </QueryClientProvider>
