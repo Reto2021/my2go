@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Confetti } from '@/components/ui/confetti';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { 
   ArrowLeft, 
   Clock, 
@@ -106,7 +107,14 @@ const InstagramShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
             <div className="flex items-center gap-4 mb-4">
               {partnerLogo ? (
                 <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
-                  <img src={partnerLogo} alt={partnerName} className="w-full h-full object-cover" />
+                  <OptimizedImage 
+                    src={partnerLogo} 
+                    alt={partnerName} 
+                    width={56}
+                    height={56}
+                    className="w-full h-full rounded-2xl"
+                    priority
+                  />
                 </div>
               ) : (
                 <div 
@@ -547,10 +555,12 @@ export default function RedemptionDetailPage() {
             <div className="flex gap-4">
               {redemption.reward?.image_url ? (
                 <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-muted">
-                  <img
+                  <OptimizedImage
                     src={redemption.reward.image_url}
                     alt={redemption.reward.title}
-                    className="w-full h-full object-cover"
+                    width={80}
+                    height={80}
+                    className="w-full h-full rounded-xl"
                   />
                 </div>
               ) : (
@@ -591,10 +601,12 @@ export default function RedemptionDetailPage() {
               <div className="flex gap-4">
                 {redemption.partner.logo_url ? (
                   <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-muted">
-                    <img
+                    <OptimizedImage
                       src={redemption.partner.logo_url}
                       alt={redemption.partner.name}
-                      className="w-full h-full object-cover"
+                      width={56}
+                      height={56}
+                      className="w-full h-full rounded-xl"
                     />
                   </div>
                 ) : (

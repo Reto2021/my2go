@@ -7,6 +7,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { GoogleReviewCard } from '@/components/partner/GoogleReviewBadge';
 import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -120,7 +121,13 @@ export default function PartnerDetailPage() {
           <div className="relative">
             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/20 mx-auto mb-4 overflow-hidden">
               {partner.logo_url ? (
-                <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover" />
+                <OptimizedImage 
+                  src={partner.logo_url} 
+                  alt={partner.name} 
+                  width={80}
+                  height={80}
+                  className="h-full w-full rounded-3xl"
+                />
               ) : (
                 <Store className="h-10 w-10 text-secondary" />
               )}

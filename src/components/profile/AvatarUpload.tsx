@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import {
   Dialog,
   DialogContent,
@@ -164,10 +165,13 @@ export function AvatarUpload({
         <div className="relative">
           <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center overflow-hidden">
             {currentAvatarUrl ? (
-              <img 
+              <OptimizedImage 
                 src={currentAvatarUrl} 
                 alt="Avatar" 
-                className="h-24 w-24 rounded-full object-cover"
+                width={96}
+                height={96}
+                className="h-24 w-24 rounded-full"
+                priority
               />
             ) : (
               <span className="text-3xl font-bold text-foreground">

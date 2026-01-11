@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Gift, Ticket, Trophy, Flame, CheckCircle2, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { FunnelRadioPlayer } from '@/components/funnel/FunnelRadioPlayer';
 import { BonusPromptSheet } from '@/components/funnel/BonusPromptSheet';
 import { QuickSignupSheet } from '@/components/funnel/QuickSignupSheet';
@@ -96,9 +97,16 @@ export default function FunnelPartnerPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="flex items-center justify-center mb-6"
         >
-          <div className="h-20 w-20 rounded-3xl bg-primary/20 flex items-center justify-center">
+          <div className="h-20 w-20 rounded-3xl bg-primary/20 flex items-center justify-center overflow-hidden">
             {config.logoUrl ? (
-              <img src={config.logoUrl} alt={config.partnerName} className="h-full w-full object-cover rounded-3xl" />
+              <OptimizedImage 
+                src={config.logoUrl} 
+                alt={config.partnerName} 
+                width={80}
+                height={80}
+                className="h-full w-full rounded-3xl"
+                priority
+              />
             ) : (
               <Store className="h-10 w-10 text-secondary" />
             )}
