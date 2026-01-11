@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getPartners, Partner, Region } from '@/lib/supabase-helpers';
 import { useLocation, calculateDistance } from '@/lib/location';
@@ -7,15 +7,14 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { PartnerMap } from '@/components/PartnerMap';
 import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
+import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
+import { useOfflinePartners } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
 import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PartnerPage() {
-  const [partners, setPartners] = useState<Partner[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
   
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,26 +32,30 @@ export default function PartnerPage() {
     clearLocation 
   } = useLocation();
   
-  const loadData = async () => {
-    setIsLoading(true);
-    setError(false);
+  // Offline-capable partners data
+  const fetchPartners = useCallback(async () => {
+    const data = await getPartners();
+    return data;
+  }, []);
+  
+  const {
+    data: partners,
+    isLoading,
+    isFromCache,
+    error,
+    lastUpdated,
+    refetch: loadData
+  } = useOfflinePartners<Partner[]>(fetchPartners);
+  
+  const loadRegions = async () => {
     try {
-      // Load partners from Supabase
-      const partnersData = await getPartners();
-      
-      // Load regions from Supabase
       const { data: regionsData } = await supabase
         .from('regions')
         .select('*')
         .order('name');
-      
-      setPartners(partnersData);
       setRegions((regionsData || []) as Region[]);
     } catch (err) {
-      console.error('Failed to load data:', err);
-      setError(true);
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to load regions:', err);
     }
   };
   
@@ -69,27 +72,29 @@ export default function PartnerPage() {
   };
   
   useEffect(() => {
-    loadData();
+    loadRegions();
     loadMapboxToken();
   }, []);
+  
+  const partnersList = partners || [];
   
   // Extract unique categories from partners
   const categories = useMemo(() => {
     const cats = new Set<string>();
-    partners.forEach(p => {
+    partnersList.forEach(p => {
       if (p.category) cats.add(p.category);
     });
     return Array.from(cats).sort();
-  }, [partners]);
+  }, [partnersList]);
   
   // Extract unique cities from partners
   const cities = useMemo(() => {
     const citySet = new Set<string>();
-    partners.forEach(p => {
+    partnersList.forEach(p => {
       if (p.city) citySet.add(p.city);
     });
     return Array.from(citySet).sort();
-  }, [partners]);
+  }, [partnersList]);
   
   const handleLocationToggle = () => {
     if (userLocation) {
@@ -120,7 +125,7 @@ export default function PartnerPage() {
   
   // Filter and sort partners
   const filteredPartners = useMemo(() => {
-    let result = [...partners];
+    let result = [...partnersList];
     
     // Search filter
     if (searchQuery.trim()) {
@@ -152,7 +157,7 @@ export default function PartnerPage() {
     }
     
     return result;
-  }, [partners, searchQuery, selectedRegion, selectedCategory, userLocation]);
+  }, [partnersList, searchQuery, selectedRegion, selectedCategory, userLocation]);
   
   // Group partners by city (when no location and no category filter)
   const groupedPartners = useMemo(() => {
@@ -173,7 +178,14 @@ export default function PartnerPage() {
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-display-sm">Partner entdecken</h1>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-display-sm">Partner entdecken</h1>
+              <OfflineDataBadge 
+                isFromCache={isFromCache}
+                lastUpdated={lastUpdated}
+                onRefresh={loadData}
+              />
+            </div>
             <div className="flex items-center gap-2">
               {hasActiveFilters && (
                 <button

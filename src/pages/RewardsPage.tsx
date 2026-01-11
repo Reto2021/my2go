@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRewards, Reward } from '@/lib/supabase-helpers';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,8 @@ import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
+import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
+import { useOfflineRewards } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
 import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucide-react';
 
@@ -35,9 +37,6 @@ const maxCostOptions = [
 ];
 
 export default function RewardsPage() {
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
   const [maxCost, setMaxCost] = useState(0);
@@ -54,46 +53,45 @@ export default function RewardsPage() {
     clearLocation 
   } = useLocation();
   
-  const loadRewards = async () => {
-    setIsLoading(true);
-    setError(false);
-    try {
-      const data = await getRewards();
-      
-      // Add distance if user location is available
-      let processedData = data;
-      if (userLocation) {
-        processedData = data.map(reward => {
-          const partner = reward.partner;
-          if (partner?.lat && partner?.lng) {
-            const distance = calculateDistance(
-              userLocation.lat,
-              userLocation.lng,
-              partner.lat,
-              partner.lng
-            );
-            return { ...reward, distanceKm: distance };
-          }
-          return { ...reward, distanceKm: 9999 };
-        }).sort((a, b) => (a.distanceKm || 9999) - (b.distanceKm || 9999));
-      }
-      
-      setRewards(processedData);
-    } catch (err) {
-      console.error('Failed to load rewards:', err);
-      setError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Offline-capable rewards data
+  const fetchRewards = useCallback(async () => {
+    const data = await getRewards();
+    return data;
+  }, []);
   
-  useEffect(() => {
-    loadRewards();
-  }, [userLocation]);
+  const {
+    data: rewards,
+    isLoading,
+    isFromCache,
+    error,
+    lastUpdated,
+    refetch: loadRewards
+  } = useOfflineRewards<Reward[]>(fetchRewards);
+  
+  const rewardsList = rewards || [];
+  
+  // Add distance to rewards if user location is available
+  const rewardsWithDistance = useMemo(() => {
+    if (!userLocation) return rewardsList;
+    
+    return rewardsList.map(reward => {
+      const partner = reward.partner;
+      if (partner?.lat && partner?.lng) {
+        const distance = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          partner.lat,
+          partner.lng
+        );
+        return { ...reward, distanceKm: distance };
+      }
+      return { ...reward, distanceKm: 9999 };
+    }).sort((a, b) => (a.distanceKm || 9999) - (b.distanceKm || 9999));
+  }, [rewardsList, userLocation]);
   
   // Client-side filtering and sorting
   const filteredAndSortedRewards = useMemo(() => {
-    let result = [...rewards];
+    let result = [...rewardsWithDistance];
     
     // Filter by category
     if (activeCategory !== 'all') {
@@ -114,12 +112,11 @@ export default function RewardsPage() {
         result.sort((a, b) => b.taler_cost - a.taler_cost);
         break;
       case 'newest':
-        // Sort by created_at if available, otherwise reverse
         result.reverse();
         break;
       case 'popular':
       default:
-        // Keep original order for popular (or sort by distance if available)
+        // Keep distance-based order if available
         if (userLocation) {
           result.sort((a, b) => ((a as any).distanceKm || 9999) - ((b as any).distanceKm || 9999));
         }
@@ -127,7 +124,7 @@ export default function RewardsPage() {
     }
     
     return result;
-  }, [rewards, maxCost, sortBy, userLocation, activeCategory]);
+  }, [rewardsWithDistance, maxCost, sortBy, userLocation, activeCategory]);
   
   const hasActiveFilters = maxCost > 0 || sortBy !== 'popular';
   
@@ -154,7 +151,14 @@ export default function RewardsPage() {
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-display-sm">Gutscheine</h1>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-display-sm">Gutscheine</h1>
+              <OfflineDataBadge 
+                isFromCache={isFromCache}
+                lastUpdated={lastUpdated}
+                onRefresh={loadRewards}
+              />
+            </div>
             
             {/* Filter Toggle */}
             <button
