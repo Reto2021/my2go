@@ -39,6 +39,7 @@ interface PartnerGHLStatus {
   created_at: string;
   synced_contacts_count: number;
   google_review_count: number | null;
+  google_rating: number | null;
 }
 
 type FilterStatus = 'all' | 'synced' | 'pending' | 'error';
@@ -57,7 +58,7 @@ export default function AdminGHLStatus() {
       // Load partners
       const { data: partnersData, error: partnersError } = await supabase
         .from('partners')
-        .select('id, name, slug, is_active, contact_email, city, ghl_location_id, ghl_synced_at, ghl_sync_status, created_at, google_review_count')
+        .select('id, name, slug, is_active, contact_email, city, ghl_location_id, ghl_synced_at, ghl_sync_status, created_at, google_review_count, google_rating')
         .order('name');
 
       if (partnersError) throw partnersError;
@@ -493,12 +494,21 @@ export default function AdminGHLStatus() {
                       </div>
                     </td>
                     <td className="p-4 text-center">
-                      {partner.google_review_count != null ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10">
-                          <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                          <span className="font-semibold text-sm tabular-nums text-amber-600">
-                            {partner.google_review_count}
-                          </span>
+                      {partner.google_review_count != null || partner.google_rating != null ? (
+                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10">
+                          {partner.google_rating != null && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                              <span className="font-semibold text-sm tabular-nums text-amber-600">
+                                {partner.google_rating.toFixed(1)}
+                              </span>
+                            </div>
+                          )}
+                          {partner.google_review_count != null && (
+                            <span className="text-xs text-muted-foreground">
+                              ({partner.google_review_count})
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">-</span>
