@@ -36,6 +36,7 @@ interface PartnerGHLStatus {
   ghl_synced_at: string | null;
   ghl_sync_status: string | null;
   created_at: string;
+  synced_contacts_count: number;
 }
 
 type FilterStatus = 'all' | 'synced' | 'pending' | 'error';
@@ -51,13 +52,66 @@ export default function AdminGHLStatus() {
   const loadPartners = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // Load partners
+      const { data: partnersData, error: partnersError } = await supabase
         .from('partners')
         .select('id, name, slug, is_active, contact_email, city, ghl_location_id, ghl_synced_at, ghl_sync_status, created_at')
         .order('name');
 
-      if (error) throw error;
-      setPartners(data || []);
+      if (partnersError) throw partnersError;
+
+      // Count synced contacts per partner from transactions (partner_visit or partner_purchase indicate a synced contact)
+      const { data: contactCounts, error: countsError } = await supabase
+        .from('transactions')
+        .select('partner_id')
+        .in('source', ['partner_visit', 'partner_purchase'])
+        .not('partner_id', 'is', null);
+
+      if (countsError) throw countsError;
+
+      // Count unique user_ids per partner from redemptions as a proxy for synced contacts
+      const { data: redemptionCounts, error: redemptionError } = await supabase
+        .from('redemptions')
+        .select('partner_id, user_id');
+
+      if (redemptionError) throw redemptionError;
+
+      // Build a map of partner_id -> unique user count from redemptions
+      const partnerContactMap = new Map<string, Set<string>>();
+      
+      redemptionCounts?.forEach(r => {
+        if (r.partner_id) {
+          if (!partnerContactMap.has(r.partner_id)) {
+            partnerContactMap.set(r.partner_id, new Set());
+          }
+          partnerContactMap.get(r.partner_id)!.add(r.user_id);
+        }
+      });
+
+      // Also add from transactions
+      const { data: transactionUsers, error: txError } = await supabase
+        .from('transactions')
+        .select('partner_id, user_id')
+        .not('partner_id', 'is', null);
+
+      if (!txError && transactionUsers) {
+        transactionUsers.forEach(t => {
+          if (t.partner_id) {
+            if (!partnerContactMap.has(t.partner_id)) {
+              partnerContactMap.set(t.partner_id, new Set());
+            }
+            partnerContactMap.get(t.partner_id)!.add(t.user_id);
+          }
+        });
+      }
+
+      // Merge counts into partners
+      const partnersWithCounts = (partnersData || []).map(p => ({
+        ...p,
+        synced_contacts_count: partnerContactMap.get(p.id)?.size || 0
+      }));
+
+      setPartners(partnersWithCounts);
     } catch (error) {
       console.error('Error loading partners:', error);
       toast.error('Partner konnten nicht geladen werden');
@@ -386,6 +440,7 @@ export default function AdminGHLStatus() {
                 <th className="text-left p-4 text-sm font-medium">Partner</th>
                 <th className="text-left p-4 text-sm font-medium">Stadt</th>
                 <th className="text-left p-4 text-sm font-medium">Status</th>
+                <th className="text-center p-4 text-sm font-medium">Kontakte</th>
                 <th className="text-left p-4 text-sm font-medium">GHL Location ID</th>
                 <th className="text-left p-4 text-sm font-medium">Letzter Sync</th>
                 <th className="text-right p-4 text-sm font-medium">Aktion</th>
@@ -394,7 +449,7 @@ export default function AdminGHLStatus() {
             <tbody>
               {filteredPartners.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     Keine Partner gefunden
                   </td>
                 </tr>
@@ -425,6 +480,14 @@ export default function AdminGHLStatus() {
                     </td>
                     <td className="p-4">
                       {getStatusBadge(partner)}
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10">
+                        <Users className="h-3.5 w-3.5 text-primary" />
+                        <span className="font-semibold text-sm tabular-nums">
+                          {partner.synced_contacts_count}
+                        </span>
+                      </div>
                     </td>
                     <td className="p-4">
                       {partner.ghl_location_id ? (
