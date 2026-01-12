@@ -9,7 +9,9 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle2,
-  Info
+  Info,
+  RefreshCw,
+  Search
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -30,10 +32,19 @@ interface PartnerSettings {
   google_review_count: number | null;
 }
 
+interface PlaceCandidate {
+  place_id: string;
+  name: string;
+  formatted_address?: string;
+  rating?: number;
+  user_ratings_total?: number;
+}
+
 export default function PartnerSettings() {
   const { partnerInfo } = usePartner();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [settings, setSettings] = useState<PartnerSettings>({
     review_request_enabled: true,
     review_request_delay_minutes: 5,
@@ -43,6 +54,8 @@ export default function PartnerSettings() {
   });
   const [googleBusinessUrl, setGoogleBusinessUrl] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [searchResults, setSearchResults] = useState<PlaceCandidate[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (partnerInfo?.partnerId) {
@@ -137,6 +150,77 @@ export default function PartnerSettings() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSyncGoogleReviews = async () => {
+    if (!partnerInfo?.partnerId || !settings.google_place_id) return;
+
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-reviews', {
+        body: {
+          action: 'sync-single',
+          partnerId: partnerInfo.partnerId,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(`Synchronisiert! Rating: ${data.rating?.toFixed(1) || '-'} ⭐, ${data.reviewCount || 0} Bewertungen`);
+        // Reload settings to get updated values
+        await loadSettings();
+      } else {
+        throw new Error(data?.error || 'Sync fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('Error syncing Google reviews:', error);
+      toast.error('Sync fehlgeschlagen. Prüfe die Google Place ID.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSearchPlace = async () => {
+    if (!partnerInfo?.partnerName) return;
+
+    setIsSearching(true);
+    setSearchResults([]);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-reviews', {
+        body: {
+          action: 'lookup-place',
+          query: partnerInfo.partnerName,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.candidates && data.candidates.length > 0) {
+        setSearchResults(data.candidates);
+        toast.success(`${data.candidates.length} Ergebnis(se) gefunden`);
+      } else {
+        toast.info('Kein Geschäft gefunden. Versuche eine genauere Suche.');
+      }
+    } catch (error) {
+      console.error('Error searching place:', error);
+      toast.error('Suche fehlgeschlagen');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectPlace = (candidate: PlaceCandidate) => {
+    setGoogleBusinessUrl(candidate.place_id);
+    setSettings(prev => ({
+      ...prev,
+      google_place_id: candidate.place_id,
+      google_rating: candidate.rating || null,
+      google_review_count: candidate.user_ratings_total || null,
+    }));
+    setSearchResults([]);
+    setHasChanges(true);
+    toast.success(`${candidate.name} ausgewählt`);
   };
 
   const handleSettingChange = <K extends keyof PartnerSettings>(
@@ -302,8 +386,8 @@ export default function PartnerSettings() {
           <CardContent className="space-y-6">
             {/* Current Status */}
             {settings.google_place_id ? (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-success/10 border border-success/30">
-                <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-success/10 border border-success/30">
+                <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="font-medium text-success">Google Business verknüpft</p>
                   <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
@@ -313,30 +397,90 @@ export default function PartnerSettings() {
                         {settings.google_rating.toFixed(1)}
                       </span>
                     )}
-                    {settings.google_review_count && (
+                    {settings.google_review_count !== null && (
                       <span>{settings.google_review_count} Bewertungen</span>
                     )}
                   </div>
                 </div>
-                <a
-                  href={`https://search.google.com/local/writereview?placeid=${settings.google_place_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  Öffnen <ExternalLink className="h-3 w-3" />
-                </a>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSyncGoogleReviews}
+                    disabled={isSyncing}
+                    className="gap-1"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                    Sync
+                  </Button>
+                  <a
+                    href={`https://search.google.com/local/writereview?placeid=${settings.google_place_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
                 <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0" />
-                <div>
+                <div className="flex-1">
                   <p className="font-medium text-yellow-700 dark:text-yellow-400">Noch nicht verknüpft</p>
                   <p className="text-sm text-muted-foreground">
-                    Füge deine Google Business URL hinzu um Bewertungen zu sammeln.
+                    Füge deine Google Business URL hinzu oder suche automatisch.
                   </p>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSearchPlace}
+                  disabled={isSearching}
+                  className="gap-1"
+                >
+                  <Search className={`h-4 w-4 ${isSearching ? 'animate-pulse' : ''}`} />
+                  Suchen
+                </Button>
               </div>
+            )}
+
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-2"
+              >
+                <Label>Suchergebnisse - Wähle dein Geschäft:</Label>
+                <div className="space-y-2">
+                  {searchResults.map((candidate) => (
+                    <button
+                      key={candidate.place_id}
+                      onClick={() => handleSelectPlace(candidate)}
+                      className="w-full text-left p-3 rounded-xl border border-border hover:border-primary hover:bg-accent/50 transition-all"
+                    >
+                      <p className="font-medium">{candidate.name}</p>
+                      {candidate.formatted_address && (
+                        <p className="text-sm text-muted-foreground truncate">{candidate.formatted_address}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-1 text-sm">
+                        {candidate.rating && (
+                          <span className="flex items-center gap-1 text-yellow-600">
+                            <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                            {candidate.rating.toFixed(1)}
+                          </span>
+                        )}
+                        {candidate.user_ratings_total && (
+                          <span className="text-muted-foreground">
+                            {candidate.user_ratings_total} Bewertungen
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
             )}
 
             {/* URL Input */}
@@ -353,9 +497,20 @@ export default function PartnerSettings() {
                   }}
                   className="flex-1"
                 />
+                {settings.google_place_id && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleSyncGoogleReviews}
+                    disabled={isSyncing}
+                    title="Bewertungen synchronisieren"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Kopiere die URL aus Google Maps oder gib die Place ID direkt ein.
+                Kopiere die URL aus Google Maps oder nutze die automatische Suche.
               </p>
             </div>
 
@@ -372,6 +527,9 @@ export default function PartnerSettings() {
                   <li>Klicke auf "Teilen" → "Link kopieren"</li>
                   <li>Füge den Link hier ein</li>
                 </ol>
+                <p className="mt-2">
+                  <strong>Tipp:</strong> Klicke auf "Suchen" um dein Geschäft automatisch zu finden!
+                </p>
               </div>
             </details>
           </CardContent>

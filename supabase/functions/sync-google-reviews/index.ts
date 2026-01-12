@@ -10,6 +10,12 @@ interface GooglePlaceDetails {
     rating?: number;
     user_ratings_total?: number;
     name?: string;
+    geometry?: {
+      location: {
+        lat: number;
+        lng: number;
+      };
+    };
   };
   status: string;
   error_message?: string;
@@ -21,6 +27,15 @@ interface Partner {
   google_place_id: string | null;
   google_rating: number | null;
   google_review_count: number | null;
+}
+
+interface SyncResult {
+  partnerId: string;
+  name: string;
+  success: boolean;
+  rating?: number;
+  reviewCount?: number;
+  error?: string;
 }
 
 Deno.serve(async (req) => {
@@ -44,129 +59,165 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch all partners with a google_place_id
-    const { data: partners, error: fetchError } = await supabase
-      .from("partners")
-      .select("id, name, google_place_id, google_rating, google_review_count")
-      .not("google_place_id", "is", null)
-      .eq("is_active", true);
+    // Parse request body for action-based routing
+    let action = "sync-all";
+    let partnerId: string | null = null;
+    let placeId: string | null = null;
 
-    if (fetchError) {
-      console.error("Error fetching partners:", fetchError);
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch partners", details: fetchError.message }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    try {
+      const body = await req.json();
+      action = body.action || "sync-all";
+      partnerId = body.partnerId || null;
+      placeId = body.placeId || null;
+    } catch {
+      // No body or invalid JSON - default to sync-all
     }
 
-    if (!partners || partners.length === 0) {
-      console.log("No partners with google_place_id found");
-      return new Response(
-        JSON.stringify({ message: "No partners with Google Place ID found", updated: 0 }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log(`Google Reviews Sync - Action: ${action}, PartnerId: ${partnerId}`);
 
-    console.log(`Found ${partners.length} partners with Google Place IDs`);
-
-    const results: { partnerId: string; name: string; success: boolean; rating?: number; reviewCount?: number; error?: string }[] = [];
-
-    // Process each partner
-    for (const partner of partners as Partner[]) {
-      if (!partner.google_place_id) continue;
-
-      try {
-        console.log(`Fetching Google reviews for: ${partner.name} (${partner.google_place_id})`);
-
-        // Call Google Places API
-        const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(partner.google_place_id)}&fields=rating,user_ratings_total,name&key=${googleApiKey}`;
-
-        const response = await fetch(placeDetailsUrl);
-        const data: GooglePlaceDetails = await response.json();
-
-        if (data.status !== "OK") {
-          console.error(`Google API error for ${partner.name}:`, data.status, data.error_message);
-          results.push({
-            partnerId: partner.id,
-            name: partner.name,
-            success: false,
-            error: `Google API: ${data.status} - ${data.error_message || "Unknown error"}`,
-          });
-          continue;
+    switch (action) {
+      case "sync-single": {
+        // Sync a single partner's Google reviews
+        if (!partnerId) {
+          return new Response(
+            JSON.stringify({ error: "Partner ID required for single sync" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
 
-        const newRating = data.result?.rating ?? null;
-        const newReviewCount = data.result?.user_ratings_total ?? null;
+        // Get partner's place_id
+        const { data: partner, error: fetchError } = await supabase
+          .from("partners")
+          .select("id, name, google_place_id, google_rating, google_review_count")
+          .eq("id", partnerId)
+          .single();
 
-        // Only update if values changed
-        if (newRating !== partner.google_rating || newReviewCount !== partner.google_review_count) {
-          const { error: updateError } = await supabase
-            .from("partners")
-            .update({
-              google_rating: newRating,
-              google_review_count: newReviewCount,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", partner.id);
+        if (fetchError || !partner) {
+          return new Response(
+            JSON.stringify({ error: "Partner not found" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
-          if (updateError) {
-            console.error(`Error updating partner ${partner.name}:`, updateError);
+        const targetPlaceId = placeId || partner.google_place_id;
+
+        if (!targetPlaceId) {
+          return new Response(
+            JSON.stringify({ error: "No Google Place ID configured for this partner" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Sync this partner
+        const result = await syncPartnerReviews(supabase, googleApiKey, partner, targetPlaceId);
+
+        return new Response(
+          JSON.stringify(result),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "lookup-place": {
+        // Search for a place by name/address
+        const body = await req.json().catch(() => ({}));
+        const query = body.query;
+
+        if (!query) {
+          return new Response(
+            JSON.stringify({ error: "Search query required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const searchUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id,name,formatted_address,rating,user_ratings_total&key=${googleApiKey}`;
+
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+
+        if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+          console.error("Google Places search error:", data);
+          return new Response(
+            JSON.stringify({ error: "Search failed", details: data.status }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            candidates: data.candidates || [],
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "sync-all":
+      default: {
+        // Fetch all partners with a google_place_id
+        const { data: partners, error: fetchError } = await supabase
+          .from("partners")
+          .select("id, name, google_place_id, google_rating, google_review_count")
+          .not("google_place_id", "is", null)
+          .eq("is_active", true);
+
+        if (fetchError) {
+          console.error("Error fetching partners:", fetchError);
+          return new Response(
+            JSON.stringify({ error: "Failed to fetch partners", details: fetchError.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (!partners || partners.length === 0) {
+          console.log("No partners with google_place_id found");
+          return new Response(
+            JSON.stringify({ message: "No partners with Google Place ID found", updated: 0 }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        console.log(`Found ${partners.length} partners with Google Place IDs`);
+
+        const results: SyncResult[] = [];
+
+        // Process each partner
+        for (const partner of partners as Partner[]) {
+          if (!partner.google_place_id) continue;
+
+          try {
+            const result = await syncPartnerReviews(supabase, googleApiKey, partner, partner.google_place_id);
+            results.push(result);
+
+            // Rate limiting: wait 100ms between requests
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch (partnerError) {
+            console.error(`Error processing partner ${partner.name}:`, partnerError);
             results.push({
               partnerId: partner.id,
               name: partner.name,
               success: false,
-              error: updateError.message,
+              error: partnerError instanceof Error ? partnerError.message : "Unknown error",
             });
-            continue;
           }
-
-          console.log(`Updated ${partner.name}: rating=${newRating}, reviews=${newReviewCount}`);
-          results.push({
-            partnerId: partner.id,
-            name: partner.name,
-            success: true,
-            rating: newRating ?? undefined,
-            reviewCount: newReviewCount ?? undefined,
-          });
-        } else {
-          console.log(`No changes for ${partner.name}`);
-          results.push({
-            partnerId: partner.id,
-            name: partner.name,
-            success: true,
-            rating: newRating ?? undefined,
-            reviewCount: newReviewCount ?? undefined,
-          });
         }
 
-        // Rate limiting: wait 100ms between requests
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      } catch (partnerError) {
-        console.error(`Error processing partner ${partner.name}:`, partnerError);
-        results.push({
-          partnerId: partner.id,
-          name: partner.name,
-          success: false,
-          error: partnerError instanceof Error ? partnerError.message : "Unknown error",
-        });
+        const successCount = results.filter((r) => r.success).length;
+        const failCount = results.filter((r) => !r.success).length;
+
+        console.log(`Sync complete: ${successCount} successful, ${failCount} failed`);
+
+        return new Response(
+          JSON.stringify({
+            message: "Google Reviews sync completed",
+            total: partners.length,
+            successful: successCount,
+            failed: failCount,
+            results,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
-
-    const successCount = results.filter((r) => r.success).length;
-    const failCount = results.filter((r) => !r.success).length;
-
-    console.log(`Sync complete: ${successCount} successful, ${failCount} failed`);
-
-    return new Response(
-      JSON.stringify({
-        message: "Google Reviews sync completed",
-        total: partners.length,
-        successful: successCount,
-        failed: failCount,
-        results,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   } catch (error) {
     console.error("Sync error:", error);
     return new Response(
@@ -175,3 +226,89 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+/**
+ * Helper function to extract clean place_id from various formats
+ */
+function extractPlaceId(input: string): string {
+  // If it's already a clean place_id (starts with ChIJ or similar)
+  if (/^[A-Za-z0-9_-]{20,}$/.test(input) && !input.includes("http")) {
+    return input;
+  }
+
+  // Try to extract from URL
+  const placeIdMatch = input.match(/place_id[=:]([A-Za-z0-9_-]+)/);
+  if (placeIdMatch) {
+    return placeIdMatch[1];
+  }
+
+  return input;
+}
+
+/**
+ * Sync a single partner's Google reviews
+ */
+async function syncPartnerReviews(
+  supabase: any,
+  googleApiKey: string,
+  partner: Partner,
+  placeIdInput: string
+): Promise<SyncResult> {
+  console.log(`Fetching Google reviews for: ${partner.name} (${placeIdInput})`);
+
+  const placeId = extractPlaceId(placeIdInput);
+
+  // Call Google Places API
+  const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=rating,user_ratings_total,name,geometry&key=${googleApiKey}`;
+
+  const response = await fetch(placeDetailsUrl);
+  const data: GooglePlaceDetails = await response.json();
+
+  if (data.status !== "OK") {
+    console.error(`Google API error for ${partner.name}:`, data.status, data.error_message);
+    return {
+      partnerId: partner.id,
+      name: partner.name,
+      success: false,
+      error: `Google API: ${data.status} - ${data.error_message || "Unknown error"}`,
+    };
+  }
+
+  const newRating = data.result?.rating ?? null;
+  const newReviewCount = data.result?.user_ratings_total ?? null;
+
+  // Prepare update object
+  const updates = {
+    google_place_id: placeId, // Store the clean place_id
+    google_rating: newRating,
+    google_review_count: newReviewCount,
+    updated_at: new Date().toISOString(),
+    lat: data.result?.geometry?.location?.lat ?? undefined,
+    lng: data.result?.geometry?.location?.lng ?? undefined,
+  };
+
+  const { error: updateError } = await supabase
+    .from("partners")
+    .update(updates)
+    .eq("id", partner.id);
+
+  if (updateError) {
+    console.error(`Error updating partner ${partner.name}:`, updateError);
+    return {
+      partnerId: partner.id,
+      name: partner.name,
+      success: false,
+      error: updateError.message,
+    };
+  }
+
+  console.log(`Updated ${partner.name}: rating=${newRating}, reviews=${newReviewCount}`);
+
+  return {
+    partnerId: partner.id,
+    name: partner.name,
+    success: true,
+    rating: newRating ?? undefined,
+    reviewCount: newReviewCount ?? undefined,
+  };
+}
