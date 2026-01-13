@@ -7,6 +7,16 @@ import { Store, Navigation, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 
+// Helper function to darken/lighten a hex color
+function adjustColor(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
+  const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+}
+
 interface PartnerMapProps {
   partners: Partner[];
   userLocation?: { lat: number; lng: number } | null;
@@ -85,44 +95,90 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
     partners.forEach(partner => {
       if (!partner.lat || !partner.lng) return;
 
-      // Create custom marker element using safe DOM methods (XSS prevention)
+      // Create custom marker element with modern pin design
       const el = document.createElement('div');
       el.className = 'partner-marker';
+      el.style.cssText = 'cursor: pointer; transition: transform 0.2s ease;';
       
-      const markerContainer = document.createElement('div');
-      markerContainer.className = 'w-10 h-10 rounded-full shadow-lg flex items-center justify-center cursor-pointer transform transition-transform hover:scale-110';
-      markerContainer.style.backgroundColor = 'hsl(var(--primary))';
+      // Outer container with pin shape
+      const pinWrapper = document.createElement('div');
+      pinWrapper.style.cssText = `
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+      `;
+      
+      // Main pin body
+      const pinBody = document.createElement('div');
+      const brandColor = partner.brand_color || '#F5B100';
+      pinBody.style.cssText = `
+        width: 44px;
+        height: 44px;
+        border-radius: 50% 50% 50% 0;
+        background: linear-gradient(135deg, ${brandColor} 0%, ${adjustColor(brandColor, -20)} 100%);
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: inset 0 -2px 4px rgba(0,0,0,0.1);
+      `;
+      
+      // Inner content container (rotated back)
+      const innerContainer = document.createElement('div');
+      innerContainer.style.cssText = `
+        transform: rotate(45deg);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      `;
       
       if (partner.logo_url) {
         const img = document.createElement('img');
         img.src = partner.logo_url;
         img.alt = partner.name || 'Partner';
-        img.className = 'w-8 h-8 rounded-full object-cover';
+        img.style.cssText = 'width: 28px; height: 28px; border-radius: 50%; object-fit: cover;';
         img.onerror = () => {
-          // Fallback to icon if image fails to load
           img.remove();
-          const fallbackSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          fallbackSvg.setAttribute('class', 'w-5 h-5 text-white');
-          fallbackSvg.setAttribute('viewBox', '0 0 24 24');
-          fallbackSvg.setAttribute('fill', 'none');
-          fallbackSvg.setAttribute('stroke', 'currentColor');
-          fallbackSvg.setAttribute('stroke-width', '2');
-          fallbackSvg.innerHTML = '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>';
-          markerContainer.appendChild(fallbackSvg);
+          innerContainer.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${brandColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`;
         };
-        markerContainer.appendChild(img);
+        innerContainer.appendChild(img);
       } else {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('class', 'w-5 h-5 text-white');
-        svg.setAttribute('viewBox', '0 0 24 24');
-        svg.setAttribute('fill', 'none');
-        svg.setAttribute('stroke', 'currentColor');
-        svg.setAttribute('stroke-width', '2');
-        svg.innerHTML = '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>';
-        markerContainer.appendChild(svg);
+        // Building/Store icon for partners without logo
+        innerContainer.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${brandColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`;
       }
       
-      el.appendChild(markerContainer);
+      pinBody.appendChild(innerContainer);
+      pinWrapper.appendChild(pinBody);
+      
+      // Small shadow/pointer at bottom
+      const pointer = document.createElement('div');
+      pointer.style.cssText = `
+        width: 8px;
+        height: 8px;
+        background: ${brandColor};
+        border-radius: 50%;
+        margin-top: -4px;
+        opacity: 0.6;
+      `;
+      pinWrapper.appendChild(pointer);
+      
+      el.appendChild(pinWrapper);
+      
+      // Hover effect
+      el.addEventListener('mouseenter', () => {
+        el.style.transform = 'scale(1.15) translateY(-4px)';
+      });
+      el.addEventListener('mouseleave', () => {
+        el.style.transform = 'scale(1) translateY(0)';
+      });
 
       el.addEventListener('click', () => {
         setSelectedPartner(partner);
@@ -133,7 +189,7 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
         });
       });
 
-      const marker = new mapboxgl.Marker({ element: el })
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([partner.lng, partner.lat])
         .addTo(map.current!);
 
