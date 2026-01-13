@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Cast, Airplay, Expand, Building2 } from 'lucide-react';
+import { Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Cast, Airplay, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useCastStore } from '@/lib/cast-store';
@@ -9,7 +9,7 @@ import { useAuthSafe } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Slider } from '@/components/ui/slider';
 import logo from '@/assets/logo-radio2go.png';
-import { ExpandedRadioPlayer } from './radio-player-expanded';
+
 import { ClockWeatherWidget } from './weather-widget';
 import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
 
@@ -405,9 +405,6 @@ export function RadioHeader() {
           </div>
         )}
       </div>
-      
-      {/* Expanded Player Modal */}
-      <ExpandedRadioPlayer isOpen={isExpanded} onClose={() => setIsExpanded(false)} />
     </header>
   );
 }
