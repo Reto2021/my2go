@@ -13,7 +13,7 @@ export interface ActivityItem {
 const ACTIVITY_MESSAGES = {
   taler_earned: [
     'Ein Hörer hat gerade Taler verdient 🪙',
-    'Jemand sammelt fleißig Taler 🎧',
+    'Jemand sammelt fleissig Taler 🎧',
     'Radio hören lohnt sich! 🪙',
   ],
   redemption: [
