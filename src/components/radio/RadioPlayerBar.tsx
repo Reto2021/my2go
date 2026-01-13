@@ -304,8 +304,8 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 exit={{ y: 20, opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className={cn(
-                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300 outline-none",
-                  justReachedTier && "ring-2 ring-accent ring-offset-2 ring-offset-background"
+                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300 outline-none isolate",
+                  justReachedTier && "ring-2 ring-accent"
                 )}
                 onClick={onExpand}
                 tabIndex={-1}
