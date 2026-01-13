@@ -604,27 +604,6 @@ export default function RewardsPage() {
             </>
           )}
           
-          {activeTab === 'aktiviert' && isAuthenticated && (
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="text-muted-foreground hover:text-foreground transition-colors">
-                      <Info className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[280px] text-center">
-                    <p className="text-sm">
-                      Aktiviere einen Gutschein mit deinen Taler. Zeige den Code beim Partner vor – nach Bestätigung wird er als <span className="text-success font-medium">verwendet</span> markiert.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <span className="text-sm text-muted-foreground">
-                Aktivierte Gutscheine und deren Status
-              </span>
-            </div>
-          )}
         </div>
       </header>
       
