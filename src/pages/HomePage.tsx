@@ -394,16 +394,9 @@ function SessionModeHome({
         </div>
       </header>
       
-      {/* Referral Promo Banner - Shows after X days */}
-      <section className="container">
+      {/* Referral Promo Banner - Compact */}
+      <section className="container pb-2">
         <ReferralPromoBanner />
-      </section>
-      
-      {/* Quick Actions - Only unique functions not in BottomNav */}
-      <section className="container pb-4">
-        <div className="grid grid-cols-1" data-onboarding="quick-actions">
-          <QuickAction to="/referral" icon={Users} label="Freunde einladen & Taler verdienen" color="accent" />
-        </div>
       </section>
       
       {/* Rewards - Primary Content */}
