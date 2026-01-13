@@ -15,8 +15,6 @@ import {
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
-import { FloatingPlaySlider } from '@/components/radio/FloatingPlaySlider';
-import { StreakDetailsSheet } from '@/components/streak/StreakDetailsSheet';
 import {
   Gift,
   MapPin,
@@ -26,7 +24,6 @@ import {
   ArrowRight,
   Navigation,
   X,
-  Ticket,
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -386,11 +383,8 @@ function SessionModeHome({
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
-  const [showStreakDetails, setShowStreakDetails] = useState(false);
-  
   return (
-    <>
-    <div className="min-h-screen pb-40 bg-background">
+    <div className="min-h-screen bg-background">
       {/* Compact Header with Greeting only */}
       <header className="container pt-4 pb-3">
         <div className="animate-in">
@@ -407,9 +401,8 @@ function SessionModeHome({
       
       {/* Quick Actions - Only unique functions not in BottomNav */}
       <section className="container pb-4">
-        <div className="grid grid-cols-2 gap-3" data-onboarding="quick-actions">
-          <QuickAction to="/rewards?tab=aktiviert" icon={Ticket} label="Meine Einlösungen" color="secondary" />
-          <QuickAction to="/referral" icon={Users} label="Freunde einladen" color="accent" />
+        <div className="grid grid-cols-1" data-onboarding="quick-actions">
+          <QuickAction to="/referral" icon={Users} label="Freunde einladen & Taler verdienen" color="accent" />
         </div>
       </section>
       
@@ -472,17 +465,6 @@ function SessionModeHome({
         <TopListenersWidget />
       </section>
     </div>
-    
-    {/* Floating Play Slider - Fixed above bottom nav, always visible */}
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 px-4 pb-2 pointer-events-none">
-      <div className="container pointer-events-auto">
-        <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
-      </div>
-    </div>
-    
-    {/* Streak Details Sheet */}
-    <StreakDetailsSheet open={showStreakDetails} onOpenChange={setShowStreakDetails} />
-    </>
   );
 }
 
