@@ -319,12 +319,15 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   // Show mini player if playing AND not minimized, or if locked
   const showMiniPlayer = (isPlaying && !isPlayerMinimized) || isLocked;
   
-  // When radio starts playing, show the player
+  // Only show player when radio STARTS playing (not continuously)
+  const wasPlayingRef = useRef(false);
   useEffect(() => {
-    if (isPlaying && isPlayerMinimized) {
+    // Only un-minimize when radio starts (transition from not playing to playing)
+    if (isPlaying && !wasPlayingRef.current) {
       setPlayerMinimized(false);
     }
-  }, [isPlaying, isPlayerMinimized, setPlayerMinimized]);
+    wasPlayingRef.current = isPlaying;
+  }, [isPlaying, setPlayerMinimized]);
   
   // Don't render during initial streak loading
   if (isStreakLoading) return null;
