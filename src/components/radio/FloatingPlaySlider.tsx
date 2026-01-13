@@ -168,12 +168,24 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
       {/* Inline flow element - not fixed, lives in content hierarchy */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 20, opacity: 0 }}
-        className="rounded-2xl bg-secondary shadow-strong overflow-hidden"
-        style={{
-          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+        animate={{ 
+          y: 0, 
+          opacity: 1,
+          boxShadow: showSlider 
+            ? [
+                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 hsl(var(--accent) / 0.4)',
+                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 8px hsl(var(--accent) / 0)',
+                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 hsl(var(--accent) / 0.4)',
+              ]
+            : '0 4px 20px rgba(0,0,0,0.2)',
         }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{
+          y: { duration: 0.3 },
+          opacity: { duration: 0.3 },
+          boxShadow: showSlider ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 },
+        }}
+        className="rounded-2xl bg-secondary shadow-strong overflow-hidden"
       >
         {/* Lock progress bar */}
         {isLocked && (
