@@ -302,10 +302,11 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 exit={{ y: 20, opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className={cn(
-                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300",
+                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300 outline-none focus:outline-none focus-visible:outline-none",
                   justReachedTier && "ring-2 ring-accent ring-offset-2 ring-offset-background"
                 )}
                 onClick={onExpand}
+                tabIndex={-1}
               >
                 {/* Progress bar at top */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-secondary-foreground/10">
@@ -360,8 +361,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                       
                       {/* Balance + Session Bonus */}
                       <div className="flex items-center gap-1">
-                        <TalerIcon className="h-3 w-3 text-accent" />
-                        <span className="text-accent font-bold">{currentBalance}</span>
+                        <span className="text-accent font-bold">🪙 {currentBalance}</span>
                         {justReachedTier ? (
                           <motion.span 
                             className="text-accent font-bold"
