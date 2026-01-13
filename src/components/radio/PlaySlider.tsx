@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate, PanInfo } from "framer-motion";
-import { Flame, Play, Lock, VolumeX, Volume2, Loader2, Check, ChevronRight } from "lucide-react";
+import { Flame, Play, Lock, VolumeX, Volume2, Loader2, ChevronRight, Sparkles } from "lucide-react";
 import { useRadioStore } from "@/lib/radio-store";
 import { useStreak } from "@/hooks/useStreak";
 import { Confetti } from "@/components/ui/confetti";
@@ -20,7 +20,7 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
   const [lockRemaining, setLockRemaining] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
-  const [isSliding, setIsSliding] = useState(false);
+  const [sliderProgress, setSliderProgress] = useState(0);
   
   const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -28,20 +28,33 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
   
   // Motion values for drag
   const x = useMotionValue(0);
-  const progress = useTransform(x, [0, sliderWidth.current], [0, 1]);
   
   // Streak data
   const canClaim = streakStatus?.can_claim ?? false;
   const nextBonus = streakStatus?.next_bonus || 5;
   const currentStreak = streakStatus?.current_streak || 0;
   
-  // Calculate slider width on mount
+  // Calculate slider width on mount and resize
   useEffect(() => {
-    if (containerRef.current) {
-      // 80px for handle width, some padding
-      sliderWidth.current = containerRef.current.offsetWidth - 80;
-    }
+    const updateWidth = () => {
+      if (containerRef.current) {
+        sliderWidth.current = containerRef.current.offsetWidth - 72; // 64px handle + 8px padding
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
   }, []);
+  
+  // Update progress based on x position
+  useEffect(() => {
+    const unsubscribe = x.on("change", (latest) => {
+      if (sliderWidth.current > 0) {
+        setSliderProgress(Math.min(1, Math.max(0, latest / sliderWidth.current)));
+      }
+    });
+    return () => unsubscribe();
+  }, [x]);
   
   // Cleanup lock timer
   useEffect(() => {
@@ -64,7 +77,6 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
     if (!canClaim || isLocked || isClaiming) return;
     
     hapticToggle();
-    setIsSliding(false);
     
     // Start radio if not playing
     if (!isPlaying && !isRadioLoading) {
@@ -88,8 +100,8 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
       },
       onError: () => {
         toast.error("Fehler beim Beanspruchen des Bonus");
-        // Reset slider
-        animate(x, 0, { type: "spring", stiffness: 500, damping: 30 });
+        animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+        setSliderProgress(0);
       },
     });
   };
@@ -139,25 +151,18 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
     toggleMute();
   };
   
-  // Handle drag
-  const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    setIsSliding(true);
-    const newX = Math.max(0, Math.min(info.offset.x, sliderWidth.current));
-    x.set(newX);
-  };
-  
   // Handle drag end
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const percentage = info.offset.x / sliderWidth.current;
     
-    if (percentage > 0.85) {
-      // Slide complete
-      animate(x, sliderWidth.current, { type: "spring", stiffness: 500, damping: 30 });
+    if (percentage > 0.75) {
+      // Slide complete - snap to end
+      animate(x, sliderWidth.current, { type: "spring", stiffness: 400, damping: 25 });
       handleSlideComplete();
     } else {
-      // Reset
-      setIsSliding(false);
-      animate(x, 0, { type: "spring", stiffness: 500, damping: 30 });
+      // Reset with spring animation
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+      setSliderProgress(0);
     }
   };
   
@@ -168,13 +173,13 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
     <>
       <Confetti isActive={showConfetti} />
       
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary via-secondary to-primary/30 animate-in">
-        {/* Animated background */}
-        <div className="absolute inset-0 opacity-30">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary via-secondary to-secondary/90 shadow-strong">
+        {/* Animated background glow */}
+        <div className="absolute inset-0 opacity-40">
           <div 
             className="absolute inset-0 animate-gradient-shift"
             style={{
-              background: 'conic-gradient(from 0deg, transparent, hsl(44 98% 49% / 0.3), transparent)',
+              background: 'conic-gradient(from 0deg, transparent, hsl(var(--accent) / 0.3), transparent)',
               width: '200%',
               height: '200%',
               top: '-50%',
@@ -185,137 +190,182 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
         
         {/* Lock progress bar */}
         {isLocked && (
-          <div className="relative h-1.5 bg-white/10">
+          <div className="relative h-1 bg-white/10">
             <motion.div
               initial={{ width: "100%" }}
               animate={{ width: `${(lockRemaining / 65) * 100}%` }}
               transition={{ duration: 1, ease: "linear" }}
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-500 to-amber-500"
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-amber-400"
             />
           </div>
         )}
         
-        <div className="relative z-10 p-4">
-          {/* Slider Mode - Show when can claim */}
+        <div className="relative z-10 p-3">
+          {/* Premium Slider Mode */}
           {showSlider ? (
             <div 
               ref={containerRef}
-              className="relative h-16 rounded-2xl bg-white/10 overflow-hidden"
+              className="relative h-16 rounded-2xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}
             >
-              {/* Track background with gradient hint */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <motion.div
-                  className="flex items-center gap-2 text-white/60"
-                  animate={{ opacity: isSliding ? 0 : 1 }}
-                >
-                  <span className="text-sm font-medium">Slide zum Starten</span>
-                  <ChevronRight className="h-4 w-4 animate-bounce-x" />
-                </motion.div>
-              </div>
+              {/* Track glow effect following slider */}
+              <motion.div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent/30 via-accent/20 to-transparent rounded-2xl"
+                style={{ 
+                  width: `${Math.max(64, sliderProgress * 100)}%`,
+                  opacity: 0.5 + sliderProgress * 0.5,
+                }}
+              />
               
-              {/* Reward indicator on right */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              {/* Center text - fades as you slide */}
+              <motion.div
+                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                style={{ opacity: 1 - sliderProgress * 1.5 }}
+              >
+                <div className="flex items-center gap-2 text-white/70">
+                  <span className="text-sm font-medium tracking-wide">Slide zum Starten</span>
+                  <motion.div
+                    animate={{ x: [0, 6, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </motion.div>
+                </div>
+              </motion.div>
+              
+              {/* Reward badge on right - animated magnetic pull */}
+              <motion.div
+                className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                animate={{
+                  scale: 1 + sliderProgress * 0.2,
+                  x: -sliderProgress * 8,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
                 <motion.div
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold flex items-center gap-1.5"
-                  animate={{ 
-                    scale: isSliding ? 1.05 : 1,
-                    boxShadow: isSliding ? "0 0 20px rgba(249, 115, 22, 0.5)" : "none"
+                  className="relative px-4 py-2.5 rounded-xl font-bold text-secondary flex items-center gap-2 overflow-hidden"
+                  style={{
+                    background: `linear-gradient(135deg, 
+                      hsl(44 98% ${54 + sliderProgress * 10}%) 0%, 
+                      hsl(38 95% ${50 + sliderProgress * 10}%) 100%)`,
+                    boxShadow: sliderProgress > 0.5 
+                      ? `0 0 ${20 + sliderProgress * 20}px hsl(44 98% 49% / ${0.3 + sliderProgress * 0.4})`
+                      : '0 4px 12px rgba(0,0,0,0.2)',
                   }}
                 >
-                  <span>+{nextBonus}</span>
+                  {/* Sparkle effect when close */}
+                  {sliderProgress > 0.6 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="absolute -top-1 -right-1"
+                    >
+                      <Sparkles className="h-4 w-4 text-white animate-pulse" />
+                    </motion.div>
+                  )}
+                  <span className="text-lg">+{nextBonus}</span>
                 </motion.div>
-              </div>
+              </motion.div>
               
-              {/* Draggable handle */}
+              {/* Draggable handle - Premium glass design */}
               <motion.div
                 drag="x"
                 dragConstraints={{ left: 0, right: sliderWidth.current }}
-                dragElastic={0}
-                onDrag={handleDrag}
+                dragElastic={0.05}
                 onDragEnd={handleDragEnd}
                 style={{ x }}
-                className="absolute left-1 top-1 bottom-1 w-16 cursor-grab active:cursor-grabbing"
+                whileDrag={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="absolute left-1 top-1 bottom-1 w-16 cursor-grab active:cursor-grabbing z-10"
               >
-                <div className={cn(
-                  "w-full h-full rounded-xl flex items-center justify-center transition-all shadow-lg",
-                  "bg-accent text-accent-foreground",
-                  isSliding && "scale-105"
-                )}>
+                <div 
+                  className="w-full h-full rounded-xl flex items-center justify-center shadow-lg transition-shadow"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 95% 45%) 100%)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
+                  }}
+                >
                   {isClaiming || isRadioLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 text-secondary animate-spin" />
                   ) : (
-                    <div className="flex items-center gap-1">
-                      <Flame className="h-5 w-5 text-orange-400" />
-                      <Play className="h-5 w-5 ml-0.5" />
+                    <div className="flex items-center gap-0.5">
+                      <Play className="h-6 w-6 text-secondary fill-secondary" />
                     </div>
                   )}
                 </div>
               </motion.div>
             </div>
           ) : (
-            /* Normal Player Mode - When locked or already claimed */
-            <div className="flex items-center gap-4">
+            /* Normal Player Mode */
+            <div className="flex items-center gap-3">
               {/* Play/Pause Button */}
               <button
                 onClick={handleTogglePlay}
                 disabled={isRadioLoading || isLocked}
                 className={cn(
-                  "h-16 w-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all shadow-lg relative",
+                  "h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-all shadow-lg relative",
                   isPlaying 
                     ? "bg-accent text-accent-foreground" 
                     : "bg-accent text-accent-foreground animate-pulse-play",
                   isLocked && "opacity-80"
                 )}
+                style={{
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+                }}
                 aria-label={isPlaying ? 'Pause' : 'Radio starten'}
               >
                 {isRadioLoading ? (
-                  <div className="h-6 w-6 border-3 border-current/30 border-t-current rounded-full animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : isLocked ? (
                   <div className="relative">
-                    <Lock className="h-6 w-6" />
-                    <span className="absolute -bottom-1 -right-1 text-[10px] font-bold bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                    <Lock className="h-5 w-5" />
+                    <span className="absolute -bottom-1 -right-2 text-[9px] font-bold bg-white text-secondary rounded-full w-5 h-5 flex items-center justify-center shadow">
                       {lockRemaining}
                     </span>
                   </div>
                 ) : isPlaying ? (
-                  <div className="h-7 w-7 flex items-center justify-center gap-1">
-                    <div className="w-1.5 h-6 bg-current rounded-sm" />
-                    <div className="w-1.5 h-6 bg-current rounded-sm" />
+                  <div className="h-6 w-6 flex items-center justify-center gap-1">
+                    <div className="w-1.5 h-5 bg-current rounded-sm" />
+                    <div className="w-1.5 h-5 bg-current rounded-sm" />
                   </div>
                 ) : (
-                  <Play className="h-7 w-7 ml-1" />
+                  <Play className="h-6 w-6 ml-0.5 fill-current" />
                 )}
               </button>
               
               {/* Text Content */}
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold text-secondary-foreground leading-tight">
+                <h2 className="text-base font-bold text-white leading-tight">
                   {isLocked 
-                    ? `Gesperrt – noch ${lockRemaining}s`
+                    ? `Gesperrt – ${lockRemaining}s`
                     : isPlaying 
                       ? 'Du hörst Radio 2Go' 
-                      : 'Radio hören & Taler sammeln'
+                      : 'Radio hören'
                   }
                 </h2>
-                <p className="text-sm text-secondary-foreground/70 mt-0.5">
+                <p className="text-sm text-white/60 mt-0.5">
                   {isLocked
-                    ? 'Session wird für Statistik gezählt'
+                    ? 'Session wird gezählt'
                     : isPlaying 
-                      ? 'Hör weiter und verdiene Taler'
-                      : 'Starte jetzt und verdiene 2Go Taler'
+                      ? 'Hör weiter & verdiene Taler'
+                      : 'Starte & verdiene Taler'
                   }
                 </p>
               </div>
               
-              {/* Mute Button - Always available */}
+              {/* Mute Button */}
               {(isPlaying || isLocked) && (
                 <button
                   onClick={handleToggleMute}
                   className={cn(
-                    "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition-all",
+                    "h-11 w-11 rounded-xl flex items-center justify-center shrink-0 transition-all",
                     isMuted 
                       ? "bg-red-500/20 text-red-400" 
-                      : "bg-white/10 text-white hover:bg-white/20"
+                      : "bg-white/10 text-white/80 hover:bg-white/20"
                   )}
                   aria-label={isMuted ? 'Ton an' : 'Stumm'}
                 >
@@ -323,14 +373,14 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
                 </button>
               )}
               
-              {/* Streak indicator - clickable for details */}
+              {/* Streak indicator */}
               {!isLocked && hasClaimedToday && currentStreak > 0 && (
                 <button
                   onClick={onStreakDetailsOpen}
-                  className="shrink-0 px-3 py-2 rounded-xl bg-orange-500/20 flex items-center gap-1.5 hover:bg-orange-500/30 transition-colors"
+                  className="shrink-0 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition-colors flex items-center gap-1.5"
                 >
                   <Flame className="h-4 w-4 text-orange-400" />
-                  <span className="font-bold text-orange-400">{currentStreak}</span>
+                  <span className="font-bold text-white">{currentStreak}</span>
                 </button>
               )}
             </div>
