@@ -218,195 +218,162 @@ export function DailyStreakCard() {
         className="p-4 rounded-2xl bg-gradient-to-br from-orange-500/10 via-card to-amber-500/5 border border-orange-500/20"
         data-onboarding="streak-card"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+        {/* Header with inline button */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shrink-0">
               <Flame className="h-5 w-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-semibold text-foreground">Täglicher Bonus</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground truncate">
                 {currentStreak > 0 
                   ? `🔥 ${currentStreak} Tag${currentStreak !== 1 ? 'e' : ''} in Folge`
-                  : "Starte heute!"
+                  : "30s hören = Taler!"
                 }
               </p>
             </div>
           </div>
           
-          {/* Streak counter badge */}
-          {currentStreak > 0 && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20"
-            >
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span className="font-bold text-orange-500">{currentStreak}</span>
-            </motion.div>
-          )}
-        </div>
-        
-        {/* Explanation Box */}
-        <div className="p-3 rounded-xl bg-muted/50 mb-4">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-foreground">So funktioniert's:</span> Klicke auf den Button, 
-            höre 30 Sekunden Radio und erhalte deinen Bonus! Je mehr Tage in Folge, desto mehr Taler – von 5 bis 15 pro Tag.
-          </p>
-        </div>
-
-        {/* Weekly Progress Header */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-muted-foreground">Deine Woche</span>
-          <span className="text-xs text-muted-foreground">
-            Tag {Math.min((currentStreak % 7) + (canClaim ? 1 : 0), 7)} von 7
-          </span>
-        </div>
-
-        {/* Day indicators with bonus labels */}
-        <div className="flex items-end justify-between gap-1 mb-4">
-          {days.map((day, index) => (
-            <motion.div
-              key={day.dayNumber}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: index * 0.05 }}
-              className="flex-1 flex flex-col items-center gap-1"
-            >
-              {/* Bonus label on top */}
-              <span className={cn(
-                "text-[10px] font-medium",
-                day.isCompleted ? "text-orange-500" : day.isCurrent ? "text-amber-500" : "text-muted-foreground/50"
-              )}>
-                +{day.bonus}
-              </span>
-              
-              {/* Day box */}
-              <div
-                className={cn(
-                  "w-full h-9 rounded-lg flex items-center justify-center text-xs font-bold transition-all",
-                  day.isCompleted 
-                    ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-md" 
-                    : day.isCurrent
-                      ? "bg-orange-500/20 text-orange-500 border-2 border-orange-500 border-dashed animate-pulse"
-                      : "bg-muted/50 text-muted-foreground"
-                )}
-              >
-                {day.isCompleted ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <span className="text-[10px]">Tag {day.dayNumber}</span>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Claim button, countdown, or status */}
-        <AnimatePresence mode="wait">
-          {isCountingDown ? (
-            // Countdown mode - radio is playing, waiting for 30s
-            <motion.div
-              key="countdown"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-3"
-            >
-              {/* Countdown display */}
-              <div className="w-full py-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <Volume2 className="h-5 w-5 text-green-500 animate-pulse" />
-                  <span className="text-sm font-medium text-green-600">Radio läuft...</span>
-                </div>
-                
-                {/* Circular countdown */}
-                <div className="relative w-16 h-16">
-                  <svg className="w-16 h-16 -rotate-90">
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                      className="text-muted/30"
-                    />
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                      strokeLinecap="round"
-                      className="text-green-500 transition-all duration-1000"
-                      strokeDasharray={176}
-                      strokeDashoffset={176 - (176 * (30 - countdown)) / 30}
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-foreground">
-                    {countdown}
-                  </span>
-                </div>
-                
-                <p className="text-xs text-muted-foreground">
-                  Noch {countdown} Sekunden für deinen Bonus
-                </p>
-              </div>
-              
-              {/* Cancel button */}
-              <button
-                onClick={handleCancelCountdown}
-                className="w-full py-2 rounded-lg bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors"
-              >
-                Abbrechen
-              </button>
-            </motion.div>
-          ) : canClaim && !claimedBonus ? (
+          {/* Inline claim button or status badge */}
+          {canClaim && !isCountingDown && !claimedBonus ? (
             <motion.button
-              key="claim"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
               onClick={handleStartBonusClaim}
               disabled={isClaiming || isRadioLoading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="shrink-0 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {isClaiming || isRadioLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <Radio className="h-5 w-5" />
-                  Jetzt {nextBonus} Taler abholen
+                  <Radio className="h-4 w-4" />
+                  +{nextBonus}
                 </>
               )}
             </motion.button>
           ) : claimedBonus ? (
             <motion.div
-              key="just-claimed"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="shrink-0 px-3 py-1.5 rounded-full bg-green-500/20 text-green-600 text-sm font-medium flex items-center gap-1"
             >
-              <Gift className="h-5 w-5" />
-              +{claimedBonus} Taler erhalten!
+              <Check className="h-4 w-4" />
+              +{claimedBonus}
             </motion.div>
-          ) : (
+          ) : !canClaim && !isCountingDown ? (
             <motion.div
-              key="claimed"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full py-3 rounded-xl bg-muted/50 text-muted-foreground font-medium flex items-center justify-center gap-2"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="shrink-0 px-3 py-1.5 rounded-full bg-muted/50 text-muted-foreground text-xs font-medium flex items-center gap-1"
             >
-              <Check className="h-5 w-5 text-green-500" />
-              Heute schon abgeholt – komm morgen wieder!
+              <Check className="h-3 w-3 text-green-500" />
+              Erledigt
+            </motion.div>
+          ) : null}
+        </div>
+
+        {/* Countdown section - only shown during countdown */}
+        <AnimatePresence>
+          {isCountingDown && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 overflow-hidden"
+            >
+              <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="h-5 w-5 text-green-500 animate-pulse" />
+                    <span className="text-sm font-medium text-green-600">Radio läuft...</span>
+                  </div>
+                  <button
+                    onClick={handleCancelCountdown}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="relative h-3 rounded-full bg-muted/50 overflow-hidden">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${((30 - countdown) / 30) * 100}%` }}
+                    transition={{ duration: 1, ease: "linear" }}
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                  />
+                </div>
+                
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Noch {countdown} Sekunden für +{nextBonus} Taler
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Weekly progress - only shown when actively engaged (countdown, just claimed, or has streak) */}
+        <AnimatePresence>
+          {(isCountingDown || claimedBonus || currentStreak > 0) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 overflow-hidden"
+            >
+              {/* Weekly Progress Header */}
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Deine Woche</span>
+                <span className="text-xs text-muted-foreground">
+                  Tag {Math.min((currentStreak % 7) + (canClaim ? 1 : 0), 7)} von 7
+                </span>
+              </div>
+
+              {/* Day indicators with bonus labels */}
+              <div className="flex items-end justify-between gap-1">
+                {days.map((day, index) => (
+                  <motion.div
+                    key={day.dayNumber}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex-1 flex flex-col items-center gap-1"
+                  >
+                    {/* Bonus label on top */}
+                    <span className={cn(
+                      "text-[10px] font-medium",
+                      day.isCompleted ? "text-orange-500" : day.isCurrent ? "text-amber-500" : "text-muted-foreground/50"
+                    )}>
+                      +{day.bonus}
+                    </span>
+                    
+                    {/* Day box */}
+                    <div
+                      className={cn(
+                        "w-full h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all",
+                        day.isCompleted 
+                          ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-md" 
+                          : day.isCurrent
+                            ? "bg-orange-500/20 text-orange-500 border-2 border-orange-500 border-dashed animate-pulse"
+                            : "bg-muted/50 text-muted-foreground"
+                      )}
+                    >
+                      {day.isCompleted ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <span className="text-[9px]">{day.dayNumber}</span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
 
         {/* Streak protection info - only show if user has freezes */}
         {freezes > 0 && (
