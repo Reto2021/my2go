@@ -1,7 +1,7 @@
 import { Reward } from '@/lib/supabase-helpers';
 import { useBalance } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Sparkles } from 'lucide-react';
+import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Sparkles, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface RewardCardProps {
@@ -41,12 +41,23 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
   return (
     <Link
       to={`/rewards/${reward.id}`}
-      className={cn('card-base p-4 flex items-center gap-4 group', className)}
+      className={cn('card-base p-4 flex items-center gap-4 group relative overflow-hidden', className)}
     >
+      {/* "Jetzt einlösbar" Badge - Top Right */}
+      {canAfford && userBalance > 0 && (
+        <div className="absolute -top-0 -right-0 z-10">
+          <div className="bg-success text-success-foreground text-[10px] font-bold px-2 py-1 rounded-bl-xl flex items-center gap-1">
+            <Check className="h-3 w-3" />
+            Jetzt einlösbar
+          </div>
+        </div>
+      )}
+      
       {/* Icon */}
       <div className={cn(
-        'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl',
-        colorClass
+        'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105',
+        colorClass,
+        canAfford && 'ring-2 ring-success/30'
       )}>
         <Icon className="h-7 w-7" />
       </div>
@@ -72,7 +83,7 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
         <div className="flex items-center gap-2 mt-1.5">
           <span className={cn(
             'inline-flex items-center gap-1 text-sm font-bold',
-            canAfford ? 'text-accent' : 'text-muted-foreground'
+            canAfford ? 'text-success' : 'text-muted-foreground'
           )}>
             <Coins className="h-3.5 w-3.5" />
             {reward.taler_cost.toLocaleString('de-CH')}

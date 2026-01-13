@@ -29,13 +29,27 @@ const TIERS = [
   { minSeconds: 3600, reward: 5 },  // 60 min
 ];
 
-function useSessionProgress() {
+interface SessionProgress {
+  elapsed: number;
+  earnedTaler: number;
+  pendingTaler: number;
+  progress: number;
+  targetSeconds: number;
+  isMaxTier: boolean;
+  secondsToNextTier: number;
+  justReachedTier: boolean;
+}
+
+function useSessionProgress(): SessionProgress {
   const { isPlaying, sessionStartTime } = useRadioStore();
   const [elapsed, setElapsed] = useState(0);
+  const [lastTierIndex, setLastTierIndex] = useState(-1);
+  const [justReachedTier, setJustReachedTier] = useState(false);
   
   useEffect(() => {
     if (!isPlaying || !sessionStartTime) {
       setElapsed(0);
+      setLastTierIndex(-1);
       return;
     }
     
@@ -56,6 +70,19 @@ function useSessionProgress() {
     return elapsed >= tier.minSeconds && (!nextTier || elapsed < nextTier.minSeconds);
   });
   
+  // Detect tier change for animation
+  useEffect(() => {
+    if (currentTierIndex > lastTierIndex && lastTierIndex >= -1 && elapsed > 0) {
+      setJustReachedTier(true);
+      const timer = setTimeout(() => setJustReachedTier(false), 2000);
+      setLastTierIndex(currentTierIndex);
+      return () => clearTimeout(timer);
+    }
+    if (currentTierIndex !== lastTierIndex) {
+      setLastTierIndex(currentTierIndex);
+    }
+  }, [currentTierIndex, lastTierIndex, elapsed]);
+  
   const earnedTaler = currentTierIndex >= 0 ? TIERS[currentTierIndex].reward : 0;
   
   // Progress to next tier
@@ -65,6 +92,7 @@ function useSessionProgress() {
   
   let progress = 0;
   let targetSeconds = TIERS[0].minSeconds;
+  let secondsToNextTier = 0;
   
   if (nextTier && currentTier) {
     // Progress between current and next tier
@@ -72,14 +100,17 @@ function useSessionProgress() {
     const rangeEnd = nextTier.minSeconds;
     progress = ((elapsed - rangeStart) / (rangeEnd - rangeStart)) * 100;
     targetSeconds = rangeEnd;
+    secondsToNextTier = rangeEnd - elapsed;
   } else if (!currentTier) {
     // Progress to first tier
     progress = (elapsed / TIERS[0].minSeconds) * 100;
     targetSeconds = TIERS[0].minSeconds;
+    secondsToNextTier = TIERS[0].minSeconds - elapsed;
   } else {
     // Max tier reached
     progress = 100;
     targetSeconds = currentTier.minSeconds;
+    secondsToNextTier = 0;
   }
   
   const pendingTaler = nextTier?.reward || (earnedTaler === 0 ? TIERS[0].reward : 0);
@@ -91,6 +122,8 @@ function useSessionProgress() {
     progress: Math.min(100, progress),
     targetSeconds,
     isMaxTier: !nextTier && currentTierIndex >= 0,
+    secondsToNextTier: Math.max(0, secondsToNextTier),
+    justReachedTier,
   };
 }
 
@@ -100,9 +133,15 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function formatTimeToTier(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  if (mins === 0) return `${seconds} Sek`;
+  return `${mins} Min`;
+}
+
 export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
   const { isPlaying, nowPlaying, togglePlay, isLoading } = useRadioStore();
-  const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier } = useSessionProgress();
+  const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier, secondsToNextTier, justReachedTier } = useSessionProgress();
   
   const handleTogglePlay = () => {
     hapticToggle();
@@ -121,14 +160,17 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
         >
           <div className="mx-auto max-w-lg">
             <div 
-              className="relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden"
+              className={cn(
+                "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300",
+                justReachedTier && "ring-2 ring-accent ring-offset-2 ring-offset-background"
+              )}
               onClick={onExpand}
             >
               {/* Progress bar at top */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-secondary-foreground/10">
                 <motion.div
                   className={cn(
-                    "h-full",
+                    "h-full transition-colors",
                     isMaxTier ? "bg-accent" : "bg-accent/80"
                   )}
                   initial={{ width: 0 }}
@@ -139,7 +181,10 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
               
               <div className="flex items-center gap-3 p-2 pt-3">
                 {/* Album Art or Equalizer */}
-                <div className="h-12 w-12 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0">
+                <div className={cn(
+                  "h-12 w-12 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0 transition-all",
+                  justReachedTier && "animate-pulse"
+                )}>
                   {nowPlaying?.artworkUrl ? (
                     <img 
                       src={nowPlaying.artworkUrl} 
@@ -159,16 +204,33 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
                   <div className="flex items-center gap-2 text-xs text-secondary-foreground/60">
                     <span>{formatTime(elapsed)}</span>
                     <span className="text-secondary-foreground/30">•</span>
+                    
+                    {/* Taler Status with Milestone Info */}
                     <div className="flex items-center gap-1">
-                      {earnedTaler > 0 ? (
+                      {justReachedTier ? (
+                        <motion.div 
+                          className="flex items-center gap-1"
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          <TalerIcon className="h-3 w-3 text-accent" />
+                          <span className="text-accent font-bold">+{earnedTaler} 🎉</span>
+                        </motion.div>
+                      ) : earnedTaler > 0 ? (
                         <>
                           <TalerIcon className="h-3 w-3 text-accent" />
                           <span className="text-accent font-medium">+{earnedTaler}</span>
+                          {!isMaxTier && secondsToNextTier > 0 && (
+                            <span className="opacity-60 ml-1">
+                              (+{pendingTaler - earnedTaler} in {formatTimeToTier(secondsToNextTier)})
+                            </span>
+                          )}
                         </>
                       ) : (
                         <>
                           <TalerIcon className="h-3 w-3 opacity-50" />
-                          <span className="opacity-70">+{pendingTaler} bald</span>
+                          <span className="opacity-70">+{pendingTaler} in {formatTimeToTier(secondsToNextTier)}</span>
                         </>
                       )}
                     </div>

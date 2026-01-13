@@ -17,6 +17,7 @@ import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
+import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
 import { useRadioStore } from '@/lib/radio-store';
 import {
   Gift, 
@@ -418,6 +419,11 @@ function SessionModeHome({
       {/* Hero Radio CTA - Prominent Player Call-to-Action */}
       <section className="container pb-4">
         <RadioHeroCTA balance={balance} />
+      </section>
+      
+      {/* Referral Promo Banner - Shows after X days */}
+      <section className="container">
+        <ReferralPromoBanner />
       </section>
       
       {/* Primary Quick Actions - 4 Most Important */}

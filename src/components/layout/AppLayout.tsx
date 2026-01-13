@@ -8,7 +8,9 @@ import { SessionSummarySheet } from '@/components/ui/session-summary-sheet';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { MiniPlayerBar } from '@/components/ui/mini-player-bar';
 import { ExpandedRadioPlayer } from '@/components/ui/radio-player-expanded';
+import { TierCelebration } from '@/components/radio/TierCelebration';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
+import { useTierReachedNotification } from '@/hooks/useTierReachedNotification';
 import { useRadioStore } from '@/lib/radio-store';
 
 interface AppLayoutProps {
@@ -19,6 +21,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   // Track radio listening for rewards
   const { sessionSummary, showSummary, closeSummary } = useRadioRewards();
   const { isPlayerExpanded, setPlayerExpanded } = useRadioStore();
+  
+  // Tier reached celebration
+  const { showCelebration, currentTierReward, dismissCelebration } = useTierReachedNotification();
   
   return (
     <BadgeNotificationProvider>
@@ -37,6 +42,13 @@ export function AppLayout({ children }: AppLayoutProps) {
         <ExpandedRadioPlayer 
           isOpen={isPlayerExpanded} 
           onClose={() => setPlayerExpanded(false)} 
+        />
+        
+        {/* Tier Reached Celebration */}
+        <TierCelebration
+          isVisible={showCelebration}
+          talerAmount={currentTierReward}
+          onDismiss={dismissCelebration}
         />
         
         <WhatsAppButton />
