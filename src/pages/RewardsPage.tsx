@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { 
   Gift, 
@@ -37,7 +38,8 @@ import {
   Sparkles,
   Radio,
   Navigation,
-  Building2
+  Building2,
+  Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -444,108 +446,131 @@ export default function RewardsPage() {
                 ))}
               </div>
               
-              {/* Extended Filters */}
-              {showFilters && (
-                <div className="mt-4 p-4 rounded-2xl bg-muted/50 space-y-4 animate-fade-in">
-                  {/* Radio 2Go Branding Hint */}
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
-                    <Radio className="h-4 w-4 text-secondary" />
-                    <p className="text-xs text-secondary font-medium">
-                      Radio 2Go hören lohnt sich! Sammle Taler & löse Gutscheine ein.
-                    </p>
-                  </div>
-                  
-                  {/* City Filter */}
-                  {availableCities.length > 0 && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        Ort
-                      </label>
-                      <div className="flex flex-wrap gap-2">
+              {/* Filter Sheet (Bottom Drawer) */}
+              <Sheet open={showFilters} onOpenChange={setShowFilters}>
+                <SheetContent side="bottom" className="rounded-t-3xl max-h-[70vh] overflow-y-auto">
+                  <SheetHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="flex items-center gap-2">
+                        <SlidersHorizontal className="h-5 w-5" />
+                        Filter
+                      </SheetTitle>
+                      {hasActiveFilters && (
                         <button
-                          onClick={() => setSelectedCity('all')}
-                          className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            selectedCity === 'all'
-                              ? 'bg-secondary text-secondary-foreground'
-                              : 'bg-background text-muted-foreground hover:text-foreground'
-                          )}
+                          onClick={clearFilters}
+                          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          Alle Orte
+                          <X className="h-4 w-4" />
+                          Zurücksetzen
                         </button>
-                        {availableCities.map(city => (
+                      )}
+                    </div>
+                  </SheetHeader>
+                  
+                  <div className="space-y-6 pb-8">
+                    {/* Radio 2Go Branding Hint */}
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+                      <Radio className="h-4 w-4 text-secondary" />
+                      <p className="text-xs text-secondary font-medium">
+                        Radio 2Go hören lohnt sich! Sammle Taler & löse Gutscheine ein.
+                      </p>
+                    </div>
+                    
+                    {/* City Filter */}
+                    {availableCities.length > 0 && (
+                      <div className="space-y-3">
+                        <label className="text-sm font-semibold flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          Ort
+                        </label>
+                        <div className="flex flex-wrap gap-2">
                           <button
-                            key={city}
-                            onClick={() => setSelectedCity(city)}
+                            onClick={() => setSelectedCity('all')}
                             className={cn(
-                              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                              selectedCity === city
+                              'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all',
+                              selectedCity === 'all'
                                 ? 'bg-secondary text-secondary-foreground'
-                                : 'bg-background text-muted-foreground hover:text-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
                             )}
                           >
-                            {city}
+                            {selectedCity === 'all' && <Check className="h-3.5 w-3.5" />}
+                            Alle Orte
+                          </button>
+                          {availableCities.map(city => (
+                            <button
+                              key={city}
+                              onClick={() => setSelectedCity(city)}
+                              className={cn(
+                                'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all',
+                                selectedCity === city
+                                  ? 'bg-secondary text-secondary-foreground'
+                                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                              )}
+                            >
+                              {selectedCity === city && <Check className="h-3.5 w-3.5" />}
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Sort */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-semibold">Sortieren</label>
+                      <div className="flex flex-wrap gap-2">
+                        {sortOptions.map(opt => (
+                          <button
+                            key={opt.id}
+                            onClick={() => setSortBy(opt.id)}
+                            className={cn(
+                              'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all',
+                              sortBy === opt.id
+                                ? 'bg-secondary text-secondary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            )}
+                          >
+                            {sortBy === opt.id && <Check className="h-3.5 w-3.5" />}
+                            {opt.label}
                           </button>
                         ))}
                       </div>
                     </div>
-                  )}
-                  
-                  {/* Sort */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Sortieren</label>
-                    <div className="flex flex-wrap gap-2">
-                      {sortOptions.map(opt => (
-                        <button
-                          key={opt.id}
-                          onClick={() => setSortBy(opt.id)}
-                          className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            sortBy === opt.id
-                              ? 'bg-secondary text-secondary-foreground'
-                              : 'bg-background text-muted-foreground hover:text-foreground'
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
+                    
+                    {/* Max Cost */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-semibold">Preis</label>
+                      <div className="flex flex-wrap gap-2">
+                        {maxCostOptions.map(opt => (
+                          <button
+                            key={opt.id}
+                            onClick={() => setMaxCost(opt.id)}
+                            className={cn(
+                              'flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all',
+                              maxCost === opt.id
+                                ? 'bg-secondary text-secondary-foreground'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            )}
+                          >
+                            {maxCost === opt.id && <Check className="h-3.5 w-3.5" />}
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Max Cost */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Preis</label>
-                    <div className="flex flex-wrap gap-2">
-                      {maxCostOptions.map(opt => (
-                        <button
-                          key={opt.id}
-                          onClick={() => setMaxCost(opt.id)}
-                          className={cn(
-                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                            maxCost === opt.id
-                              ? 'bg-secondary text-secondary-foreground'
-                              : 'bg-background text-muted-foreground hover:text-foreground'
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Clear Filters */}
-                  {hasActiveFilters && (
-                    <button
-                      onClick={clearFilters}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    
+                    {/* Apply Button */}
+                    <Button 
+                      onClick={() => setShowFilters(false)}
+                      className="w-full"
+                      size="lg"
                     >
-                      <X className="h-4 w-4" />
-                      Filter zurücksetzen
-                    </button>
-                  )}
-                </div>
-              )}
+                      <Check className="h-4 w-4 mr-2" />
+                      {filteredAndSortedRewards.length} Gutscheine anzeigen
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </>
           )}
           
