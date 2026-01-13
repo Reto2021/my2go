@@ -397,22 +397,12 @@ function SessionModeHome({
   
   return (
     <div className="min-h-screen pb-28 bg-background">
-      {/* Compact Header with Greeting + Inline Balance */}
+      {/* Compact Header with Greeting only - Balance is in main header */}
       <header className="container pt-4 pb-3">
-        <div className="flex items-center justify-between animate-in">
+        <div className="animate-in">
           <p className="text-muted-foreground">
             Hallo, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
           </p>
-          {/* Inline Balance - Compact */}
-          <Link 
-            to="/my-redemptions"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-secondary text-secondary-foreground"
-            data-onboarding="balance-card"
-          >
-            <Coins className="h-4 w-4 text-accent" />
-            <span className="text-sm font-bold tabular-nums">{balance.taler_balance.toLocaleString('de-CH')}</span>
-            <span className="text-xs opacity-70">Taler</span>
-          </Link>
         </div>
       </header>
       
@@ -588,20 +578,10 @@ function RadioHeroCTA({ balance }: RadioHeroCTAProps) {
           </h2>
           <p className="text-sm text-secondary-foreground/70 mt-0.5">
             {isPlaying 
-              ? `+5 Taler pro 30 Min • ${balance.lifetime_earned} gesammelt`
+              ? 'Hör weiter und verdiene Taler'
               : 'Starte jetzt und verdiene 2Go Taler'
             }
           </p>
-        </div>
-        
-        {/* Stats Badge */}
-        <div className="flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl bg-white/10">
-          <span className="text-2xl font-extrabold text-accent tabular-nums">
-            {balance.lifetime_earned}
-          </span>
-          <span className="text-[10px] text-secondary-foreground/60 uppercase tracking-wide">
-            verdient
-          </span>
         </div>
       </div>
     </div>
