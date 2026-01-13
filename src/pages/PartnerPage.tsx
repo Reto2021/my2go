@@ -185,7 +185,12 @@ export default function PartnerPage() {
         <div className="container py-3 space-y-3">
           {/* Title + View Toggle + Clear Filters in one row */}
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold shrink-0">Partner</h1>
+            <div className="flex items-center gap-2 shrink-0">
+              <h1 className="text-lg font-bold">Partner</h1>
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {filteredPartners.length}
+              </span>
+            </div>
             
             {/* Search - inline */}
             <div className="relative flex-1">
@@ -351,10 +356,25 @@ export default function PartnerPage() {
               mapboxToken={mapboxToken}
             />
           ) : (
-            <div className="h-full flex items-center justify-center bg-muted rounded-2xl">
-              <div className="text-center p-4">
-                <MapIcon className="h-12 w-12 text-muted-foreground mx-auto mb-2 animate-pulse" />
-                <p className="text-muted-foreground">Karte wird geladen...</p>
+            <div className="h-full flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted rounded-2xl relative overflow-hidden">
+              {/* Animated background */}
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+              </div>
+              
+              <div className="text-center p-6 relative z-10">
+                {/* Animated map icon with rings */}
+                <div className="relative inline-flex items-center justify-center mb-4">
+                  <div className="absolute w-16 h-16 rounded-full border-2 border-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
+                  <div className="absolute w-12 h-12 rounded-full border-2 border-primary/30 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <MapIcon className="h-7 w-7 text-primary animate-pulse" />
+                  </div>
+                </div>
+                
+                <p className="text-sm font-medium text-foreground mb-1">Karte wird geladen</p>
+                <p className="text-xs text-muted-foreground">Einen Moment bitte...</p>
               </div>
             </div>
           )
