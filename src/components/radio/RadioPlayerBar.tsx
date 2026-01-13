@@ -20,10 +20,12 @@ interface RadioPlayerBarProps {
 
 // Tier thresholds in seconds (must match DB tiers)
 const TIERS = [
-  { minSeconds: 300, reward: 1 },   // 5 min
-  { minSeconds: 900, reward: 2 },   // 15 min
-  { minSeconds: 1800, reward: 3 },  // 30 min
-  { minSeconds: 3600, reward: 5 },  // 60 min
+  { minSeconds: 60, reward: 1 },     // 1 min - Kurzhörer
+  { minSeconds: 300, reward: 3 },    // 5 min - Casual Listener
+  { minSeconds: 900, reward: 5 },    // 15 min - Musikfan
+  { minSeconds: 1800, reward: 10 },  // 30 min - Radiokenner
+  { minSeconds: 3600, reward: 20 },  // 60 min - Dauerhörer
+  { minSeconds: 7200, reward: 35 },  // 2 Std - Super Fan
 ];
 
 function useSessionProgress() {
