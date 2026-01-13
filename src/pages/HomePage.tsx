@@ -365,7 +365,7 @@ function FeatureChip({ icon: Icon, label, color, to }: FeatureChipProps) {
       <div className={`icon-container-md rounded-2xl ${colorClasses[color]}`}>
         <Icon className="h-5 w-5" />
       </div>
-      <span className="text-xs font-semibold text-center text-foreground">{label}</span>
+      <span className="text-sm font-semibold text-center text-foreground">{label}</span>
     </Link>
   );
 }

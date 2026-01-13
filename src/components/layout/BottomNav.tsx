@@ -71,8 +71,8 @@ export function BottomNav() {
                 )} strokeWidth={isActive || isHighlight ? 2.5 : 2} />
               </div>
               <span className={cn(
-                'text-[10px] font-semibold tracking-wide',
-                isActive ? 'opacity-100' : 'opacity-70'
+                'text-xs font-semibold',
+                isActive ? 'opacity-100' : 'opacity-80'
               )}>
                 {item.label}
               </span>

@@ -108,7 +108,7 @@ export function ClockWeatherWidget({ className }: { className?: string }) {
       className
     )}>
       {/* Digital Clock with blinking colon */}
-      <span className="text-xs font-semibold text-secondary-foreground tabular-nums">
+      <span className="text-sm font-semibold text-secondary-foreground tabular-nums">
         {hours}
         <span className={cn("transition-opacity", colonVisible ? "opacity-100" : "opacity-30")}>:</span>
         {minutes}
@@ -125,8 +125,8 @@ export function ClockWeatherWidget({ className }: { className?: string }) {
         </div>
       ) : weather && (
         <div className="flex items-center gap-1">
-          <WeatherIcon className="h-3.5 w-3.5 text-secondary-foreground/70" />
-          <span className="text-xs font-semibold text-secondary-foreground tabular-nums">
+          <WeatherIcon className="h-4 w-4 text-secondary-foreground/80" />
+          <span className="text-sm font-semibold text-secondary-foreground tabular-nums">
             {weather.temp}°
           </span>
         </div>
