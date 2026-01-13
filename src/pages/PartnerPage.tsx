@@ -181,150 +181,141 @@ export default function PartnerPage() {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
-        <div className="container py-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-display-sm">Partner entdecken</h1>
-              <OfflineDataBadge 
-                isFromCache={isFromCache}
-                lastUpdated={lastUpdated}
-                onRefresh={loadData}
+      <header className="sticky top-20 z-40 bg-background backdrop-blur-lg border-b border-border/50">
+        <div className="container py-3 space-y-3">
+          {/* Title + View Toggle + Clear Filters in one row */}
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold shrink-0">Partner</h1>
+            
+            {/* Search - inline */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={cn(
+                  'w-full h-9 pl-9 pr-8 rounded-xl text-sm',
+                  'bg-muted border-0',
+                  'placeholder:text-muted-foreground/60',
+                  'focus:outline-none focus:ring-2 focus:ring-primary/20',
+                  'transition-all duration-200'
+                )}
               />
-            </div>
-            <div className="flex items-center gap-2">
-              {hasActiveFilters && (
-                <button
-                  onClick={clearAllFilters}
-                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-background"
                 >
-                  <X className="h-4 w-4" />
-                  Filter löschen
+                  <X className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               )}
-              
-              {/* View Mode Toggle */}
-              <div className="flex bg-muted rounded-xl p-1">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'p-2 rounded-lg transition-all',
-                    viewMode === 'list' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                  aria-label="Listenansicht"
-                >
-                  <List className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
-                  className={cn(
-                    'p-2 rounded-lg transition-all',
-                    viewMode === 'map' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                  aria-label="Kartenansicht"
-                >
-                  <MapIcon className="h-4 w-4" />
-                </button>
-              </div>
             </div>
-          </div>
-          
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Partner, Kategorie oder Ort suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                'w-full h-12 pl-12 pr-4 rounded-2xl',
-                'bg-muted border-2 border-transparent',
-                'placeholder:text-muted-foreground/60',
-                'focus:outline-none focus:border-primary/30 focus:bg-background',
-                'transition-all duration-200'
-              )}
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-background"
+            
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-muted-foreground hover:text-foreground shrink-0"
               >
-                <X className="h-4 w-4 text-muted-foreground" />
+                <X className="h-4 w-4" />
               </button>
             )}
-          </div>
-          
-          {/* Category Filter */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="h-4 w-4" />
-              <span>Kategorie</span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
-              {categories.map(category => (
-                <button
-                  key={category}
-                  onClick={() => handleCategorySelect(category)}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
-                    selectedCategory === category
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  )}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          {/* Location & City Chips */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>Ort</span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
-              {/* Location Chip */}
+            
+            {/* View Mode Toggle */}
+            <div className="flex bg-muted rounded-lg p-0.5 shrink-0">
               <button
-                onClick={handleLocationToggle}
-                disabled={isRequestingLocation}
+                onClick={() => setViewMode('list')}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
-                  userLocation
-                    ? 'bg-accent text-accent-foreground'
+                  'p-1.5 rounded-md transition-all',
+                  viewMode === 'list' 
+                    ? 'bg-background shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+                aria-label="Listenansicht"
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={cn(
+                  'p-1.5 rounded-md transition-all',
+                  viewMode === 'map' 
+                    ? 'bg-background shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+                aria-label="Kartenansicht"
+              >
+                <MapIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Offline Badge - only when from cache */}
+          {isFromCache && (
+            <OfflineDataBadge 
+              isFromCache={isFromCache}
+              lastUpdated={lastUpdated}
+              onRefresh={loadData}
+            />
+          )}
+          
+          {/* Combined Filter Row: Location + Categories */}
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
+            {/* Location Chip */}
+            <button
+              onClick={handleLocationToggle}
+              disabled={isRequestingLocation}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                userLocation
+                  ? 'bg-accent text-accent-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              )}
+            >
+              <Navigation className={cn(
+                'h-3.5 w-3.5',
+                isRequestingLocation && 'animate-pulse'
+              )} />
+              {isRequestingLocation ? 'Suche...' : userLocation ? 'In der Nähe' : 'Standort'}
+            </button>
+            
+            {/* City Chips */}
+            {cities.map(city => (
+              <button
+                key={city}
+                onClick={() => handleRegionSelect(city)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                  selectedRegion === city
+                    ? 'bg-secondary text-secondary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 )}
               >
-                <Navigation className={cn(
-                  'h-4 w-4',
-                  isRequestingLocation && 'animate-pulse'
-                )} />
-                {isRequestingLocation ? 'Suche...' : userLocation ? 'In der Nähe' : 'Standort'}
-                {userLocation && <X className="h-3 w-3 ml-1" />}
+                {city}
               </button>
-              
-              {/* Dynamic City Chips from Partners */}
-              {cities.map(city => (
-                <button
-                  key={city}
-                  onClick={() => handleRegionSelect(city)}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
-                    selectedRegion === city
-                      ? 'bg-secondary text-secondary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  )}
-                >
-                  {city}
-                </button>
-              ))}
-            </div>
+            ))}
+            
+            {/* Separator */}
+            {categories.length > 0 && cities.length > 0 && (
+              <div className="w-px bg-border/50 my-1 shrink-0" />
+            )}
+            
+            {/* Category Chips */}
+            {categories.map(category => (
+              <button
+                key={category}
+                onClick={() => handleCategorySelect(category)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200',
+                  selectedCategory === category
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                )}
+              >
+                {category}
+              </button>
+            ))}
           </div>
         </div>
       </header>
@@ -339,7 +330,7 @@ export default function PartnerPage() {
       )}
       
       {/* Content */}
-      <div className={cn("container py-6", viewMode === 'map' && "h-[calc(100vh-350px)] min-h-[400px]")}>
+      <div className={cn("container py-4", viewMode === 'map' && "h-[calc(100vh-280px)] min-h-[400px]")}>
         {isLoading ? (
           <div className="space-y-3 stagger-children">
             {Array.from({ length: 5 }).map((_, i) => (
