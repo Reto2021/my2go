@@ -27,27 +27,25 @@ const TIERS = [
 ];
 
 function useSessionProgress() {
-  const { isPlaying, sessionStartTime } = useRadioStore();
-  const [elapsed, setElapsed] = useState(0);
+  const { isPlaying, currentSessionDuration, updateSessionDuration } = useRadioStore();
   const [lastTierIndex, setLastTierIndex] = useState(-1);
   const [justReachedTier, setJustReachedTier] = useState(false);
   
+  // Update session duration every second (same as expanded player)
   useEffect(() => {
-    if (!isPlaying || !sessionStartTime) {
-      setElapsed(0);
+    if (!isPlaying) {
       setLastTierIndex(-1);
       return;
     }
     
-    const startMs = sessionStartTime.getTime();
-    setElapsed(Math.floor((Date.now() - startMs) / 1000));
-    
     const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startMs) / 1000));
+      updateSessionDuration();
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [isPlaying, sessionStartTime]);
+  }, [isPlaying, updateSessionDuration]);
+  
+  const elapsed = currentSessionDuration;
   
   const currentTierIndex = TIERS.findIndex((tier, i) => {
     const nextTier = TIERS[i + 1];
