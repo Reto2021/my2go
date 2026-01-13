@@ -31,6 +31,7 @@ interface RadioStore {
   sessionStartTime: Date | null;
   currentSessionDuration: number;
   isPlayerExpanded: boolean;
+  isPlayerMinimized: boolean;
   
   togglePlay: () => void;
   toggleMute: () => void;
@@ -38,6 +39,7 @@ interface RadioStore {
   fetchNowPlaying: () => Promise<void>;
   updateSessionDuration: () => void;
   setPlayerExpanded: (expanded: boolean) => void;
+  setPlayerMinimized: (minimized: boolean) => void;
 }
 
 interface iTunesMediaResult {
@@ -121,8 +123,10 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   sessionStartTime: null,
   currentSessionDuration: 0,
   isPlayerExpanded: false,
+  isPlayerMinimized: false,
 
   setPlayerExpanded: (expanded: boolean) => set({ isPlayerExpanded: expanded }),
+  setPlayerMinimized: (minimized: boolean) => set({ isPlayerMinimized: minimized }),
 
   updateSessionDuration: () => {
     const { sessionStartTime, isPlaying } = get();
