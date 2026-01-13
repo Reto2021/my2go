@@ -184,8 +184,12 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
   };
 
   return (
-    <div className="relative w-full h-full min-h-[400px]">
-      <div ref={mapContainer} className="absolute inset-0 rounded-2xl overflow-hidden" />
+    <div className="relative w-full h-full" style={{ minHeight: '400px' }}>
+      <div 
+        ref={mapContainer} 
+        className="absolute inset-0 rounded-2xl overflow-hidden"
+        style={{ width: '100%', height: '100%' }}
+      />
       
       {/* Selected Partner Card */}
       {selectedPartner && (
