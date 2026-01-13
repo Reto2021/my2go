@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { BalanceStickyBar } from '@/components/rewards/BalanceStickyBar';
 import { useOfflineRewards } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
 import { Gift, Wallet, Info, SlidersHorizontal, X, MapPin, Loader2 } from 'lucide-react';
@@ -156,6 +157,9 @@ export default function RewardsPage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
+          {/* Balance Sticky Bar - Shows current Taler */}
+          <BalanceStickyBar className="mb-4" />
+          
           <div className="flex items-center justify-between mb-2">
             <div className="flex flex-col gap-1">
               <h1 className="text-display-sm">Gutscheine</h1>
