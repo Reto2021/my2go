@@ -469,13 +469,15 @@ function SessionModeHome({
       </section>
       
       {/* Social Proof - Compact */}
-      <section className="container pb-6">
+      <section className="container pb-4">
         <TopListenersWidget />
       </section>
+      
+      {/* Play Slider - Inline element, last in flow, sticky at bottom when scrolling */}
+      <section className="container pb-6 sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40">
+        <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
+      </section>
     </div>
-    
-    {/* Floating Play Slider - Fixed above bottom nav */}
-    <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
     
     {/* Streak Details Sheet */}
     <StreakDetailsSheet open={showStreakDetails} onOpenChange={setShowStreakDetails} />
