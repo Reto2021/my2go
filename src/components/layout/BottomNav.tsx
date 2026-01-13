@@ -34,10 +34,13 @@ export function BottomNav() {
   
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50" data-onboarding="bottom-nav">
+      {/* Fade gradient above nav */}
+      <div className="absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-white/90 to-transparent pointer-events-none" />
+      
       {/* Background blur */}
       <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-border/50" />
       
-      <div className="relative container flex items-center justify-around py-2 pb-safe">
+      <div className="relative container flex items-center justify-around py-1.5 pb-safe">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || 
@@ -51,7 +54,7 @@ export function BottomNav() {
               onMouseEnter={() => handlePrefetch(item.path)}
               onTouchStart={() => handlePrefetch(item.path)}
               className={cn(
-                'flex flex-col items-center gap-1 min-w-[48px] min-h-[48px] px-3 py-2.5 rounded-2xl transition-all duration-200',
+                'flex flex-col items-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1.5 rounded-xl transition-all duration-200',
                 isActive
                   ? 'text-secondary'
                   : isHighlight 
@@ -60,19 +63,19 @@ export function BottomNav() {
               )}
             >
               <div className={cn(
-                'relative p-2 rounded-xl transition-all duration-200',
+                'relative p-1.5 rounded-lg transition-all duration-200',
                 isActive && 'bg-primary/20',
                 isHighlight && !isActive && 'bg-accent text-secondary'
               )}>
                 <Icon className={cn(
-                  'h-5 w-5 transition-transform duration-200',
+                  'h-4 w-4 transition-transform duration-200',
                   isActive && 'scale-110',
-                  isHighlight && 'h-6 w-6'
+                  isHighlight && 'h-5 w-5'
                 )} strokeWidth={isActive || isHighlight ? 2.5 : 2} />
               </div>
               <span className={cn(
-                'text-xs font-semibold',
-                isActive ? 'opacity-100' : 'opacity-80'
+                'text-[10px] font-semibold leading-tight',
+                isActive ? 'opacity-100' : 'opacity-70'
               )}>
                 {item.label}
               </span>
