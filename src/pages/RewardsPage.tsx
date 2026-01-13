@@ -758,28 +758,6 @@ export default function RewardsPage() {
               </div>
             ) : (
               <>
-                {/* Stats Cards */}
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  <Card className="bg-accent/10 border-accent/30">
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-accent">{redemptionStats.pending}</p>
-                      <p className="text-xs text-muted-foreground">Offen</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-success/10 border-success/30">
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-success">{redemptionStats.used}</p>
-                      <p className="text-xs text-muted-foreground">Verwendet</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-muted/50 border-border/50">
-                    <CardContent className="p-4 text-center">
-                      <p className="text-2xl font-bold text-muted-foreground">{redemptionStats.expired}</p>
-                      <p className="text-xs text-muted-foreground">Abgelaufen</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
                 {/* Filter Tabs */}
                 <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
                   {[
