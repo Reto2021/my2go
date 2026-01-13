@@ -290,8 +290,10 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
       <Confetti isActive={showConfetti} />
       
       {/* Fixed bar above BottomNav */}
-      <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 px-3">
-        <div className="mx-auto max-w-lg">
+      <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 pointer-events-none">
+        {/* Background blur layer */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-transparent" />
+        <div className="relative mx-auto max-w-lg px-3 pointer-events-auto">
           <AnimatePresence mode="wait">
             {showMiniPlayer ? (
               /* ===== STATE 3: Mini Player (Radio Playing) ===== */
@@ -301,7 +303,10 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 animate={{ y: 0, opacity: 1, scale: 1 }}
                 exit={{ y: 20, opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300 outline-none"
+                className={cn(
+                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300 outline-none",
+                  justReachedTier && "ring-2 ring-accent ring-offset-2 ring-offset-background"
+                )}
                 onClick={onExpand}
                 tabIndex={-1}
               >
