@@ -159,6 +159,10 @@ export default {
           "0%, 100%": { transform: "scale(1)", boxShadow: "0 0 0 0 hsl(44 98% 49% / 0.4)" },
           "50%": { transform: "scale(1.05)", boxShadow: "0 0 0 8px hsl(44 98% 49% / 0)" },
         },
+        "bounce-x": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(4px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -177,6 +181,7 @@ export default {
         "gradient-shift": "gradient-shift 30s linear infinite",
         "brush-stroke": "brush-stroke 0.7s ease-out forwards",
         "pulse-play": "pulse-play 2s ease-in-out infinite",
+        "bounce-x": "bounce-x 1s ease-in-out infinite",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
