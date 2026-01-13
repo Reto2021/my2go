@@ -415,7 +415,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 </div>
               </motion.div>
             ) : (
-              /* ===== STATE 1 & 2: Slider Mode with Balance/Streak Header ===== */
+              /* ===== STATE 1 & 2: Slider Mode (Compact) ===== */
               <motion.div
                 key="slider"
                 initial={{ y: 20, opacity: 0 }}
@@ -440,36 +440,6 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 }}
                 className="rounded-2xl bg-secondary shadow-strong overflow-hidden relative"
               >
-                {/* Balance + Streak Header Row */}
-                <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
-                  {/* Balance */}
-                  <div className="flex items-center gap-1.5">
-                    <TalerIcon className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-bold text-secondary-foreground">{currentBalance}</span>
-                    <span className="text-xs text-secondary-foreground/50">Taler</span>
-                  </div>
-                  
-                  {/* Streak */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStreakDetailsOpen?.();
-                    }}
-                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    <Flame className={cn(
-                      "h-4 w-4",
-                      currentStreak > 0 ? "text-accent" : "text-secondary-foreground/40"
-                    )} />
-                    <span className={cn(
-                      "text-sm font-bold",
-                      currentStreak > 0 ? "text-accent" : "text-secondary-foreground/40"
-                    )}>
-                      {currentStreak}
-                    </span>
-                    <span className="text-xs text-secondary-foreground/50">Tage</span>
-                  </button>
-                </div>
                 {/* Shine effect - only when bonus available */}
                 {hasBonusAvailable && (
                   <motion.div
@@ -497,28 +467,28 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                     ref={containerRef}
                     className="relative h-14 rounded-xl"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
-                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                      border: '1px solid rgba(255,255,255,0.12)',
                     }}
                   >
                     {/* Track glow */}
                     <motion.div
-                      className="absolute inset-y-1 left-1 bg-gradient-to-r from-accent/20 to-transparent rounded-lg"
+                      className="absolute inset-y-1 left-1 bg-gradient-to-r from-accent/25 to-transparent rounded-lg"
                       style={{ 
                         width: `${Math.max(56, sliderProgress * 85)}%`,
-                        opacity: 0.4 + sliderProgress * 0.6,
+                        opacity: 0.5 + sliderProgress * 0.5,
                       }}
                     />
                     
-                    {/* Center text */}
+                    {/* Center text - improved contrast */}
                     <motion.div
                       className="absolute inset-0 flex items-center justify-center pointer-events-none"
                       style={{ opacity: 1 - sliderProgress * 1.5 }}
                     >
-                      <div className="flex items-center gap-2 text-white/60">
-                        <span className="text-sm font-semibold">
+                      <div className="flex items-center gap-2 text-secondary-foreground/80">
+                        <span className="text-sm font-semibold tracking-wide">
                           {hasBonusAvailable 
-                            ? `2Go hören +${nextBonus} Taler`
+                            ? `Slide für +${nextBonus} Taler`
                             : 'Radio 2Go starten'
                           }
                         </span>
