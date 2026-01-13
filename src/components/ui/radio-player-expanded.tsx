@@ -20,6 +20,7 @@ import {
   Image
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { hapticToggle } from '@/lib/haptics';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
 import { Slider } from '@/components/ui/slider';
 import { formatDistanceToNow } from 'date-fns';
@@ -357,7 +358,10 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              onClick={togglePlay}
+              onClick={() => {
+                hapticToggle();
+                togglePlay();
+              }}
               disabled={isLoading}
               className={cn(
                 "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0",

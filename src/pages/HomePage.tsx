@@ -35,6 +35,7 @@ import {
   Pause
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { hapticToggle } from '@/lib/haptics';
 
 // Prefetch common routes after initial load
 if (typeof window !== 'undefined') {
@@ -531,6 +532,11 @@ interface RadioHeroCTAProps {
 function RadioHeroCTA({ balance }: RadioHeroCTAProps) {
   const { isPlaying, togglePlay, isLoading } = useRadioStore();
   
+  const handleTogglePlay = () => {
+    hapticToggle();
+    togglePlay();
+  };
+  
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary via-secondary to-primary/30 p-4 animate-in">
       {/* Subtle animated background */}
@@ -550,7 +556,7 @@ function RadioHeroCTA({ balance }: RadioHeroCTAProps) {
       <div className="relative z-10 flex items-center gap-4">
         {/* Large Play Button */}
         <button
-          onClick={togglePlay}
+          onClick={handleTogglePlay}
           disabled={isLoading}
           className={cn(
             "h-16 w-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all shadow-lg",
