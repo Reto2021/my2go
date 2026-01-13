@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate, PanInfo } from "framer-motion";
-import { Flame, Play, Lock, VolumeX, Volume2, Loader2, ChevronRight } from "lucide-react";
+import { Flame, Play, Lock, VolumeX, Volume2, Loader2, ChevronRight, Radio } from "lucide-react";
 import { useRadioStore } from "@/lib/radio-store";
 import { useStreak } from "@/hooks/useStreak";
 import { Confetti } from "@/components/ui/confetti";
@@ -240,7 +240,7 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
               {/* Reward badge on right - inside the track */}
               <div className="absolute right-1.5 top-1 bottom-1 flex items-center pointer-events-none">
                 <motion.div
-                  className="px-4 py-2 rounded-xl font-bold text-secondary flex items-center justify-center"
+                  className="px-3 py-2 rounded-xl font-bold text-secondary flex items-center gap-1.5"
                   animate={{
                     scale: 1 + sliderProgress * 0.15,
                   }}
@@ -251,6 +251,7 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
                       : '0 2px 8px rgba(0,0,0,0.15)',
                   }}
                 >
+                  <Radio className="h-4 w-4" />
                   <span className="text-base font-bold">+{nextBonus}</span>
                 </motion.div>
               </div>
