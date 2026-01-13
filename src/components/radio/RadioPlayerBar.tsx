@@ -12,23 +12,42 @@ import { TalerIcon } from "@/components/icons/TalerIcon";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { hapticToggle } from "@/lib/haptics";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RadioPlayerBarProps {
   onExpand: () => void;
   onStreakDetailsOpen?: () => void;
 }
 
-// Tier thresholds in seconds (must match DB tiers)
-const TIERS = [
-  { minSeconds: 60, reward: 1 },     // 1 min - Kurzhörer
-  { minSeconds: 300, reward: 3 },    // 5 min - Casual Listener
-  { minSeconds: 900, reward: 5 },    // 15 min - Musikfan
-  { minSeconds: 1800, reward: 10 },  // 30 min - Radiokenner
-  { minSeconds: 3600, reward: 20 },  // 60 min - Dauerhörer
-  { minSeconds: 7200, reward: 35 },  // 2 Std - Super Fan
-];
+interface ListeningTier {
+  minSeconds: number;
+  reward: number;
+}
 
-function useSessionProgress() {
+// Hook to fetch tiers from database
+function useListeningTiers() {
+  const [tiers, setTiers] = useState<ListeningTier[]>([]);
+  
+  useEffect(() => {
+    supabase
+      .from('radio_listening_tiers')
+      .select('min_duration_seconds, taler_reward')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setTiers(data.map(t => ({
+            minSeconds: t.min_duration_seconds,
+            reward: t.taler_reward
+          })));
+        }
+      });
+  }, []);
+  
+  return tiers;
+}
+
+function useSessionProgress(tiers: ListeningTier[]) {
   const { isPlaying, currentSessionDuration, updateSessionDuration } = useRadioStore();
   const [lastTierIndex, setLastTierIndex] = useState(-1);
   const [justReachedTier, setJustReachedTier] = useState(false);
@@ -49,8 +68,21 @@ function useSessionProgress() {
   
   const elapsed = currentSessionDuration;
   
-  const currentTierIndex = TIERS.findIndex((tier, i) => {
-    const nextTier = TIERS[i + 1];
+  // Don't compute if no tiers loaded yet
+  if (tiers.length === 0) {
+    return {
+      elapsed,
+      earnedTaler: 0,
+      pendingTaler: 0,
+      progress: 0,
+      isMaxTier: false,
+      secondsToNextTier: 0,
+      justReachedTier: false,
+    };
+  }
+  
+  const currentTierIndex = tiers.findIndex((tier, i) => {
+    const nextTier = tiers[i + 1];
     return elapsed >= tier.minSeconds && (!nextTier || elapsed < nextTier.minSeconds);
   });
   
@@ -66,10 +98,10 @@ function useSessionProgress() {
     }
   }, [currentTierIndex, lastTierIndex, elapsed]);
   
-  const earnedTaler = currentTierIndex >= 0 ? TIERS[currentTierIndex].reward : 0;
+  const earnedTaler = currentTierIndex >= 0 ? tiers[currentTierIndex].reward : 0;
   const nextTierIndex = currentTierIndex + 1;
-  const nextTier = TIERS[nextTierIndex];
-  const currentTier = currentTierIndex >= 0 ? TIERS[currentTierIndex] : null;
+  const nextTier = tiers[nextTierIndex];
+  const currentTier = currentTierIndex >= 0 ? tiers[currentTierIndex] : null;
   
   let progress = 0;
   let secondsToNextTier = 0;
@@ -79,15 +111,15 @@ function useSessionProgress() {
     const rangeEnd = nextTier.minSeconds;
     progress = ((elapsed - rangeStart) / (rangeEnd - rangeStart)) * 100;
     secondsToNextTier = rangeEnd - elapsed;
-  } else if (!currentTier) {
-    progress = (elapsed / TIERS[0].minSeconds) * 100;
-    secondsToNextTier = TIERS[0].minSeconds - elapsed;
+  } else if (!currentTier && tiers.length > 0) {
+    progress = (elapsed / tiers[0].minSeconds) * 100;
+    secondsToNextTier = tiers[0].minSeconds - elapsed;
   } else {
     progress = 100;
     secondsToNextTier = 0;
   }
   
-  const pendingTaler = nextTier?.reward || (earnedTaler === 0 ? TIERS[0].reward : 0);
+  const pendingTaler = nextTier?.reward || (earnedTaler === 0 && tiers.length > 0 ? tiers[0].reward : 0);
   
   return {
     elapsed,
@@ -141,8 +173,9 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   
   const x = useMotionValue(0);
   
-  // Session progress for mini-player
-  const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier, secondsToNextTier, justReachedTier } = useSessionProgress();
+  // Load tiers from database and calculate session progress
+  const tiers = useListeningTiers();
+  const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier, secondsToNextTier, justReachedTier } = useSessionProgress(tiers);
   
   // Streak data
   const canClaim = streakStatus?.can_claim ?? false;
