@@ -333,17 +333,35 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
               /* ===== STATE 3: Mini Player (Radio Playing) ===== */
               <motion.div
                 key="mini-player"
-                initial={{ y: 20, opacity: 0, scale: 0.95 }}
+                initial={{ y: 60, opacity: 0, scale: 0.9 }}
                 animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: 20, opacity: 0, scale: 0.95 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                exit={{ y: 100, opacity: 0, scale: 0.9 }}
+                transition={{ 
+                  type: "spring", 
+                  damping: 30, 
+                  stiffness: 200,
+                  opacity: { duration: 0.25 }
+                }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0.1, bottom: 0.5 }}
+                onDragEnd={(_, info) => {
+                  // Swipe down to pause
+                  if (info.offset.y > 60 || info.velocity.y > 300) {
+                    hapticToggle();
+                    togglePlay();
+                  }
+                }}
                 className={cn(
-                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300 outline-none isolate",
+                  "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-grab active:cursor-grabbing overflow-hidden transition-colors duration-300 outline-none isolate touch-pan-x",
                   justReachedTier && "ring-2 ring-accent"
                 )}
                 onClick={onExpand}
                 tabIndex={-1}
               >
+                {/* Swipe indicator */}
+                <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-secondary-foreground/20" />
+                
                 {/* Progress bar at top */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-secondary-foreground/10">
                   <motion.div
@@ -369,7 +387,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                   </div>
                 )}
                 
-                <div className="flex items-center gap-3 p-2.5 pt-3">
+                <div className="flex items-center gap-3 p-2.5 pt-4">
                   {/* Album Art or Equalizer */}
                   <div className={cn(
                     "h-12 w-12 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0 transition-all",
