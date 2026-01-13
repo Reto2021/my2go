@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
 import { getRewards, getPartnersWithMinRewardCost, Reward, PartnerWithMinCost } from '@/lib/supabase-helpers';
@@ -12,16 +11,12 @@ import {
   SkeletonRewardCard, 
   SkeletonPartnerCard, 
   SkeletonBalanceCard,
-  SkeletonListItem 
 } from '@/components/ui/skeleton';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
-import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
-import { useRadioStore } from '@/lib/radio-store';
-import { useStreak } from '@/hooks/useStreak';
-import { Confetti } from '@/components/ui/confetti';
-import { toast } from 'sonner';
+import { PlaySlider } from '@/components/radio/PlaySlider';
+import { StreakDetailsSheet } from '@/components/streak/StreakDetailsSheet';
 import {
   Gift,
   MapPin,
@@ -33,15 +28,8 @@ import {
   X,
   Ticket,
   Users,
-  Play,
-  Pause,
-  Flame,
-  Radio,
-  Volume2,
-  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { hapticToggle } from '@/lib/haptics';
 
 // Prefetch common routes after initial load
 if (typeof window !== 'undefined') {
@@ -398,7 +386,7 @@ function SessionModeHome({
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
-  
+  const [showStreakDetails, setShowStreakDetails] = useState(false);
   
   return (
     <div className="min-h-screen pb-28 bg-background">
@@ -411,10 +399,13 @@ function SessionModeHome({
         </div>
       </header>
       
-      {/* Hero Radio CTA - Prominent Player Call-to-Action */}
+      {/* Hero Radio CTA - Play Slider with Streak Integration */}
       <section className="container pb-4">
-        <RadioHeroCTA balance={balance} />
+        <PlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
       </section>
+      
+      {/* Streak Details Sheet */}
+      <StreakDetailsSheet open={showStreakDetails} onOpenChange={setShowStreakDetails} />
       
       {/* Referral Promo Banner - Shows after X days */}
       <section className="container">
@@ -489,222 +480,6 @@ function SessionModeHome({
         <TopListenersWidget />
       </section>
     </div>
-  );
-}
-
-/* New Radio Hero CTA Component with integrated Daily Bonus */
-
-interface RadioHeroCTAProps {
-  balance: { taler_balance: number; lifetime_earned: number; lifetime_spent: number };
-}
-
-function RadioHeroCTA({ balance }: RadioHeroCTAProps) {
-  const { isPlaying, togglePlay, isLoading } = useRadioStore();
-  const { streakStatus, isLoading: isStreakLoading, claimStreak, isClaiming } = useStreak();
-  
-  // Countdown state for daily bonus
-  const [isCountingDown, setIsCountingDown] = useState(false);
-  const [countdown, setCountdown] = useState(30);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
-  const wasPlayingBeforeRef = useRef(false);
-
-  const canClaim = streakStatus?.can_claim ?? false;
-  const nextBonus = streakStatus?.next_bonus || 5;
-  const currentStreak = streakStatus?.current_streak || 0;
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
-    };
-  }, []);
-
-  // Handle countdown completion
-  useEffect(() => {
-    if (isCountingDown && countdown <= 0) {
-      setIsCountingDown(false);
-      setCountdown(30);
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
-      
-      claimStreak(undefined, {
-        onSuccess: (data) => {
-          if (data.success) {
-            setShowConfetti(true);
-            toast.success(`+${data.bonus} Taler erhalten!`, {
-              description: `Tag ${data.current_streak} – weiter so!`,
-            });
-            setTimeout(() => setShowConfetti(false), 3000);
-          }
-        },
-        onError: () => {
-          toast.error("Fehler beim Beanspruchen des Bonus");
-        },
-      });
-    }
-  }, [isCountingDown, countdown, claimStreak]);
-
-  // Check if radio stopped during countdown
-  useEffect(() => {
-    if (isCountingDown && !isPlaying) {
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-        countdownRef.current = null;
-      }
-    } else if (isCountingDown && isPlaying && !countdownRef.current) {
-      countdownRef.current = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    }
-  }, [isPlaying, isCountingDown]);
-
-  const handleTogglePlay = () => {
-    hapticToggle();
-    togglePlay();
-  };
-
-  const handleClaimBonus = () => {
-    hapticToggle();
-    wasPlayingBeforeRef.current = isPlaying;
-    
-    if (!isPlaying && !isLoading) {
-      togglePlay();
-    }
-    
-    setIsCountingDown(true);
-    setCountdown(30);
-    
-    toast.info("🎵 Höre 30 Sekunden für deinen Bonus!", {
-      duration: 3000,
-    });
-    
-    if (isPlaying) {
-      countdownRef.current = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    } else {
-      const checkPlaying = setInterval(() => {
-        const currentIsPlaying = useRadioStore.getState().isPlaying;
-        if (currentIsPlaying) {
-          clearInterval(checkPlaying);
-          countdownRef.current = setInterval(() => {
-            setCountdown((prev) => prev - 1);
-          }, 1000);
-        }
-      }, 100);
-      
-      setTimeout(() => {
-        clearInterval(checkPlaying);
-        if (!useRadioStore.getState().isPlaying) {
-          setIsCountingDown(false);
-          setCountdown(30);
-          toast.error("Radio konnte nicht gestartet werden");
-        }
-      }, 10000);
-    }
-  };
-  
-  return (
-    <>
-      <Confetti isActive={showConfetti} />
-      
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary via-secondary to-primary/30 animate-in">
-        {/* Subtle animated background */}
-        <div className="absolute inset-0 opacity-30">
-          <div 
-            className="absolute inset-0 animate-gradient-shift"
-            style={{
-              background: 'conic-gradient(from 0deg, transparent, hsl(44 98% 49% / 0.3), transparent)',
-              width: '200%',
-              height: '200%',
-              top: '-50%',
-              left: '-50%',
-            }}
-          />
-        </div>
-
-        {/* Progress bar during countdown */}
-        {isCountingDown && (
-          <div className="relative h-1 bg-white/10">
-            <motion.div
-              initial={{ width: "0%" }}
-              animate={{ width: `${((30 - countdown) / 30) * 100}%` }}
-              transition={{ duration: 1, ease: "linear" }}
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-500 to-amber-500"
-            />
-          </div>
-        )}
-        
-        <div className="relative z-10 flex items-center gap-4 p-4">
-          {/* Large Play Button */}
-          <button
-            onClick={handleTogglePlay}
-            disabled={isLoading}
-            className={cn(
-              "h-16 w-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all shadow-lg",
-              isPlaying 
-                ? "bg-accent text-accent-foreground" 
-                : "bg-accent text-accent-foreground animate-pulse-play"
-            )}
-            aria-label={isPlaying ? 'Pause' : 'Radio starten'}
-          >
-            {isLoading ? (
-              <div className="h-6 w-6 border-3 border-current/30 border-t-current rounded-full animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="h-7 w-7" />
-            ) : (
-              <Play className="h-7 w-7 ml-1" />
-            )}
-          </button>
-          
-          {/* Text Content */}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-secondary-foreground leading-tight">
-              {isCountingDown 
-                ? `Noch ${countdown}s...`
-                : isPlaying 
-                  ? 'Du hörst Radio 2Go' 
-                  : 'Radio hören & Taler sammeln'
-              }
-            </h2>
-            <p className="text-sm text-secondary-foreground/70 mt-0.5">
-              {isCountingDown
-                ? 'Dein Bonus wird gutgeschrieben'
-                : isPlaying 
-                  ? 'Hör weiter und verdiene Taler'
-                  : 'Starte jetzt und verdiene 2Go Taler'
-              }
-            </p>
-          </div>
-
-          {/* Daily Bonus Button - Right side */}
-          {!isStreakLoading && canClaim && !isCountingDown && (
-            <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              onClick={handleClaimBonus}
-              disabled={isClaiming || isLoading}
-              className="shrink-0 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 shadow-lg"
-            >
-              <Radio className="h-4 w-4" />
-              <span>+{nextBonus}</span>
-            </motion.button>
-          )}
-
-          {/* Streak indicator when already claimed */}
-          {!isStreakLoading && !canClaim && currentStreak > 0 && !isCountingDown && (
-            <div className="shrink-0 px-3 py-1.5 rounded-full bg-orange-500/20 flex items-center gap-1">
-              <Flame className="h-4 w-4 text-orange-400" />
-              <span className="font-bold text-orange-400 text-sm">{currentStreak}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </>
   );
 }
 
