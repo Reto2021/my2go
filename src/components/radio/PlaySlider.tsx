@@ -240,7 +240,7 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
               {/* Reward badge on right - inside the track */}
               <div className="absolute right-1.5 top-1 bottom-1 flex items-center pointer-events-none">
                 <motion.div
-                  className="px-3 py-2 rounded-xl font-bold text-secondary flex items-center gap-1.5"
+                  className="px-3 py-2 rounded-xl font-bold text-secondary flex items-center gap-1.5 relative"
                   animate={{
                     scale: 1 + sliderProgress * 0.15,
                   }}
@@ -251,7 +251,28 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
                       : '0 2px 8px rgba(0,0,0,0.15)',
                   }}
                 >
-                  <Radio className="h-4 w-4" />
+                  {/* Radio icon with glow and pulse */}
+                  <motion.div
+                    animate={{
+                      scale: sliderProgress > 0.3 ? [1, 1.15, 1] : 1,
+                    }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: sliderProgress > 0.3 ? Infinity : 0,
+                      ease: "easeInOut",
+                    }}
+                    className="relative"
+                  >
+                    {/* Glow behind icon */}
+                    {sliderProgress > 0.4 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 0.6, scale: 1.5 }}
+                        className="absolute inset-0 bg-white rounded-full blur-sm"
+                      />
+                    )}
+                    <Radio className="h-4 w-4 relative z-10" />
+                  </motion.div>
                   <span className="text-base font-bold">+{nextBonus}</span>
                 </motion.div>
               </div>
