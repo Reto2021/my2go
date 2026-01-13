@@ -7,7 +7,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode, Coins, ArrowLeft } from 'lucide-react';
+import { Gift, Clock, CheckCircle, XCircle, AlertCircle, ChevronRight, QrCode, Coins, ArrowLeft, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -139,8 +140,24 @@ export default function MyRedemptionsPage() {
           <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div>
-            <h1 className="text-lg font-semibold">Meine Gutscheine</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">Meine Gutscheine</h1>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[280px] text-center">
+                    <p className="text-sm">
+                      Aktiviere einen Gutschein mit deinen Taler. Zeige den Code beim Partner vor – nach Bestätigung wird er als <span className="text-success font-medium">verwendet</span> markiert.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <p className="text-sm text-muted-foreground">
               Aktivierte Gutscheine und deren Status
             </p>
@@ -149,16 +166,6 @@ export default function MyRedemptionsPage() {
       </header>
 
       <div className="container py-6">
-
-      {/* Info Box explaining the flow */}
-      <Card className="mb-6 bg-muted/30 border-border/50">
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">
-            <strong className="text-foreground">So funktioniert's:</strong> Aktiviere einen Gutschein mit deinen Taler. 
-            Zeige den Code beim Partner vor – nach Bestätigung wird er als <span className="text-success font-medium">verwendet</span> markiert.
-          </p>
-        </CardContent>
-      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-3 mb-6">
