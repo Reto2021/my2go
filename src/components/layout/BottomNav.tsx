@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Gift, QrCode, Store, Music } from 'lucide-react';
+import { Home, Gift, QrCode, Store, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useCallback } from 'react';
@@ -9,7 +9,7 @@ const navItems = [
   { path: '/rewards', label: 'Gutscheine', icon: Gift },
   { path: '/my-qr', label: 'Mein QR', icon: QrCode, highlight: true },
   { path: '/partner', label: 'Partner', icon: Store },
-  { path: '/code', label: 'Radio-Code', icon: Music },
+  { path: '/code', label: 'Taler-Alarm', icon: Bell },
 ];
 
 export function BottomNav() {
@@ -55,14 +55,14 @@ export function BottomNav() {
                 isActive
                   ? 'text-secondary'
                   : isHighlight 
-                    ? 'text-accent'
+                    ? 'text-secondary'
                     : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <div className={cn(
                 'relative p-2 rounded-xl transition-all duration-200',
                 isActive && 'bg-primary/20',
-                isHighlight && !isActive && 'bg-accent/20'
+                isHighlight && !isActive && 'bg-accent text-secondary'
               )}>
                 <Icon className={cn(
                   'h-5 w-5 transition-transform duration-200',

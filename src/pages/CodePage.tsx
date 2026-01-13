@@ -87,7 +87,7 @@ export default function CodePage() {
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
         <div className="container py-4">
-          <h1 className="text-display-sm">Radio-Code einlösen</h1>
+          <h1 className="text-display-sm">Taler-Alarm einlösen</h1>
         </div>
       </header>
       

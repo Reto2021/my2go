@@ -70,7 +70,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'navigation',
     targetSelector: '[data-onboarding="bottom-nav"]',
     title: 'Navigation 🧭',
-    description: 'Wechsle hier zwischen Home, Gutscheinen, deinem QR-Code, Partnern und Radio-Codes.',
+    description: 'Wechsle hier zwischen Home, Gutscheinen, deinem QR-Code, Partnern und Taler-Alarm.',
     position: 'top',
     spotlightPadding: 4,
   },
