@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getPartners, Partner, Region } from '@/lib/supabase-helpers';
+import { getPartnersWithMinRewardCost, PartnerWithMinCost, Region } from '@/lib/supabase-helpers';
 import { useLocation, calculateDistance } from '@/lib/location';
 import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -11,7 +11,7 @@ import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useOfflinePartners } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
-import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon } from 'lucide-react';
+import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PartnerPage() {
@@ -35,7 +35,7 @@ export default function PartnerPage() {
   
   // Offline-capable partners data
   const fetchPartners = useCallback(async () => {
-    const data = await getPartners();
+    const data = await getPartnersWithMinRewardCost();
     return data;
   }, []);
   
@@ -46,7 +46,7 @@ export default function PartnerPage() {
     error,
     lastUpdated,
     refetch: loadData
-  } = useOfflinePartners<Partner[]>(fetchPartners);
+  } = useOfflinePartners<PartnerWithMinCost[]>(fetchPartners);
   
   const loadRegions = async () => {
     try {
@@ -164,7 +164,7 @@ export default function PartnerPage() {
   const groupedPartners = useMemo(() => {
     if (userLocation || searchQuery.trim() || selectedCategory) return null;
     
-    const groups: Record<string, Partner[]> = {};
+    const groups: Record<string, PartnerWithMinCost[]> = {};
     filteredPartners.forEach(p => {
       const city = p.city || 'Andere';
       if (!groups[city]) groups[city] = [];
@@ -403,7 +403,7 @@ export default function PartnerPage() {
                 </div>
                 <div className="space-y-3">
                   {cityPartners.map(partner => (
-                    <PartnerCard key={partner.id} partner={partner} />
+                    <PartnerCard key={partner.id} partner={partner} minTalerCost={partner.minRewardCost} />
                   ))}
                 </div>
               </div>
@@ -413,7 +413,7 @@ export default function PartnerPage() {
           /* Fallback: Simple list */
           <div className="space-y-3">
             {filteredPartners.map(partner => (
-              <PartnerCard key={partner.id} partner={partner} />
+              <PartnerCard key={partner.id} partner={partner} minTalerCost={partner.minRewardCost} />
             ))}
           </div>
         )}
@@ -425,7 +425,7 @@ export default function PartnerPage() {
 
 // Partner card with distance display
 interface PartnerCardWithDistanceProps {
-  partner: Partner;
+  partner: PartnerWithMinCost;
   distance?: number;
 }
 
@@ -443,9 +443,17 @@ function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceP
       
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
-          {partner.name}
-        </h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+            {partner.name}
+          </h3>
+          {partner.minRewardCost !== undefined && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-xs font-semibold whitespace-nowrap">
+              <Coins className="h-3 w-3" />
+              Ab {partner.minRewardCost}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground line-clamp-1">
           {partner.category || 'Partner'}
         </p>
