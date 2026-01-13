@@ -51,7 +51,7 @@ export function BottomNav() {
               onMouseEnter={() => handlePrefetch(item.path)}
               onTouchStart={() => handlePrefetch(item.path)}
               className={cn(
-                'flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200',
+                'flex flex-col items-center gap-1 min-w-[48px] min-h-[48px] px-3 py-2.5 rounded-2xl transition-all duration-200',
                 isActive
                   ? 'text-secondary'
                   : isHighlight 
