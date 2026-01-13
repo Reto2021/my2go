@@ -408,7 +408,7 @@ function SessionModeHome({
       {/* Quick Actions - Only unique functions not in BottomNav */}
       <section className="container pb-4">
         <div className="grid grid-cols-2 gap-3" data-onboarding="quick-actions">
-          <QuickAction to="/my-redemptions" icon={Ticket} label="Meine Einlösungen" color="secondary" />
+          <QuickAction to="/rewards?tab=aktiviert" icon={Ticket} label="Meine Einlösungen" color="secondary" />
           <QuickAction to="/referral" icon={Users} label="Freunde einladen" color="accent" />
         </div>
       </section>
