@@ -46,7 +46,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     id: 'streak',
     targetSelector: '[data-onboarding="streak-card"]',
     title: 'Täglicher Bonus 🔥',
-    description: 'Hol dir jeden Tag deinen Bonus! Je länger deine Serie, desto mehr Taler bekommst du.',
+    description: 'Hol dir jeden Tag 5–15 Taler! Je länger deine Serie, desto mehr verdienst du. Die Schneeflocke ❄️ ist dein Pause-Schutz – damit bleibt deine Serie erhalten, wenn du mal einen Tag verpasst.',
     position: 'bottom',
     spotlightPadding: 8,
   },
