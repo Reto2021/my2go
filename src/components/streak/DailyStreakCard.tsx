@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Zap, Gift, Check, Loader2, Snowflake, ShoppingCart, Coins } from "lucide-react";
+import { Flame, Gift, Check, Loader2, Snowflake, ShoppingCart } from "lucide-react";
 import { useStreak } from "@/hooks/useStreak";
 import { useAuth } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
-import { TalerIcon } from "@/components/icons/TalerIcon";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import talerCoin from "@/assets/taler-coin.png";
 import {
@@ -84,13 +84,14 @@ export function DailyStreakCard() {
   const freezes = streakStatus.streak_freezes || 0;
   const freezeCost = streakStatus.freeze_cost || 50;
   const canAffordFreeze = (balance?.taler_balance || 0) >= freezeCost;
+  const nextBonus = streakStatus.next_bonus || 5;
 
-  // Generate streak day indicators (show 7 days)
+  // Generate streak day indicators (show 7 days as weekly goal)
   const days = Array.from({ length: 7 }, (_, i) => {
     const dayNumber = i + 1;
-    const isCompleted = dayNumber <= currentStreak;
-    const isCurrent = dayNumber === currentStreak + 1 && canClaim;
-    const bonus = Math.min(5 + (dayNumber - 1), 15);
+    const isCompleted = dayNumber <= (currentStreak % 7 || (currentStreak > 0 && currentStreak % 7 === 0 ? 7 : 0));
+    const isCurrent = dayNumber === ((currentStreak % 7) + 1) && canClaim;
+    const bonus = Math.min(5 + dayNumber - 1, 15);
     return { dayNumber, isCompleted, isCurrent, bonus };
   });
 
@@ -105,88 +106,84 @@ export function DailyStreakCard() {
         data-onboarding="streak-card"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
               <Flame className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Tagesbonus</h3>
+              <h3 className="font-semibold text-foreground">Täglicher Bonus</h3>
               <p className="text-xs text-muted-foreground">
                 {currentStreak > 0 
-                  ? `${currentStreak} Tag${currentStreak !== 1 ? 'e' : ''} in Folge!`
-                  : "Starte deine Serie!"
+                  ? `🔥 ${currentStreak} Tag${currentStreak !== 1 ? 'e' : ''} in Folge`
+                  : "Starte heute!"
                 }
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {/* Freeze counter */}
-            <motion.button
-              onClick={() => setShowFreezeDialog(true)}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 transition-colors"
-              title="Pause-Schutz: Schützt deine Serie bei einem verpassten Tag"
+          {/* Streak counter badge */}
+          {currentStreak > 0 && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20"
             >
-              <Snowflake className="h-3.5 w-3.5 text-sky-400" />
-              <span className="text-xs font-bold text-sky-400">{freezes}</span>
-            </motion.button>
-            
-            {currentStreak > 0 && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-500/20"
-              >
-                <Flame className="h-4 w-4 text-orange-500" />
-                <span className="font-bold text-orange-500">{currentStreak}</span>
-              </motion.div>
-            )}
-          </div>
+              <Flame className="h-4 w-4 text-orange-500" />
+              <span className="font-bold text-orange-500">{currentStreak}</span>
+            </motion.div>
+          )}
         </div>
         
-        {/* Explanation */}
-        <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-          Hole dir täglich deinen Bonus! Je länger deine Serie, desto mehr Taler bekommst du (5–15 Taler/Tag).
-        </p>
+        {/* Explanation Box */}
+        <div className="p-3 rounded-xl bg-muted/50 mb-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-semibold text-foreground">So funktioniert's:</span> Öffne die App jeden Tag und hole deinen Bonus ab. 
+            Je mehr Tage in Folge, desto mehr Taler bekommst du – von 5 bis 15 Taler pro Tag!
+          </p>
+        </div>
 
-        {/* Day indicators */}
-        <div className="flex items-center justify-between gap-1 mb-4">
+        {/* Weekly Progress Header */}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium text-muted-foreground">Deine Woche</span>
+          <span className="text-xs text-muted-foreground">
+            Tag {Math.min((currentStreak % 7) + (canClaim ? 1 : 0), 7)} von 7
+          </span>
+        </div>
+
+        {/* Day indicators with bonus labels */}
+        <div className="flex items-end justify-between gap-1 mb-4">
           {days.map((day, index) => (
             <motion.div
               key={day.dayNumber}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: index * 0.05 }}
-              className="flex-1"
+              className="flex-1 flex flex-col items-center gap-1"
             >
+              {/* Bonus label on top */}
+              <span className={cn(
+                "text-[10px] font-medium",
+                day.isCompleted ? "text-orange-500" : day.isCurrent ? "text-amber-500" : "text-muted-foreground/50"
+              )}>
+                +{day.bonus}
+              </span>
+              
+              {/* Day box */}
               <div
-                className={`
-                  relative h-10 rounded-lg flex items-center justify-center text-xs font-bold transition-all
-                  ${day.isCompleted 
+                className={cn(
+                  "w-full h-9 rounded-lg flex items-center justify-center text-xs font-bold transition-all",
+                  day.isCompleted 
                     ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-md" 
                     : day.isCurrent
                       ? "bg-orange-500/20 text-orange-500 border-2 border-orange-500 border-dashed animate-pulse"
                       : "bg-muted/50 text-muted-foreground"
-                  }
-                `}
+                )}
               >
                 {day.isCompleted ? (
                   <Check className="h-4 w-4" />
                 ) : (
-                  <span>{day.dayNumber}</span>
-                )}
-                
-                {/* Bonus indicator for current claimable day */}
-                {day.isCurrent && (
-                  <motion.div
-                    initial={{ y: 5, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 whitespace-nowrap"
-                  >
-                    <Coins className="h-3 w-3" />
-                    +{day.bonus}
-                  </motion.div>
+                  <span className="text-[10px]">Tag {day.dayNumber}</span>
                 )}
               </div>
             </motion.div>
@@ -214,8 +211,8 @@ export function DailyStreakCard() {
                 </>
               ) : (
                 <>
-                  <Zap className="h-5 w-5" />
-                  Heute beanspruchen (+{streakStatus.next_bonus} Taler)
+                  <Gift className="h-5 w-5" />
+                  Jetzt {nextBonus} Taler abholen
                 </>
               )}
             </motion.button>
@@ -228,15 +225,36 @@ export function DailyStreakCard() {
               className="w-full py-3 rounded-xl bg-muted/50 text-muted-foreground font-medium flex items-center justify-center gap-2"
             >
               <Check className="h-5 w-5 text-green-500" />
-              Heute bereits beansprucht
+              Heute schon abgeholt – komm morgen wieder!
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Streak protection info - only show if user has freezes */}
+        {freezes > 0 && (
+          <div className="mt-3 p-2 rounded-lg bg-sky-500/10 flex items-center gap-2">
+            <Snowflake className="h-4 w-4 text-sky-400 shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-sky-400">{freezes}× Pausentag</span> – falls du mal einen Tag verpasst, bleibt deine Serie trotzdem erhalten.
+            </p>
+          </div>
+        )}
+        
+        {/* Buy freeze button - only show if no freezes */}
+        {freezes === 0 && currentStreak >= 3 && (
+          <button
+            onClick={() => setShowFreezeDialog(true)}
+            className="mt-3 w-full p-2 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 transition-colors flex items-center justify-center gap-2"
+          >
+            <Snowflake className="h-4 w-4 text-sky-400" />
+            <span className="text-xs font-medium text-sky-400">Pausentag kaufen (schützt deine Serie)</span>
+          </button>
+        )}
+
         {/* Longest streak info */}
-        {streakStatus.longest_streak > 0 && (
+        {streakStatus.longest_streak > 7 && (
           <p className="text-xs text-center text-muted-foreground mt-3">
-            Längste Serie: {streakStatus.longest_streak} Tage
+            🏆 Dein Rekord: {streakStatus.longest_streak} Tage in Folge
           </p>
         )}
       </motion.div>
