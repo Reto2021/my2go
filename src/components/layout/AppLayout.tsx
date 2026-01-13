@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
@@ -6,6 +6,8 @@ import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
 import { SessionSummarySheet } from '@/components/ui/session-summary-sheet';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
+import { MiniPlayerBar } from '@/components/ui/mini-player-bar';
+import { ExpandedRadioPlayer } from '@/components/ui/radio-player-expanded';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 
 interface AppLayoutProps {
@@ -15,6 +17,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   // Track radio listening for rewards
   const { sessionSummary, showSummary, closeSummary } = useRadioRewards();
+  const [isPlayerExpanded, setIsPlayerExpanded] = useState(false);
   
   return (
     <BadgeNotificationProvider>
@@ -25,6 +28,16 @@ export function AppLayout({ children }: AppLayoutProps) {
           {children || <Outlet />}
         </main>
         <BottomNav />
+        
+        {/* Mini Player Bar - appears when radio is playing */}
+        <MiniPlayerBar onExpand={() => setIsPlayerExpanded(true)} />
+        
+        {/* Expanded Player Bottom Sheet */}
+        <ExpandedRadioPlayer 
+          isOpen={isPlayerExpanded} 
+          onClose={() => setIsPlayerExpanded(false)} 
+        />
+        
         <WhatsAppButton />
         
         {/* Session Summary Modal with Share Option */}

@@ -199,60 +199,30 @@ export function RadioHeader() {
         {/* Clock & Weather Widget - hidden on very small screens */}
         <ClockWeatherWidget className="flex-shrink-0 hidden xs:flex" />
         
-        {/* Player area - compact on mobile */}
-        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0" data-onboarding="radio-player">
-          {/* Play button - smaller on mobile */}
-          <button
-            onClick={togglePlay}
-            disabled={isLoading}
-            className={cn(
-              "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
-              isPlaying 
-                ? "bg-accent text-accent-foreground" 
-                : "bg-accent text-accent-foreground animate-pulse-play",
-              isLoading && "opacity-60"
-            )}
-            aria-label={isPlaying ? 'Pause' : 'Abspielen'}
-          >
-            {isLoading ? (
-              <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            ) : (
-              <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-0.5" />
-            )}
-          </button>
-          
-          {/* Now playing info - clickable to expand */}
-          <div 
-            className="flex-1 min-w-0 cursor-pointer"
-            onClick={() => setIsExpanded(true)}
-          >
-            {isPlaying ? (
-              <div className="flex items-center gap-1 sm:gap-2">
-                {/* Equalizer - hidden on small mobile */}
-                <Equalizer className="flex-shrink-0 hidden sm:flex" />
-                {/* Song info with marquee */}
-                <Marquee className="flex-1 min-w-0 text-[10px] sm:text-xs text-secondary-foreground font-medium">
-                  <span className="text-secondary-foreground/60 hidden sm:inline">Du hörst: </span>
-                  {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
-                </Marquee>
-                {/* Live Listener Count */}
-                <LiveListenerCount size="sm" showLabel={false} className="hidden sm:flex" />
-                {/* Expand hint */}
-                <Expand className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 sm:gap-2">
-                <p className="text-[10px] sm:text-xs text-secondary-foreground/70 font-medium truncate">
-                  <span className="sm:hidden">Taler sammeln</span>
-                  <span className="hidden sm:inline">Radio hören und 2Go Taler sammeln</span>
-                </p>
-                <Expand className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent flex-shrink-0" />
-              </div>
-            )}
-          </div>
-          
+        {/* Player area - Status only, no play button here */}
+        <div 
+          className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer" 
+          data-onboarding="radio-player"
+          onClick={() => setIsExpanded(true)}
+        >
+          {isPlaying ? (
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {/* Equalizer indicator */}
+              <Equalizer className="flex-shrink-0" />
+              {/* Song info with marquee */}
+              <Marquee className="flex-1 min-w-0 text-[10px] sm:text-xs text-secondary-foreground font-medium">
+                {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
+              </Marquee>
+              {/* Live Listener Count */}
+              <LiveListenerCount size="sm" showLabel={false} className="hidden sm:flex" />
+            </div>
+          ) : (
+            <p className="text-[10px] sm:text-xs text-secondary-foreground/70 font-medium truncate flex-1">
+              <span className="sm:hidden">Radio starten →</span>
+              <span className="hidden sm:inline">Radio hören und 2Go Taler sammeln</span>
+            </p>
+          )}
+        </div>
           {/* Volume and Cast controls - only when playing */}
           {isPlaying && (
             <div className="flex items-center gap-1 flex-shrink-0">
@@ -341,8 +311,6 @@ export function RadioHeader() {
               </button>
             </div>
           )}
-        </div>
-        
         {/* Taler Balance + User Menu - only when logged in */}
         {isAuthenticated && (
           <div className="flex items-center gap-2 flex-shrink-0">
