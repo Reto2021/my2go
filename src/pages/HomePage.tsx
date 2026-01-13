@@ -414,9 +414,11 @@ function SessionModeHome({
       </section>
       
       {/* Play Slider - Initially inline, becomes sticky when scrolling */}
-      <section className="container pb-4 sticky top-0 z-40 -mx-4 px-4 bg-gradient-to-b from-background via-background to-transparent pt-2">
-        <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
-      </section>
+      <div className="sticky top-0 z-40 bg-gradient-to-b from-background via-background/95 to-transparent pb-2 pt-1">
+        <section className="container">
+          <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
+        </section>
+      </div>
       
       {/* Rewards - Primary Content */}
       <section className="container section" data-onboarding="rewards-section">
