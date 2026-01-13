@@ -17,9 +17,11 @@ import {
   MessageSquare,
   ChevronDown,
   Phone,
-  MessageCircle
+  MessageCircle,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 
 // Category order for grouping
 const CATEGORY_ORDER = ['Grundlagen', 'Gutscheine', 'Codes', 'Taler', 'Streaming', 'Konto'];
@@ -136,6 +138,20 @@ export default function FAQPage() {
       </header>
       
       <div className="container py-6">
+        {/* Tutorial Trigger */}
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/10 border border-primary/20 mb-4 animate-in">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
+              <BookOpen className="h-5 w-5 text-secondary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">App-Einführung</h3>
+              <p className="text-xs text-muted-foreground">Schau dir die Tour nochmal an</p>
+            </div>
+          </div>
+          <OnboardingTrigger />
+        </div>
+        
         {/* Quick Info Banner */}
         <div className="flex items-center gap-3 p-4 rounded-2xl bg-accent/10 border border-accent/20 mb-6 animate-in">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20 flex-shrink-0">

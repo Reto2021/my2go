@@ -105,7 +105,7 @@ export function DailyStreakCard() {
         data-onboarding="streak-card"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
               <Flame className="h-5 w-5 text-white" />
@@ -126,7 +126,7 @@ export function DailyStreakCard() {
             <motion.button
               onClick={() => setShowFreezeDialog(true)}
               className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-sky-500/20 hover:bg-sky-500/30 transition-colors"
-              title="Pause-Schutz kaufen"
+              title="Pause-Schutz: Schützt deine Serie bei einem verpassten Tag"
             >
               <Snowflake className="h-3.5 w-3.5 text-sky-400" />
               <span className="text-xs font-bold text-sky-400">{freezes}</span>
@@ -144,6 +144,11 @@ export function DailyStreakCard() {
             )}
           </div>
         </div>
+        
+        {/* Explanation */}
+        <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+          Hole dir täglich deinen Bonus! Je länger deine Serie, desto mehr Taler bekommst du (5–15 Taler/Tag).
+        </p>
 
         {/* Day indicators */}
         <div className="flex items-center justify-between gap-1 mb-4">
