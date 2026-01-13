@@ -161,7 +161,7 @@ function Equalizer({ className }: { className?: string }) {
 }
 
 export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBarProps) {
-  const { isPlaying, togglePlay, toggleMute, isMuted, isLoading: isRadioLoading, nowPlaying } = useRadioStore();
+  const { isPlaying, togglePlay, toggleMute, isMuted, isLoading: isRadioLoading, nowPlaying, isPlayerMinimized, setPlayerMinimized } = useRadioStore();
   const { streakStatus, isLoading: isStreakLoading, claimStreak, isClaiming } = useStreak();
   const authContext = useAuthSafe();
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
@@ -316,7 +316,15 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   };
   
   // Determine which state to show
-  const showMiniPlayer = isPlaying || isLocked;
+  // Show mini player if playing AND not minimized, or if locked
+  const showMiniPlayer = (isPlaying && !isPlayerMinimized) || isLocked;
+  
+  // When radio starts playing, show the player
+  useEffect(() => {
+    if (isPlaying && isPlayerMinimized) {
+      setPlayerMinimized(false);
+    }
+  }, [isPlaying, isPlayerMinimized, setPlayerMinimized]);
   
   // Don't render during initial streak loading
   if (isStreakLoading) return null;
@@ -344,12 +352,17 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 }}
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0.1, bottom: 0.5 }}
+                dragElastic={{ top: 0.3, bottom: 0.5 }}
                 onDragEnd={(_, info) => {
-                  // Swipe down to pause
-                  if (info.offset.y > 60 || info.velocity.y > 300) {
+                  // Swipe up to expand player
+                  if (info.offset.y < -40 || info.velocity.y < -200) {
                     hapticToggle();
-                    togglePlay();
+                    onExpand();
+                  }
+                  // Swipe down to minimize (hide bar, radio keeps playing)
+                  else if (info.offset.y > 60 || info.velocity.y > 300) {
+                    hapticToggle();
+                    setPlayerMinimized(true);
                   }
                 }}
                 className={cn(
