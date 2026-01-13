@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+// Chromecast removed - clean build
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Building2 } from 'lucide-react';
