@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Gift, Check, Loader2, Snowflake, ShoppingCart } from "lucide-react";
+import { Flame, Gift, Check, Loader2, Snowflake, ShoppingCart, Radio, Volume2 } from "lucide-react";
 import { useStreak } from "@/hooks/useStreak";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRadioStore } from "@/lib/radio-store";
 import { Confetti } from "@/components/ui/confetti";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -20,9 +21,86 @@ import { Button } from "@/components/ui/button";
 export function DailyStreakCard() {
   const { user, balance } = useAuth();
   const { streakStatus, isLoading, claimStreak, isClaiming, purchaseFreeze, isPurchasing } = useStreak();
+  const { isPlaying, togglePlay, isLoading: isRadioLoading } = useRadioStore();
+  
   const [showConfetti, setShowConfetti] = useState(false);
   const [claimedBonus, setClaimedBonus] = useState<number | null>(null);
   const [showFreezeDialog, setShowFreezeDialog] = useState(false);
+  
+  // Countdown state
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [countdown, setCountdown] = useState(30);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const wasPlayingBeforeRef = useRef(false);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, []);
+
+  // Handle countdown completion
+  useEffect(() => {
+    if (isCountingDown && countdown <= 0) {
+      // Countdown finished - claim the bonus
+      setIsCountingDown(false);
+      setCountdown(30);
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+      
+      // Actually claim the bonus
+      claimStreak(undefined, {
+        onSuccess: (data) => {
+          if (data.success) {
+            setClaimedBonus(data.bonus);
+            setShowConfetti(true);
+            
+            if (data.used_freeze) {
+              toast.success(`Tagesbonus gerettet! +${data.bonus} Taler`, {
+                description: `Pausentag verwendet! Noch ${data.freezes_remaining} übrig.`,
+              });
+            } else {
+              toast.success(`+${data.bonus} Taler erhalten!`, {
+                description: `Tag ${data.current_streak} – weiter so!`,
+              });
+            }
+            
+            setTimeout(() => {
+              setShowConfetti(false);
+              setClaimedBonus(null);
+            }, 3000);
+          }
+        },
+        onError: () => {
+          toast.error("Fehler beim Beanspruchen des Bonus");
+        },
+      });
+    }
+  }, [isCountingDown, countdown, claimStreak]);
+
+  // Check if radio stopped during countdown
+  useEffect(() => {
+    if (isCountingDown && !isPlaying) {
+      // Radio was stopped - pause countdown
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      toast.info("Radio pausiert – Countdown gestoppt", {
+        description: "Starte das Radio erneut, um den Countdown fortzusetzen.",
+      });
+    } else if (isCountingDown && isPlaying && !countdownRef.current) {
+      // Radio resumed - continue countdown
+      countdownRef.current = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+      toast.success("Radio läuft wieder – Countdown geht weiter!");
+    }
+  }, [isPlaying, isCountingDown]);
 
   if (!user || isLoading) {
     return null;
@@ -32,33 +110,68 @@ export function DailyStreakCard() {
     return null;
   }
 
-  const handleClaim = () => {
-    claimStreak(undefined, {
-      onSuccess: (data) => {
-        if (data.success) {
-          setClaimedBonus(data.bonus);
-          setShowConfetti(true);
-          
-          if (data.used_freeze) {
-            toast.success(`Tagesbonus gerettet! +${data.bonus} Taler`, {
-              description: `Pause-Schutz verwendet! Noch ${data.freezes_remaining} übrig.`,
-            });
-          } else {
-            toast.success(`+${data.bonus} Taler erhalten!`, {
-              description: `Tag ${data.current_streak} – weiter so!`,
-            });
-          }
-          
-          setTimeout(() => {
-            setShowConfetti(false);
-            setClaimedBonus(null);
-          }, 3000);
-        }
-      },
-      onError: () => {
-        toast.error("Fehler beim Beanspruchen des Bonus");
-      },
+  const handleStartBonusClaim = () => {
+    // Store if radio was already playing
+    wasPlayingBeforeRef.current = isPlaying;
+    
+    // Start radio if not playing
+    if (!isPlaying && !isRadioLoading) {
+      togglePlay();
+    }
+    
+    // Start countdown
+    setIsCountingDown(true);
+    setCountdown(30);
+    
+    toast.info("🎵 Radio gestartet!", {
+      description: "Höre 30 Sekunden zu, um deinen Bonus zu erhalten.",
     });
+    
+    // Start countdown timer (will be managed by useEffect when radio starts)
+    if (isPlaying) {
+      countdownRef.current = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else {
+      // Wait for radio to start, then begin countdown
+      const checkPlaying = setInterval(() => {
+        const currentIsPlaying = useRadioStore.getState().isPlaying;
+        if (currentIsPlaying) {
+          clearInterval(checkPlaying);
+          countdownRef.current = setInterval(() => {
+            setCountdown((prev) => prev - 1);
+          }, 1000);
+        }
+      }, 100);
+      
+      // Timeout after 10 seconds if radio doesn't start
+      setTimeout(() => {
+        clearInterval(checkPlaying);
+        if (!useRadioStore.getState().isPlaying) {
+          setIsCountingDown(false);
+          setCountdown(30);
+          toast.error("Radio konnte nicht gestartet werden", {
+            description: "Bitte versuche es erneut.",
+          });
+        }
+      }, 10000);
+    }
+  };
+
+  const handleCancelCountdown = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    setIsCountingDown(false);
+    setCountdown(30);
+    
+    // Stop radio if it wasn't playing before
+    if (!wasPlayingBeforeRef.current && isPlaying) {
+      togglePlay();
+    }
+    
+    toast.info("Bonus-Abruf abgebrochen");
   };
 
   const handlePurchaseFreeze = () => {
@@ -138,8 +251,8 @@ export function DailyStreakCard() {
         {/* Explanation Box */}
         <div className="p-3 rounded-xl bg-muted/50 mb-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            <span className="font-semibold text-foreground">So funktioniert's:</span> Öffne die App jeden Tag und hole deinen Bonus ab. 
-            Je mehr Tage in Folge, desto mehr Taler – von 5 bis 15 pro Tag!
+            <span className="font-semibold text-foreground">So funktioniert's:</span> Klicke auf den Button, 
+            höre 30 Sekunden Radio und erhalte deinen Bonus! Je mehr Tage in Folge, desto mehr Taler – von 5 bis 15 pro Tag.
           </p>
         </div>
 
@@ -190,32 +303,97 @@ export function DailyStreakCard() {
           ))}
         </div>
 
-        {/* Claim button or status */}
+        {/* Claim button, countdown, or status */}
         <AnimatePresence mode="wait">
-          {canClaim ? (
+          {isCountingDown ? (
+            // Countdown mode - radio is playing, waiting for 30s
+            <motion.div
+              key="countdown"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-3"
+            >
+              {/* Countdown display */}
+              <div className="w-full py-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="h-5 w-5 text-green-500 animate-pulse" />
+                  <span className="text-sm font-medium text-green-600">Radio läuft...</span>
+                </div>
+                
+                {/* Circular countdown */}
+                <div className="relative w-16 h-16">
+                  <svg className="w-16 h-16 -rotate-90">
+                    <circle
+                      cx="32"
+                      cy="32"
+                      r="28"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      className="text-muted/30"
+                    />
+                    <circle
+                      cx="32"
+                      cy="32"
+                      r="28"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                      strokeLinecap="round"
+                      className="text-green-500 transition-all duration-1000"
+                      strokeDasharray={176}
+                      strokeDashoffset={176 - (176 * (30 - countdown)) / 30}
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-xl font-bold text-foreground">
+                    {countdown}
+                  </span>
+                </div>
+                
+                <p className="text-xs text-muted-foreground">
+                  Noch {countdown} Sekunden für deinen Bonus
+                </p>
+              </div>
+              
+              {/* Cancel button */}
+              <button
+                onClick={handleCancelCountdown}
+                className="w-full py-2 rounded-lg bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors"
+              >
+                Abbrechen
+              </button>
+            </motion.div>
+          ) : canClaim && !claimedBonus ? (
             <motion.button
               key="claim"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              onClick={handleClaim}
-              disabled={isClaiming}
+              onClick={handleStartBonusClaim}
+              disabled={isClaiming || isRadioLoading}
               className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {isClaiming ? (
+              {isClaiming || isRadioLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
-              ) : claimedBonus ? (
-                <>
-                  <Gift className="h-5 w-5" />
-                  +{claimedBonus} Taler erhalten!
-                </>
               ) : (
                 <>
-                  <Gift className="h-5 w-5" />
+                  <Radio className="h-5 w-5" />
                   Jetzt {nextBonus} Taler abholen
                 </>
               )}
             </motion.button>
+          ) : claimedBonus ? (
+            <motion.div
+              key="just-claimed"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold flex items-center justify-center gap-2"
+            >
+              <Gift className="h-5 w-5" />
+              +{claimedBonus} Taler erhalten!
+            </motion.div>
           ) : (
             <motion.div
               key="claimed"
