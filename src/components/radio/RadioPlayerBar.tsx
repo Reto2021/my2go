@@ -361,7 +361,8 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                       
                       {/* Balance + Session Bonus */}
                       <div className="flex items-center gap-1">
-                        <span className="text-accent font-bold">🪙 {currentBalance}</span>
+                        <TalerIcon className="h-3.5 w-3.5 text-accent" />
+                        <span className="text-accent font-bold">{currentBalance}</span>
                         {justReachedTier ? (
                           <motion.span 
                             className="text-accent font-bold"
