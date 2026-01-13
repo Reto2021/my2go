@@ -2,12 +2,12 @@ import { useEffect, useState, useRef } from 'react';
 // Chromecast removed - clean build
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Volume1, Settings, LogOut, Coins, Building2 } from 'lucide-react';
+import { Settings, LogOut, Coins, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Slider } from '@/components/ui/slider';
+
 import logo from '@/assets/logo-radio2go.png';
 
 import { ClockWeatherWidget } from './weather-widget';
@@ -61,26 +61,12 @@ function Marquee({ children, className }: { children: React.ReactNode; className
   );
 }
 
-function VolumeIcon({ volume, isMuted }: { volume: number; isMuted: boolean }) {
-  if (isMuted || volume === 0) {
-    return <VolumeX className="h-4 w-4 text-secondary-foreground/70" />;
-  }
-  if (volume < 0.5) {
-    return <Volume1 className="h-4 w-4 text-secondary-foreground/70" />;
-  }
-  return <Volume2 className="h-4 w-4 text-secondary-foreground/70" />;
-}
 
 export function RadioHeader() {
   const { 
     isPlaying, 
-    isMuted, 
     isLoading, 
-    volume,
     nowPlaying, 
-    togglePlay, 
-    toggleMute,
-    setVolume,
     fetchNowPlaying 
   } = useRadioStore();
   const navigate = useNavigate();
@@ -97,7 +83,6 @@ export function RadioHeader() {
   // Display name: prefer first_name, fallback to email prefix
   const displayName = profile?.first_name || profile?.display_name || authContext?.user?.email?.split('@')[0] || 'User';
   
-  const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [prevBalance, setPrevBalance] = useState<number | null>(null);
   const [balanceChanged, setBalanceChanged] = useState(false);
@@ -128,18 +113,6 @@ export function RadioHeader() {
       fetchNowPlaying();
     }
   }, [isPlaying, fetchNowPlaying]);
-  
-  // Auto-hide volume slider
-  useEffect(() => {
-    if (showVolume) {
-      const timer = setTimeout(() => setShowVolume(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showVolume, volume]);
-
-  const handleVolumeChange = (values: number[]) => {
-    setVolume(values[0]);
-  };
   
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -205,39 +178,6 @@ export function RadioHeader() {
             </p>
           )}
         </div>
-          {/* Volume controls - only when playing */}
-          {isPlaying && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {/* Volume slider - expandable */}
-              <div className={cn(
-                "overflow-hidden transition-all duration-300 ease-out",
-                showVolume ? "w-20 opacity-100" : "w-0 opacity-0"
-              )}>
-                <Slider
-                  value={[isMuted ? 0 : volume]}
-                  max={1}
-                  step={0.05}
-                  onValueChange={handleVolumeChange}
-                  className="w-20"
-                />
-              </div>
-              
-              {/* Volume button */}
-              <button
-                onClick={() => {
-                  if (showVolume) {
-                    toggleMute();
-                  } else {
-                    setShowVolume(true);
-                  }
-                }}
-                className="h-8 w-8 rounded-full bg-secondary-foreground/10 flex items-center justify-center hover:bg-secondary-foreground/20 transition-colors"
-                aria-label={isMuted ? 'Ton an' : 'Lautstärke'}
-              >
-                <VolumeIcon volume={volume} isMuted={isMuted} />
-              </button>
-            </div>
-          )}
         {/* Taler Balance + User Menu - only when logged in */}
         {isAuthenticated && (
           <div className="flex items-center gap-2 flex-shrink-0">
