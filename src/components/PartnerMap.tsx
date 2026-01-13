@@ -7,15 +7,6 @@ import { Store, Navigation, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 
-// Helper function to darken/lighten a hex color
-function adjustColor(hex: string, percent: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.max(0, Math.min(255, (num >> 16) + amt));
-  const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amt));
-  const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
-}
 
 interface PartnerMapProps {
   partners: Partner[];
@@ -117,13 +108,13 @@ export function PartnerMap({ partners, userLocation, mapboxToken }: PartnerMapPr
         width: 44px;
         height: 44px;
         border-radius: 50% 50% 50% 0;
-        background: linear-gradient(135deg, ${brandColor} 0%, ${adjustColor(brandColor, -20)} 100%);
+        background: ${brandColor};
         transform: rotate(-45deg);
         display: flex;
         align-items: center;
         justify-content: center;
         border: 3px solid white;
-        box-shadow: inset 0 -2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
       `;
       
       // Inner content container (rotated back)
