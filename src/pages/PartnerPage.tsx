@@ -350,11 +350,13 @@ export default function PartnerPage() {
         ) : viewMode === 'map' ? (
           /* Map View */
           mapboxToken ? (
-            <PartnerMap 
-              partners={filteredPartners} 
-              userLocation={userLocation}
-              mapboxToken={mapboxToken}
-            />
+            <div className="w-full h-full">
+              <PartnerMap 
+                partners={filteredPartners} 
+                userLocation={userLocation}
+                mapboxToken={mapboxToken}
+              />
+            </div>
           ) : (
             <div className="h-full flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted rounded-2xl relative overflow-hidden">
               {/* Animated background */}
