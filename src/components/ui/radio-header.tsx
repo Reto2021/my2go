@@ -197,7 +197,7 @@ export function RadioHeader() {
                 {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
               </Marquee>
               {/* Live Listener Count */}
-              <LiveListenerCount size="sm" showLabel={false} className="hidden sm:flex" />
+              <LiveListenerCount size="sm" showLabel={false} className="flex" />
             </div>
           ) : (
             <p className="text-xs sm:text-sm text-secondary-foreground/90 font-medium truncate flex-1">
@@ -268,7 +268,7 @@ export function RadioHeader() {
                     transition={{ duration: 0.2 }}
                     className="text-xs font-bold text-accent tabular-nums"
                   >
-                    {realBalance.taler_balance.toLocaleString('de-CH')}
+                    {realBalance.taler_balance.toLocaleString('de-CH')} Taler
                   </motion.span>
                 </AnimatePresence>
               </motion.div>
