@@ -34,7 +34,10 @@ import {
   QrCode,
   Coins,
   Ticket,
-  Sparkles
+  Sparkles,
+  Radio,
+  Navigation,
+  Building2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -119,6 +122,8 @@ export default function RewardsPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
   const [maxCost, setMaxCost] = useState(0);
+  const [selectedCity, setSelectedCity] = useState<string>('all');
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   
   // Redemptions state
@@ -153,6 +158,17 @@ export default function RewardsPage() {
   } = useOfflineRewards<Reward[]>(fetchRewards);
   
   const rewardsList = rewards || [];
+  
+  // Fetch available cities from rewards data
+  useEffect(() => {
+    if (rewardsList.length > 0) {
+      const cities = [...new Set(rewardsList
+        .map(r => r.partner?.city)
+        .filter((city): city is string => !!city)
+      )].sort();
+      setAvailableCities(cities);
+    }
+  }, [rewardsList]);
   
   // Fetch redemptions when tab is aktiviert and user is authenticated
   useEffect(() => {
@@ -218,6 +234,11 @@ export default function RewardsPage() {
       result = result.filter(r => r.reward_type === activeCategory);
     }
     
+    // Filter by city
+    if (selectedCity !== 'all') {
+      result = result.filter(r => r.partner?.city === selectedCity);
+    }
+    
     // Filter by max cost
     if (maxCost > 0) {
       result = result.filter(r => r.taler_cost <= maxCost);
@@ -244,7 +265,7 @@ export default function RewardsPage() {
     }
     
     return result;
-  }, [rewardsWithDistance, maxCost, sortBy, userLocation, activeCategory]);
+  }, [rewardsWithDistance, maxCost, sortBy, userLocation, activeCategory, selectedCity]);
   
   // Redemption helpers
   const getEffectiveStatus = (r: Redemption) => {
@@ -264,11 +285,12 @@ export default function RewardsPage() {
     totalSpent: redemptions.filter((r) => getEffectiveStatus(r) === 'used').reduce((sum, r) => sum + r.taler_spent, 0),
   };
   
-  const hasActiveFilters = maxCost > 0 || sortBy !== 'popular';
+  const hasActiveFilters = maxCost > 0 || sortBy !== 'popular' || selectedCity !== 'all';
   
   const clearFilters = () => {
     setMaxCost(0);
     setSortBy('popular');
+    setSelectedCity('all');
   };
   
   const handleLocationToggle = () => {
@@ -339,7 +361,7 @@ export default function RewardsPage() {
                 Filter
                 {hasActiveFilters && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs">
-                    {(maxCost > 0 ? 1 : 0) + (sortBy !== 'popular' ? 1 : 0)}
+                    {(maxCost > 0 ? 1 : 0) + (sortBy !== 'popular' ? 1 : 0) + (selectedCity !== 'all' ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -424,7 +446,52 @@ export default function RewardsPage() {
               
               {/* Extended Filters */}
               {showFilters && (
-                <div className="mt-4 p-4 rounded-2xl bg-muted/50 space-y-4 animate-in">
+                <div className="mt-4 p-4 rounded-2xl bg-muted/50 space-y-4 animate-fade-in">
+                  {/* Radio 2Go Branding Hint */}
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+                    <Radio className="h-4 w-4 text-secondary" />
+                    <p className="text-xs text-secondary font-medium">
+                      Radio 2Go hören lohnt sich! Sammle Taler & löse Gutscheine ein.
+                    </p>
+                  </div>
+                  
+                  {/* City Filter */}
+                  {availableCities.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        Ort
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setSelectedCity('all')}
+                          className={cn(
+                            'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                            selectedCity === 'all'
+                              ? 'bg-secondary text-secondary-foreground'
+                              : 'bg-background text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          Alle Orte
+                        </button>
+                        {availableCities.map(city => (
+                          <button
+                            key={city}
+                            onClick={() => setSelectedCity(city)}
+                            className={cn(
+                              'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                              selectedCity === city
+                                ? 'bg-secondary text-secondary-foreground'
+                                : 'bg-background text-muted-foreground hover:text-foreground'
+                            )}
+                          >
+                            {city}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Sort */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Sortieren</label>
@@ -471,7 +538,7 @@ export default function RewardsPage() {
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <X className="h-4 w-4" />
                       Filter zurücksetzen
@@ -511,11 +578,11 @@ export default function RewardsPage() {
         <div className="container pt-4">
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
-              <Info className="h-5 w-5 text-secondary" />
+              <Radio className="h-5 w-5 text-secondary" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                Zum Einlösen anmelden
+                Radio 2Go hören & Taler sammeln
               </p>
               <p className="text-xs text-muted-foreground">
                 Melde dich an, um Gutscheine einzulösen.
@@ -536,10 +603,10 @@ export default function RewardsPage() {
       {!isAuthenticated && activeTab === 'aktiviert' && (
         <div className="container py-8">
           <EmptyState
-            icon={Ticket}
-            title="Anmeldung erforderlich"
-            description="Melde dich an, um deine aktivierten Gutscheine zu sehen."
-            action={{ label: 'Anmelden', onClick: handleLogin }}
+            icon={Radio}
+            title="Radio 2Go hören lohnt sich!"
+            description="Melde dich an, höre Radio 2Go, sammle Taler und löse exklusive Gutscheine ein."
+            action={{ label: 'Jetzt starten', onClick: handleLogin }}
           />
         </div>
       )}
@@ -653,11 +720,11 @@ export default function RewardsPage() {
                 {/* Redemptions List */}
                 {filteredRedemptions.length === 0 ? (
                   <EmptyState
-                    icon={Ticket}
+                    icon={Radio}
                     title={redemptionFilter === 'all' ? 'Noch keine Gutscheine aktiviert' : 'Keine Ergebnisse'}
                     description={
                       redemptionFilter === 'all'
-                        ? 'Aktiviere deinen ersten Gutschein mit Taler und er erscheint hier.'
+                        ? 'Hör Radio 2Go, sammle Taler und aktiviere deinen ersten Gutschein!'
                         : 'Keine Gutscheine mit diesem Status gefunden.'
                     }
                     action={
