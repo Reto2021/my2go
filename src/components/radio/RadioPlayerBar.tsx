@@ -258,9 +258,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
         },
       });
     } else {
-      toast.success("Radio 2Go läuft!", {
-        description: hasClaimedToday ? "Dein Tages-Bonus wurde bereits abgeholt." : undefined,
-      });
+      // Just reset slider without toast notification
       animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
       setSliderProgress(0);
     }
