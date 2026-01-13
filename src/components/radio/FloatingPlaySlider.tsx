@@ -213,7 +213,7 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 style={{ opacity: 1 - sliderProgress * 1.5 }}
               >
                 <div className="flex items-center gap-2 text-white/60">
-                  <span className="text-sm font-semibold">+{nextBonus} Taler jetzt holen</span>
+                  <span className="text-sm font-semibold">2Go hören +{nextBonus} Taler holen</span>
                   <motion.div
                     animate={{ x: [0, 6, 0] }}
                     transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
