@@ -1,6 +1,6 @@
 import { Partner } from '@/lib/supabase-helpers';
 import { cn } from '@/lib/utils';
-import { MapPin, ChevronRight, Store } from 'lucide-react';
+import { MapPin, ChevronRight, Store, Coins } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
 import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
@@ -12,9 +12,10 @@ interface PartnerCardProps {
   className?: string;
   showArrow?: boolean;
   redemptionCount?: number;
+  minTalerCost?: number; // Minimum Taler cost for rewards at this partner
 }
 
-export function PartnerCard({ partner, className, showArrow = true, redemptionCount }: PartnerCardProps) {
+export function PartnerCard({ partner, className, showArrow = true, redemptionCount, minTalerCost }: PartnerCardProps) {
   // Use provided count or fetch it
   const { data: fetchedCount } = usePartnerRedemptionCount(partner.id);
   const displayCount = redemptionCount ?? fetchedCount ?? 0;
@@ -27,8 +28,18 @@ export function PartnerCard({ partner, className, showArrow = true, redemptionCo
   return (
     <Link
       to={`/partner/${partner.slug}`}
-      className={cn('card-base p-4 flex items-center gap-4 group', className)}
+      className={cn('card-base p-4 flex items-center gap-4 group relative', className)}
     >
+      {/* "Ab X Taler" Badge - Top Right */}
+      {minTalerCost !== undefined && minTalerCost > 0 && (
+        <div className="absolute -top-0 -right-0 z-10">
+          <div className="bg-accent text-accent-foreground text-[10px] font-bold px-2 py-1 rounded-bl-xl flex items-center gap-1">
+            <Coins className="h-3 w-3" />
+            Ab {minTalerCost}
+          </div>
+        </div>
+      )}
+      
       {/* Logo */}
       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
         {partner.logo_url ? (

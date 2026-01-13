@@ -219,8 +219,7 @@ export function RadioHeader() {
             </div>
           ) : (
             <p className="text-[10px] sm:text-xs text-secondary-foreground/70 font-medium truncate flex-1">
-              <span className="sm:hidden">Radio starten →</span>
-              <span className="hidden sm:inline">Radio hören und 2Go Taler sammeln</span>
+              Radio starten & Taler sammeln →
             </p>
           )}
         </div>

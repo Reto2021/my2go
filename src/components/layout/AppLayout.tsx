@@ -9,6 +9,7 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { MiniPlayerBar } from '@/components/ui/mini-player-bar';
 import { ExpandedRadioPlayer } from '@/components/ui/radio-player-expanded';
 import { TierCelebration } from '@/components/radio/TierCelebration';
+import { OnboardingTutorial } from '@/components/onboarding/OnboardingTutorial';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 import { useTierReachedNotification } from '@/hooks/useTierReachedNotification';
 import { useRadioStore } from '@/lib/radio-store';
@@ -50,6 +51,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           talerAmount={currentTierReward}
           onDismiss={dismissCelebration}
         />
+        
+        {/* Onboarding Tutorial for new users */}
+        <OnboardingTutorial />
         
         <WhatsAppButton />
         
