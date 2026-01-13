@@ -15,7 +15,7 @@ import {
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
-import { PlaySlider } from '@/components/radio/PlaySlider';
+import { FloatingPlaySlider } from '@/components/radio/FloatingPlaySlider';
 import { StreakDetailsSheet } from '@/components/streak/StreakDetailsSheet';
 import {
   Gift,
@@ -389,8 +389,9 @@ function SessionModeHome({
   const [showStreakDetails, setShowStreakDetails] = useState(false);
   
   return (
-    <div className="min-h-screen pb-28 bg-background">
-      {/* Compact Header with Greeting only - Balance is in main header */}
+    <>
+    <div className="min-h-screen pb-36 bg-background">
+      {/* Compact Header with Greeting only */}
       <header className="container pt-4 pb-3">
         <div className="animate-in">
           <p className="text-muted-foreground">
@@ -398,14 +399,6 @@ function SessionModeHome({
           </p>
         </div>
       </header>
-      
-      {/* Hero Radio CTA - Play Slider with Streak Integration */}
-      <section className="container pb-4">
-        <PlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
-      </section>
-      
-      {/* Streak Details Sheet */}
-      <StreakDetailsSheet open={showStreakDetails} onOpenChange={setShowStreakDetails} />
       
       {/* Referral Promo Banner - Shows after X days */}
       <section className="container">
@@ -480,6 +473,13 @@ function SessionModeHome({
         <TopListenersWidget />
       </section>
     </div>
+    
+    {/* Floating Play Slider - Fixed above bottom nav */}
+    <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
+    
+    {/* Streak Details Sheet */}
+    <StreakDetailsSheet open={showStreakDetails} onOpenChange={setShowStreakDetails} />
+    </>
   );
 }
 
