@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { hapticToggle } from '@/lib/haptics';
 import { TalerIcon } from '@/components/icons/TalerIcon';
+import { useAuthSafe } from '@/contexts/AuthContext';
 
 interface MiniPlayerBarProps {
   onExpand: () => void;
@@ -142,6 +143,8 @@ function formatTimeToTier(seconds: number): string {
 export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
   const { isPlaying, nowPlaying, togglePlay, isLoading } = useRadioStore();
   const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier, secondsToNextTier, justReachedTier } = useSessionProgress();
+  const authContext = useAuthSafe();
+  const currentBalance = authContext?.balance?.taler_balance ?? 0;
   
   const handleTogglePlay = () => {
     hapticToggle();
@@ -205,34 +208,24 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
                     <span>{formatTime(elapsed)}</span>
                     <span className="text-secondary-foreground/30">•</span>
                     
-                    {/* Taler Status with Milestone Info */}
+                    {/* Current Balance + Session Bonus */}
                     <div className="flex items-center gap-1">
+                      <TalerIcon className="h-3 w-3 text-accent" />
+                      <span className="text-accent font-bold">{currentBalance}</span>
                       {justReachedTier ? (
-                        <motion.div 
-                          className="flex items-center gap-1"
+                        <motion.span 
+                          className="text-accent font-bold"
                           initial={{ scale: 0.8 }}
                           animate={{ scale: [1, 1.2, 1] }}
                           transition={{ duration: 0.5 }}
                         >
-                          <TalerIcon className="h-3 w-3 text-accent" />
-                          <span className="text-accent font-bold">+{earnedTaler} 🎉</span>
-                        </motion.div>
+                          (+{earnedTaler} 🎉)
+                        </motion.span>
                       ) : earnedTaler > 0 ? (
-                        <>
-                          <TalerIcon className="h-3 w-3 text-accent" />
-                          <span className="text-accent font-medium">+{earnedTaler}</span>
-                          {!isMaxTier && secondsToNextTier > 0 && (
-                            <span className="opacity-60 ml-1">
-                              (+{pendingTaler - earnedTaler} in {formatTimeToTier(secondsToNextTier)})
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <TalerIcon className="h-3 w-3 opacity-50" />
-                          <span className="opacity-70">+{pendingTaler} in {formatTimeToTier(secondsToNextTier)}</span>
-                        </>
-                      )}
+                        <span className="text-accent/70 font-medium">(+{earnedTaler})</span>
+                      ) : secondsToNextTier > 0 ? (
+                        <span className="opacity-60">• +{pendingTaler} in {formatTimeToTier(secondsToNextTier)}</span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
