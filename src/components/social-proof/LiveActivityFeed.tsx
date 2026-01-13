@@ -111,13 +111,13 @@ export function ActivityTicker({ className }: { className?: string }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         className={cn(
-          'flex items-center gap-2 text-xs text-muted-foreground',
+          'flex items-center gap-2 text-sm text-muted-foreground',
           className
         )}
       >
-        <span className="relative flex h-1.5 w-1.5">
+        <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
         </span>
         <span>{latestActivity.icon}</span>
         <span className="truncate">{latestActivity.message}</span>
