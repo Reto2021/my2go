@@ -64,9 +64,9 @@ export function BottomNav() {
                 isActive && 'bg-primary/20',
                 isHighlight && !isActive && 'bg-accent text-secondary'
               )}>
-                {/* Pulse ring for QR button */}
+                {/* Subtle glow ring for QR button */}
                 {isHighlight && !isActive && (
-                  <span className="absolute inset-0 rounded-lg bg-accent/30 animate-ping" />
+                  <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
                 )}
                 <Icon className={cn(
                   'relative h-4 w-4 transition-transform duration-200',
