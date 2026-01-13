@@ -38,7 +38,7 @@ const PartnerDetailPage = lazy(() => import("./pages/PartnerDetailPage"));
 const FAQPage = lazy(() => import("./pages/FAQPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const MyRedemptionsPage = lazy(() => import("./pages/MyRedemptionsPage"));
+// MyRedemptionsPage removed - now integrated in RewardsPage as tab
 const MyQRPage = lazy(() => import("./pages/MyQRPage"));
 const RedemptionDetailPage = lazy(() => import("./pages/RedemptionDetailPage"));
 const ReferralPage = lazy(() => import("./pages/ReferralPage"));
@@ -199,8 +199,8 @@ function AppContent() {
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/my-redemptions" element={<MyRedemptionsPage />} />
-            <Route path="/my-redemptions/:id" element={<RedemptionDetailPage />} />
+            {/* Redemption detail now under rewards path */}
+            <Route path="/rewards/redemption/:id" element={<RedemptionDetailPage />} />
             <Route path="/my-qr" element={<MyQRPage />} />
             <Route path="/referral" element={<ReferralPage />} />
             <Route path="/badges" element={<BadgesPage />} />

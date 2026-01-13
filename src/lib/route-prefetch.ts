@@ -10,7 +10,7 @@ const routeImports: Record<string, () => Promise<unknown>> = {
   '/code': () => import('@/pages/CodePage'),
   '/settings': () => import('@/pages/SettingsPage'),
   '/profile': () => import('@/pages/ProfilePage'),
-  '/my-redemptions': () => import('@/pages/MyRedemptionsPage'),
+  // '/my-redemptions' removed - now integrated in RewardsPage
   '/badges': () => import('@/pages/BadgesPage'),
   '/leaderboard': () => import('@/pages/LeaderboardPage'),
   '/referral': () => import('@/pages/ReferralPage'),
@@ -115,7 +115,7 @@ function schedulePrefetch(): void {
     
     // Prefetch secondary routes after a longer delay
     requestIdleCallback(() => {
-      prefetchRoutes(['/settings', '/my-redemptions', '/badges']);
+      prefetchRoutes(['/settings', '/badges']);
     }, { timeout: 5000 });
   } else {
     // Fallback
@@ -124,7 +124,7 @@ function schedulePrefetch(): void {
     }, 2000);
     
     setTimeout(() => {
-      prefetchRoutes(['/settings', '/my-redemptions', '/badges']);
+      prefetchRoutes(['/settings', '/badges']);
     }, 4000);
   }
 }

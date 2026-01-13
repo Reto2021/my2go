@@ -355,7 +355,7 @@ export default function RedemptionDetailPage() {
         </header>
         <div className="text-center py-12">
           <p className="text-muted-foreground">{error || 'Nicht gefunden'}</p>
-          <Button onClick={() => navigate('/my-redemptions')} className="mt-4">
+          <Button onClick={() => navigate('/rewards?tab=aktiviert')} className="mt-4">
             Zurück zur Übersicht
           </Button>
         </div>
@@ -760,7 +760,7 @@ export default function RedemptionDetailPage() {
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => navigate('/my-redemptions')}
+          onClick={() => navigate('/rewards?tab=aktiviert')}
         >
           Zurück zur Übersicht
         </Button>
