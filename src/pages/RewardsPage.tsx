@@ -900,19 +900,6 @@ export default function RewardsPage() {
                     })}
                   </div>
                 )}
-
-                {/* Total Spent Footer */}
-                {redemptionStats.totalSpent > 0 && (
-                  <div className="mt-8 p-4 bg-secondary/5 rounded-2xl border border-secondary/20">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Insgesamt eingelöst</span>
-                      <span className="inline-flex items-center gap-1.5 text-lg font-bold text-secondary">
-                        <Coins className="h-5 w-5" />
-                        {redemptionStats.totalSpent} Taler
-                      </span>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </>
