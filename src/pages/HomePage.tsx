@@ -15,13 +15,13 @@ import {
 } from '@/components/ui/skeleton';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
-import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
+
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
 import { useRadioStore } from '@/lib/radio-store';
 import {
-  Gift, 
-  MapPin, 
+  Gift,
+  MapPin,
   ChevronRight, 
   Wallet,
   Music,
@@ -30,8 +30,6 @@ import {
   X,
   Ticket,
   Users,
-  Trophy,
-  Coins,
   Play,
   Pause
 } from 'lucide-react';
@@ -393,7 +391,7 @@ function SessionModeHome({
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
-  const [showExtras, setShowExtras] = useState(false);
+  
   
   return (
     <div className="min-h-screen pb-28 bg-background">
@@ -416,17 +414,20 @@ function SessionModeHome({
         <ReferralPromoBanner />
       </section>
       
-      {/* Primary Quick Actions - 4 Most Important */}
+      {/* Quick Actions - Only unique functions not in BottomNav */}
       <section className="container pb-4">
-        <div className="grid grid-cols-4 gap-2" data-onboarding="quick-actions">
-          <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="accent" />
-          <QuickAction to="/partner" icon={MapPin} label="Partner" color="primary" />
-          <QuickAction to="/my-redemptions" icon={Ticket} label="Einlösungen" color="secondary" />
-          <QuickAction to="/my-qr" icon={Wallet} label="Mein QR" color="accent" />
+        <div className="grid grid-cols-2 gap-3" data-onboarding="quick-actions">
+          <QuickAction to="/my-redemptions" icon={Ticket} label="Meine Einlösungen" color="secondary" />
+          <QuickAction to="/referral" icon={Users} label="Freunde einladen" color="accent" />
         </div>
       </section>
       
-      {/* Rewards - Primary Content, BEFORE Gaming Features */}
+      {/* Daily Streak - Always visible */}
+      <section className="container pb-4">
+        <DailyStreakCard />
+      </section>
+      
+      {/* Rewards - Primary Content */}
       <section className="container section" data-onboarding="rewards-section">
         <div className="section-header">
           <h2 className="section-title">
@@ -475,41 +476,9 @@ function SessionModeHome({
         </div>
       </section>
       
-      {/* Collapsible Gaming & Social Section */}
-      <section className="container section">
-        <button 
-          onClick={() => setShowExtras(!showExtras)}
-          className="w-full flex items-center justify-between py-3 text-left"
-        >
-          <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-accent" />
-            <span className="font-semibold text-foreground">Streak & Rangliste</span>
-          </div>
-          <ChevronRight className={cn(
-            "h-5 w-5 text-muted-foreground transition-transform",
-            showExtras && "rotate-90"
-          )} />
-        </button>
-        
-        {showExtras && (
-          <div className="space-y-3 pt-2 animate-in">
-            {/* Daily Streak Card */}
-            <DailyStreakCard />
-            
-            {/* Leaderboard Invite */}
-            <LeaderboardInviteCard />
-            
-            {/* Recent Badges Bar */}
-            <RecentBadgesBar />
-            
-            {/* Secondary Quick Actions */}
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              <QuickAction to="/code" icon={Music} label="Radio-Code" color="accent" />
-              <QuickAction to="/referral" icon={Users} label="Einladen" color="primary" />
-              <QuickAction to="/leaderboard" icon={Trophy} label="Rangliste" color="accent" />
-            </div>
-          </div>
-        )}
+      {/* Recent Badges - Compact */}
+      <section className="container pb-4">
+        <RecentBadgesBar />
       </section>
       
       {/* Social Proof - Compact */}
