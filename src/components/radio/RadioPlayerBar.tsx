@@ -316,8 +316,11 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   };
   
   // Determine which state to show
-  // Show mini player if playing AND not minimized, or if locked
+  // 1. Mini player: playing AND not minimized, or locked
+  // 2. Minimized bar: playing but minimized (swipe up to restore)
+  // 3. Slider: not playing
   const showMiniPlayer = (isPlaying && !isPlayerMinimized) || isLocked;
+  const showMinimizedBar = isPlaying && isPlayerMinimized && !isLocked;
   
   // Only show player when radio STARTS playing (not continuously)
   const wasPlayingRef = useRef(false);
@@ -480,8 +483,48 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                   <ChevronUp className="h-4 w-4 text-secondary-foreground/40 shrink-0" />
                 </div>
               </motion.div>
+            ) : showMinimizedBar ? (
+              /* ===== STATE 2: Minimized Bar (Radio still playing, swipe up to restore) ===== */
+              <motion.div
+                key="minimized-bar"
+                initial={{ y: 40, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 40, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0.5, bottom: 0.3 }}
+                onDragEnd={(_, info) => {
+                  // Swipe up to restore mini player
+                  if (info.offset.y < -30 || info.velocity.y < -150) {
+                    hapticToggle();
+                    setPlayerMinimized(false);
+                  }
+                }}
+                onClick={() => {
+                  hapticToggle();
+                  setPlayerMinimized(false);
+                }}
+                className="rounded-full bg-secondary/90 backdrop-blur-sm shadow-lg px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-secondary transition-colors"
+              >
+                {/* Equalizer */}
+                <Equalizer className="flex-shrink-0" />
+                
+                {/* Now Playing */}
+                <p className="text-xs text-secondary-foreground font-medium truncate flex-1">
+                  {nowPlaying?.title || 'Radio 2Go läuft'}
+                </p>
+                
+                {/* Session time */}
+                <span className="text-xs text-secondary-foreground/60 tabular-nums">
+                  {formatTime(elapsed)}
+                </span>
+                
+                {/* Swipe up hint */}
+                <ChevronUp className="h-4 w-4 text-secondary-foreground/40" />
+              </motion.div>
             ) : (
-              /* ===== STATE 1 & 2: Slider Mode (Compact) ===== */
+              /* ===== STATE 1: Slider Mode (Compact) ===== */
               <motion.div
                 key="slider"
                 initial={{ y: 20, opacity: 0 }}
