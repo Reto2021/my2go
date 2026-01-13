@@ -73,32 +73,43 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
   
   // Handle slide complete
   const handleSlideComplete = () => {
-    if (!canClaim || isLocked || isClaiming) return;
+    if (isLocked || isClaiming) return;
     
     hapticToggle();
     
+    // Always start/ensure radio is playing
     if (!isPlaying && !isRadioLoading) {
       togglePlay();
     }
     
-    claimStreak(undefined, {
-      onSuccess: (data) => {
-        if (data.success) {
-          setShowConfetti(true);
-          setHasClaimedToday(true);
-          toast.success(`+${data.bonus} Taler erhalten!`, {
-            description: `Tag ${data.current_streak} – weiter so!`,
-          });
-          setTimeout(() => setShowConfetti(false), 3000);
-          startLock();
-        }
-      },
-      onError: () => {
-        toast.error("Fehler beim Beanspruchen des Bonus");
-        animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
-        setSliderProgress(0);
-      },
-    });
+    // Only claim streak bonus if available
+    if (canClaim && !hasClaimedToday) {
+      claimStreak(undefined, {
+        onSuccess: (data) => {
+          if (data.success) {
+            setShowConfetti(true);
+            setHasClaimedToday(true);
+            toast.success(`+${data.bonus} Taler erhalten!`, {
+              description: `Tag ${data.current_streak} – weiter so!`,
+            });
+            setTimeout(() => setShowConfetti(false), 3000);
+            startLock();
+          }
+        },
+        onError: () => {
+          toast.error("Fehler beim Beanspruchen des Bonus");
+          animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+          setSliderProgress(0);
+        },
+      });
+    } else {
+      // No bonus to claim, just reset slider and show feedback
+      toast.success("Radio 2Go läuft!", {
+        description: "Dein Tages-Bonus wurde bereits abgeholt.",
+      });
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+      setSliderProgress(0);
+    }
   };
   
   // Start 65 second lock
@@ -155,11 +166,12 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
     }
   };
   
-  const showSlider = canClaim && !isLocked && !hasClaimedToday;
+  // Always show slider, but with different states
+  const showSlider = !isLocked && !isPlaying;
+  const hasBonusAvailable = canClaim && !hasClaimedToday;
   
-  // Don't render if nothing to show (no streak action needed and not playing)
+  // Don't render only during initial streak loading
   if (isStreakLoading) return null;
-  if (!showSlider && !isPlaying && !isLocked && !hasClaimedToday) return null;
   
   return (
     <>
@@ -171,7 +183,7 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
         animate={{ 
           y: 0, 
           opacity: 1,
-          boxShadow: showSlider 
+          boxShadow: showSlider && hasBonusAvailable
             ? [
                 '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 rgba(255, 170, 0, 0.25)',
                 '0 4px 20px rgba(0,0,0,0.2), 0 0 6px 3px rgba(255, 170, 0, 0)',
@@ -183,12 +195,12 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
         transition={{
           y: { duration: 0.3 },
           opacity: { duration: 0.3 },
-          boxShadow: showSlider ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 },
+          boxShadow: showSlider && hasBonusAvailable ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 },
         }}
         className="rounded-2xl bg-secondary shadow-strong overflow-hidden relative"
       >
-        {/* Shine effect */}
-        {showSlider && (
+        {/* Shine effect - only when bonus available */}
+        {showSlider && hasBonusAvailable && (
           <motion.div
             className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl z-20"
             initial={false}
@@ -247,7 +259,12 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 style={{ opacity: 1 - sliderProgress * 1.5 }}
               >
                 <div className="flex items-center gap-2 text-white/60">
-                  <span className="text-sm font-semibold">2Go hören +{nextBonus} Taler holen</span>
+                  <span className="text-sm font-semibold">
+                    {hasBonusAvailable 
+                      ? `2Go hören +${nextBonus} Taler holen`
+                      : 'Radio 2Go starten'
+                    }
+                  </span>
                   <motion.div
                     animate={{ x: [0, 6, 0] }}
                     transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
@@ -257,30 +274,30 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 </div>
               </motion.div>
               
-              {/* Reward badge */}
+              {/* Reward badge - shows bonus or just radio icon */}
               <div className="absolute right-1.5 top-1 bottom-1 flex items-center pointer-events-none">
                 <motion.div
                   className="px-3 py-1.5 rounded-lg font-bold text-secondary flex items-center gap-1.5"
-                  animate={{ scale: 1 + sliderProgress * 0.12 }}
+                  animate={{ scale: hasBonusAvailable ? 1 + sliderProgress * 0.12 : 1 }}
                   style={{
                     background: `linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 95% 45%) 100%)`,
-                    boxShadow: sliderProgress > 0.5 
+                    boxShadow: hasBonusAvailable && sliderProgress > 0.5 
                       ? `0 0 ${12 + sliderProgress * 12}px hsl(44 98% 49% / ${0.4 + sliderProgress * 0.3})`
                       : '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
                   <motion.div
                     animate={{
-                      scale: sliderProgress > 0.3 ? [1, 1.15, 1] : 1,
+                      scale: hasBonusAvailable && sliderProgress > 0.3 ? [1, 1.15, 1] : 1,
                     }}
                     transition={{
                       duration: 0.8,
-                      repeat: sliderProgress > 0.3 ? Infinity : 0,
+                      repeat: hasBonusAvailable && sliderProgress > 0.3 ? Infinity : 0,
                       ease: "easeInOut",
                     }}
                     className="relative"
                   >
-                    {sliderProgress > 0.4 && (
+                    {hasBonusAvailable && sliderProgress > 0.4 && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 0.5, scale: 1.4 }}
@@ -289,7 +306,9 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                     )}
                     <Radio className="h-3.5 w-3.5 relative z-10" />
                   </motion.div>
-                  <span className="text-sm font-bold">+{nextBonus}</span>
+                  {hasBonusAvailable && (
+                    <span className="text-sm font-bold">+{nextBonus}</span>
+                  )}
                 </motion.div>
               </div>
               
