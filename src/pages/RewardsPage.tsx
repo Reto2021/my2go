@@ -346,7 +346,7 @@ export default function RewardsPage() {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+      <header className="sticky top-20 z-40 bg-background backdrop-blur-lg border-b border-border/50">
         <div className="container py-4">
           
           <div className="flex items-center justify-between mb-4">
@@ -419,6 +419,26 @@ export default function RewardsPage() {
           {/* Tab-specific content */}
           {activeTab === 'entdecken' && (
             <>
+              {/* Search Input - inside sticky header */}
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Gutscheine, Partner oder Ort suchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10 h-11 rounded-xl bg-muted/50"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              
               {/* Live Activity Ticker - Social Proof */}
               <ActivityTicker className="mb-3" />
               
@@ -654,25 +674,6 @@ export default function RewardsPage() {
         {/* ENTDECKEN TAB */}
         {activeTab === 'entdecken' && (
           <>
-            {/* Search Input */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Gutscheine, Partner oder Ort suchen..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 h-11 rounded-xl bg-muted/50"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
             
             {/* Active Filter Chips */}
             {hasActiveFilters && (
