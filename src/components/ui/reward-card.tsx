@@ -46,8 +46,8 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
       {/* "Jetzt einlösbar" Badge - Top Right */}
       {canAfford && userBalance > 0 && (
         <div className="absolute -top-0 -right-0 z-10">
-          <div className="bg-success text-success-foreground text-[10px] font-bold px-2 py-1 rounded-bl-xl flex items-center gap-1">
-            <Check className="h-3 w-3" />
+          <div className="bg-success text-success-foreground text-xs font-bold px-2.5 py-1.5 rounded-bl-xl flex items-center gap-1">
+            <Check className="h-3.5 w-3.5" />
             Jetzt einlösbar
           </div>
         </div>
@@ -69,13 +69,13 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
             {reward.title}
           </h3>
           {distance !== undefined && (
-            <span className="flex items-center gap-0.5 text-xs text-muted-foreground whitespace-nowrap">
-              <MapPin className="h-3 w-3" />
+            <span className="flex items-center gap-0.5 text-sm text-foreground/70 whitespace-nowrap">
+              <MapPin className="h-3.5 w-3.5" />
               {formatDistance(distance)}
             </span>
           )}
         </div>
-        <p className="text-sm text-muted-foreground line-clamp-1">
+        <p className="text-sm text-foreground/70 line-clamp-1">
           {partnerName}
         </p>
         
@@ -89,7 +89,7 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
             {reward.taler_cost.toLocaleString('de-CH')}
           </span>
           {!canAfford && userBalance > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-foreground/60">
               noch {(reward.taler_cost - userBalance).toLocaleString('de-CH')} nötig
             </span>
           )}

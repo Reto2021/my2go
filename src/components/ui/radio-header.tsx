@@ -218,7 +218,7 @@ export function RadioHeader() {
               <LiveListenerCount size="sm" showLabel={false} className="hidden sm:flex" />
             </div>
           ) : (
-            <p className="text-[10px] sm:text-xs text-secondary-foreground/70 font-medium truncate flex-1">
+            <p className="text-xs sm:text-sm text-secondary-foreground/90 font-medium truncate flex-1">
               Radio starten & Taler sammeln →
             </p>
           )}
