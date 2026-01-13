@@ -5,13 +5,12 @@ import { useLocation, calculateDistance } from '@/lib/location';
 import { PartnerCard, PartnerCardSkeleton } from '@/components/ui/partner-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
-import { PartnerMap } from '@/components/PartnerMap';
 import { GoogleReviewBadge } from '@/components/partner/GoogleReviewBadge';
 import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useOfflinePartners } from '@/hooks/useOfflineData';
 import { cn } from '@/lib/utils';
-import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, List, Map as MapIcon, Coins } from 'lucide-react';
+import { MapPin, Search, Navigation, X, Store, ChevronRight, Filter, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PartnerPage() {
@@ -21,8 +20,6 @@ export default function PartnerPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   
   // Location from global store
   const { 
@@ -60,21 +57,8 @@ export default function PartnerPage() {
     }
   };
   
-  const loadMapboxToken = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-      if (error) throw error;
-      if (data?.token) {
-        setMapboxToken(data.token);
-      }
-    } catch (err) {
-      console.error('Failed to load Mapbox token:', err);
-    }
-  };
-  
   useEffect(() => {
     loadRegions();
-    loadMapboxToken();
   }, []);
   
   const partnersList = partners || [];
@@ -227,33 +211,6 @@ export default function PartnerPage() {
               </button>
             )}
             
-            {/* View Mode Toggle */}
-            <div className="flex bg-muted rounded-lg p-0.5 shrink-0">
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  'p-1.5 rounded-md transition-all',
-                  viewMode === 'list' 
-                    ? 'bg-background shadow-sm text-foreground' 
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                aria-label="Listenansicht"
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={cn(
-                  'p-1.5 rounded-md transition-all',
-                  viewMode === 'map' 
-                    ? 'bg-background shadow-sm text-foreground' 
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-                aria-label="Kartenansicht"
-              >
-                <MapIcon className="h-4 w-4" />
-              </button>
-            </div>
           </div>
           
           {/* Offline Badge - only when from cache */}
@@ -335,7 +292,7 @@ export default function PartnerPage() {
       )}
       
       {/* Content */}
-      <div className={cn("container py-4", viewMode === 'map' && "h-[calc(100vh-280px)] min-h-[400px]")}>
+      <div className="container py-4">
         {isLoading ? (
           <div className="space-y-3 stagger-children">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -347,39 +304,6 @@ export default function PartnerPage() {
             title="Partner konnten nicht geladen werden"
             onRetry={loadData}
           />
-        ) : viewMode === 'map' ? (
-          /* Map View */
-          mapboxToken ? (
-            <div className="w-full h-full">
-              <PartnerMap 
-                partners={filteredPartners} 
-                userLocation={userLocation}
-                mapboxToken={mapboxToken}
-              />
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center bg-gradient-to-br from-muted/50 to-muted rounded-2xl relative overflow-hidden">
-              {/* Animated background */}
-              <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
-              </div>
-              
-              <div className="text-center p-6 relative z-10">
-                {/* Animated map icon with rings */}
-                <div className="relative inline-flex items-center justify-center mb-4">
-                  <div className="absolute w-16 h-16 rounded-full border-2 border-primary/20 animate-ping" style={{ animationDuration: '2s' }} />
-                  <div className="absolute w-12 h-12 rounded-full border-2 border-primary/30 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.5s' }} />
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <MapIcon className="h-7 w-7 text-primary animate-pulse" />
-                  </div>
-                </div>
-                
-                <p className="text-sm font-medium text-foreground mb-1">Karte wird geladen</p>
-                <p className="text-xs text-muted-foreground">Einen Moment bitte...</p>
-              </div>
-            </div>
-          )
         ) : filteredPartners.length === 0 ? (
           <EmptyState
             icon={Store}
