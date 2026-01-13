@@ -390,7 +390,7 @@ function SessionModeHome({
   
   return (
     <>
-    <div className="min-h-screen pb-36 bg-background">
+    <div className="min-h-screen pb-40 bg-background">
       {/* Compact Header with Greeting only */}
       <header className="container pt-4 pb-3">
         <div className="animate-in">
@@ -412,13 +412,6 @@ function SessionModeHome({
           <QuickAction to="/referral" icon={Users} label="Freunde einladen" color="accent" />
         </div>
       </section>
-      
-      {/* Play Slider - Initially inline, becomes sticky when scrolling */}
-      <div className="sticky top-0 z-40 bg-gradient-to-b from-background via-background/95 to-transparent pb-2 pt-1">
-        <section className="container">
-          <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
-        </section>
-      </div>
       
       {/* Rewards - Primary Content */}
       <section className="container section" data-onboarding="rewards-section">
@@ -475,9 +468,16 @@ function SessionModeHome({
       </section>
       
       {/* Social Proof - Compact */}
-      <section className="container pb-28">
+      <section className="container pb-4">
         <TopListenersWidget />
       </section>
+    </div>
+    
+    {/* Floating Play Slider - Fixed above bottom nav, always visible */}
+    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 px-4 pb-2 pointer-events-none">
+      <div className="container pointer-events-auto">
+        <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
+      </div>
     </div>
     
     {/* Streak Details Sheet */}
