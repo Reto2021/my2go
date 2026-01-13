@@ -291,8 +291,6 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
       
       {/* Fixed bar above BottomNav */}
       <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 pointer-events-none">
-        {/* Background blur layer */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-transparent" />
         <div className="relative mx-auto max-w-lg px-3 pointer-events-auto">
           <AnimatePresence mode="wait">
             {showMiniPlayer ? (
@@ -366,14 +364,9 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                         <TalerIcon className="h-3.5 w-3.5 text-accent" />
                         <span className="text-accent font-bold">{currentBalance}</span>
                         {justReachedTier ? (
-                          <motion.span 
-                            className="text-accent font-bold"
-                            initial={{ scale: 0.8 }}
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 0.5 }}
-                          >
+                          <span className="text-accent font-bold">
                             (+{earnedTaler} 🎉)
-                          </motion.span>
+                          </span>
                         ) : earnedTaler > 0 ? (
                           <span className="text-accent/70 font-medium">(+{earnedTaler})</span>
                         ) : secondsToNextTier > 0 ? (
