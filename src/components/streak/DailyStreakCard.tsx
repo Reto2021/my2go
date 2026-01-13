@@ -137,9 +137,9 @@ export function DailyStreakCard() {
         
         {/* Explanation Box */}
         <div className="p-3 rounded-xl bg-muted/50 mb-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             <span className="font-semibold text-foreground">So funktioniert's:</span> Öffne die App jeden Tag und hole deinen Bonus ab. 
-            Je mehr Tage in Folge, desto mehr Taler bekommst du – von 5 bis 15 Taler pro Tag!
+            Je mehr Tage in Folge, desto mehr Taler – von 5 bis 15 pro Tag!
           </p>
         </div>
 
