@@ -2,7 +2,9 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Gift, QrCode, Store, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
+
+const QR_VISITED_KEY = 'qr_page_visited';
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
@@ -15,6 +17,17 @@ const navItems = [
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [hasVisitedQR, setHasVisitedQR] = useState(() => {
+    return localStorage.getItem(QR_VISITED_KEY) === 'true';
+  });
+  
+  // Track when user visits QR page
+  useEffect(() => {
+    if (location.pathname === '/my-qr' && !hasVisitedQR) {
+      localStorage.setItem(QR_VISITED_KEY, 'true');
+      setHasVisitedQR(true);
+    }
+  }, [location.pathname, hasVisitedQR]);
   
   const handleNavClick = (e: React.MouseEvent, path: string) => {
     e.preventDefault();
@@ -64,8 +77,8 @@ export function BottomNav() {
                 isActive && 'bg-primary/20',
                 isHighlight && !isActive && 'bg-accent text-secondary'
               )}>
-                {/* Subtle glow ring for QR button */}
-                {isHighlight && !isActive && (
+                {/* Subtle glow ring for QR button - only for new users */}
+                {isHighlight && !isActive && !hasVisitedQR && (
                   <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
                 )}
                 <Icon className={cn(
