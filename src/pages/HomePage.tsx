@@ -413,6 +413,10 @@ function SessionModeHome({
         </div>
       </section>
       
+      {/* Play Slider - Initially inline, becomes sticky when scrolling */}
+      <section className="container pb-4 sticky top-0 z-40 -mx-4 px-4 bg-gradient-to-b from-background via-background to-transparent pt-2">
+        <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
+      </section>
       
       {/* Rewards - Primary Content */}
       <section className="container section" data-onboarding="rewards-section">
@@ -469,13 +473,8 @@ function SessionModeHome({
       </section>
       
       {/* Social Proof - Compact */}
-      <section className="container pb-4">
+      <section className="container pb-28">
         <TopListenersWidget />
-      </section>
-      
-      {/* Play Slider - Inline element, last in flow, sticky at bottom when scrolling */}
-      <section className="container pb-6 sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40">
-        <FloatingPlaySlider onStreakDetailsOpen={() => setShowStreakDetails(true)} />
       </section>
     </div>
     
