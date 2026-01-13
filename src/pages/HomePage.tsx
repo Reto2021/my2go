@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
 import { getRewards, getPartners, Reward, Partner } from '@/lib/supabase-helpers';
 import { prefetchCommonRoutes } from '@/lib/route-prefetch';
-import { BalanceCard } from '@/components/ui/balance-card';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
 import { 
@@ -17,8 +16,8 @@ import {
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { DailyStreakCard } from '@/components/streak/DailyStreakCard';
 import { LeaderboardInviteCard } from '@/components/leaderboard/LeaderboardInviteCard';
-import { LiveActivityFeed } from '@/components/social-proof/LiveActivityFeed';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
+import { useRadioStore } from '@/lib/radio-store';
 import {
   Gift, 
   MapPin, 
@@ -30,7 +29,10 @@ import {
   X,
   Ticket,
   Users,
-  Trophy
+  Trophy,
+  Coins,
+  Play,
+  Pause
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -389,59 +391,49 @@ function SessionModeHome({
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
+  const [showExtras, setShowExtras] = useState(false);
+  
   return (
     <div className="min-h-screen pb-28 bg-background">
-      {/* Header - greeting only, menu is in RadioHeader */}
-      {displayName && (
-        <header className="container pt-6 pb-4">
-          <p className="text-muted-foreground animate-in">
-            Hallo, <span className="font-semibold text-foreground">{displayName}</span> 👋
+      {/* Compact Header with Greeting + Inline Balance */}
+      <header className="container pt-4 pb-3">
+        <div className="flex items-center justify-between animate-in">
+          <p className="text-muted-foreground">
+            Hallo, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
           </p>
-        </header>
-      )}
-      
-      {/* Balance Card & Streak */}
-      <section className="container py-4 space-y-3">
-        <div className="animate-in">
-          <BalanceCard balance={balance} />
+          {/* Inline Balance - Compact */}
+          <Link 
+            to="/my-redemptions"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-secondary text-secondary-foreground"
+            data-onboarding="balance-card"
+          >
+            <Coins className="h-4 w-4 text-accent" />
+            <span className="text-sm font-bold tabular-nums">{balance.taler_balance.toLocaleString('de-CH')}</span>
+            <span className="text-xs opacity-70">Taler</span>
+          </Link>
         </div>
-        
-        {/* Leaderboard Invite */}
-        <LeaderboardInviteCard />
-        
-        {/* Daily Streak Card */}
-        <DailyStreakCard />
-        
-        {/* Recent Badges Bar */}
-        <RecentBadgesBar />
-        
-        {/* Top Listeners Widget - Social Proof */}
-        <TopListenersWidget />
-        
-        {/* Live Activity Feed - Social Proof */}
-        <div className="card-base p-4">
-          <LiveActivityFeed maxItems={3} />
+      </header>
+      
+      {/* Hero Radio CTA - Prominent Player Call-to-Action */}
+      <section className="container pb-4">
+        <RadioHeroCTA balance={balance} />
+      </section>
+      
+      {/* Primary Quick Actions - 4 Most Important */}
+      <section className="container pb-4">
+        <div className="grid grid-cols-4 gap-2" data-onboarding="quick-actions">
+          <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="accent" />
+          <QuickAction to="/partner" icon={MapPin} label="Partner" color="primary" />
+          <QuickAction to="/my-redemptions" icon={Ticket} label="Einlösungen" color="secondary" />
+          <QuickAction to="/my-qr" icon={Wallet} label="Mein QR" color="accent" />
         </div>
       </section>
       
-      {/* Quick Actions */}
-      <section className="container section">
-        <h2 className="section-title mb-5">Schnellzugriff</h2>
-        <div className="grid grid-cols-6 gap-2 stagger-children" data-onboarding="quick-actions">
-          <QuickAction to="/code" icon={Music} label="Radio-Code" color="accent" />
-          <QuickAction to="/my-redemptions" icon={Ticket} label="Einlösungen" color="primary" />
-          <QuickAction to="/rewards" icon={Gift} label="Gutscheine" color="primary" />
-          <QuickAction to="/partner" icon={MapPin} label="Partner" color="secondary" />
-          <QuickAction to="/referral" icon={Users} label="Einladen" color="accent" />
-          <QuickAction to="/leaderboard" icon={Trophy} label="Rangliste" color="accent" />
-        </div>
-      </section>
-      
-      {/* Rewards */}
+      {/* Rewards - Primary Content, BEFORE Gaming Features */}
       <section className="container section" data-onboarding="rewards-section">
         <div className="section-header">
           <h2 className="section-title">
-            {userLocation ? 'In deiner Nähe' : 'Für dich'}
+            {userLocation ? 'In deiner Nähe' : 'Gutscheine für dich'}
           </h2>
           <Link to="/rewards" className="section-link">
             Alle <ChevronRight className="h-4 w-4" />
@@ -452,7 +444,7 @@ function SessionModeHome({
         {userLocation ? (
           <button
             onClick={onClearLocation}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent/10 text-accent mb-4"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent/10 text-accent mb-3"
           >
             <Navigation className="h-3.5 w-3.5" />
             Standort aktiv
@@ -462,7 +454,7 @@ function SessionModeHome({
           <button
             onClick={onRequestLocation}
             disabled={isRequestingLocation}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground mb-4 hover:bg-muted/80 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground mb-3 hover:bg-muted/80 transition-colors"
           >
             <Navigation className={cn("h-3.5 w-3.5", isRequestingLocation && "animate-pulse")} />
             {isRequestingLocation ? 'Suche...' : 'Standort aktivieren'}
@@ -485,6 +477,121 @@ function SessionModeHome({
           )}
         </div>
       </section>
+      
+      {/* Collapsible Gaming & Social Section */}
+      <section className="container section">
+        <button 
+          onClick={() => setShowExtras(!showExtras)}
+          className="w-full flex items-center justify-between py-3 text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-accent" />
+            <span className="font-semibold text-foreground">Streak & Rangliste</span>
+          </div>
+          <ChevronRight className={cn(
+            "h-5 w-5 text-muted-foreground transition-transform",
+            showExtras && "rotate-90"
+          )} />
+        </button>
+        
+        {showExtras && (
+          <div className="space-y-3 pt-2 animate-in">
+            {/* Daily Streak Card */}
+            <DailyStreakCard />
+            
+            {/* Leaderboard Invite */}
+            <LeaderboardInviteCard />
+            
+            {/* Recent Badges Bar */}
+            <RecentBadgesBar />
+            
+            {/* Secondary Quick Actions */}
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <QuickAction to="/code" icon={Music} label="Radio-Code" color="accent" />
+              <QuickAction to="/referral" icon={Users} label="Einladen" color="primary" />
+              <QuickAction to="/leaderboard" icon={Trophy} label="Rangliste" color="accent" />
+            </div>
+          </div>
+        )}
+      </section>
+      
+      {/* Social Proof - Compact */}
+      <section className="container pb-6">
+        <TopListenersWidget />
+      </section>
+    </div>
+  );
+}
+
+/* New Radio Hero CTA Component */
+interface RadioHeroCTAProps {
+  balance: { taler_balance: number; lifetime_earned: number; lifetime_spent: number };
+}
+
+function RadioHeroCTA({ balance }: RadioHeroCTAProps) {
+  const { isPlaying, togglePlay, isLoading } = useRadioStore();
+  
+  return (
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary via-secondary to-primary/30 p-4 animate-in">
+      {/* Subtle animated background */}
+      <div className="absolute inset-0 opacity-30">
+        <div 
+          className="absolute inset-0 animate-gradient-shift"
+          style={{
+            background: 'conic-gradient(from 0deg, transparent, hsl(44 98% 49% / 0.3), transparent)',
+            width: '200%',
+            height: '200%',
+            top: '-50%',
+            left: '-50%',
+          }}
+        />
+      </div>
+      
+      <div className="relative z-10 flex items-center gap-4">
+        {/* Large Play Button */}
+        <button
+          onClick={togglePlay}
+          disabled={isLoading}
+          className={cn(
+            "h-16 w-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all shadow-lg",
+            isPlaying 
+              ? "bg-accent text-accent-foreground" 
+              : "bg-accent text-accent-foreground animate-pulse-play"
+          )}
+          aria-label={isPlaying ? 'Pause' : 'Radio starten'}
+        >
+          {isLoading ? (
+            <div className="h-6 w-6 border-3 border-current/30 border-t-current rounded-full animate-spin" />
+          ) : isPlaying ? (
+            <Pause className="h-7 w-7" />
+          ) : (
+            <Play className="h-7 w-7 ml-1" />
+          )}
+        </button>
+        
+        {/* Text Content */}
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-bold text-secondary-foreground leading-tight">
+            {isPlaying ? 'Du hörst Radio 2Go' : 'Radio hören & Taler sammeln'}
+          </h2>
+          <p className="text-sm text-secondary-foreground/70 mt-0.5">
+            {isPlaying 
+              ? `+5 Taler pro 30 Min • ${balance.lifetime_earned} gesammelt`
+              : 'Starte jetzt und verdiene 2Go Taler'
+            }
+          </p>
+        </div>
+        
+        {/* Stats Badge */}
+        <div className="flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl bg-white/10">
+          <span className="text-2xl font-extrabold text-accent tabular-nums">
+            {balance.lifetime_earned}
+          </span>
+          <span className="text-[10px] text-secondary-foreground/60 uppercase tracking-wide">
+            verdient
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
