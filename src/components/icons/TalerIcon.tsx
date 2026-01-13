@@ -4,15 +4,63 @@ import { cn } from '@/lib/utils';
 interface TalerIconProps {
   className?: string;
   size?: number | string;
+  variant?: 'default' | 'compact';
 }
 
 export const TalerIcon = forwardRef<SVGSVGElement, TalerIconProps>(
-  function TalerIcon({ className, size = 64 }, ref) {
+  function TalerIcon({ className, size, variant = 'default' }, ref) {
+    // Auto-detect variant based on className size
+    const isCompact = variant === 'compact' || className?.includes('h-3') || className?.includes('h-4') || className?.includes('w-3') || className?.includes('w-4');
+    
+    if (isCompact) {
+      // Simplified coin for small sizes
+      return (
+        <svg
+          ref={ref}
+          width={size || 16}
+          height={size || 16}
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={cn("flex-shrink-0", className)}
+        >
+          {/* Outer circle */}
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            fill="currentColor"
+            opacity="0.9"
+          />
+          {/* Inner highlight */}
+          <circle
+            cx="12"
+            cy="12"
+            r="7.5"
+            fill="currentColor"
+          />
+          {/* 2 symbol */}
+          <text
+            x="12"
+            y="16"
+            textAnchor="middle"
+            fontSize="11"
+            fontWeight="900"
+            fontFamily="system-ui, sans-serif"
+            fill="hsl(197, 96%, 18%)"
+          >
+            2
+          </text>
+        </svg>
+      );
+    }
+    
+    // Full detailed icon for larger sizes
     return (
       <svg
         ref={ref}
-        width={size}
-        height={size}
+        width={size || 64}
+        height={size || 64}
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -54,7 +102,7 @@ export const TalerIcon = forwardRef<SVGSVGElement, TalerIconProps>(
           );
         })}
         
-        {/* 2GO Text - Radio 2Go style: large bold "2" with smaller "GO" */}
+        {/* 2GO Text */}
         <text
           x="32"
           y="62"
