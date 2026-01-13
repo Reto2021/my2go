@@ -52,6 +52,17 @@ function useSessionProgress(tiers: ListeningTier[]) {
   const [lastTierIndex, setLastTierIndex] = useState(-1);
   const [justReachedTier, setJustReachedTier] = useState(false);
   
+  const elapsed = currentSessionDuration;
+  const safeTiers = tiers || [];
+  
+  // Calculate tier index (safe for empty array)
+  const currentTierIndex = safeTiers.length > 0 
+    ? safeTiers.findIndex((tier, i) => {
+        const nextTier = safeTiers[i + 1];
+        return elapsed >= tier.minSeconds && (!nextTier || elapsed < nextTier.minSeconds);
+      })
+    : -1;
+  
   // Update session duration every second (same as expanded player)
   useEffect(() => {
     if (!isPlaying) {
@@ -66,26 +77,7 @@ function useSessionProgress(tiers: ListeningTier[]) {
     return () => clearInterval(interval);
   }, [isPlaying, updateSessionDuration]);
   
-  const elapsed = currentSessionDuration;
-  
-  // Don't compute if no tiers loaded yet
-  if (tiers.length === 0) {
-    return {
-      elapsed,
-      earnedTaler: 0,
-      pendingTaler: 0,
-      progress: 0,
-      isMaxTier: false,
-      secondsToNextTier: 0,
-      justReachedTier: false,
-    };
-  }
-  
-  const currentTierIndex = tiers.findIndex((tier, i) => {
-    const nextTier = tiers[i + 1];
-    return elapsed >= tier.minSeconds && (!nextTier || elapsed < nextTier.minSeconds);
-  });
-  
+  // Track tier changes for celebration
   useEffect(() => {
     if (currentTierIndex > lastTierIndex && lastTierIndex >= -1 && elapsed > 0) {
       setJustReachedTier(true);
@@ -98,10 +90,23 @@ function useSessionProgress(tiers: ListeningTier[]) {
     }
   }, [currentTierIndex, lastTierIndex, elapsed]);
   
-  const earnedTaler = currentTierIndex >= 0 ? tiers[currentTierIndex].reward : 0;
+  // Early return AFTER all hooks
+  if (safeTiers.length === 0) {
+    return {
+      elapsed,
+      earnedTaler: 0,
+      pendingTaler: 0,
+      progress: 0,
+      isMaxTier: false,
+      secondsToNextTier: 0,
+      justReachedTier: false,
+    };
+  }
+  
+  const earnedTaler = currentTierIndex >= 0 ? safeTiers[currentTierIndex].reward : 0;
   const nextTierIndex = currentTierIndex + 1;
-  const nextTier = tiers[nextTierIndex];
-  const currentTier = currentTierIndex >= 0 ? tiers[currentTierIndex] : null;
+  const nextTier = safeTiers[nextTierIndex];
+  const currentTier = currentTierIndex >= 0 ? safeTiers[currentTierIndex] : null;
   
   let progress = 0;
   let secondsToNextTier = 0;
@@ -111,15 +116,15 @@ function useSessionProgress(tiers: ListeningTier[]) {
     const rangeEnd = nextTier.minSeconds;
     progress = ((elapsed - rangeStart) / (rangeEnd - rangeStart)) * 100;
     secondsToNextTier = rangeEnd - elapsed;
-  } else if (!currentTier && tiers.length > 0) {
-    progress = (elapsed / tiers[0].minSeconds) * 100;
-    secondsToNextTier = tiers[0].minSeconds - elapsed;
+  } else if (!currentTier) {
+    progress = (elapsed / safeTiers[0].minSeconds) * 100;
+    secondsToNextTier = safeTiers[0].minSeconds - elapsed;
   } else {
     progress = 100;
     secondsToNextTier = 0;
   }
   
-  const pendingTaler = nextTier?.reward || (earnedTaler === 0 && tiers.length > 0 ? tiers[0].reward : 0);
+  const pendingTaler = nextTier?.reward || (earnedTaler === 0 ? safeTiers[0].reward : 0);
   
   return {
     elapsed,
