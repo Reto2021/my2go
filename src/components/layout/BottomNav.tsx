@@ -34,11 +34,8 @@ export function BottomNav() {
   
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50" data-onboarding="bottom-nav">
-      {/* Fade gradient above nav */}
-      <div className="absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-white/90 to-transparent pointer-events-none" />
-      
       {/* Background blur */}
-      <div className="absolute inset-0 bg-white/90 backdrop-blur-xl border-t border-border/50" />
+      <div className="absolute inset-0 bg-background/95 backdrop-blur-xl border-t border-border/30" />
       
       <div className="relative container flex items-center justify-around py-1.5 pb-safe">
         {navItems.map((item) => {
@@ -67,8 +64,12 @@ export function BottomNav() {
                 isActive && 'bg-primary/20',
                 isHighlight && !isActive && 'bg-accent text-secondary'
               )}>
+                {/* Pulse ring for QR button */}
+                {isHighlight && !isActive && (
+                  <span className="absolute inset-0 rounded-lg bg-accent/30 animate-ping" />
+                )}
                 <Icon className={cn(
-                  'h-4 w-4 transition-transform duration-200',
+                  'relative h-4 w-4 transition-transform duration-200',
                   isActive && 'scale-110',
                   isHighlight && 'h-5 w-5'
                 )} strokeWidth={isActive || isHighlight ? 2.5 : 2} />
