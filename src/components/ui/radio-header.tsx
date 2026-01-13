@@ -111,9 +111,10 @@ export function RadioHeader() {
   const [showVolume, setShowVolume] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showCastMenu, setShowCastMenu] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [prevBalance, setPrevBalance] = useState<number | null>(null);
   const [balanceChanged, setBalanceChanged] = useState(false);
+  
+  const { setPlayerExpanded } = useRadioStore();
   
   // Initialize Cast SDK
   useEffect(() => {
@@ -203,7 +204,7 @@ export function RadioHeader() {
         <div 
           className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer" 
           data-onboarding="radio-player"
-          onClick={() => setIsExpanded(true)}
+          onClick={() => setPlayerExpanded(true)}
         >
           {isPlaying ? (
             <div className="flex items-center gap-2 flex-1 min-w-0">
