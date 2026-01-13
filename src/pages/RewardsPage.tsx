@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 import { 
   Gift, 
   Wallet, 
@@ -39,7 +40,8 @@ import {
   Radio,
   Navigation,
   Building2,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -127,6 +129,7 @@ export default function RewardsPage() {
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Redemptions state
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
@@ -231,6 +234,17 @@ export default function RewardsPage() {
   const filteredAndSortedRewards = useMemo(() => {
     let result = [...rewardsWithDistance];
     
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(r => 
+        r.title.toLowerCase().includes(query) ||
+        r.description?.toLowerCase().includes(query) ||
+        r.partner?.name?.toLowerCase().includes(query) ||
+        r.partner?.city?.toLowerCase().includes(query)
+      );
+    }
+    
     // Filter by category
     if (activeCategory !== 'all') {
       result = result.filter(r => r.reward_type === activeCategory);
@@ -267,7 +281,7 @@ export default function RewardsPage() {
     }
     
     return result;
-  }, [rewardsWithDistance, maxCost, sortBy, userLocation, activeCategory, selectedCity]);
+  }, [rewardsWithDistance, maxCost, sortBy, userLocation, activeCategory, selectedCity, searchQuery]);
   
   // Redemption helpers
   const getEffectiveStatus = (r: Redemption) => {
@@ -287,12 +301,13 @@ export default function RewardsPage() {
     totalSpent: redemptions.filter((r) => getEffectiveStatus(r) === 'used').reduce((sum, r) => sum + r.taler_spent, 0),
   };
   
-  const hasActiveFilters = maxCost > 0 || sortBy !== 'popular' || selectedCity !== 'all';
+  const hasActiveFilters = maxCost > 0 || sortBy !== 'popular' || selectedCity !== 'all' || searchQuery.trim() !== '';
   
   const clearFilters = () => {
     setMaxCost(0);
     setSortBy('popular');
     setSelectedCity('all');
+    setSearchQuery('');
   };
   
   const handleLocationToggle = () => {
@@ -641,6 +656,77 @@ export default function RewardsPage() {
         {/* ENTDECKEN TAB */}
         {activeTab === 'entdecken' && (
           <>
+            {/* Search Input */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Gutscheine, Partner oder Ort suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10 h-11 rounded-xl bg-muted/50"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            
+            {/* Active Filter Chips */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap gap-2 mb-4 animate-fade-in">
+                {searchQuery.trim() && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium group hover:bg-secondary/80 transition-colors"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    "{searchQuery}"
+                    <X className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100" />
+                  </button>
+                )}
+                {selectedCity !== 'all' && (
+                  <button
+                    onClick={() => setSelectedCity('all')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium group hover:bg-secondary/80 transition-colors"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    {selectedCity}
+                    <X className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100" />
+                  </button>
+                )}
+                {maxCost > 0 && (
+                  <button
+                    onClick={() => setMaxCost(0)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium group hover:bg-secondary/80 transition-colors"
+                  >
+                    <Coins className="h-3.5 w-3.5" />
+                    Bis {maxCost} Taler
+                    <X className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100" />
+                  </button>
+                )}
+                {sortBy !== 'popular' && (
+                  <button
+                    onClick={() => setSortBy('popular')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground text-sm font-medium group hover:bg-secondary/80 transition-colors"
+                  >
+                    {sortOptions.find(o => o.id === sortBy)?.label}
+                    <X className="h-3.5 w-3.5 opacity-60 group-hover:opacity-100" />
+                  </button>
+                )}
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm font-medium hover:bg-muted/80 transition-colors"
+                >
+                  Alle löschen
+                </button>
+              </div>
+            )}
+            
             {/* Results count */}
             {!isLoading && !error && (
               <p className="text-sm text-muted-foreground mb-4">
