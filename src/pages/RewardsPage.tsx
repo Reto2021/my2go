@@ -347,18 +347,42 @@ export default function RewardsPage() {
     <div className="min-h-screen pb-24">
       {/* Header */}
       <header className="sticky top-20 z-40 bg-background backdrop-blur-lg border-b border-border/50">
-        <div className="container py-4">
-          
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-display-sm">Gutscheine</h1>
-              {activeTab === 'entdecken' && (
-                <OfflineDataBadge 
-                  isFromCache={isFromCache}
-                  lastUpdated={lastUpdated}
-                  onRefresh={loadRewards}
-                />
-              )}
+        <div className="container py-3">
+          {/* Title + Tabs + Filter in one row */}
+          <div className="flex items-center gap-3 mb-3">
+            <h1 className="text-lg font-bold shrink-0">Gutscheine</h1>
+            
+            {/* Tab Switcher */}
+            <div className="flex gap-1.5 flex-1">
+              <button
+                onClick={() => setTab('entdecken')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all',
+                  activeTab === 'entdecken'
+                    ? 'bg-secondary text-secondary-foreground shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                )}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Entdecken
+              </button>
+              <button
+                onClick={() => setTab('aktiviert')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all',
+                  activeTab === 'aktiviert'
+                    ? 'bg-secondary text-secondary-foreground shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                )}
+              >
+                <Ticket className="h-3.5 w-3.5" />
+                Aktiviert
+                {pendingCount > 0 && (
+                  <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent text-secondary text-xs font-bold px-1">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
             </div>
             
             {/* Filter Toggle - Only show on entdecken tab */}
@@ -366,16 +390,15 @@ export default function RewardsPage() {
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors',
+                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-sm font-medium transition-colors shrink-0',
                   showFilters || hasActiveFilters
                     ? 'bg-secondary text-secondary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 )}
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                Filter
                 {hasActiveFilters && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs">
                     {(maxCost > 0 ? 1 : 0) + (sortBy !== 'popular' ? 1 : 0) + (selectedCity !== 'all' ? 1 : 0)}
                   </span>
                 )}
@@ -383,38 +406,15 @@ export default function RewardsPage() {
             )}
           </div>
           
-          {/* Tab Switcher */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setTab('entdecken')}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all',
-                activeTab === 'entdecken'
-                  ? 'bg-secondary text-secondary-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              )}
-            >
-              <Sparkles className="h-4 w-4" />
-              Entdecken
-            </button>
-            <button
-              onClick={() => setTab('aktiviert')}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all',
-                activeTab === 'aktiviert'
-                  ? 'bg-secondary text-secondary-foreground shadow-sm'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              )}
-            >
-              <Ticket className="h-4 w-4" />
-              Aktiviert
-              {pendingCount > 0 && (
-                <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent text-secondary text-xs font-bold px-1">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-          </div>
+          {/* Offline Badge - only on entdecken */}
+          {activeTab === 'entdecken' && isFromCache && (
+            <OfflineDataBadge 
+              isFromCache={isFromCache}
+              lastUpdated={lastUpdated}
+              onRefresh={loadRewards}
+              className="mb-2"
+            />
+          )}
           
           {/* Tab-specific content */}
           {activeTab === 'entdecken' && (
