@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate, PanInfo } from "framer-motion";
-import { Flame, Play, Lock, VolumeX, Volume2, Loader2, ChevronRight, Sparkles } from "lucide-react";
+import { Flame, Play, Lock, VolumeX, Volume2, Loader2, ChevronRight } from "lucide-react";
 import { useRadioStore } from "@/lib/radio-store";
 import { useStreak } from "@/hooks/useStreak";
 import { Confetti } from "@/components/ui/confetti";
@@ -205,7 +205,7 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
           {showSlider ? (
             <div 
               ref={containerRef}
-              className="relative h-16 rounded-2xl overflow-hidden"
+              className="relative h-16 rounded-2xl"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
                 backdropFilter: 'blur(8px)',
@@ -214,10 +214,10 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
             >
               {/* Track glow effect following slider */}
               <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent/30 via-accent/20 to-transparent rounded-2xl"
+                className="absolute inset-y-1 left-1 bg-gradient-to-r from-accent/20 via-accent/10 to-transparent rounded-xl"
                 style={{ 
-                  width: `${Math.max(64, sliderProgress * 100)}%`,
-                  opacity: 0.5 + sliderProgress * 0.5,
+                  width: `${Math.max(60, sliderProgress * 85)}%`,
+                  opacity: 0.4 + sliderProgress * 0.6,
                 }}
               />
               
@@ -226,7 +226,7 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 style={{ opacity: 1 - sliderProgress * 1.5 }}
               >
-                <div className="flex items-center gap-2 text-white/70">
+                <div className="flex items-center gap-2 text-white/60">
                   <span className="text-sm font-medium tracking-wide">Slide zum Starten</span>
                   <motion.div
                     animate={{ x: [0, 6, 0] }}
@@ -237,39 +237,23 @@ export function PlaySlider({ onStreakDetailsOpen }: PlaySliderProps) {
                 </div>
               </motion.div>
               
-              {/* Reward badge on right - animated magnetic pull */}
-              <motion.div
-                className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
-                animate={{
-                  scale: 1 + sliderProgress * 0.2,
-                  x: -sliderProgress * 8,
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              >
+              {/* Reward badge on right - inside the track */}
+              <div className="absolute right-1.5 top-1 bottom-1 flex items-center pointer-events-none">
                 <motion.div
-                  className="relative px-4 py-2.5 rounded-xl font-bold text-secondary flex items-center gap-2 overflow-hidden"
+                  className="px-4 py-2 rounded-xl font-bold text-secondary flex items-center justify-center"
+                  animate={{
+                    scale: 1 + sliderProgress * 0.15,
+                  }}
                   style={{
-                    background: `linear-gradient(135deg, 
-                      hsl(44 98% ${54 + sliderProgress * 10}%) 0%, 
-                      hsl(38 95% ${50 + sliderProgress * 10}%) 100%)`,
+                    background: `linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 95% 45%) 100%)`,
                     boxShadow: sliderProgress > 0.5 
-                      ? `0 0 ${20 + sliderProgress * 20}px hsl(44 98% 49% / ${0.3 + sliderProgress * 0.4})`
-                      : '0 4px 12px rgba(0,0,0,0.2)',
+                      ? `0 0 ${16 + sliderProgress * 16}px hsl(44 98% 49% / ${0.3 + sliderProgress * 0.4})`
+                      : '0 2px 8px rgba(0,0,0,0.15)',
                   }}
                 >
-                  {/* Sparkle effect when close */}
-                  {sliderProgress > 0.6 && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="absolute -top-1 -right-1"
-                    >
-                      <Sparkles className="h-4 w-4 text-white animate-pulse" />
-                    </motion.div>
-                  )}
-                  <span className="text-lg">+{nextBonus}</span>
+                  <span className="text-base font-bold">+{nextBonus}</span>
                 </motion.div>
-              </motion.div>
+              </div>
               
               {/* Draggable handle - Premium glass design */}
               <motion.div
