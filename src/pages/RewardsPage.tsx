@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { RewardCard, RewardCardSkeleton } from '@/components/ui/reward-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
-import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
+
 import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
@@ -438,9 +438,6 @@ export default function RewardsPage() {
                   </button>
                 )}
               </div>
-              
-              {/* Live Activity Ticker - Social Proof */}
-              <ActivityTicker className="mb-3" />
               
               {/* Location + Category Filter */}
               <div className="flex gap-2 overflow-x-auto -mx-4 px-4 scrollbar-none">
