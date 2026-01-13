@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pause, Play } from 'lucide-react';
+import { Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
+import { hapticToggle } from '@/lib/haptics';
 
 interface MiniPlayerBarProps {
   onExpand: () => void;
@@ -20,6 +21,11 @@ function Equalizer({ className }: { className?: string }) {
 
 export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
   const { isPlaying, nowPlaying, togglePlay, isLoading } = useRadioStore();
+  
+  const handleTogglePlay = () => {
+    hapticToggle();
+    togglePlay();
+  };
   
   return (
     <AnimatePresence>
@@ -63,7 +69,7 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  togglePlay();
+                  handleTogglePlay();
                 }}
                 disabled={isLoading}
                 className={cn(
