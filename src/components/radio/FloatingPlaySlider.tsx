@@ -167,16 +167,15 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
       
       {/* Inline flow element - not fixed, lives in content hierarchy */}
       <motion.div
-        initial={{ y: 20, opacity: 0, scale: 1 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ 
           y: 0, 
           opacity: 1,
-          scale: showSlider ? [1, 1.02, 1] : 1,
           boxShadow: showSlider 
             ? [
-                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 rgba(255, 170, 0, 0.5)',
-                '0 4px 25px rgba(0,0,0,0.25), 0 0 12px 6px rgba(255, 140, 0, 0)',
-                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 rgba(255, 170, 0, 0.5)',
+                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 rgba(255, 170, 0, 0.25)',
+                '0 4px 20px rgba(0,0,0,0.2), 0 0 6px 3px rgba(255, 170, 0, 0)',
+                '0 4px 20px rgba(0,0,0,0.2), 0 0 0 0 rgba(255, 170, 0, 0.25)',
               ]
             : '0 4px 20px rgba(0,0,0,0.2)',
         }}
@@ -184,11 +183,32 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
         transition={{
           y: { duration: 0.3 },
           opacity: { duration: 0.3 },
-          scale: showSlider ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 },
-          boxShadow: showSlider ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 },
+          boxShadow: showSlider ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" } : { duration: 0.3 },
         }}
-        className="rounded-2xl bg-secondary shadow-strong overflow-hidden"
+        className="rounded-2xl bg-secondary shadow-strong overflow-hidden relative"
       >
+        {/* Shine effect */}
+        {showSlider && (
+          <motion.div
+            className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl z-20"
+            initial={false}
+          >
+            <motion.div
+              className="absolute inset-y-0 w-24 -skew-x-12"
+              style={{
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)',
+              }}
+              animate={{ x: ['-100%', '400%'] }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                repeatDelay: 2,
+                ease: "easeInOut",
+              }}
+            />
+          </motion.div>
+        )}
+        
         {/* Lock progress bar */}
         {isLocked && (
           <div className="h-1 bg-white/10">
