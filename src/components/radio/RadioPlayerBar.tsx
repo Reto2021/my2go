@@ -415,7 +415,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 </div>
               </motion.div>
             ) : (
-              /* ===== STATE 1 & 2: Slider Mode ===== */
+              /* ===== STATE 1 & 2: Slider Mode with Balance/Streak Header ===== */
               <motion.div
                 key="slider"
                 initial={{ y: 20, opacity: 0 }}
@@ -440,6 +440,36 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                 }}
                 className="rounded-2xl bg-secondary shadow-strong overflow-hidden relative"
               >
+                {/* Balance + Streak Header Row */}
+                <div className="flex items-center justify-between px-3 py-2 border-b border-white/5">
+                  {/* Balance */}
+                  <div className="flex items-center gap-1.5">
+                    <TalerIcon className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-bold text-secondary-foreground">{currentBalance}</span>
+                    <span className="text-xs text-secondary-foreground/50">Taler</span>
+                  </div>
+                  
+                  {/* Streak */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStreakDetailsOpen?.();
+                    }}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    <Flame className={cn(
+                      "h-4 w-4",
+                      currentStreak > 0 ? "text-accent" : "text-secondary-foreground/40"
+                    )} />
+                    <span className={cn(
+                      "text-sm font-bold",
+                      currentStreak > 0 ? "text-accent" : "text-secondary-foreground/40"
+                    )}>
+                      {currentStreak}
+                    </span>
+                    <span className="text-xs text-secondary-foreground/50">Tage</span>
+                  </button>
+                </div>
                 {/* Shine effect - only when bonus available */}
                 {hasBonusAvailable && (
                   <motion.div
