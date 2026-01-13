@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
-import { getRewards, getPartners, Reward, Partner } from '@/lib/supabase-helpers';
+import { getRewards, getPartnersWithMinRewardCost, Reward, PartnerWithMinCost } from '@/lib/supabase-helpers';
 import { prefetchCommonRoutes } from '@/lib/route-prefetch';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
@@ -56,7 +56,7 @@ export default function HomePage() {
   } = useLocation();
   
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [partners, setPartners] = useState<Partner[]>([]);
+  const [partners, setPartners] = useState<PartnerWithMinCost[]>([]);
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
@@ -78,7 +78,7 @@ export default function HomePage() {
       try {
         const [rewardsData, partnersData] = await Promise.all([
           getRewards(),
-          getPartners(),
+          getPartnersWithMinRewardCost(),
         ]);
         
         // Sort by distance if user location is available
@@ -195,7 +195,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 interface BrowseModeHomeProps {
   rewards: Reward[];
-  partners: Partner[];
+  partners: PartnerWithMinCost[];
   isLoading: boolean;
   onLogin: () => void;
 }
@@ -306,7 +306,7 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
             </div>
           ) : (
             partners.slice(0, 2).map(partner => (
-              <PartnerCard key={partner.id} partner={partner} />
+              <PartnerCard key={partner.id} partner={partner} minTalerCost={partner.minRewardCost} />
             ))
           )}
         </div>

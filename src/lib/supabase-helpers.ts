@@ -281,6 +281,10 @@ export async function getTransactions(userId: string, limit = 50): Promise<Trans
 // PARTNERS
 // ============================================================================
 
+export interface PartnerWithMinCost extends Partner {
+  minRewardCost?: number;
+}
+
 export async function getPartners(): Promise<Partner[]> {
   // Use secure RPC function that only exposes public-safe fields
   const { data, error } = await supabase.rpc('get_public_partners');
@@ -291,6 +295,47 @@ export async function getPartners(): Promise<Partner[]> {
   }
   
   return (data || []) as Partner[];
+}
+
+/**
+ * Get partners with their minimum reward cost for "Ab X Taler" badge
+ */
+export async function getPartnersWithMinRewardCost(): Promise<PartnerWithMinCost[]> {
+  // Get partners
+  const { data: partnersData, error: partnersError } = await supabase.rpc('get_public_partners');
+  
+  if (partnersError) {
+    console.error('Error fetching partners:', partnersError);
+    return [];
+  }
+  
+  const partners = (partnersData || []) as Partner[];
+  
+  // Get min reward cost per partner (only active rewards)
+  const { data: rewardsData, error: rewardsError } = await supabase
+    .from('rewards')
+    .select('partner_id, taler_cost')
+    .eq('is_active', true);
+  
+  if (rewardsError) {
+    console.error('Error fetching rewards for min cost:', rewardsError);
+    return partners; // Return partners without min cost if rewards fail
+  }
+  
+  // Build min cost map per partner
+  const minCostMap = new Map<string, number>();
+  (rewardsData || []).forEach(reward => {
+    const current = minCostMap.get(reward.partner_id);
+    if (current === undefined || reward.taler_cost < current) {
+      minCostMap.set(reward.partner_id, reward.taler_cost);
+    }
+  });
+  
+  // Merge min cost into partners
+  return partners.map(partner => ({
+    ...partner,
+    minRewardCost: minCostMap.get(partner.id),
+  }));
 }
 
 export async function getPartnerBySlug(slug: string): Promise<Partner | null> {
