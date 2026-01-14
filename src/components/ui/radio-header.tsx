@@ -185,23 +185,23 @@ export function RadioHeader() {
             {/* Taler Balance - compact on mobile, larger touch target */}
             {realBalance && (
               <motion.div 
-                className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/15 min-h-[32px]"
+                className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-accent/15"
                 animate={balanceChanged ? {
                   scale: [1, 1.15, 1],
                   boxShadow: [
                     '0 0 0 0 hsla(44, 98%, 49%, 0)',
-                    '0 0 0 6px hsla(44, 98%, 49%, 0.3)',
+                    '0 0 0 4px hsla(44, 98%, 49%, 0.3)',
                     '0 0 0 0 hsla(44, 98%, 49%, 0)'
                   ]
                 } : {}}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
                 <Coins className={cn(
-                  "h-3.5 w-3.5 text-accent transition-transform",
+                  "h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent transition-transform",
                   balanceChanged && "animate-spin"
                 )} />
-                <span className="text-xs font-bold text-accent tabular-nums whitespace-nowrap">
-                  {realBalance.taler_balance.toLocaleString('de-CH')}<span className="hidden sm:inline"> Taler</span>
+                <span className="text-[11px] sm:text-xs font-bold text-accent tabular-nums">
+                  {realBalance.taler_balance.toLocaleString('de-CH')}
                 </span>
               </motion.div>
             )}
