@@ -329,15 +329,15 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       </section>
       
       {/* Info / Footer */}
-      <section className="container pb-44">
-        <div className="py-12 px-8 rounded-3xl bg-secondary/5 border border-secondary/10">
-          <p className="text-lg text-muted-foreground text-center mb-6">
+      <section className="container pb-32">
+        <div className="p-6 rounded-2xl bg-secondary/5 border border-secondary/10">
+          <p className="text-sm text-muted-foreground text-center mb-3">
             2Go Taler sind Bonuspunkte und nicht auszahlbar.
           </p>
-          <div className="flex justify-center flex-wrap gap-x-10 gap-y-3 text-lg text-muted-foreground/80">
-            <Link to="/impressum" className="hover:text-foreground transition-colors py-2">Impressum</Link>
-            <Link to="/datenschutz" className="hover:text-foreground transition-colors py-2">Datenschutz</Link>
-            <Link to="/agb" className="hover:text-foreground transition-colors py-2">AGB</Link>
+          <div className="flex justify-center gap-4 text-xs text-muted-foreground/70">
+            <Link to="/impressum" className="hover:text-foreground transition-colors">Impressum</Link>
+            <Link to="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link>
+            <Link to="/agb" className="hover:text-foreground transition-colors">AGB</Link>
           </div>
         </div>
       </section>
