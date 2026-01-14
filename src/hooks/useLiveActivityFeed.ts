@@ -90,11 +90,35 @@ function getStreakMessage(days: number): string {
   return `${days}-Tage Streak geht weiter 🔥`;
 }
 
-// Sample partner names for mock activities
-const SAMPLE_PARTNERS = [
-  'Café Müller', 'Bäckerei Schmid', 'Pizzeria Roma', 'Restaurant Sonne',
-  'Blumen Hofer', 'Coiffeur Style', 'Fitness Plus', 'Buchhandlung Meier'
-];
+// Cached partner names from database
+let cachedPartnerNames: string[] = [];
+
+async function loadPartnerNames() {
+  if (cachedPartnerNames.length > 0) return cachedPartnerNames;
+  
+  try {
+    const { data } = await supabase.rpc('get_public_partners_safe');
+    if (data && data.length > 0) {
+      cachedPartnerNames = data.map((p: { name: string }) => p.name);
+    }
+  } catch {
+    // Fallback to sample names
+  }
+  
+  // Fallback if no partners loaded
+  if (cachedPartnerNames.length === 0) {
+    cachedPartnerNames = ['Café Müller', 'Bäckerei Schmid', 'Pizzeria Roma', 'Restaurant Sonne'];
+  }
+  
+  return cachedPartnerNames;
+}
+
+function getRandomPartnerName(): string {
+  if (cachedPartnerNames.length === 0) {
+    return 'Partner';
+  }
+  return cachedPartnerNames[Math.floor(Math.random() * cachedPartnerNames.length)];
+}
 
 function createMockActivity(): ActivityItem {
   const types: ActivityItem['type'][] = ['taler_earned', 'redemption', 'badge', 'streak', 'referral', 'milestone', 'streak_start'];
@@ -140,7 +164,7 @@ function createMockActivity(): ActivityItem {
 
   // Special handling for redemption - use partner names
   if (selectedType === 'redemption') {
-    const partnerName = SAMPLE_PARTNERS[Math.floor(Math.random() * SAMPLE_PARTNERS.length)];
+    const partnerName = getRandomPartnerName();
     return {
       id: `mock-${Date.now()}-${Math.random()}`,
       type: 'redemption',
@@ -172,16 +196,23 @@ export function useLiveActivityFeed(maxItems: number = 5) {
   }, [maxItems]);
 
   useEffect(() => {
-    // Initialize with some recent activities
-    const initialActivities: ActivityItem[] = [];
-    for (let i = 0; i < 3; i++) {
-      initialActivities.push({
-        ...createMockActivity(),
-        timestamp: new Date(Date.now() - i * 30000), // 30 seconds apart
-      });
-    }
-    setActivities(initialActivities);
-    setIsConnected(true);
+    // Load partner names first, then initialize activities
+    const initializeActivities = async () => {
+      await loadPartnerNames();
+      
+      // Initialize with some recent activities
+      const initialActivities: ActivityItem[] = [];
+      for (let i = 0; i < 3; i++) {
+        initialActivities.push({
+          ...createMockActivity(),
+          timestamp: new Date(Date.now() - i * 30000), // 30 seconds apart
+        });
+      }
+      setActivities(initialActivities);
+      setIsConnected(true);
+    };
+    
+    initializeActivities();
 
     // Listen to real transactions (including Taler milestones)
     const transactionChannel = supabase
