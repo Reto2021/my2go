@@ -244,26 +244,6 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* DEBUG: Solid red bar to test if rendering works */}
-              <motion.div
-                className="absolute top-0 bottom-0 rounded-xl"
-                style={{
-                  width: 80,
-                  background: '#FF0000',
-                  zIndex: 999,
-                  left: 60,
-                }}
-                animate={{
-                  x: [0, 250],
-                  opacity: [1, 1],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-              />
-              
               {/* Track glow */}
               <motion.div
                 className="absolute inset-y-1 left-1 bg-gradient-to-r from-accent/20 to-transparent rounded-lg"
