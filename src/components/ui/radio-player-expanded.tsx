@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
@@ -143,8 +143,19 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0.1, bottom: 0.4 }}
+          onDragEnd={(_, info) => {
+            // Swipe down to close
+            if (info.offset.y > 100 || info.velocity.y > 500) {
+              onClose();
+            }
+          }}
+          className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black touch-pan-x"
         >
+          {/* Swipe indicator */}
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/30 z-10" />
           {/* Header */}
           <div className="flex items-center justify-between p-3 sm:p-4 flex-shrink-0" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
             <button
@@ -450,6 +461,15 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
 }) {
   const hasVideo = !!videoUrl;
   const shouldShowVideo = showVideo && hasVideo;
+  const [showHint, setShowHint] = useState(true);
+
+  // Auto-hide hint after 4 seconds
+  useEffect(() => {
+    if (hasVideo && showHint) {
+      const timer = setTimeout(() => setShowHint(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasVideo, showHint]);
 
   return (
     <div className="relative">
@@ -458,6 +478,8 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
         className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0 w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
+        onClick={hasVideo ? onToggleMedia : undefined}
+        style={{ cursor: hasVideo ? 'pointer' : 'default' }}
       >
         {shouldShowVideo ? (
           <video
@@ -483,8 +505,25 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
           </div>
         )}
         
+        {/* Video hint overlay - shows when video is available but not playing */}
+        <AnimatePresence>
+          {hasVideo && !shouldShowVideo && showHint && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
+            >
+              <div className="flex flex-col items-center gap-2 text-white">
+                <Video className="h-8 w-8" />
+                <span className="text-sm font-medium">Tippe für Video</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Playing indicator */}
-        {isPlaying && !shouldShowVideo && (
+        {isPlaying && !shouldShowVideo && !showHint && (
           <div className="absolute bottom-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
             <div className="flex items-end gap-0.5 h-4">
               <motion.div
@@ -508,11 +547,11 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
         )}
       </motion.div>
       
-      {/* Video/Cover Toggle Button */}
+      {/* Video/Cover Toggle Button - small indicator */}
       {hasVideo && (
         <button
           onClick={onToggleMedia}
-          className="absolute top-3 right-3 h-9 w-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+          className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors z-10"
           title={shouldShowVideo ? 'Cover anzeigen' : 'Video anzeigen'}
         >
           {shouldShowVideo ? (
