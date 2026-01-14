@@ -163,6 +163,12 @@ export default {
           "0%, 100%": { transform: "translateX(0)" },
           "50%": { transform: "translateX(4px)" },
         },
+        "slider-shimmer": {
+          "0%": { left: "-100px", opacity: "0" },
+          "10%": { opacity: "1" },
+          "90%": { opacity: "1" },
+          "100%": { left: "100%", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -182,6 +188,8 @@ export default {
         "brush-stroke": "brush-stroke 0.7s ease-out forwards",
         "pulse-play": "pulse-play 2s ease-in-out infinite",
         "bounce-x": "bounce-x 1s ease-in-out infinite",
+        "slider-shimmer": "slider-shimmer 1.8s ease-in-out infinite",
+        "slider-shimmer-delayed": "slider-shimmer 1.8s ease-in-out infinite 0.35s",
       },
       transitionTimingFunction: {
         "bounce-in": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",

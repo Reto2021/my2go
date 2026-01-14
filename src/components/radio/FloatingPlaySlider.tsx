@@ -244,21 +244,22 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Gold shimmer bars moving across slider */}
-              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[5]">
-                {/* Main shimmer bar */}
+              {/* VERY VISIBLE Gold shimmer bars */}
+              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[10]">
+                {/* Main wide shimmer bar */}
                 <div 
-                  className="absolute top-0 bottom-0 w-20 animate-gold-shimmer"
+                  className="absolute top-0 bottom-0 w-32 animate-slider-shimmer"
                   style={{
-                    background: 'linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.9), rgba(255, 230, 100, 1), rgba(255, 200, 0, 0.9), transparent)',
-                    boxShadow: '0 0 30px 5px rgba(255, 200, 0, 0.5)',
+                    background: 'linear-gradient(90deg, transparent 0%, #FFB800 30%, #FFDD00 50%, #FFB800 70%, transparent 100%)',
+                    boxShadow: '0 0 40px 10px rgba(255, 200, 0, 0.7)',
                   }}
                 />
                 {/* Second shimmer bar - delayed */}
                 <div 
-                  className="absolute top-0 bottom-0 w-12 animate-gold-shimmer-delayed"
+                  className="absolute top-0 bottom-0 w-20 animate-slider-shimmer-delayed"
                   style={{
-                    background: 'linear-gradient(90deg, transparent, rgba(255, 220, 50, 0.7), transparent)',
+                    background: 'linear-gradient(90deg, transparent 0%, #FFD000 40%, #FFEE55 50%, #FFD000 60%, transparent 100%)',
+                    boxShadow: '0 0 25px 5px rgba(255, 220, 0, 0.5)',
                   }}
                 />
               </div>
