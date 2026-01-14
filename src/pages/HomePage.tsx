@@ -329,15 +329,15 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       </section>
       
       {/* Info / Footer */}
-      <section className="container pb-40">
-        <div className="py-10 px-6 rounded-3xl bg-secondary/5 border border-secondary/10">
-          <p className="text-base text-muted-foreground text-center mb-5">
+      <section className="container pb-44">
+        <div className="py-12 px-8 rounded-3xl bg-secondary/5 border border-secondary/10">
+          <p className="text-lg text-muted-foreground text-center mb-6">
             2Go Taler sind Bonuspunkte und nicht auszahlbar.
           </p>
-          <div className="flex justify-center flex-wrap gap-x-8 gap-y-2 text-base text-muted-foreground/80">
-            <Link to="/impressum" className="hover:text-foreground transition-colors">Impressum</Link>
-            <Link to="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link>
-            <Link to="/agb" className="hover:text-foreground transition-colors">AGB</Link>
+          <div className="flex justify-center flex-wrap gap-x-10 gap-y-3 text-lg text-muted-foreground/80">
+            <Link to="/impressum" className="hover:text-foreground transition-colors py-2">Impressum</Link>
+            <Link to="/datenschutz" className="hover:text-foreground transition-colors py-2">Datenschutz</Link>
+            <Link to="/agb" className="hover:text-foreground transition-colors py-2">AGB</Link>
           </div>
         </div>
       </section>
@@ -361,13 +361,13 @@ function FeatureChip({ icon: Icon, label, fullLabel, color, to }: FeatureChipPro
   };
   
   return (
-    <Link to={to} className="card-glass p-4 sm:p-5 flex flex-col items-center gap-3 hover:scale-105 transition-transform">
-      <div className={`flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl ${colorClasses[color]}`}>
-        <Icon className="h-7 w-7 sm:h-8 sm:w-8" />
+    <Link to={to} className="card-glass p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3 hover:scale-105 transition-transform">
+      <div className={`icon-container-md rounded-2xl ${colorClasses[color]}`}>
+        <Icon className="h-5 w-5" />
       </div>
       {/* Short label on mobile, full label on larger screens */}
-      <span className="text-sm font-bold text-center text-foreground sm:hidden">{label}</span>
-      <span className="text-base font-bold text-center text-foreground hidden sm:block">{fullLabel || label}</span>
+      <span className="text-xs sm:text-sm font-semibold text-center text-foreground sm:hidden">{label}</span>
+      <span className="text-sm font-semibold text-center text-foreground hidden sm:block">{fullLabel || label}</span>
     </Link>
   );
 }
