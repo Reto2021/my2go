@@ -142,49 +142,49 @@ export function RadioHeader() {
         />
       </div>
       
-      <div className="relative container flex items-center gap-2 sm:gap-3 py-1.5 sm:py-2">
+      <div className="relative container flex items-center gap-1.5 sm:gap-3 py-1.5 sm:py-2">
         {/* Logo - responsive size */}
         <Link to="/" className="flex-shrink-0">
           <img 
             src={logo} 
             alt="Radio 2Go" 
-            className="h-10 sm:h-14 hover:opacity-80 transition-opacity"
+            className="h-8 sm:h-14 hover:opacity-80 transition-opacity"
           />
         </Link>
         
-        {/* Clock & Weather Widget - hidden on very small screens */}
-        <ClockWeatherWidget className="flex-shrink-0 hidden xs:flex" />
+        {/* Clock & Weather Widget - hidden on small screens */}
+        <ClockWeatherWidget className="flex-shrink-0 hidden sm:flex" />
         
         {/* Player area - Status only, no play button here */}
         <div 
-          className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer" 
+          className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0 cursor-pointer overflow-hidden" 
           data-onboarding="radio-player"
           onClick={() => setPlayerExpanded(true)}
         >
           {isPlaying ? (
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 overflow-hidden">
               {/* Equalizer indicator */}
               <Equalizer className="flex-shrink-0" />
-              {/* Song info with marquee */}
-              <Marquee className="flex-1 min-w-0 text-[10px] sm:text-xs text-secondary-foreground font-medium">
+              {/* Song info with marquee - truncated on mobile */}
+              <span className="text-[10px] sm:text-xs text-secondary-foreground font-medium truncate flex-1 min-w-0">
                 {nowPlaying ? `${nowPlaying.artist} – ${nowPlaying.title}` : "Lädt..."}
-              </Marquee>
-              {/* Live Listener Count */}
-              <LiveListenerCount size="sm" showLabel={false} className="flex" />
+              </span>
+              {/* Live Listener Count - hidden on very small screens */}
+              <LiveListenerCount size="sm" showLabel={false} className="hidden xs:flex flex-shrink-0" />
             </div>
           ) : (
-            <p className="text-xs sm:text-sm text-secondary-foreground/90 font-medium truncate flex-1">
-              Radio starten & Taler sammeln →
+            <p className="text-[10px] sm:text-sm text-secondary-foreground/90 font-medium truncate flex-1">
+              Radio starten →
             </p>
           )}
         </div>
         {/* Taler Balance + User Menu - only when logged in */}
         {isAuthenticated && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Taler Balance */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Taler Balance - compact on mobile */}
             {realBalance && (
               <motion.div 
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/20"
+                className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/20"
                 animate={balanceChanged ? {
                   scale: [1, 1.15, 1],
                   boxShadow: [
@@ -196,21 +196,12 @@ export function RadioHeader() {
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
                 <Coins className={cn(
-                  "h-3.5 w-3.5 text-accent transition-transform",
+                  "h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent transition-transform",
                   balanceChanged && "animate-spin"
                 )} />
-                <AnimatePresence mode="wait">
-                  <motion.span 
-                    key={realBalance.taler_balance}
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 10, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-xs font-bold text-accent tabular-nums"
-                  >
-                    {realBalance.taler_balance.toLocaleString('de-CH')} Taler
-                  </motion.span>
-                </AnimatePresence>
+                <span className="text-[10px] sm:text-xs font-bold text-accent tabular-nums whitespace-nowrap">
+                  {realBalance.taler_balance.toLocaleString('de-CH')}<span className="hidden sm:inline"> Taler</span>
+                </span>
               </motion.div>
             )}
             
