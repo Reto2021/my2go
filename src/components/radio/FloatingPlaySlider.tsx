@@ -247,18 +247,18 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
               {/* Shimmer effect across entire track */}
               {sliderProgress === 0 && (
                 <motion.div
-                  className="absolute inset-0 pointer-events-none z-[1]"
+                  className="absolute inset-0 pointer-events-none z-[5]"
                 >
                   <motion.div
-                    className="absolute inset-y-0 w-16 -skew-x-12"
+                    className="absolute inset-y-0 w-20 -skew-x-12"
                     style={{
-                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)',
                     }}
-                    animate={{ x: ['-20%', '450%'] }}
+                    animate={{ x: ['-80px', '400px'] }}
                     transition={{
-                      duration: 2,
+                      duration: 1.8,
                       repeat: Infinity,
-                      repeatDelay: 0.8,
+                      repeatDelay: 0.6,
                       ease: "easeInOut",
                     }}
                   />
