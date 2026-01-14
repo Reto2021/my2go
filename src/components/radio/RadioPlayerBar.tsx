@@ -588,7 +588,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                       border: '1px solid rgba(255,255,255,0.12)',
                     }}
                   >
-                    {/* Soft spotlight - warm champagne glow matching accent */}
+                    {/* Soft spotlight - cool sky-blue glow matching primary */}
                     <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ zIndex: 10 }}>
                       <motion.div
                         className="absolute"
@@ -597,7 +597,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                           height: 100,
                           top: '50%',
                           marginTop: -50,
-                          background: 'radial-gradient(circle, rgba(252, 220, 140, 0.4) 0%, rgba(252, 200, 100, 0.15) 45%, transparent 70%)',
+                          background: 'radial-gradient(circle, rgba(122, 184, 214, 0.45) 0%, rgba(122, 184, 214, 0.2) 45%, transparent 70%)',
                           filter: 'blur(10px)',
                         }}
                         animate={{ 
