@@ -588,27 +588,27 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                       border: '1px solid rgba(255,255,255,0.12)',
                     }}
                   >
-                    {/* Soft spotlight - organic glow effect */}
+                    {/* Soft spotlight - warm champagne glow matching accent */}
                     <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ zIndex: 10 }}>
                       <motion.div
                         className="absolute"
                         style={{
-                          width: 120,
-                          height: 120,
+                          width: 100,
+                          height: 100,
                           top: '50%',
-                          marginTop: -60,
-                          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 40%, transparent 70%)',
-                          filter: 'blur(8px)',
+                          marginTop: -50,
+                          background: 'radial-gradient(circle, rgba(252, 220, 140, 0.4) 0%, rgba(252, 200, 100, 0.15) 45%, transparent 70%)',
+                          filter: 'blur(10px)',
                         }}
                         animate={{ 
-                          x: [-60, 320],
-                          opacity: [0, 0.8, 1, 0.8, 0],
+                          x: [-50, 300],
+                          opacity: [0, 0.7, 0.9, 0.7, 0],
                         }}
                         transition={{
-                          duration: 3,
+                          duration: 3.5,
                           repeat: Infinity,
                           ease: 'easeInOut',
-                          repeatDelay: 1.5,
+                          repeatDelay: 2,
                         }}
                       />
                     </div>
