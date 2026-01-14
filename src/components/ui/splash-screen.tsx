@@ -11,20 +11,20 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <motion.img
         src="/pwa-192x192.png"
         alt="2Go"
-        className="h-24 sm:h-32 w-auto"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className="w-32 h-32 sm:w-40 sm:h-40"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1.2 }}
         transition={{ 
-          duration: 0.8, 
-          ease: [0.25, 0.46, 0.45, 0.94]
+          duration: 2.5, 
+          ease: [0.25, 0.1, 0.25, 1]
         }}
         onAnimationComplete={() => {
-          setTimeout(onComplete, 400);
+          setTimeout(onComplete, 500);
         }}
       />
     </motion.div>
