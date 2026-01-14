@@ -19,7 +19,7 @@ export function WhatsAppButton({ className }: { className?: string }) {
         'shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40',
         'transition-all duration-300',
         // Position above bottom nav + player bar with safe area
-        'bottom-[calc(12rem+env(safe-area-inset-bottom))] right-3',
+        'bottom-[calc(12.5rem+env(safe-area-inset-bottom))] right-3',
         className
       )}
       aria-label="WhatsApp Studio kontaktieren"
