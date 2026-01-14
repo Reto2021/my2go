@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BadgeIcon } from '@/components/badges/BadgeIcon';
+import { MarketingOptInWidget } from '@/components/admin/MarketingOptInWidget';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -137,6 +138,9 @@ export default function AdminDashboard() {
           </Link>
         ))}
       </div>
+      
+      {/* Marketing Opt-In Analytics */}
+      <MarketingOptInWidget />
       
       {/* Badge Statistics */}
       <div className="card-base p-6">
