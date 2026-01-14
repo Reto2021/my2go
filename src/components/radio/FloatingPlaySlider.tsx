@@ -244,22 +244,45 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* VERY VISIBLE Gold shimmer bars */}
-              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[10]">
-                {/* Main wide shimmer bar */}
-                <div 
-                  className="absolute top-0 bottom-0 w-32 animate-slider-shimmer"
+              {/* Gold shimmer using framer-motion for guaranteed visibility */}
+              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none" style={{ zIndex: 50 }}>
+                {/* Primary shimmer bar */}
+                <motion.div
+                  className="absolute top-0 bottom-0"
                   style={{
-                    background: 'linear-gradient(90deg, transparent 0%, #FFB800 30%, #FFDD00 50%, #FFB800 70%, transparent 100%)',
-                    boxShadow: '0 0 40px 10px rgba(255, 200, 0, 0.7)',
+                    width: '120px',
+                    background: 'linear-gradient(90deg, transparent 0%, #FFB800 25%, #FFEE00 50%, #FFB800 75%, transparent 100%)',
+                    boxShadow: '0 0 50px 15px rgba(255, 200, 0, 0.8)',
+                    left: 0,
+                  }}
+                  animate={{
+                    left: ['0px', '100%'],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    repeatDelay: 0.3,
                   }}
                 />
-                {/* Second shimmer bar - delayed */}
-                <div 
-                  className="absolute top-0 bottom-0 w-20 animate-slider-shimmer-delayed"
+                {/* Secondary shimmer bar */}
+                <motion.div
+                  className="absolute top-0 bottom-0"
                   style={{
-                    background: 'linear-gradient(90deg, transparent 0%, #FFD000 40%, #FFEE55 50%, #FFD000 60%, transparent 100%)',
-                    boxShadow: '0 0 25px 5px rgba(255, 220, 0, 0.5)',
+                    width: '80px',
+                    background: 'linear-gradient(90deg, transparent 0%, #FFD700 30%, #FFFF80 50%, #FFD700 70%, transparent 100%)',
+                    boxShadow: '0 0 30px 8px rgba(255, 215, 0, 0.6)',
+                    left: 0,
+                  }}
+                  animate={{
+                    left: ['0px', '100%'],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    repeatDelay: 0.3,
+                    delay: 0.3,
                   }}
                 />
               </div>
