@@ -319,6 +319,13 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 dragElastic={0.05}
                 onDragEnd={handleDragEnd}
                 style={{ x }}
+                animate={sliderProgress === 0 ? { x: [0, 8, 0] } : undefined}
+                transition={sliderProgress === 0 ? { 
+                  duration: 1.8, 
+                  repeat: Infinity, 
+                  ease: "easeInOut",
+                  repeatDelay: 0.5
+                } : undefined}
                 whileDrag={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="absolute left-1 top-1 bottom-1 w-14 cursor-grab active:cursor-grabbing z-10"
