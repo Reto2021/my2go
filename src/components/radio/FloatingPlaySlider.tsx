@@ -244,32 +244,40 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Gold shimmer overlay - CSS animation for reliability */}
-              <div 
-                className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[5]"
-                style={{
-                  background: `linear-gradient(
-                    90deg,
-                    transparent 0%,
-                    transparent 25%,
-                    rgba(255, 180, 0, 0.5) 35%,
-                    rgba(255, 220, 80, 0.7) 40%,
-                    rgba(255, 180, 0, 0.5) 45%,
-                    transparent 55%,
-                    transparent 70%,
-                    rgba(255, 200, 50, 0.4) 78%,
-                    rgba(255, 220, 80, 0.5) 82%,
-                    rgba(255, 200, 50, 0.4) 86%,
-                    transparent 100%
-                  )`,
-                  backgroundSize: '300% 100%',
-                  animation: 'shimmerSlide 2s ease-in-out infinite',
-                }}
-              />
+              {/* Gold shimmer bar moving across - very visible */}
+              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[5]">
+                <div 
+                  className="absolute top-0 bottom-0 w-20"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.8), rgba(255, 230, 100, 1), rgba(255, 200, 0, 0.8), transparent)',
+                    animation: 'goldShimmer 1.5s ease-in-out infinite',
+                    boxShadow: '0 0 20px rgba(255, 200, 0, 0.6)',
+                  }}
+                />
+                <div 
+                  className="absolute top-0 bottom-0 w-12"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 220, 50, 0.6), transparent)',
+                    animation: 'goldShimmer 1.5s ease-in-out infinite 0.3s',
+                  }}
+                />
+              </div>
               <style>{`
-                @keyframes shimmerSlide {
-                  0% { background-position: 100% 0; }
-                  100% { background-position: -100% 0; }
+                @keyframes goldShimmer {
+                  0% { 
+                    left: -80px;
+                    opacity: 0;
+                  }
+                  10% {
+                    opacity: 1;
+                  }
+                  90% {
+                    opacity: 1;
+                  }
+                  100% { 
+                    left: calc(100% + 80px);
+                    opacity: 0;
+                  }
                 }
               `}</style>
               
