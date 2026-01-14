@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const STREAM_URL = 'http://uksoutha.streaming.broadcast.radio/radio2go';
+const STREAM_URL = 'https://uksoutha.streaming.broadcast.radio/radio2go';
 const API_URL = 'https://api.broadcast.radio/api/nowplaying/2400';
 const ARTWORK_BASE = 'https://api.broadcast.radio';
 const DEFAULT_ARTWORK = '/pwa-512x512.png';
