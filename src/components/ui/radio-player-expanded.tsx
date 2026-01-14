@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Play, 
   Pause, 
@@ -41,6 +42,7 @@ interface ExpandedRadioPlayerProps {
 }
 
 export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProps) {
+  const navigate = useNavigate();
   const auth = useAuthSafe();
   const user = auth?.user ?? null;
   const isAuthenticated = !!user;
@@ -293,10 +295,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       type="button"
                       onClick={() => {
                         onClose();
-                        // Small delay to ensure player closes before navigation
-                        setTimeout(() => {
-                          window.location.href = '/auth';
-                        }, 100);
+                        navigate('/auth');
                       }}
                       className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-accent text-accent-foreground font-semibold text-sm active:scale-95 transition-transform touch-manipulation"
                     >
