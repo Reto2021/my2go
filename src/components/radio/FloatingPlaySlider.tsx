@@ -244,25 +244,41 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Shimmer effect across entire track */}
+              {/* Double gold shimmer effect across entire track */}
               {sliderProgress === 0 && (
-                <motion.div
-                  className="absolute inset-0 pointer-events-none z-[5]"
-                >
+                <div className="absolute inset-0 pointer-events-none z-[5] overflow-hidden">
+                  {/* First shimmer - gold */}
                   <motion.div
-                    className="absolute inset-y-0 w-20 -skew-x-12"
+                    className="absolute inset-y-0 w-24 -skew-x-12"
                     style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)',
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 170, 0, 0.5) 40%, rgba(255, 200, 50, 0.7) 50%, rgba(255, 170, 0, 0.5) 60%, transparent 100%)',
                     }}
-                    animate={{ x: ['-80px', '400px'] }}
+                    initial={{ x: -100 }}
+                    animate={{ x: [-100, 350] }}
                     transition={{
-                      duration: 1.8,
+                      duration: 1.5,
                       repeat: Infinity,
-                      repeatDelay: 0.6,
+                      repeatDelay: 0.3,
                       ease: "easeInOut",
                     }}
                   />
-                </motion.div>
+                  {/* Second shimmer - gold, delayed */}
+                  <motion.div
+                    className="absolute inset-y-0 w-16 -skew-x-12"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 200, 50, 0.4) 50%, transparent 100%)',
+                    }}
+                    initial={{ x: -80 }}
+                    animate={{ x: [-80, 350] }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      repeatDelay: 0.3,
+                      delay: 0.4,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </div>
               )}
               
               {/* Track glow */}
