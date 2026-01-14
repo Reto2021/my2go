@@ -238,12 +238,33 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
           {showSlider ? (
             <div 
               ref={containerRef}
-              className="relative h-14 rounded-xl"
+              className="relative h-14 rounded-xl overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
+              {/* Shimmer effect across entire track */}
+              {sliderProgress === 0 && (
+                <motion.div
+                  className="absolute inset-0 pointer-events-none z-[1]"
+                >
+                  <motion.div
+                    className="absolute inset-y-0 w-16 -skew-x-12"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                    }}
+                    animate={{ x: ['-20%', '450%'] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 0.8,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </motion.div>
+              )}
+              
               {/* Track glow */}
               <motion.div
                 className="absolute inset-y-1 left-1 bg-gradient-to-r from-accent/20 to-transparent rounded-lg"
@@ -324,38 +345,16 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 className="absolute left-1 top-1 bottom-1 w-14 cursor-grab active:cursor-grabbing z-10"
               >
                 <div 
-                  className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden relative"
+                  className="w-full h-full rounded-lg flex items-center justify-center"
                   style={{
                     background: 'linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 95% 45%) 100%)',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25)',
                   }}
                 >
-                  {/* Shimmer effect */}
-                  {sliderProgress === 0 && (
-                    <motion.div
-                      className="absolute inset-0 pointer-events-none"
-                      initial={false}
-                    >
-                      <motion.div
-                        className="absolute inset-y-0 w-8 -skew-x-12"
-                        style={{
-                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-                        }}
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{
-                          duration: 1.2,
-                          repeat: Infinity,
-                          repeatDelay: 1,
-                          ease: "easeInOut",
-                        }}
-                      />
-                    </motion.div>
-                  )}
-                  
                   {isClaiming || isRadioLoading ? (
-                    <Loader2 className="h-5 w-5 text-secondary animate-spin relative z-10" />
+                    <Loader2 className="h-5 w-5 text-secondary animate-spin" />
                   ) : (
-                    <Play className="h-5 w-5 text-secondary fill-secondary relative z-10" />
+                    <Play className="h-5 w-5 text-secondary fill-secondary" />
                   )}
                 </div>
               </motion.div>
