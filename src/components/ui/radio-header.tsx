@@ -144,7 +144,7 @@ export function RadioHeader() {
       
       <div className="relative container flex items-center gap-2 sm:gap-3 py-2 sm:py-2.5">
         {/* Logo - larger on mobile for better visibility */}
-        <Link to="/" className="flex-shrink-0">
+        <Link to="/" className="flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center">
           <img 
             src={logo} 
             alt="Radio 2Go" 
@@ -152,12 +152,13 @@ export function RadioHeader() {
           />
         </Link>
         
-        {/* Clock & Weather Widget - hidden on small screens */}
+        {/* Clock & Weather Widget - compact on mobile, full on desktop */}
+        <ClockWeatherWidget compact className="flex-shrink-0 flex sm:hidden" />
         <ClockWeatherWidget className="flex-shrink-0 hidden sm:flex" />
         
-        {/* Player area - Status only, no play button here */}
+        {/* Player area - Status only, larger touch target */}
         <div 
-          className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0 cursor-pointer overflow-hidden" 
+          className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0 cursor-pointer overflow-hidden min-h-[44px] px-1" 
           data-onboarding="radio-player"
           onClick={() => setPlayerExpanded(true)}
         >
@@ -181,10 +182,10 @@ export function RadioHeader() {
         {/* Taler Balance + User Menu - only when logged in */}
         {isAuthenticated && (
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            {/* Taler Balance - compact on mobile */}
+            {/* Taler Balance - compact on mobile, larger touch target */}
             {realBalance && (
               <motion.div 
-                className="flex items-center gap-1 px-2 py-1 rounded-full bg-accent/20"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-accent/20 min-h-[36px]"
                 animate={balanceChanged ? {
                   scale: [1, 1.15, 1],
                   boxShadow: [
@@ -196,23 +197,23 @@ export function RadioHeader() {
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
                 <Coins className={cn(
-                  "h-3 w-3 sm:h-3.5 sm:w-3.5 text-accent transition-transform",
+                  "h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent transition-transform",
                   balanceChanged && "animate-spin"
                 )} />
-                <span className="text-[10px] sm:text-xs font-bold text-accent tabular-nums whitespace-nowrap">
+                <span className="text-xs sm:text-sm font-bold text-accent tabular-nums whitespace-nowrap">
                   {realBalance.taler_balance.toLocaleString('de-CH')}<span className="hidden sm:inline"> Taler</span>
                 </span>
               </motion.div>
             )}
             
-            {/* User Avatar */}
+            {/* User Avatar - larger touch target */}
             <div className="relative">
               <button 
                 onClick={() => setShowMenu(!showMenu)}
-                className="flex items-center gap-2 p-1 rounded-full hover:bg-secondary-foreground/10 transition-colors"
+                className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-full hover:bg-secondary-foreground/10 transition-colors"
               >
-                <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center">
-                  <span className="text-sm font-bold text-secondary-foreground">
+                <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-accent/20 flex items-center justify-center">
+                  <span className="text-sm sm:text-base font-bold text-secondary-foreground">
                     {displayName.charAt(0).toUpperCase()}
                   </span>
                 </div>
