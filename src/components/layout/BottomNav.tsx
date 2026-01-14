@@ -50,7 +50,7 @@ export function BottomNav() {
       {/* Background blur */}
       <div className="absolute inset-0 bg-background/95 backdrop-blur-xl border-t border-border/30" />
       
-      <div className="relative container flex items-center justify-around py-1.5 pb-safe">
+      <div className="relative container flex items-center justify-around py-3 pb-safe">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || 
@@ -64,7 +64,7 @@ export function BottomNav() {
               onMouseEnter={() => handlePrefetch(item.path)}
               onTouchStart={() => handlePrefetch(item.path)}
               className={cn(
-                'flex flex-col items-center gap-0.5 min-w-[44px] min-h-[44px] px-2 py-1.5 rounded-xl transition-all duration-200',
+                'flex flex-col items-center gap-1 min-w-[52px] min-h-[52px] px-3 py-2 rounded-xl transition-all duration-200',
                 isActive
                   ? 'text-secondary'
                   : isHighlight 
@@ -73,7 +73,7 @@ export function BottomNav() {
               )}
             >
               <div className={cn(
-                'relative p-1.5 rounded-lg transition-all duration-200',
+                'relative p-2 rounded-lg transition-all duration-200',
                 isActive && 'bg-primary/20',
                 isHighlight && !isActive && 'bg-accent text-secondary'
               )}>
@@ -82,13 +82,13 @@ export function BottomNav() {
                   <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
                 )}
                 <Icon className={cn(
-                  'relative h-4 w-4 transition-transform duration-200',
+                  'relative h-5 w-5 transition-transform duration-200',
                   isActive && 'scale-110',
-                  isHighlight && 'h-5 w-5'
+                  isHighlight && 'h-6 w-6'
                 )} strokeWidth={isActive || isHighlight ? 2.5 : 2} />
               </div>
               <span className={cn(
-                'text-[10px] font-semibold leading-tight',
+                'text-xs font-semibold leading-tight',
                 isActive ? 'opacity-100' : 'opacity-70'
               )}>
                 {item.label}
