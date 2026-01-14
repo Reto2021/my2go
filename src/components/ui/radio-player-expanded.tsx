@@ -185,20 +185,10 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             </div>
           </div>
 
-          {/* Scrollable Main Content - with swipe-to-close support */}
-          <motion.div 
+          {/* Scrollable Main Content - NO drag on this container to allow button clicks */}
+          <div 
             className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4 relative z-20" 
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.3 }}
-            onDragEnd={(_, info) => {
-              // Swipe down to close - only if scrolled to top
-              if (info.offset.y > 100 || info.velocity.y > 500) {
-                hapticToggle();
-                onClose();
-              }
-            }}
           >
             {/* Large Cover Art or Video */}
             <ArtworkDisplay 
@@ -393,7 +383,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 </div>
               </motion.div>
             )}
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
