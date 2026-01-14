@@ -238,6 +238,9 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
       togglePlay();
     }
     
+    // Open expanded player with video when radio starts
+    onExpand();
+    
     // Only claim streak bonus if available
     if (canClaim && !hasClaimedToday) {
       claimStreak(undefined, {

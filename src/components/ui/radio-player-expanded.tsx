@@ -8,13 +8,10 @@ import {
   VolumeX, 
   Radio, 
   Music2, 
-  Maximize2, 
-  Minimize2, 
   ChevronDown,
   Clock,
   Gift,
   Coins,
-  LogIn,
   Wallet,
   Video,
   Image
@@ -63,7 +60,6 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     setVolume 
   } = useRadioStore();
   
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
   const [showVideo, setShowVideo] = useState(true); // Default to video when available
 
@@ -127,38 +123,17 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
 
   const { current: currentTier, next: nextTier, progress } = getCurrentAndNextTier();
 
-  // Handle fullscreen
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(console.error);
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(console.error);
-    }
-  }, []);
-
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
   // Close on escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isFullscreen) {
+      if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, isFullscreen, onClose]);
+  }, [isOpen, onClose]);
+
 
   return (
     <AnimatePresence>
@@ -168,10 +143,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className={cn(
-            "fixed inset-0 z-[200] flex flex-col overflow-hidden",
-            isFullscreen ? "bg-black" : "bg-gradient-to-b from-secondary via-secondary to-black"
-          )}
+          className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 sm:p-4 flex-shrink-0" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
@@ -190,16 +162,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               {isPlaying && <LiveListenerCount size="sm" className="bg-white/10" />}
             </div>
             
-            <button
-              onClick={toggleFullscreen}
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-5 w-5 text-white" />
-              ) : (
-                <Maximize2 className="h-5 w-5 text-white" />
-              )}
-            </button>
+            {/* Empty spacer for balanced header */}
+            <div className="h-9 w-9 sm:h-10 sm:w-10" />
           </div>
 
           {/* Scrollable Main Content */}
@@ -210,7 +174,6 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               videoUrl={nowPlaying?.videoUrl}
               title={nowPlaying?.title}
               isPlaying={isPlaying}
-              isFullscreen={isFullscreen}
               showVideo={showVideo}
               onToggleMedia={() => setShowVideo(!showVideo)}
             />
@@ -222,16 +185,10 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               transition={{ delay: 0.2 }}
               className="text-center mb-4 sm:mb-8 max-w-md w-full"
             >
-              <h2 className={cn(
-                "font-bold text-white mb-1 sm:mb-2 truncate",
-                isFullscreen ? "text-3xl" : "text-xl sm:text-2xl"
-              )}>
+              <h2 className="font-bold text-white mb-1 sm:mb-2 truncate text-xl sm:text-2xl">
                 {nowPlaying?.title || 'Radio 2Go'}
               </h2>
-              <p className={cn(
-                "text-white/60 truncate",
-                isFullscreen ? "text-xl" : "text-base sm:text-lg"
-              )}>
+              <p className="text-white/60 truncate text-base sm:text-lg">
                 {nowPlaying?.artist || 'Live Stream'}
               </p>
             </motion.div>
@@ -381,7 +338,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             </motion.button>
             
             {/* Song History - always show if available */}
-            {songHistory.length > 0 && !isFullscreen && (
+            {songHistory.length > 0 && (
               <motion.div
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -481,7 +438,6 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
   videoUrl,
   title,
   isPlaying,
-  isFullscreen,
   showVideo,
   onToggleMedia
 }: {
@@ -489,7 +445,6 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
   videoUrl?: string | null;
   title?: string;
   isPlaying: boolean;
-  isFullscreen: boolean;
   showVideo: boolean;
   onToggleMedia: () => void;
 }) {
@@ -502,10 +457,7 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className={cn(
-          "relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0",
-          isFullscreen ? "w-[400px] h-[400px]" : "w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
-        )}
+        className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0 w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
       >
         {shouldShowVideo ? (
           <video
