@@ -175,10 +175,10 @@ export function RadioHeader() {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-accent" />
               <p className="text-xs sm:text-base text-secondary-foreground font-semibold">
                 Radio starten
               </p>
+              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-accent" />
             </div>
           )}
         </div>
