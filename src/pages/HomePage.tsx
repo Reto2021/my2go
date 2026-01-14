@@ -242,12 +242,12 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         </div>
       </section>
       
-      {/* Features */}
+      {/* Features - Compact for mobile */}
       <section className="container -mt-16 relative z-20">
-        <div className="grid grid-cols-3 gap-3 animate-in-delayed">
-          <FeatureChip icon={Music} label="Radio hören & verdienen" color="accent" to="/auth" />
-          <FeatureChip icon={Gift} label="Gutscheine einlösen" color="primary" to="/rewards" />
-          <FeatureChip icon={MapPin} label="Partner entdecken" color="secondary" to="/partner" />
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 animate-in-delayed">
+          <FeatureChip icon={Music} label="Hören" fullLabel="Radio hören" color="accent" to="/auth" />
+          <FeatureChip icon={Gift} label="Sammeln" fullLabel="Taler sammeln" color="primary" to="/rewards" />
+          <FeatureChip icon={MapPin} label="Einlösen" fullLabel="Gutscheine einlösen" color="secondary" to="/partner" />
         </div>
       </section>
       
@@ -327,12 +327,17 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         </div>
       </section>
       
-      {/* Info */}
-      <section className="container pb-28">
-        <div className="p-5 rounded-2xl bg-secondary/5 border border-secondary/10">
-          <p className="text-sm text-muted-foreground text-center">
+      {/* Info / Footer */}
+      <section className="container pb-32">
+        <div className="p-6 rounded-2xl bg-secondary/5 border border-secondary/10">
+          <p className="text-sm text-muted-foreground text-center mb-3">
             2Go Taler sind Bonuspunkte und nicht auszahlbar.
           </p>
+          <div className="flex justify-center gap-4 text-xs text-muted-foreground/70">
+            <Link to="/impressum" className="hover:text-foreground transition-colors">Impressum</Link>
+            <Link to="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link>
+            <Link to="/agb" className="hover:text-foreground transition-colors">AGB</Link>
+          </div>
         </div>
       </section>
     </div>
@@ -342,11 +347,12 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
 interface FeatureChipProps {
   icon: React.ElementType;
   label: string;
+  fullLabel?: string;
   color: 'accent' | 'primary' | 'secondary';
   to: string;
 }
 
-function FeatureChip({ icon: Icon, label, color, to }: FeatureChipProps) {
+function FeatureChip({ icon: Icon, label, fullLabel, color, to }: FeatureChipProps) {
   const colorClasses = {
     accent: 'bg-accent/15 text-accent',
     primary: 'bg-primary/20 text-secondary',
@@ -354,11 +360,13 @@ function FeatureChip({ icon: Icon, label, color, to }: FeatureChipProps) {
   };
   
   return (
-    <Link to={to} className="card-glass p-4 flex flex-col items-center gap-3 hover:scale-105 transition-transform">
+    <Link to={to} className="card-glass p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3 hover:scale-105 transition-transform">
       <div className={`icon-container-md rounded-2xl ${colorClasses[color]}`}>
         <Icon className="h-5 w-5" />
       </div>
-      <span className="text-sm font-semibold text-center text-foreground">{label}</span>
+      {/* Short label on mobile, full label on larger screens */}
+      <span className="text-xs sm:text-sm font-semibold text-center text-foreground sm:hidden">{label}</span>
+      <span className="text-sm font-semibold text-center text-foreground hidden sm:block">{fullLabel || label}</span>
     </Link>
   );
 }

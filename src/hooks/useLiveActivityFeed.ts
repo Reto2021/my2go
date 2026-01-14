@@ -17,9 +17,8 @@ const ACTIVITY_MESSAGES = {
     'Radio hören lohnt sich! 🪙',
   ],
   redemption: [
-    'Ein Gutschein wurde gerade eingelöst ☕',
-    'Jemand spart bei einem Partner 🎁',
-    'Ein Hörer geniesst seine Belohnung 🛍️',
+    // Will be replaced with partner-specific messages
+    'Ein Gutschein wurde gerade eingelöst 🎁',
   ],
   badge: [
     'Eine neue Auszeichnung wurde erreicht 🏆',
@@ -70,6 +69,18 @@ function getMilestoneMessage(amount: number): string {
   return `${amount.toLocaleString('de-DE')} Taler wurden gerade erreicht! 🎯`;
 }
 
+function getRedemptionMessage(partnerName?: string): string {
+  if (partnerName) {
+    const templates = [
+      `Einlösung bei ${partnerName} 🎁`,
+      `Gutschein bei ${partnerName} genutzt ☕`,
+      `Jemand spart bei ${partnerName} 🛍️`,
+    ];
+    return templates[Math.floor(Math.random() * templates.length)];
+  }
+  return 'Ein Gutschein wurde gerade eingelöst 🎁';
+}
+
 function getStreakMessage(days: number): string {
   if (days === 1) return 'Ein neuer Streak wurde gestartet! 🚀';
   if (days === 7) return '7-Tage Streak! Eine Woche am Ball 🔥';
@@ -78,6 +89,12 @@ function getStreakMessage(days: number): string {
   if (days >= 100) return `${days}-Tage Streak! Unglaublich! 👑`;
   return `${days}-Tage Streak geht weiter 🔥`;
 }
+
+// Sample partner names for mock activities
+const SAMPLE_PARTNERS = [
+  'Café Müller', 'Bäckerei Schmid', 'Pizzeria Roma', 'Restaurant Sonne',
+  'Blumen Hofer', 'Coiffeur Style', 'Fitness Plus', 'Buchhandlung Meier'
+];
 
 function createMockActivity(): ActivityItem {
   const types: ActivityItem['type'][] = ['taler_earned', 'redemption', 'badge', 'streak', 'referral', 'milestone', 'streak_start'];
@@ -118,6 +135,18 @@ function createMockActivity(): ActivityItem {
       icon: '🔥',
       timestamp: new Date(),
       amount: days,
+    };
+  }
+
+  // Special handling for redemption - use partner names
+  if (selectedType === 'redemption') {
+    const partnerName = SAMPLE_PARTNERS[Math.floor(Math.random() * SAMPLE_PARTNERS.length)];
+    return {
+      id: `mock-${Date.now()}-${Math.random()}`,
+      type: 'redemption',
+      message: getRedemptionMessage(partnerName),
+      icon: '🎁',
+      timestamp: new Date(),
     };
   }
 
@@ -197,7 +226,7 @@ export function useLiveActivityFeed(maxItems: number = 5) {
       )
       .subscribe();
 
-    // Listen to redemptions
+    // Listen to redemptions with partner name lookup
     const redemptionChannel = supabase
       .channel('activity-redemptions')
       .on(
@@ -207,13 +236,25 @@ export function useLiveActivityFeed(maxItems: number = 5) {
           schema: 'public',
           table: 'redemptions',
         },
-        (payload) => {
-          const redemption = payload.new as { status: string };
+        async (payload) => {
+          const redemption = payload.new as { status: string; partner_id: string };
           if (redemption.status === 'used') {
+            // Try to get partner name
+            let partnerName: string | undefined;
+            try {
+              const { data } = await supabase
+                .rpc('get_partner_public_info', { partner_id: redemption.partner_id });
+              if (data && data[0]) {
+                partnerName = data[0].name;
+              }
+            } catch {
+              // Ignore errors, just use generic message
+            }
+            
             addActivity({
               id: `red-${Date.now()}`,
               type: 'redemption',
-              message: getRandomMessage('redemption'),
+              message: getRedemptionMessage(partnerName),
               icon: '🎁',
               timestamp: new Date(),
             });
