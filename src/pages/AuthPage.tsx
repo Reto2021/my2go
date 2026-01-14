@@ -26,7 +26,7 @@ export default function AuthPage() {
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string; firstName?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string; firstName?: string; marketing?: string }>({});
   
   // Check for referral code in URL
   const referralCode = searchParams.get('ref') || '';
@@ -80,7 +80,7 @@ export default function AuthPage() {
   };
   
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string; phone?: string; firstName?: string } = {};
+    const newErrors: { email?: string; password?: string; phone?: string; firstName?: string; marketing?: string } = {};
     
     try {
       emailSchema.parse(email);
@@ -113,6 +113,11 @@ export default function AuthPage() {
         if (e instanceof z.ZodError) {
           newErrors.phone = e.errors[0].message;
         }
+      }
+      
+      // Marketing consent is required for signup
+      if (!marketingConsent) {
+        newErrors.marketing = 'Bitte stimme zu, um fortzufahren';
       }
     }
     
@@ -325,24 +330,6 @@ export default function AuthPage() {
               </div>
             )}
             
-            {/* Marketing Opt-in (only for signup) */}
-            {mode === 'signup' && (
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-muted/50">
-                <input
-                  type="checkbox"
-                  id="marketingConsent"
-                  checked={marketingConsent}
-                  onChange={(e) => setMarketingConsent(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent"
-                />
-                <label htmlFor="marketingConsent" className="text-sm text-muted-foreground cursor-pointer">
-                  Ich möchte per E-Mail und SMS über Aktionen, Angebote und Neuigkeiten informiert werden. 
-                  Details in den{' '}
-                  <a href="/agb" className="text-secondary hover:underline">Nutzungsbedingungen</a>.
-                </label>
-              </div>
-            )}
-            
             {/* Email */}
             <div className="space-y-2">
               <label className="text-sm font-medium">E-Mail</label>
@@ -406,6 +393,45 @@ export default function AuthPage() {
                 </a>
               )}
             </div>
+            
+            {/* Marketing Opt-in - REQUIRED for signup, placed before submit button */}
+            {mode === 'signup' && (
+              <div className={cn(
+                "p-4 rounded-2xl border-2 transition-all",
+                errors.marketing 
+                  ? "border-destructive bg-destructive/5" 
+                  : marketingConsent 
+                    ? "border-primary/30 bg-primary/5" 
+                    : "border-transparent bg-muted/50"
+              )}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="marketingConsent"
+                    checked={marketingConsent}
+                    onChange={(e) => {
+                      setMarketingConsent(e.target.checked);
+                      setErrors(prev => ({ ...prev, marketing: undefined }));
+                    }}
+                    className="mt-0.5 h-5 w-5 rounded border-border text-primary focus:ring-primary accent-primary"
+                  />
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium text-foreground block">
+                      🎁 Ja, ich will exklusive Vorteile! *
+                    </span>
+                    <span className="text-xs text-muted-foreground block leading-relaxed">
+                      Ich möchte per E-Mail, SMS und WhatsApp über <strong>exklusive Aktionen, Bonus-Taler und Partner-Angebote</strong> informiert werden. 
+                      Abmeldung jederzeit möglich.
+                    </span>
+                  </div>
+                </label>
+                {errors.marketing && (
+                  <p className="text-sm text-destructive mt-2 flex items-center gap-1">
+                    <span>⚠️</span> {errors.marketing}
+                  </p>
+                )}
+              </div>
+            )}
             
             {/* Submit Button */}
             <button
