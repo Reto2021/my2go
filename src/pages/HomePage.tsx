@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/skeleton';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
+import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
 import {
   Gift,
@@ -383,14 +384,26 @@ function SessionModeHome({
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
+  // Time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Guten Morgen';
+    if (hour < 18) return 'Hallo';
+    return 'Guten Abend';
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Compact Header with Greeting only */}
+      {/* Compact Header with Greeting + Live Activity */}
       <header className="container pt-4 pb-3">
-        <div className="animate-in">
+        <div className="animate-in space-y-2">
+          {/* Greeting row */}
           <p className="text-muted-foreground">
-            Hallo, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
+            {getGreeting()}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
           </p>
+          
+          {/* Live Activity Ticker - Social Proof */}
+          <ActivityTicker className="text-xs" />
         </div>
       </header>
       
