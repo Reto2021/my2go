@@ -48,7 +48,12 @@ function getConditionFromCode(code: number): string {
   return 'cloudy';
 }
 
-export function ClockWeatherWidget({ className }: { className?: string }) {
+interface ClockWeatherWidgetProps {
+  className?: string;
+  compact?: boolean; // For mobile view
+}
+
+export function ClockWeatherWidget({ className, compact = false }: ClockWeatherWidgetProps) {
   const [time, setTime] = useState(new Date());
   const [colonVisible, setColonVisible] = useState(true);
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -101,6 +106,33 @@ export function ClockWeatherWidget({ className }: { className?: string }) {
   const hours = time.getHours().toString().padStart(2, '0');
   const minutes = time.getMinutes().toString().padStart(2, '0');
   const WeatherIcon = weather ? getWeatherIcon(weather.condition) : Cloud;
+
+  // Compact version for mobile
+  if (compact) {
+    return (
+      <div className={cn(
+        "flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-foreground/10",
+        className
+      )}>
+        {/* Digital Clock */}
+        <span className="text-xs font-semibold text-secondary-foreground tabular-nums">
+          {hours}
+          <span className={cn("transition-opacity", colonVisible ? "opacity-100" : "opacity-30")}>:</span>
+          {minutes}
+        </span>
+        
+        {/* Weather icon + temp inline */}
+        {!loading && weather && (
+          <>
+            <WeatherIcon className="h-3 w-3 text-secondary-foreground/80" />
+            <span className="text-xs font-semibold text-secondary-foreground tabular-nums">
+              {weather.temp}°
+            </span>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
