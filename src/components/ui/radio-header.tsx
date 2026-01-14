@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 // Chromecast removed - clean build
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, LogOut, Coins, Building2 } from 'lucide-react';
+import { Settings, LogOut, Coins, Building2, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
@@ -174,9 +174,12 @@ export function RadioHeader() {
               <LiveListenerCount size="sm" showLabel={false} className="hidden xs:flex flex-shrink-0" />
             </div>
           ) : (
-            <p className="text-[10px] sm:text-sm text-secondary-foreground/90 font-medium truncate flex-1">
-              Radio starten →
-            </p>
+            <div className="flex items-center gap-1.5">
+              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-accent" />
+              <p className="text-xs sm:text-base text-secondary-foreground font-semibold">
+                Radio starten
+              </p>
+            </div>
           )}
         </div>
         {/* Taler Balance + User Menu - only when logged in */}
