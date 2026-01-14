@@ -146,23 +146,21 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
         >
-          {/* Swipe indicator - only the small bar is interactive */}
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-center pt-2 pointer-events-none">
-            <motion.div 
-              className="w-12 h-8 flex items-center justify-center cursor-grab active:cursor-grabbing pointer-events-auto touch-none"
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0.1, bottom: 0.4 }}
-              onDragEnd={(_, info) => {
-                // Swipe down to close
-                if (info.offset.y > 100 || info.velocity.y > 500) {
-                  onClose();
-                }
-              }}
-            >
-              <div className="w-10 h-1 rounded-full bg-white/30" />
-            </motion.div>
-          </div>
+          {/* Swipe indicator - larger touch area for easier dragging */}
+          <motion.div 
+            className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center h-12 cursor-grab active:cursor-grabbing"
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.1, bottom: 0.5 }}
+            onDragEnd={(_, info) => {
+              // Swipe down to close
+              if (info.offset.y > 80 || info.velocity.y > 400) {
+                onClose();
+              }
+            }}
+          >
+            <div className="w-10 h-1 rounded-full bg-white/30" />
+          </motion.div>
           {/* Header - with extra padding for drag handle */}
           <div className="flex items-center justify-between p-3 sm:p-4 pt-5 sm:pt-6 flex-shrink-0 relative z-20" style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}>
             <button
