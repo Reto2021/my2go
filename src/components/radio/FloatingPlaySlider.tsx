@@ -244,46 +244,25 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Gold shimmer - using x transform with pixel values */}
-              <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none" style={{ zIndex: 50 }}>
-                {/* Primary shimmer bar */}
-                <motion.div
-                  className="absolute top-0 bottom-0 left-0"
-                  style={{
-                    width: 120,
-                    background: 'linear-gradient(90deg, transparent 0%, #FFB800 25%, #FFEE00 50%, #FFB800 75%, transparent 100%)',
-                    boxShadow: '0 0 50px 15px rgba(255, 200, 0, 0.8)',
-                  }}
-                  animate={{
-                    x: [-120, 400],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    repeatDelay: 0.2,
-                  }}
-                />
-                {/* Secondary shimmer bar */}
-                <motion.div
-                  className="absolute top-0 bottom-0 left-0"
-                  style={{
-                    width: 80,
-                    background: 'linear-gradient(90deg, transparent 0%, #FFD700 30%, #FFFF80 50%, #FFD700 70%, transparent 100%)',
-                    boxShadow: '0 0 30px 8px rgba(255, 215, 0, 0.6)',
-                  }}
-                  animate={{
-                    x: [-80, 400],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    repeatDelay: 0.2,
-                    delay: 0.35,
-                  }}
-                />
-              </div>
+              {/* DEBUG: Solid red bar to test if rendering works */}
+              <motion.div
+                className="absolute top-0 bottom-0 rounded-xl"
+                style={{
+                  width: 80,
+                  background: '#FF0000',
+                  zIndex: 999,
+                  left: 60,
+                }}
+                animate={{
+                  x: [0, 250],
+                  opacity: [1, 1],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: 'linear',
+                }}
+              />
               
               {/* Track glow */}
               <motion.div
