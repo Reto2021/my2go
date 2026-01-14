@@ -588,6 +588,41 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                       border: '1px solid rgba(255,255,255,0.12)',
                     }}
                   >
+                    {/* GOLD SHIMMER - Double bar animation across slider */}
+                    <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ zIndex: 10 }}>
+                      {/* Primary gold shimmer bar */}
+                      <motion.div
+                        className="absolute top-0 bottom-0"
+                        style={{
+                          width: 100,
+                          background: 'linear-gradient(90deg, transparent, #FFB800, #FFEE00, #FFB800, transparent)',
+                          boxShadow: '0 0 40px 10px rgba(255, 200, 0, 0.8)',
+                        }}
+                        animate={{ x: [0, 300] }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                      />
+                      {/* Secondary gold shimmer bar - delayed */}
+                      <motion.div
+                        className="absolute top-0 bottom-0"
+                        style={{
+                          width: 60,
+                          background: 'linear-gradient(90deg, transparent, #FFD700, #FFFF80, #FFD700, transparent)',
+                          boxShadow: '0 0 25px 5px rgba(255, 215, 0, 0.6)',
+                        }}
+                        animate={{ x: [0, 300] }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: 'linear',
+                          delay: 0.35,
+                        }}
+                      />
+                    </div>
+                    
                     {/* Track glow */}
                     <motion.div
                       className="absolute inset-y-1 left-1 bg-gradient-to-r from-accent/25 to-transparent rounded-lg"
