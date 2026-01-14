@@ -340,8 +340,8 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
     <>
       <Confetti isActive={showConfetti} />
       
-      {/* Fixed bar above BottomNav - increased spacing for proper clearance */}
-      <div className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 w-full max-w-md px-3 pointer-events-none">
+      {/* Fixed bar above BottomNav - using higher z-index and fixed pixel value for consistency */}
+      <div className="fixed bottom-[100px] left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-3 pointer-events-none" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="relative pointer-events-auto">
           <AnimatePresence mode="wait">
             {showMiniPlayer ? (
