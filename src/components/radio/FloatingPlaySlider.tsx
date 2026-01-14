@@ -244,42 +244,24 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Gold shimmer bar moving across - very visible */}
+              {/* Gold shimmer bars moving across slider */}
               <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[5]">
+                {/* Main shimmer bar */}
                 <div 
-                  className="absolute top-0 bottom-0 w-20"
+                  className="absolute top-0 bottom-0 w-20 animate-gold-shimmer"
                   style={{
-                    background: 'linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.8), rgba(255, 230, 100, 1), rgba(255, 200, 0, 0.8), transparent)',
-                    animation: 'goldShimmer 1.5s ease-in-out infinite',
-                    boxShadow: '0 0 20px rgba(255, 200, 0, 0.6)',
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.9), rgba(255, 230, 100, 1), rgba(255, 200, 0, 0.9), transparent)',
+                    boxShadow: '0 0 30px 5px rgba(255, 200, 0, 0.5)',
                   }}
                 />
+                {/* Second shimmer bar - delayed */}
                 <div 
-                  className="absolute top-0 bottom-0 w-12"
+                  className="absolute top-0 bottom-0 w-12 animate-gold-shimmer-delayed"
                   style={{
-                    background: 'linear-gradient(90deg, transparent, rgba(255, 220, 50, 0.6), transparent)',
-                    animation: 'goldShimmer 1.5s ease-in-out infinite 0.3s',
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 220, 50, 0.7), transparent)',
                   }}
                 />
               </div>
-              <style>{`
-                @keyframes goldShimmer {
-                  0% { 
-                    left: -80px;
-                    opacity: 0;
-                  }
-                  10% {
-                    opacity: 1;
-                  }
-                  90% {
-                    opacity: 1;
-                  }
-                  100% { 
-                    left: calc(100% + 80px);
-                    opacity: 0;
-                  }
-                }
-              `}</style>
               
               {/* Track glow */}
               <motion.div
