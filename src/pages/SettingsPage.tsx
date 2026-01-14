@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles, Share, Plus } from 'lucide-react';
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/lib/settings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +45,9 @@ export default function SettingsPage() {
   const [visitCount, setVisitCount] = useState(0);
   const [firstVisitDate, setFirstVisitDate] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   
   useEffect(() => {
     // Check admin status
@@ -62,6 +70,10 @@ export default function SettingsPage() {
       || (window.navigator as any).standalone === true;
     setIsInstalled(standalone);
     
+    // Detect iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(iOS);
+    
     // Get visit statistics
     const storedVisitCount = parseInt(localStorage.getItem(VISIT_COUNT_KEY) || '0');
     setVisitCount(storedVisitCount);
@@ -75,6 +87,13 @@ export default function SettingsPage() {
       localStorage.setItem('pwa-first-visit', Date.now().toString());
       setFirstVisitDate(new Date().toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' }));
     }
+    
+    // Listen for install prompt (Android/Chrome)
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     
     const checkPushStatus = async () => {
       const supported = isPushSupported();
@@ -97,8 +116,41 @@ export default function SettingsPage() {
     
     // Small delay to allow Service Worker to register
     const timer = setTimeout(checkPushStatus, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
   }, []);
+
+  const handleInstallClick = async () => {
+    if (isInstalled) {
+      toast.success('My 2Go ist bereits installiert!');
+      return;
+    }
+    
+    if (isIOS) {
+      setShowIOSInstructions(true);
+      return;
+    }
+    
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          toast.success('App wird installiert!');
+          setIsInstalled(true);
+        }
+        setDeferredPrompt(null);
+      } catch (error) {
+        console.error('Install error:', error);
+        navigate('/install');
+      }
+    } else {
+      // Fallback to install page if prompt not available
+      navigate('/install');
+    }
+  };
   
   const handlePushToggle = async (enabled: boolean) => {
     if (!user) {
@@ -409,23 +461,68 @@ export default function SettingsPage() {
           
           <div className="card-base divide-y divide-border">
             {/* Install App */}
-            <button 
-              onClick={() => navigate('/install')}
-              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-secondary/10 flex items-center justify-center">
-                  <Download className="h-5 w-5 text-secondary" />
+            <div className="p-4">
+              <button 
+                onClick={handleInstallClick}
+                className="w-full flex items-center justify-between hover:bg-muted/50 transition-colors rounded-lg -m-2 p-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isInstalled ? 'bg-success/10' : 'bg-secondary/10'}`}>
+                    <Download className={`h-5 w-5 ${isInstalled ? 'text-success' : 'text-secondary'}`} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">App installieren</p>
+                    <p className="text-sm text-muted-foreground">
+                      {isInstalled 
+                        ? 'My 2Go ist installiert ✓' 
+                        : isIOS 
+                          ? 'Zum Home-Bildschirm hinzufügen'
+                          : deferredPrompt 
+                            ? 'Jetzt installieren'
+                            : 'Zum Homescreen hinzufügen'
+                      }
+                    </p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-medium">App installieren</p>
-                  <p className="text-sm text-muted-foreground">
-                    {isInstalled ? 'My 2Go ist installiert ✓' : 'Zum Homescreen hinzufügen'}
-                  </p>
+                {!isInstalled && (
+                  <div className={`h-8 px-3 rounded-full flex items-center justify-center text-sm font-medium ${
+                    deferredPrompt ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {deferredPrompt ? 'Installieren' : <ChevronRight className="h-5 w-5" />}
+                  </div>
+                )}
+              </button>
+              
+              {/* iOS Instructions - shown inline when clicked */}
+              {showIOSInstructions && isIOS && !isInstalled && (
+                <div className="mt-4 bg-muted/50 rounded-xl p-4 animate-in">
+                  <div className="flex items-center gap-2 text-sm text-foreground font-medium mb-3">
+                    <Share className="h-4 w-4 text-primary" />
+                    So installierst du My 2Go:
+                  </div>
+                  <ol className="text-sm text-muted-foreground space-y-2 ml-1">
+                    <li className="flex items-center gap-3">
+                      <span className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">1</span>
+                      <span>Tippe auf <Share className="h-4 w-4 inline mx-1" /> (Teilen) in Safari</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">2</span>
+                      <span>Wähle <Plus className="h-4 w-4 inline mx-1" /> "Zum Home-Bildschirm"</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <span className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">3</span>
+                      <span>Tippe auf "Hinzufügen"</span>
+                    </li>
+                  </ol>
+                  <button 
+                    onClick={() => setShowIOSInstructions(false)}
+                    className="mt-3 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Ausblenden
+                  </button>
                 </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
+              )}
+            </div>
             
             {/* Visit Statistics */}
             <div className="flex items-center justify-between p-4">
