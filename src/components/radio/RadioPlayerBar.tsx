@@ -341,7 +341,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
       <Confetti isActive={showConfetti} />
       
       {/* Fixed bar above BottomNav */}
-      <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 w-full max-w-md px-4 pointer-events-none">
+      <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 w-full max-w-md px-4 pointer-events-none">
         <div className="relative pointer-events-auto">
           <AnimatePresence mode="wait">
             {showMiniPlayer ? (
