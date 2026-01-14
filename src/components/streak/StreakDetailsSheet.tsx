@@ -62,7 +62,7 @@ export function StreakDetailsSheet({ open, onOpenChange }: StreakDetailsSheetPro
   
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto pb-safe">
         <SheetHeader className="text-left pb-4">
           <SheetTitle className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">

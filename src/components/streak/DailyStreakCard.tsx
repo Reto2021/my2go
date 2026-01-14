@@ -406,7 +406,7 @@ export function DailyStreakCard() {
 
       {/* Freeze Purchase Dialog */}
       <Dialog open={showFreezeDialog} onOpenChange={setShowFreezeDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Snowflake className="h-5 w-5 text-sky-400" />
