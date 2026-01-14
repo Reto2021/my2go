@@ -588,38 +588,37 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                       border: '1px solid rgba(255,255,255,0.12)',
                     }}
                   >
-                    {/* Gold shimmer - elegant double bar */}
+                    {/* Silver shimmer - subtle elegant effect */}
                     <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ zIndex: 10 }}>
                       {/* Primary shimmer bar */}
                       <motion.div
                         className="absolute top-0 bottom-0"
                         style={{
-                          width: 80,
-                          background: 'linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.5), rgba(255, 220, 80, 0.7), rgba(255, 200, 0, 0.5), transparent)',
-                          boxShadow: '0 0 20px 4px rgba(255, 200, 0, 0.4)',
+                          width: 60,
+                          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.25), transparent)',
                         }}
                         animate={{ x: [0, 280] }}
                         transition={{
-                          duration: 2,
+                          duration: 2.5,
                           repeat: Infinity,
                           ease: 'easeInOut',
-                          repeatDelay: 0.5,
+                          repeatDelay: 1,
                         }}
                       />
                       {/* Secondary shimmer bar - delayed */}
                       <motion.div
                         className="absolute top-0 bottom-0"
                         style={{
-                          width: 50,
-                          background: 'linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.4), transparent)',
+                          width: 40,
+                          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
                         }}
                         animate={{ x: [0, 280] }}
                         transition={{
-                          duration: 2,
+                          duration: 2.5,
                           repeat: Infinity,
                           ease: 'easeInOut',
-                          repeatDelay: 0.5,
-                          delay: 0.4,
+                          repeatDelay: 1,
+                          delay: 0.5,
                         }}
                       />
                     </div>
