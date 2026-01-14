@@ -13,6 +13,7 @@ import {
   Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 
 const navItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -88,6 +89,9 @@ export function AdminLayout() {
       <main className="container py-6">
         <Outlet />
       </main>
+      
+      {/* WhatsApp Button */}
+      <WhatsAppButton />
     </div>
   );
 }

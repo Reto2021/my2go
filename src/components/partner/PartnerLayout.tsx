@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePartner } from './PartnerGuard';
+import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 
 export function PartnerLayout() {
   const location = useLocation();
@@ -146,6 +147,9 @@ export function PartnerLayout() {
           })}
         </div>
       </nav>
+      
+      {/* WhatsApp Button */}
+      <WhatsAppButton />
     </div>
   );
 }
