@@ -319,19 +319,19 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 dragElastic={0.05}
                 onDragEnd={handleDragEnd}
                 style={{ x }}
-                animate={sliderProgress === 0 ? { x: [0, 8, 0] } : undefined}
-                transition={sliderProgress === 0 ? { 
-                  duration: 1.8, 
-                  repeat: Infinity, 
-                  ease: "easeInOut",
-                  repeatDelay: 0.5
-                } : undefined}
                 whileDrag={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="absolute left-1 top-1 bottom-1 w-14 cursor-grab active:cursor-grabbing z-10"
               >
-                <div 
+                <motion.div 
                   className="w-full h-full rounded-lg flex items-center justify-center"
+                  animate={sliderProgress === 0 ? { x: [0, 6, 0] } : { x: 0 }}
+                  transition={{ 
+                    duration: 1.5, 
+                    repeat: sliderProgress === 0 ? Infinity : 0, 
+                    ease: "easeInOut",
+                    repeatDelay: 0.3
+                  }}
                   style={{
                     background: 'linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 95% 45%) 100%)',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25)',
@@ -342,7 +342,7 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                   ) : (
                     <Play className="h-5 w-5 text-secondary fill-secondary" />
                   )}
-                </div>
+                </motion.div>
               </motion.div>
             </div>
           ) : (
