@@ -17,7 +17,7 @@ export function TierCelebration({ isVisible, talerAmount, onDismiss }: TierCeleb
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.9 }}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-50"
+          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[100]"
         >
           <div className="relative">
             {/* Glow effect */}
