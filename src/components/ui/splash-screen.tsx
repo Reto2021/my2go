@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import logo2go from '@/assets/logo-2go.png';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -14,9 +15,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <motion.img
-        src="/pwa-192x192.png"
+        src={logo2go}
         alt="2Go"
-        className="w-32 h-32 sm:w-40 sm:h-40"
+        className="w-32 h-32 sm:w-40 sm:h-40 object-contain"
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1.2 }}
         transition={{ 
