@@ -38,22 +38,6 @@ export function OfflineIndicator() {
 
   return (
     <>
-      {/* Back Online Toast */}
-      <AnimatePresence>
-        {showBackOnline && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] pointer-events-none"
-          >
-            <div className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full shadow-lg">
-              <Check className="h-4 w-4" />
-              <span className="text-sm font-medium">Wieder online!</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Offline Banner */}
       <AnimatePresence>
