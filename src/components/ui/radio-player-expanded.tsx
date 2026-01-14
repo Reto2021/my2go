@@ -443,6 +443,9 @@ function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) 
   );
 }
 
+// Storage key for video hint
+const VIDEO_HINT_SHOWN_KEY = 'radio2go_video_hint_shown';
+
 // Memoized artwork component to prevent flickering during session duration updates
 const ArtworkDisplay = React.memo(function ArtworkDisplay({
   artworkUrl,
@@ -461,15 +464,34 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
 }) {
   const hasVideo = !!videoUrl;
   const shouldShowVideo = showVideo && hasVideo;
-  const [showHint, setShowHint] = useState(true);
+  
+  // Check localStorage to see if hint was already shown
+  const [showHint, setShowHint] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem(VIDEO_HINT_SHOWN_KEY);
+  });
 
-  // Auto-hide hint after 4 seconds
+  // Auto-hide hint after 4 seconds and mark as shown in localStorage
   useEffect(() => {
     if (hasVideo && showHint) {
-      const timer = setTimeout(() => setShowHint(false), 4000);
+      const timer = setTimeout(() => {
+        setShowHint(false);
+        localStorage.setItem(VIDEO_HINT_SHOWN_KEY, 'true');
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [hasVideo, showHint]);
+
+  // Handle toggle with haptic feedback
+  const handleToggle = () => {
+    hapticToggle();
+    // If hint is showing, hide it and mark as shown
+    if (showHint) {
+      setShowHint(false);
+      localStorage.setItem(VIDEO_HINT_SHOWN_KEY, 'true');
+    }
+    onToggleMedia();
+  };
 
   return (
     <div className="relative">
@@ -478,7 +500,7 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1 }}
         className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl mb-4 sm:mb-8 flex-shrink-0 w-[200px] h-[200px] xs:w-[240px] xs:h-[240px] sm:w-[280px] sm:h-[280px] md:w-[320px] md:h-[320px]"
-        onClick={hasVideo ? onToggleMedia : undefined}
+        onClick={hasVideo ? handleToggle : undefined}
         style={{ cursor: hasVideo ? 'pointer' : 'default' }}
       >
         {shouldShowVideo ? (
@@ -550,7 +572,7 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
       {/* Video/Cover Toggle Button - small indicator */}
       {hasVideo && (
         <button
-          onClick={onToggleMedia}
+          onClick={handleToggle}
           className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-colors z-10"
           title={shouldShowVideo ? 'Cover anzeigen' : 'Video anzeigen'}
         >
