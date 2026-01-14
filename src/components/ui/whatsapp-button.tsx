@@ -116,13 +116,27 @@ export function WhatsAppButton({ className }: { className?: string }) {
           className
         )}
       >
-        {/* Pulse rings - only show when menu is closed */}
+        {/* Organic pulse ring - slower, softer animation */}
         {!isOpen && (
-          <>
-            <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
-            <span className="absolute inset-0 rounded-full bg-[#25D366] animate-pulse opacity-20" />
-          </>
+          <motion.span
+            className="absolute inset-0 rounded-full bg-[#25D366]"
+            animate={{
+              scale: [1, 1.4, 1.4, 1],
+              opacity: [0.4, 0.15, 0, 0],
+            }}
+            transition={{
+              duration: 2.5,
+              repeat: Infinity,
+              ease: "easeOut",
+              times: [0, 0.4, 0.7, 1],
+            }}
+          />
         )}
+        
+        {/* Notification badge */}
+        <span className="absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground shadow-md">
+          1
+        </span>
         
         <button
           onClick={() => setIsOpen(!isOpen)}
