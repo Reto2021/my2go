@@ -19,7 +19,7 @@ import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger"
 import { InstallPrompt } from "./components/ui/install-prompt";
 import { FunnelLayout } from "./components/funnel/FunnelLayout";
 import { RouteLoader } from "./components/ui/route-loader";
-import { SplashScreen } from "./components/ui/splash-screen";
+
 import { OfflinePrefetchProvider } from "./hooks/useOfflinePrefetch";
 
 // Core pages - loaded immediately
@@ -221,19 +221,7 @@ function AppContent() {
   );
 }
 
-const SPLASH_SHOWN_KEY = 'my2go_splash_shown';
-
 const App = () => {
-  const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash on first load per session
-    return !sessionStorage.getItem(SPLASH_SHOWN_KEY);
-  });
-
-  const handleSplashComplete = () => {
-    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-    setShowSplash(false);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -244,14 +232,6 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <OnboardingOverlay />
-                <AnimatePresence mode="wait">
-                  {showSplash && (
-                    <SplashScreen 
-                      key="splash"
-                      onComplete={handleSplashComplete} 
-                    />
-                  )}
-                </AnimatePresence>
                 <AppContent />
               </TooltipProvider>
             </OnboardingProvider>
