@@ -218,6 +218,11 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         </div>
         
         <div className="container relative z-10 pt-6 pb-32">
+          {/* Install Banner for guests */}
+          <div className="mb-4">
+            <InstallBanner />
+          </div>
+          
           <div className="animate-in">
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
               Hör 2Go.<br />
