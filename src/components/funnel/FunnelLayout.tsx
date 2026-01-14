@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import logoRadio2go from "@/assets/logo-radio2go.png";
+import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 
 export function FunnelLayout() {
   const location = useLocation();
@@ -8,6 +9,8 @@ export function FunnelLayout() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* WhatsApp Button */}
+      <WhatsAppButton />
       {/* Minimal Header - Logo only, no navigation */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border/50">
         <div className="container max-w-lg mx-auto px-4">
