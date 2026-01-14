@@ -67,7 +67,8 @@ export function RadioHeader() {
     isPlaying, 
     isLoading, 
     nowPlaying, 
-    fetchNowPlaying 
+    fetchNowPlaying,
+    togglePlay 
   } = useRadioStore();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -160,7 +161,12 @@ export function RadioHeader() {
         <div 
           className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0 cursor-pointer overflow-hidden min-h-[44px] px-1" 
           data-onboarding="radio-player"
-          onClick={() => setPlayerExpanded(true)}
+          onClick={() => {
+            if (!isPlaying && !isLoading) {
+              togglePlay();
+            }
+            setPlayerExpanded(true);
+          }}
         >
           {isPlaying ? (
             <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 overflow-hidden">
