@@ -142,13 +142,13 @@ export function RadioHeader() {
         />
       </div>
       
-      <div className="relative container flex items-center gap-1.5 sm:gap-3 py-1.5 sm:py-2">
-        {/* Logo - responsive size */}
+      <div className="relative container flex items-center gap-2 sm:gap-3 py-2 sm:py-2.5">
+        {/* Logo - larger on mobile for better visibility */}
         <Link to="/" className="flex-shrink-0">
           <img 
             src={logo} 
             alt="Radio 2Go" 
-            className="h-8 sm:h-14 hover:opacity-80 transition-opacity"
+            className="h-10 sm:h-14 hover:opacity-80 transition-opacity"
           />
         </Link>
         
