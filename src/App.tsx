@@ -1,9 +1,10 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OnlineStatusProvider } from "@/contexts/OnlineStatusContext";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
@@ -18,6 +19,7 @@ import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger"
 import { InstallPrompt } from "./components/ui/install-prompt";
 import { FunnelLayout } from "./components/funnel/FunnelLayout";
 import { RouteLoader } from "./components/ui/route-loader";
+import { SplashScreen } from "./components/ui/splash-screen";
 import { OfflinePrefetchProvider } from "./hooks/useOfflinePrefetch";
 
 // Core pages - loaded immediately
@@ -219,23 +221,35 @@ function AppContent() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <OnlineStatusProvider>
-        <OfflinePrefetchProvider>
-          <OnboardingProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <OnboardingOverlay />
-              <AppContent />
-            </TooltipProvider>
-          </OnboardingProvider>
-        </OfflinePrefetchProvider>
-      </OnlineStatusProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <OnlineStatusProvider>
+          <OfflinePrefetchProvider>
+            <OnboardingProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <OnboardingOverlay />
+                <AnimatePresence mode="wait">
+                  {showSplash && (
+                    <SplashScreen 
+                      key="splash"
+                      onComplete={() => setShowSplash(false)} 
+                    />
+                  )}
+                </AnimatePresence>
+                <AppContent />
+              </TooltipProvider>
+            </OnboardingProvider>
+          </OfflinePrefetchProvider>
+        </OnlineStatusProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
