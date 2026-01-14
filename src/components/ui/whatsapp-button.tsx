@@ -108,20 +108,33 @@ export function WhatsAppButton({ className }: { className?: string }) {
         )}
       </AnimatePresence>
 
-      {/* Main button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
+      {/* Main button with pulse effect */}
+      <div
         className={cn(
-          'fixed z-[50] flex items-center justify-center',
-          'h-10 w-10 rounded-full',
-          'bg-[#25D366] hover:bg-[#20BD5A] active:scale-95',
-          'shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40',
-          'transition-all duration-300',
+          'fixed z-[50]',
           'bottom-[calc(12.5rem+env(safe-area-inset-bottom))] right-3',
           className
         )}
-        aria-label="WhatsApp Studio kontaktieren"
       >
+        {/* Pulse rings - only show when menu is closed */}
+        {!isOpen && (
+          <>
+            <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
+            <span className="absolute inset-0 rounded-full bg-[#25D366] animate-pulse opacity-20" />
+          </>
+        )}
+        
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            'relative flex items-center justify-center',
+            'h-10 w-10 rounded-full',
+            'bg-[#25D366] hover:bg-[#20BD5A] active:scale-95',
+            'shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40',
+            'transition-all duration-300'
+          )}
+          aria-label="WhatsApp Studio kontaktieren"
+        >
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
@@ -145,7 +158,8 @@ export function WhatsAppButton({ className }: { className?: string }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </button>
+        </button>
+      </div>
     </>
   );
 }
