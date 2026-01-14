@@ -12,6 +12,15 @@ interface TargetRect {
 }
 
 export function OnboardingOverlay() {
+  // Safe access to onboarding context
+  let onboardingContext;
+  try {
+    onboardingContext = useOnboarding();
+  } catch {
+    // Context not available yet, render nothing
+    return null;
+  }
+
   const {
     isActive,
     currentStep,
@@ -20,7 +29,7 @@ export function OnboardingOverlay() {
     nextStep,
     prevStep,
     skipOnboarding,
-  } = useOnboarding();
+  } = onboardingContext;
 
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
