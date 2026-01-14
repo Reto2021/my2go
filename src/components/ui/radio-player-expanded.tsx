@@ -146,45 +146,60 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
         >
-          {/* Swipe indicator - centered, doesn't overlap with close button */}
+          {/* Header with integrated close button and swipe indicator */}
+          <div 
+            className="flex-shrink-0 relative z-50" 
+            style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+          >
+            {/* Swipe indicator - purely visual, positioned above header content */}
+            <div className="flex justify-center pt-2 pb-1">
+              <div className="w-10 h-1 rounded-full bg-white/30" />
+            </div>
+            
+            {/* Header row with close button */}
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2">
+              {/* Close Button - clear and prominent */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  hapticToggle();
+                  onClose();
+                }}
+                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                aria-label="Schliessen"
+              >
+                <ChevronDown className="h-6 w-6 text-white" />
+              </button>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Radio className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-semibold text-white">Radio 2Go Live</span>
+                </div>
+                {isPlaying && <LiveListenerCount size="sm" className="bg-white/10" />}
+              </div>
+              
+              {/* Empty spacer for balanced header */}
+              <div className="h-10 w-10" />
+            </div>
+          </div>
+
+          {/* Scrollable Main Content - with swipe-to-close support */}
           <motion.div 
-            className="absolute top-0 left-16 right-16 z-30 flex items-center justify-center h-12 cursor-grab active:cursor-grabbing"
+            className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4 relative z-20" 
+            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0.1, bottom: 0.5 }}
+            dragElastic={{ top: 0, bottom: 0.3 }}
             onDragEnd={(_, info) => {
-              // Swipe down to close
-              if (info.offset.y > 80 || info.velocity.y > 400) {
+              // Swipe down to close - only if scrolled to top
+              if (info.offset.y > 100 || info.velocity.y > 500) {
+                hapticToggle();
                 onClose();
               }
             }}
           >
-            <div className="w-10 h-1 rounded-full bg-white/30" />
-          </motion.div>
-          {/* Header - with extra padding for drag handle */}
-          <div className="flex items-center justify-between p-3 sm:p-4 pt-5 sm:pt-6 flex-shrink-0 relative z-40" style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors touch-manipulation"
-            >
-              <ChevronDown className="h-5 w-5 text-white" />
-            </button>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Radio className="h-4 w-4 text-accent" />
-                <span className="text-sm font-semibold text-white">Radio 2Go Live</span>
-              </div>
-              {isPlaying && <LiveListenerCount size="sm" className="bg-white/10" />}
-            </div>
-            
-            {/* Empty spacer for balanced header */}
-            <div className="h-9 w-9 sm:h-10 sm:w-10" />
-          </div>
-
-          {/* Scrollable Main Content */}
-          <div className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4 relative z-20" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
             {/* Large Cover Art or Video */}
             <ArtworkDisplay 
               artworkUrl={nowPlaying?.artworkUrl} 
@@ -378,7 +393,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 </div>
               </motion.div>
             )}
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
