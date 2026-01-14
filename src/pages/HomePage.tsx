@@ -21,11 +21,12 @@ import {
   MapPin,
   ChevronRight, 
   Wallet,
-  Music,
+  Radio,
   ArrowRight,
   Navigation,
   X,
   Users,
+  Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -245,9 +246,9 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       {/* Features - Compact for mobile */}
       <section className="container -mt-16 relative z-20">
         <div className="grid grid-cols-3 gap-2 sm:gap-3 animate-in-delayed">
-          <FeatureChip icon={Music} label="Hören" fullLabel="Radio hören" color="accent" to="/auth" />
-          <FeatureChip icon={Gift} label="Sammeln" fullLabel="Taler sammeln" color="primary" to="/rewards" />
-          <FeatureChip icon={MapPin} label="Einlösen" fullLabel="Gutscheine einlösen" color="secondary" to="/partner" />
+          <FeatureChip icon={Radio} label="Hören" fullLabel="Radio hören" color="accent" to="/auth" />
+          <FeatureChip icon={Coins} label="Sammeln" fullLabel="Taler sammeln" color="primary" to="/rewards" />
+          <FeatureChip icon={Gift} label="Einlösen" fullLabel="Gutscheine einlösen" color="secondary" to="/partner" />
         </div>
       </section>
       
@@ -328,12 +329,12 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
       </section>
       
       {/* Info / Footer */}
-      <section className="container pb-32">
-        <div className="p-6 rounded-2xl bg-secondary/5 border border-secondary/10">
-          <p className="text-sm text-muted-foreground text-center mb-3">
+      <section className="container pb-36">
+        <div className="p-8 rounded-2xl bg-secondary/5 border border-secondary/10">
+          <p className="text-sm text-muted-foreground text-center mb-4">
             2Go Taler sind Bonuspunkte und nicht auszahlbar.
           </p>
-          <div className="flex justify-center gap-4 text-xs text-muted-foreground/70">
+          <div className="flex justify-center gap-6 text-sm text-muted-foreground/70">
             <Link to="/impressum" className="hover:text-foreground transition-colors">Impressum</Link>
             <Link to="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</Link>
             <Link to="/agb" className="hover:text-foreground transition-colors">AGB</Link>
