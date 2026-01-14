@@ -143,21 +143,25 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          drag="y"
-          dragConstraints={{ top: 0, bottom: 0 }}
-          dragElastic={{ top: 0.1, bottom: 0.4 }}
-          onDragEnd={(_, info) => {
-            // Swipe down to close
-            if (info.offset.y > 100 || info.velocity.y > 500) {
-              onClose();
-            }
-          }}
-          className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black touch-pan-x"
+          className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
         >
-          {/* Swipe indicator */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/30 z-10" />
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 sm:p-4 flex-shrink-0" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+          {/* Swipe indicator - this is the drag handle */}
+          <motion.div 
+            className="absolute top-0 left-0 right-0 h-16 z-10 flex items-start justify-center pt-2 cursor-grab active:cursor-grabbing"
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.1, bottom: 0.4 }}
+            onDragEnd={(_, info) => {
+              // Swipe down to close
+              if (info.offset.y > 100 || info.velocity.y > 500) {
+                onClose();
+              }
+            }}
+          >
+            <div className="w-10 h-1 rounded-full bg-white/30" />
+          </motion.div>
+          {/* Header - with extra padding for drag handle */}
+          <div className="flex items-center justify-between p-3 sm:p-4 pt-5 sm:pt-6 flex-shrink-0" style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}>
             <button
               onClick={onClose}
               className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
