@@ -16,6 +16,7 @@ import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
+import { InstallBanner } from '@/components/home/InstallBanner';
 import {
   Gift,
   MapPin,
@@ -415,6 +416,11 @@ function SessionModeHome({
           <ActivityTicker className="text-xs" />
         </div>
       </header>
+      
+      {/* Install Banner - for users who haven't installed the PWA */}
+      <section className="container pb-3">
+        <InstallBanner />
+      </section>
       
       {/* Referral Promo Banner - Compact */}
       <section className="container pb-2">
