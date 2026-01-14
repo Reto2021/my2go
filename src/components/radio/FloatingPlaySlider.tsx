@@ -244,45 +244,43 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Gold shimmer using framer-motion for guaranteed visibility */}
+              {/* Gold shimmer - using x transform with pixel values */}
               <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none" style={{ zIndex: 50 }}>
                 {/* Primary shimmer bar */}
                 <motion.div
-                  className="absolute top-0 bottom-0"
+                  className="absolute top-0 bottom-0 left-0"
                   style={{
-                    width: '120px',
+                    width: 120,
                     background: 'linear-gradient(90deg, transparent 0%, #FFB800 25%, #FFEE00 50%, #FFB800 75%, transparent 100%)',
                     boxShadow: '0 0 50px 15px rgba(255, 200, 0, 0.8)',
-                    left: 0,
                   }}
                   animate={{
-                    left: ['0px', '100%'],
+                    x: [-120, 400],
                   }}
                   transition={{
                     duration: 1.5,
                     repeat: Infinity,
                     ease: 'easeInOut',
-                    repeatDelay: 0.3,
+                    repeatDelay: 0.2,
                   }}
                 />
                 {/* Secondary shimmer bar */}
                 <motion.div
-                  className="absolute top-0 bottom-0"
+                  className="absolute top-0 bottom-0 left-0"
                   style={{
-                    width: '80px',
+                    width: 80,
                     background: 'linear-gradient(90deg, transparent 0%, #FFD700 30%, #FFFF80 50%, #FFD700 70%, transparent 100%)',
                     boxShadow: '0 0 30px 8px rgba(255, 215, 0, 0.6)',
-                    left: 0,
                   }}
                   animate={{
-                    left: ['0px', '100%'],
+                    x: [-80, 400],
                   }}
                   transition={{
                     duration: 1.5,
                     repeat: Infinity,
                     ease: 'easeInOut',
-                    repeatDelay: 0.3,
-                    delay: 0.3,
+                    repeatDelay: 0.2,
+                    delay: 0.35,
                   }}
                 />
               </div>
