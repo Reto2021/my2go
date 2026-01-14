@@ -368,7 +368,7 @@ interface PartnerCardWithDistanceProps {
 
 function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceProps) {
   return (
-    <Link to={`/partner/${partner.slug}`} className="list-item group">
+    <Link to={`/partner/${partner.slug}`} className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 active:scale-[0.99] group">
       {/* Logo */}
       <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
         {partner.logo_url ? (
