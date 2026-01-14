@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { 
+import {
   Play, 
   Pause, 
   Volume2, 
@@ -145,26 +144,29 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
         >
-          {/* Swipe indicator - this is the drag handle */}
-          <motion.div 
-            className="absolute top-0 left-0 right-0 h-16 z-10 flex items-start justify-center pt-2 cursor-grab active:cursor-grabbing"
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0.1, bottom: 0.4 }}
-            onDragEnd={(_, info) => {
-              // Swipe down to close
-              if (info.offset.y > 100 || info.velocity.y > 500) {
-                onClose();
-              }
-            }}
-          >
-            <div className="w-10 h-1 rounded-full bg-white/30" />
-          </motion.div>
+          {/* Swipe indicator - only the small bar is interactive */}
+          <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-center pt-2 pointer-events-none">
+            <motion.div 
+              className="w-12 h-8 flex items-center justify-center cursor-grab active:cursor-grabbing pointer-events-auto touch-none"
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0.1, bottom: 0.4 }}
+              onDragEnd={(_, info) => {
+                // Swipe down to close
+                if (info.offset.y > 100 || info.velocity.y > 500) {
+                  onClose();
+                }
+              }}
+            >
+              <div className="w-10 h-1 rounded-full bg-white/30" />
+            </motion.div>
+          </div>
           {/* Header - with extra padding for drag handle */}
-          <div className="flex items-center justify-between p-3 sm:p-4 pt-5 sm:pt-6 flex-shrink-0" style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}>
+          <div className="flex items-center justify-between p-3 sm:p-4 pt-5 sm:pt-6 flex-shrink-0 relative z-20" style={{ paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem))' }}>
             <button
+              type="button"
               onClick={onClose}
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors touch-manipulation"
             >
               <ChevronDown className="h-5 w-5 text-white" />
             </button>
@@ -182,7 +184,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           </div>
 
           {/* Scrollable Main Content */}
-          <div className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4 relative z-20" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
             {/* Large Cover Art or Video */}
             <ArtworkDisplay 
               artworkUrl={nowPlaying?.artworkUrl} 
@@ -281,20 +283,26 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   /* Login Prompt for unauthenticated users */
                   <div className="bg-white/10 rounded-2xl p-4 text-center">
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <Coins className="h-5 w-5" />
+                      <Coins className="h-5 w-5 text-accent" />
                       <span className="text-base font-bold text-white">2Go Taler verdienen</span>
                     </div>
                     <p className="text-sm text-white/70 mb-4">
                       Melde dich an, um beim Radiohören Taler zu sammeln und exklusive Gutscheine einzulösen!
                     </p>
-                    <Link
-                      to="/auth"
-                      onClick={onClose}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:bg-accent/90 transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        // Small delay to ensure player closes before navigation
+                        setTimeout(() => {
+                          window.location.href = '/auth';
+                        }, 100);
+                      }}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-accent text-accent-foreground font-semibold text-sm active:scale-95 transition-transform touch-manipulation"
                     >
                       <Wallet className="h-4 w-4" />
                       Kostenlos anmelden
-                    </Link>
+                    </button>
                   </div>
                 )}
               </motion.div>
@@ -307,8 +315,12 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               transition={{ delay: 0.3 }}
               className="w-full max-w-xs mb-4 sm:mb-8"
             >
-              <div className="flex items-center gap-4">
-                <button onClick={toggleMute} className="text-white/60 hover:text-white transition-colors">
+              <div className="flex items-center gap-4 touch-none">
+                <button 
+                  type="button"
+                  onClick={toggleMute} 
+                  className="text-white/60 hover:text-white transition-colors touch-manipulation p-2 -m-2"
+                >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="h-5 w-5" />
                   ) : (
@@ -320,23 +332,21 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   onValueChange={(value) => setVolume(value[0] / 100)}
                   max={100}
                   step={1}
-                  className="flex-1"
+                  className="flex-1 touch-none"
                 />
               </div>
             </motion.div>
 
             {/* Play/Pause Button */}
-            <motion.button
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.4 }}
+            <button
+              type="button"
               onClick={() => {
                 hapticToggle();
                 togglePlay();
               }}
               disabled={isLoading}
               className={cn(
-                "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0",
+                "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0 touch-manipulation active:scale-95",
                 isPlaying 
                   ? "bg-white text-secondary hover:bg-white/90" 
                   : "bg-accent text-accent-foreground hover:bg-accent/90",
@@ -350,7 +360,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               ) : (
                 <Play className="h-6 w-6 sm:h-8 sm:w-8 ml-1" />
               )}
-            </motion.button>
+            </button>
             
             {/* Song History - always show if available */}
             {songHistory.length > 0 && (
