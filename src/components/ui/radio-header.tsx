@@ -180,11 +180,8 @@ export function RadioHeader() {
               <LiveListenerCount size="sm" showLabel={false} className="hidden xs:flex flex-shrink-0" />
             </div>
           ) : (
-            <div className="flex items-center gap-1.5">
-              <p className="text-xs sm:text-base text-secondary-foreground font-semibold">
-                Radio starten
-              </p>
-              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-accent fill-accent" />
+            <div className="flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-accent/20" title="Radio starten">
+              <Play className="h-5 w-5 sm:h-6 sm:w-6 text-accent fill-accent" />
             </div>
           )}
         </div>
