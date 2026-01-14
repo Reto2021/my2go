@@ -323,26 +323,41 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
                 whileTap={{ scale: 0.98 }}
                 className="absolute left-1 top-1 bottom-1 w-14 cursor-grab active:cursor-grabbing z-10"
               >
-                <motion.div 
-                  className="w-full h-full rounded-lg flex items-center justify-center"
-                  animate={sliderProgress === 0 ? { x: [0, 6, 0] } : { x: 0 }}
-                  transition={{ 
-                    duration: 1.5, 
-                    repeat: sliderProgress === 0 ? Infinity : 0, 
-                    ease: "easeInOut",
-                    repeatDelay: 0.3
-                  }}
+                <div 
+                  className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden relative"
                   style={{
                     background: 'linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(38 95% 45%) 100%)',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25)',
                   }}
                 >
-                  {isClaiming || isRadioLoading ? (
-                    <Loader2 className="h-5 w-5 text-secondary animate-spin" />
-                  ) : (
-                    <Play className="h-5 w-5 text-secondary fill-secondary" />
+                  {/* Shimmer effect */}
+                  {sliderProgress === 0 && (
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none"
+                      initial={false}
+                    >
+                      <motion.div
+                        className="absolute inset-y-0 w-8 -skew-x-12"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                        }}
+                        animate={{ x: ['-100%', '200%'] }}
+                        transition={{
+                          duration: 1.2,
+                          repeat: Infinity,
+                          repeatDelay: 1,
+                          ease: "easeInOut",
+                        }}
+                      />
+                    </motion.div>
                   )}
-                </motion.div>
+                  
+                  {isClaiming || isRadioLoading ? (
+                    <Loader2 className="h-5 w-5 text-secondary animate-spin relative z-10" />
+                  ) : (
+                    <Play className="h-5 w-5 text-secondary fill-secondary relative z-10" />
+                  )}
+                </div>
               </motion.div>
             </div>
           ) : (
