@@ -221,8 +221,18 @@ function AppContent() {
   );
 }
 
+const SPLASH_SHOWN_KEY = 'my2go_splash_shown';
+
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash on first load per session
+    return !sessionStorage.getItem(SPLASH_SHOWN_KEY);
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+    setShowSplash(false);
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -238,7 +248,7 @@ const App = () => {
                   {showSplash && (
                     <SplashScreen 
                       key="splash"
-                      onComplete={() => setShowSplash(false)} 
+                      onComplete={handleSplashComplete} 
                     />
                   )}
                 </AnimatePresence>
