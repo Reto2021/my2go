@@ -12,13 +12,23 @@ export function TierCelebration({ isVisible, talerAmount, onDismiss }: TierCeleb
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.9 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="fixed bottom-36 left-1/2 -translate-x-1/2 z-[100]"
-        >
+        <>
+          {/* Overlay backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99]"
+            onClick={onDismiss}
+          />
+          
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100]"
+          >
           <div className="relative">
             {/* Glow effect */}
             <div className="absolute inset-0 bg-accent/30 rounded-2xl blur-xl animate-pulse" />
@@ -80,7 +90,8 @@ export function TierCelebration({ isVisible, talerAmount, onDismiss }: TierCeleb
               </div>
             </div>
           </div>
-        </motion.div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
