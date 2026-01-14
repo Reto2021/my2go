@@ -238,52 +238,40 @@ export function FloatingPlaySlider({ onStreakDetailsOpen }: FloatingPlaySliderPr
           {showSlider ? (
             <div 
               ref={containerRef}
-              className="relative h-14 rounded-xl overflow-hidden"
+              className="relative h-14 rounded-xl"
               style={{
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)',
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
-              {/* Double gold shimmer effect across entire track */}
-              {sliderProgress === 0 && (
-                <>
-                  {/* First shimmer - gold, wide */}
-                  <motion.div
-                    className="absolute inset-y-0 w-28 -skew-x-12 pointer-events-none z-[5]"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 180, 0, 0.6) 40%, rgba(255, 220, 80, 0.8) 50%, rgba(255, 180, 0, 0.6) 60%, transparent 100%)',
-                    }}
-                    animate={{ 
-                      x: [0, 320],
-                      opacity: [0, 1, 1, 0],
-                    }}
-                    transition={{
-                      duration: 1.2,
-                      repeat: Infinity,
-                      repeatDelay: 0.5,
-                      ease: "easeInOut",
-                    }}
-                  />
-                  {/* Second shimmer - gold, thinner, delayed */}
-                  <motion.div
-                    className="absolute inset-y-0 w-16 -skew-x-12 pointer-events-none z-[5]"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 200, 50, 0.5) 50%, transparent 100%)',
-                    }}
-                    animate={{ 
-                      x: [0, 320],
-                      opacity: [0, 1, 1, 0],
-                    }}
-                    transition={{
-                      duration: 1.2,
-                      repeat: Infinity,
-                      repeatDelay: 0.5,
-                      delay: 0.25,
-                      ease: "easeInOut",
-                    }}
-                  />
-                </>
-              )}
+              {/* Gold shimmer overlay - CSS animation for reliability */}
+              <div 
+                className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-[5]"
+                style={{
+                  background: `linear-gradient(
+                    90deg,
+                    transparent 0%,
+                    transparent 25%,
+                    rgba(255, 180, 0, 0.5) 35%,
+                    rgba(255, 220, 80, 0.7) 40%,
+                    rgba(255, 180, 0, 0.5) 45%,
+                    transparent 55%,
+                    transparent 70%,
+                    rgba(255, 200, 50, 0.4) 78%,
+                    rgba(255, 220, 80, 0.5) 82%,
+                    rgba(255, 200, 50, 0.4) 86%,
+                    transparent 100%
+                  )`,
+                  backgroundSize: '300% 100%',
+                  animation: 'shimmerSlide 2s ease-in-out infinite',
+                }}
+              />
+              <style>{`
+                @keyframes shimmerSlide {
+                  0% { background-position: 100% 0; }
+                  100% { background-position: -100% 0; }
+                }
+              `}</style>
               
               {/* Track glow */}
               <motion.div
