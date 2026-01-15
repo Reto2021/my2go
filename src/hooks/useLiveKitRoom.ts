@@ -30,6 +30,13 @@ export interface Reaction {
   timestamp: number;
 }
 
+export interface ApplauseEvent {
+  id: string;
+  participantId: string;
+  participantName: string;
+  timestamp: number;
+}
+
 export interface UseLiveKitRoomReturn {
   isConnected: boolean;
   isConnecting: boolean;
@@ -42,7 +49,9 @@ export interface UseLiveKitRoomReturn {
   toggleMute: () => void;
   toggleVideo: () => void;
   sendReaction: (emoji: string) => void;
+  sendApplause: () => void;
   reactions: Reaction[];
+  applauseEvents: ApplauseEvent[];
   isMuted: boolean;
   isVideoOff: boolean;
 }
@@ -59,6 +68,7 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [applauseEvents, setApplauseEvents] = useState<ApplauseEvent[]>([]);
   const [room, setRoom] = useState<Room | null>(null);
 
   const roomRef = useRef<Room | null>(null);
@@ -81,6 +91,16 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
       return () => clearTimeout(timer);
     }
   }, [reactions]);
+
+  // Auto-remove applause events after 4 seconds
+  useEffect(() => {
+    if (applauseEvents.length > 0) {
+      const timer = setTimeout(() => {
+        setApplauseEvents(prev => prev.filter(a => Date.now() - a.timestamp < 4000));
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [applauseEvents]);
 
   const getToken = async (roomName: string): Promise<{ token: string; url: string; participantName: string } | null> => {
     try {
@@ -220,7 +240,7 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
         updateParticipants(newRoom);
       });
 
-      // Handle incoming data (reactions)
+      // Handle incoming data (reactions and applause)
       newRoom.on(RoomEvent.DataReceived, (payload: Uint8Array, participant?: RemoteParticipant) => {
         try {
           const decoder = new TextDecoder();
@@ -230,6 +250,13 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
             setReactions(prev => [...prev, {
               id: `${Date.now()}-${Math.random()}`,
               emoji: data.emoji,
+              participantId: participant?.identity || 'unknown',
+              participantName: participant?.name || 'Someone',
+              timestamp: Date.now()
+            }]);
+          } else if (data.type === 'applause') {
+            setApplauseEvents(prev => [...prev, {
+              id: `${Date.now()}-${Math.random()}`,
               participantId: participant?.identity || 'unknown',
               participantName: participant?.name || 'Someone',
               timestamp: Date.now()
@@ -278,6 +305,7 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     setIsMuted(false);
     setIsVideoOff(false);
     setReactions([]);
+    setApplauseEvents([]);
   }, []);
 
   const toggleMute = useCallback(async () => {
@@ -318,6 +346,23 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     }
   }, [isConnected, user]);
 
+  const sendApplause = useCallback(() => {
+    if (roomRef.current && isConnected) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(JSON.stringify({ type: 'applause' }));
+      
+      roomRef.current.localParticipant.publishData(data, { reliable: true });
+      
+      // Also trigger locally
+      setApplauseEvents(prev => [...prev, {
+        id: `${Date.now()}-${Math.random()}`,
+        participantId: user?.id || 'local',
+        participantName: 'Du',
+        timestamp: Date.now()
+      }]);
+    }
+  }, [isConnected, user]);
+
   return {
     isConnected,
     isConnecting,
@@ -330,7 +375,9 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     toggleMute,
     toggleVideo,
     sendReaction,
+    sendApplause,
     reactions,
+    applauseEvents,
     isMuted,
     isVideoOff
   };
