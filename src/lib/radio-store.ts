@@ -6,6 +6,76 @@ const ARTWORK_BASE = 'https://api.broadcast.radio';
 const DEFAULT_ARTWORK = '/pwa-512x512.png';
 const ITUNES_SEARCH_API = 'https://itunes.apple.com/search';
 
+// SessionStorage keys for persistence
+const SESSION_STORAGE_KEY = 'radio2go_session';
+const CELEBRATED_TIERS_KEY = 'radio2go_celebrated_tiers';
+
+interface PersistedSession {
+  startTime: string; // ISO string
+  celebratedTiers: string[]; // Tier IDs that were already celebrated
+}
+
+// Helper functions for session persistence
+function saveSessionToStorage(startTime: Date, celebratedTiers: string[] = []) {
+  try {
+    const session: PersistedSession = {
+      startTime: startTime.toISOString(),
+      celebratedTiers,
+    };
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  } catch (e) {
+    console.warn('Could not save session to storage:', e);
+  }
+}
+
+function loadSessionFromStorage(): PersistedSession | null {
+  try {
+    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Could not load session from storage:', e);
+  }
+  return null;
+}
+
+function clearSessionFromStorage() {
+  try {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (e) {
+    console.warn('Could not clear session from storage:', e);
+  }
+}
+
+export function getCelebratedTiers(): string[] {
+  try {
+    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (stored) {
+      const session: PersistedSession = JSON.parse(stored);
+      return session.celebratedTiers || [];
+    }
+  } catch (e) {
+    console.warn('Could not get celebrated tiers:', e);
+  }
+  return [];
+}
+
+export function addCelebratedTier(tierName: string) {
+  try {
+    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (stored) {
+      const session: PersistedSession = JSON.parse(stored);
+      if (!session.celebratedTiers.includes(tierName)) {
+        session.celebratedTiers.push(tierName);
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      }
+    }
+  } catch (e) {
+    console.warn('Could not add celebrated tier:', e);
+  }
+}
+
 interface NowPlayingData {
   title: string;
   artist: string;
@@ -40,6 +110,7 @@ interface RadioStore {
   updateSessionDuration: () => void;
   setPlayerExpanded: (expanded: boolean) => void;
   setPlayerMinimized: (minimized: boolean) => void;
+  restoreSession: () => boolean; // Returns true if session was restored
 }
 
 interface iTunesMediaResult {
@@ -182,6 +253,23 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     }
   },
 
+  restoreSession: () => {
+    const stored = loadSessionFromStorage();
+    if (stored) {
+      const startTime = new Date(stored.startTime);
+      const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000);
+      
+      // Only restore if session is less than 2 hours old
+      if (elapsed < 7200) {
+        set({ sessionStartTime: startTime, currentSessionDuration: elapsed });
+        return true;
+      } else {
+        clearSessionFromStorage();
+      }
+    }
+    return false;
+  },
+
   togglePlay: () => {
     const { isPlaying, isLoading, audio, nowPlaying } = get();
     
@@ -201,6 +289,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     if (isPlaying) {
       currentAudio.pause();
       currentAudio.src = '';
+      clearSessionFromStorage();
       set({ isPlaying: false, sessionStartTime: null, currentSessionDuration: 0 });
       updateMediaSession(nowPlaying, false);
     } else {
@@ -208,7 +297,17 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       currentAudio.src = STREAM_URL;
       currentAudio.play()
         .then(() => {
-          set({ isPlaying: true, isLoading: false, sessionStartTime: new Date(), currentSessionDuration: 0 });
+          // Try to restore previous session first
+          const restored = get().restoreSession();
+          
+          if (!restored) {
+            // Start fresh session
+            const startTime = new Date();
+            saveSessionToStorage(startTime, []);
+            set({ sessionStartTime: startTime, currentSessionDuration: 0 });
+          }
+          
+          set({ isPlaying: true, isLoading: false });
           get().fetchNowPlaying();
           updateMediaSession(get().nowPlaying, true);
         })
