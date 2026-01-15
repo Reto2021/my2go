@@ -123,23 +123,44 @@ export function AnimatedVinylFallback({ isPlaying, size = 'lg' }: AnimatedVinylF
         </div>
       )}
 
-      {/* Glow effect when playing */}
+      {/* Pulsing glow effect when playing */}
       {isPlaying && (
-        <motion.div
-          className="absolute inset-0 rounded-full pointer-events-none"
-          animate={{
-            boxShadow: [
-              '0 0 20px 0 rgba(var(--accent-rgb), 0.2)',
-              '0 0 40px 10px rgba(var(--accent-rgb), 0.3)',
-              '0 0 20px 0 rgba(var(--accent-rgb), 0.2)',
-            ],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+        <>
+          {/* Outer pulsing glow ring */}
+          <motion.div
+            className="absolute inset-[2%] rounded-full pointer-events-none"
+            style={{
+              background: 'transparent',
+              boxShadow: '0 0 30px 8px hsl(var(--accent) / 0.4), 0 0 60px 20px hsl(var(--primary) / 0.2)',
+            }}
+            animate={{
+              opacity: [0.5, 1, 0.5],
+              scale: [0.98, 1.02, 0.98],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          {/* Inner bright glow */}
+          <motion.div
+            className="absolute inset-[5%] rounded-full pointer-events-none"
+            style={{
+              background: 'transparent',
+              boxShadow: '0 0 20px 4px hsl(var(--accent) / 0.6), inset 0 0 30px 5px hsl(var(--primary) / 0.1)',
+            }}
+            animate={{
+              opacity: [0.6, 0.9, 0.6],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.3,
+            }}
+          />
+        </>
       )}
     </div>
   );
