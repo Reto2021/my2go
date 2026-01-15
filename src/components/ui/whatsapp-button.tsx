@@ -28,8 +28,8 @@ const quickMessages = [
   },
   { 
     icon: Store, 
-    label: '2Go Taler-Partner vorschlagen', 
-    message: 'Hey Radio 2Go! 🏪 Ich möchte euch einen Taler-Partner vorschlagen:' 
+    label: 'Gutscheinpartner vorschlagen', 
+    message: 'Hey Radio 2Go! 🏪 Ich möchte euch einen Gutscheinpartner vorschlagen:' 
   },
 ];
 
