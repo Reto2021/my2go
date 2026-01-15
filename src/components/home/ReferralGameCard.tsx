@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Gift, Users, Share2, Trophy, Star, Sparkles, ChevronRight, Copy, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Gift, Users, Share2, Trophy, Star, Sparkles, ChevronRight, Copy, Check, MessageCircle, Send, Mail, MoreHorizontal } from 'lucide-react';
 import { useAuth, useUserCode } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -14,18 +14,47 @@ const MILESTONES = [
   { count: 10, label: 'Squad Leader', icon: Sparkles, reward: 250, badge: '👑' },
 ];
 
+// Share channel configurations
+const SHARE_CHANNELS = [
+  { 
+    id: 'whatsapp', 
+    label: 'WhatsApp', 
+    icon: MessageCircle, 
+    color: 'bg-[#25D366]',
+    getUrl: (link: string, text: string) => 
+      `https://wa.me/?text=${encodeURIComponent(text + '\n\n' + link)}`
+  },
+  { 
+    id: 'telegram', 
+    label: 'Telegram', 
+    icon: Send, 
+    color: 'bg-[#0088cc]',
+    getUrl: (link: string, text: string) => 
+      `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`
+  },
+  { 
+    id: 'email', 
+    label: 'Email', 
+    icon: Mail, 
+    color: 'bg-muted-foreground',
+    getUrl: (link: string, text: string) => 
+      `mailto:?subject=${encodeURIComponent('Einladung zu My 2Go')}&body=${encodeURIComponent(text + '\n\n' + link)}`
+  },
+];
+
 export function ReferralGameCard() {
   const { user, profile } = useAuth();
   const userCode = useUserCode();
   const [copied, setCopied] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   
   const referralCount = profile?.referral_count || 0;
   const referralCode = userCode?.permanent_code || '';
   
-  // Build the referral link
+  // Build the referral link and share text
   const baseUrl = window.location.origin;
   const referralLink = `${baseUrl}/auth?ref=${encodeURIComponent(referralCode)}`;
+  const shareText = `Hey! Melde dich bei My 2Go an und wir erhalten beide 25 Taler Bonus! 🎁`;
   
   // Calculate progress to next milestone
   const currentMilestone = MILESTONES.findIndex(m => referralCount < m.count);
@@ -49,25 +78,27 @@ export function ReferralGameCard() {
     }
   };
   
-  const handleShare = async () => {
+  const handleShareChannel = (channel: typeof SHARE_CHANNELS[0]) => {
+    const url = channel.getUrl(referralLink, shareText);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  
+  const handleNativeShare = async () => {
     if (!navigator.share) {
-      handleCopy();
+      setShowMoreOptions(true);
       return;
     }
     
-    setIsSharing(true);
     try {
       await navigator.share({
         title: 'My 2Go',
-        text: `Melde dich bei My 2Go an und wir erhalten beide 25 Taler! Nutze meinen Code: ${referralCode}`,
+        text: shareText,
         url: referralLink,
       });
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         handleCopy();
       }
-    } finally {
-      setIsSharing(false);
     }
   };
   
@@ -182,33 +213,57 @@ export function ReferralGameCard() {
           })}
         </div>
         
-        {/* Action Buttons */}
+        {/* Quick Share Buttons - Direct App Links */}
+        <div className="flex gap-2 mb-2">
+          {SHARE_CHANNELS.map((channel) => (
+            <motion.button
+              key={channel.id}
+              onClick={() => handleShareChannel(channel)}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-white font-semibold text-xs transition-opacity hover:opacity-90',
+                channel.color
+              )}
+              whileTap={{ scale: 0.97 }}
+            >
+              <channel.icon className="h-4 w-4" />
+              <span className="hidden xs:inline">{channel.label}</span>
+            </motion.button>
+          ))}
+        </div>
+        
+        {/* Secondary Actions */}
         <div className="flex gap-2">
           <motion.button
-            onClick={handleShare}
-            disabled={isSharing}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:bg-accent/90 transition-colors"
-            whileTap={{ scale: 0.98 }}
-          >
-            <Share2 className="h-4 w-4" />
-            Teilen
-          </motion.button>
-          
-          <motion.button
             onClick={handleCopy}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary-foreground/10 text-secondary-foreground font-semibold text-sm hover:bg-secondary-foreground/20 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-secondary-foreground/10 text-secondary-foreground font-semibold text-sm hover:bg-secondary-foreground/20 transition-colors"
             whileTap={{ scale: 0.98 }}
           >
             {copied ? (
-              <Check className="h-4 w-4 text-success" />
+              <>
+                <Check className="h-4 w-4 text-success" />
+                Kopiert!
+              </>
             ) : (
-              <Copy className="h-4 w-4" />
+              <>
+                <Copy className="h-4 w-4" />
+                Link kopieren
+              </>
             )}
+          </motion.button>
+          
+          <motion.button
+            onClick={handleNativeShare}
+            className="flex items-center justify-center px-3 py-2 rounded-xl bg-secondary-foreground/10 text-secondary-foreground hover:bg-secondary-foreground/20 transition-colors"
+            whileTap={{ scale: 0.98 }}
+            title="Mehr Optionen"
+          >
+            <MoreHorizontal className="h-4 w-4" />
           </motion.button>
           
           <Link
             to="/referral"
-            className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-secondary-foreground/10 text-secondary-foreground hover:bg-secondary-foreground/20 transition-colors"
+            className="flex items-center justify-center px-3 py-2 rounded-xl bg-secondary-foreground/10 text-secondary-foreground hover:bg-secondary-foreground/20 transition-colors"
+            title="Details"
           >
             <ChevronRight className="h-4 w-4" />
           </Link>
