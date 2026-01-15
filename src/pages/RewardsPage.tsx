@@ -346,7 +346,7 @@ export default function RewardsPage() {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background backdrop-blur-lg border-b border-border/50">
+      <header className="sticky top-20 z-40 bg-background border-b border-border/50">
         <div className="container py-3">
           {/* Title + Tabs + Filter in one row */}
           <div className="flex items-center gap-3 mb-3">
