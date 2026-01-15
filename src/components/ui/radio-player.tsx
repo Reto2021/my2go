@@ -59,6 +59,49 @@ const formatSessionTime = (seconds: number): string => {
   return `${secs}s`;
 };
 
+// Helper: Mini vinyl fallback for the compact player
+function MiniVinylFallback({ isPlaying }: { isPlaying: boolean }) {
+  return (
+    <div className="h-full w-full bg-secondary/30 flex items-center justify-center relative overflow-hidden">
+      <motion.div
+        className="absolute inset-1 rounded-full bg-gradient-to-br from-secondary/50 to-secondary/80"
+        animate={isPlaying ? { rotate: 360 } : {}}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+      >
+        <div className="absolute inset-0 rounded-full border border-white/10" />
+        <div className="absolute inset-[30%] rounded-full bg-accent/30" />
+        <div className="absolute inset-[40%] rounded-full bg-secondary" />
+      </motion.div>
+    </div>
+  );
+}
+
+// Helper: Artwork with fallback to vinyl on error
+function MiniArtworkWithFallback({ 
+  src, 
+  alt, 
+  isPlaying 
+}: { 
+  src: string; 
+  alt: string; 
+  isPlaying: boolean 
+}) {
+  const [hasError, setHasError] = useState(false);
+  
+  if (hasError) {
+    return <MiniVinylFallback isPlaying={isPlaying} />;
+  }
+  
+  return (
+    <img 
+      src={src} 
+      alt={alt}
+      className="h-full w-full object-cover"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
 export function RadioPlayer({ className }: { className?: string }) {
   const { 
     isPlaying, 
@@ -376,16 +419,13 @@ export function RadioPlayer({ className }: { className?: string }) {
                 isPlaying && "ring-2 ring-accent ring-offset-2 ring-offset-secondary"
               )}>
                 {nowPlaying?.artworkUrl ? (
-                  <img 
+                  <MiniArtworkWithFallback 
                     src={nowPlaying.artworkUrl} 
                     alt={nowPlaying.title}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
+                    isPlaying={isPlaying}
                   />
                 ) : (
-                  <Music2 className="h-6 w-6 text-secondary-foreground/70" />
+                  <MiniVinylFallback isPlaying={isPlaying} />
                 )}
               </div>
               {isPlaying && (
