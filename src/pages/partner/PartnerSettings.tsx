@@ -56,6 +56,9 @@ export default function PartnerSettings() {
   const [hasChanges, setHasChanges] = useState(false);
   const [searchResults, setSearchResults] = useState<PlaceCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [customSearchQuery, setCustomSearchQuery] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'valid' | 'invalid' | null>(null);
 
   useEffect(() => {
     if (partnerInfo?.partnerId) {
@@ -181,8 +184,9 @@ export default function PartnerSettings() {
     }
   };
 
-  const handleSearchPlace = async () => {
-    if (!partnerInfo?.partnerName) return;
+  const handleSearchPlace = async (customQuery?: string) => {
+    const query = customQuery || customSearchQuery || partnerInfo?.partnerName;
+    if (!query) return;
 
     setIsSearching(true);
     setSearchResults([]);
@@ -190,7 +194,7 @@ export default function PartnerSettings() {
       const { data, error } = await supabase.functions.invoke('sync-google-reviews', {
         body: {
           action: 'lookup-place',
-          query: partnerInfo.partnerName,
+          query: query,
         },
       });
 
@@ -200,13 +204,45 @@ export default function PartnerSettings() {
         setSearchResults(data.candidates);
         toast.success(`${data.candidates.length} Ergebnis(se) gefunden`);
       } else {
-        toast.info('Kein Geschäft gefunden. Versuche eine genauere Suche.');
+        toast.info('Kein Geschäft gefunden. Versuche einen anderen Suchbegriff.');
       }
     } catch (error) {
       console.error('Error searching place:', error);
       toast.error('Suche fehlgeschlagen');
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleValidatePlaceId = async () => {
+    if (!settings.google_place_id) return;
+
+    setIsValidating(true);
+    setValidationStatus(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-google-reviews', {
+        body: {
+          action: 'sync-single',
+          partnerId: partnerInfo?.partnerId,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.rating) {
+        setValidationStatus('valid');
+        toast.success(`Place ID ist gültig! Rating: ${data.rating?.toFixed(1)} ⭐`);
+        await loadSettings();
+      } else {
+        setValidationStatus('invalid');
+        toast.error('Place ID ist ungültig oder das Geschäft wurde nicht gefunden');
+      }
+    } catch (error) {
+      console.error('Error validating place ID:', error);
+      setValidationStatus('invalid');
+      toast.error('Validierung fehlgeschlagen - Place ID prüfen');
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -219,6 +255,8 @@ export default function PartnerSettings() {
       google_review_count: candidate.user_ratings_total || null,
     }));
     setSearchResults([]);
+    setCustomSearchQuery('');
+    setValidationStatus(null);
     setHasChanges(true);
     toast.success(`${candidate.name} ausgewählt`);
   };
@@ -386,23 +424,54 @@ export default function PartnerSettings() {
           <CardContent className="space-y-6">
             {/* Current Status */}
             {settings.google_place_id ? (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-success/10 border border-success/30">
-                <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+              <div className={`flex items-start gap-3 p-4 rounded-xl border ${
+                validationStatus === 'invalid' 
+                  ? 'bg-destructive/10 border-destructive/30'
+                  : 'bg-success/10 border-success/30'
+              }`}>
+                {validationStatus === 'invalid' ? (
+                  <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                )}
                 <div className="flex-1">
-                  <p className="font-medium text-success">Google Business verknüpft</p>
+                  <p className={`font-medium ${validationStatus === 'invalid' ? 'text-destructive' : 'text-success'}`}>
+                    {validationStatus === 'invalid' ? 'Place ID ungültig - bitte korrigieren' : 'Google Business verknüpft'}
+                  </p>
                   <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                    {settings.google_rating && (
+                    {settings.google_rating && validationStatus !== 'invalid' && (
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                         {settings.google_rating.toFixed(1)}
                       </span>
                     )}
-                    {settings.google_review_count !== null && (
+                    {settings.google_review_count !== null && validationStatus !== 'invalid' && (
                       <span>{settings.google_review_count} Bewertungen</span>
                     )}
+                    {validationStatus === 'invalid' && (
+                      <span className="text-destructive">Suche unten nach dem richtigen Geschäft</span>
+                    )}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1 font-mono truncate">
+                    ID: {settings.google_place_id.substring(0, 30)}...
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleValidatePlaceId}
+                    disabled={isValidating}
+                    className="gap-1"
+                    title="Place ID validieren"
+                  >
+                    {isValidating ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    Prüfen
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -435,7 +504,7 @@ export default function PartnerSettings() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleSearchPlace}
+                  onClick={() => handleSearchPlace(partnerInfo?.partnerName)}
                   disabled={isSearching}
                   className="gap-1"
                 >
@@ -444,6 +513,30 @@ export default function PartnerSettings() {
                 </Button>
               </div>
             )}
+
+            {/* Custom Search */}
+            <div className="space-y-2">
+              <Label>Geschäft suchen</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="z.B. 'Café Sonnenschein Aarau' oder 'Aargauer Kunsthaus'"
+                  value={customSearchQuery}
+                  onChange={(e) => setCustomSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchPlace()}
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => handleSearchPlace()}
+                  disabled={isSearching || !customSearchQuery.trim()}
+                >
+                  <Search className={`h-4 w-4 ${isSearching ? 'animate-pulse' : ''}`} />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Gib den Namen und Ort deines Geschäfts ein für eine präzisere Suche.
+              </p>
+            </div>
 
             {/* Search Results */}
             {searchResults.length > 0 && (
