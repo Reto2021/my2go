@@ -32,7 +32,7 @@ export function TierCelebration({ isVisible, talerAmount, onDismiss }: TierCeleb
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-[100] flex items-center justify-center sm:w-[90%] sm:max-w-sm pointer-events-none"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
             >
               <div className="relative w-full max-w-xs pointer-events-auto">
                 {/* Glow effect */}
