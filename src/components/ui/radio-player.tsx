@@ -6,6 +6,7 @@ import { useRadioStore } from '@/lib/radio-store';
 import { ExpandedRadioPlayer } from './radio-player-expanded';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { Confetti } from '@/components/ui/confetti';
+import { LiveChatButton } from '@/components/chat/LiveChatButton';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ListeningTier {
@@ -525,6 +526,19 @@ export function RadioPlayer({ className }: { className?: string }) {
                     {/* Arrow pointer */}
                     <div className="absolute -bottom-1 right-2 w-2 h-2 bg-black/80 rotate-45" />
                   </div>
+                </div>
+              )}
+              {/* Live Chat Button */}
+              {nowPlaying && (
+                <div 
+                  className="absolute -bottom-1 -left-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <LiveChatButton 
+                    songTitle={nowPlaying.title} 
+                    songArtist={nowPlaying.artist}
+                    className="h-6 w-6 text-[10px]"
+                  />
                 </div>
               )}
             </div>
