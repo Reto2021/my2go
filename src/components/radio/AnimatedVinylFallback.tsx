@@ -85,25 +85,14 @@ export function AnimatedVinylFallback({ isPlaying, size = 'lg' }: AnimatedVinylF
 
         {/* Center label with 2Go Taler logo */}
         <div className="absolute inset-[28%] rounded-full overflow-hidden bg-gradient-to-br from-accent via-primary to-accent shadow-inner flex items-center justify-center">
-          {/* Logo container */}
-          <motion.div
-            className="w-[90%] h-[90%] rounded-full overflow-hidden bg-white flex items-center justify-center p-2"
-            animate={isPlaying ? { rotate: -360 } : {}}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          >
+          {/* Logo container - rotates WITH the vinyl (no counter-rotation) */}
+          <div className="w-[90%] h-[90%] rounded-full overflow-hidden bg-white flex items-center justify-center p-2">
             <img 
               src={talerLogo} 
               alt="2Go Taler" 
               className="w-full h-full object-contain"
             />
-          </motion.div>
-          
-          {/* Center spindle hole */}
-          <div className="absolute inset-[42%] rounded-full bg-black/80 shadow-inner" />
+          </div>
         </div>
       </motion.div>
 
