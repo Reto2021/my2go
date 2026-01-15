@@ -1476,10 +1476,15 @@ export type Database = {
         Args: { _partner_id: string; _user_id: string }
         Returns: boolean
       }
-      process_referral: {
-        Args: { _referral_code: string; _referred_user_id: string }
-        Returns: Json
-      }
+      process_referral:
+        | {
+            Args: { _referral_code: string; _referred_user_id: string }
+            Returns: Json
+          }
+        | {
+            Args: { _referral_code: string; _referred_user_id: string }
+            Returns: Json
+          }
       purchase_streak_freeze: { Args: { _user_id: string }; Returns: Json }
       redeem_air_drop_code: {
         Args: { _code: string; _user_id: string }
