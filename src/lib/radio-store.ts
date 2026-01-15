@@ -218,8 +218,12 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         let artworkUrl = np.artworkUrl ? `${ARTWORK_BASE}${np.artworkUrl}` : null;
         let videoUrl: string | null = null;
         
-        // Try iTunes for artwork and video
-        if (title && artist) {
+        // Only try iTunes for artwork and video if we have real title and artist
+        const hasRealMetadata = title !== 'Unknown' && artist !== 'Unknown Artist' && 
+                                 !title.toLowerCase().includes('unknown') && 
+                                 !artist.toLowerCase().includes('unknown');
+        
+        if (hasRealMetadata) {
           const iTunesMedia = await fetchITunesMedia(title, artist);
           if (!artworkUrl && iTunesMedia.artworkUrl) {
             artworkUrl = iTunesMedia.artworkUrl;
