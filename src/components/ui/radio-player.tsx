@@ -338,36 +338,103 @@ export function RadioPlayer({ className }: { className?: string }) {
         )}
       </AnimatePresence>
 
-      <div className="relative">
-        {/* Tier Reached Celebration */}
-        <AnimatePresence>
-          {showTierReached && reachedTier && (
+      {/* Tier Reached Celebration - Full screen overlay */}
+      <AnimatePresence>
+        {showTierReached && reachedTier && (
+          <>
+            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
+              onClick={() => {
+                setShowTierReached(false);
+                setShowConfetti(false);
+              }}
+            />
+            
+            {/* Celebration Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: -20 }}
-              className="absolute -top-20 left-1/2 -translate-x-1/2 z-[50]"
+              exit={{ opacity: 0, scale: 0.8, y: -50 }}
+              className="fixed inset-0 flex items-center justify-center z-[101] p-4 pointer-events-none"
             >
-              <div className="bg-gradient-to-r from-accent to-primary px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+              <div className="pointer-events-auto bg-gradient-to-br from-accent via-accent to-primary px-8 py-6 rounded-3xl shadow-2xl shadow-accent/40 flex flex-col items-center gap-4 max-w-xs w-full border border-white/20">
+                {/* Sparkles */}
                 <motion.div
-                  animate={{ rotate: [0, -15, 15, -15, 15, 0], scale: [1, 1.3, 1] }}
-                  transition={{ duration: 0.6 }}
-                  className="text-xl"
+                  className="absolute -top-2 -left-2 text-2xl"
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  ✨
+                </motion.div>
+                <motion.div
+                  className="absolute -top-2 -right-2 text-2xl"
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity }}
+                >
+                  🎊
+                </motion.div>
+                
+                {/* Icon */}
+                <motion.div
+                  animate={{ rotate: [0, -15, 15, -15, 15, 0], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 0.8, repeat: 2 }}
+                  className="text-5xl"
                 >
                   🎉
                 </motion.div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-white/80">{reachedTier.name} erreicht!</span>
-                  <div className="flex items-center gap-1">
-                    <TalerIcon size={14} />
-                    <span className="text-sm font-bold text-white">+{reachedTier.taler_reward} Taler</span>
-                  </div>
+                
+                {/* Text */}
+                <div className="text-center">
+                  <motion.p 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-white/80 text-sm mb-1"
+                  >
+                    Stufe erreicht!
+                  </motion.p>
+                  <motion.h3 
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-white font-bold text-xl"
+                  >
+                    {reachedTier.name}
+                  </motion.h3>
                 </div>
+                
+                {/* Reward */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex items-center gap-2 bg-white/20 px-5 py-2.5 rounded-full"
+                >
+                  <TalerIcon size={24} />
+                  <span className="text-2xl font-bold text-white">+{reachedTier.taler_reward}</span>
+                  <span className="text-white/80 text-sm">Taler</span>
+                </motion.div>
+                
+                {/* Dismiss hint */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="text-white/50 text-xs"
+                >
+                  Tippe zum Schließen
+                </motion.p>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </>
+        )}
+      </AnimatePresence>
 
+      <div className="relative">
         <div 
           className={cn(
             "relative overflow-hidden rounded-2xl bg-gradient-to-r from-secondary via-secondary to-secondary/90 text-secondary-foreground cursor-pointer",
