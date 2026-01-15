@@ -13,7 +13,8 @@ import {
   Music,
   Share2,
   Copy,
-  Check
+  Check,
+  Palette
 } from 'lucide-react';
 import { useLiveKitRoom, Participant, REACTION_EMOJIS } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,13 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Track, Room } from 'livekit-client';
+import { 
+  CameraFilterOverlay, 
+  FilterSelector, 
+  getVideoFilter, 
+  CameraFilterType,
+  CAMERA_FILTERS 
+} from './CameraFilters';
 
 interface DancePartySheetProps {
   open: boolean;
@@ -60,11 +68,13 @@ const FloatingReaction = ({ emoji, onComplete }: { emoji: string; onComplete: ()
 const LiveKitVideoTile = ({ 
   participant, 
   isLocal,
-  room
+  room,
+  filter = 'none'
 }: { 
   participant: Participant;
   isLocal: boolean;
   room: Room | null;
+  filter?: CameraFilterType;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -134,21 +144,28 @@ const LiveKitVideoTile = ({
           <span className="text-sm text-muted-foreground">{participant.name}</span>
         </div>
       ) : (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted={isLocal}
-          className="w-full h-full object-cover mirror"
-          style={{ transform: isLocal ? 'scaleX(-1)' : 'none' }}
-        />
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted={isLocal}
+            className="w-full h-full object-cover"
+            style={{ 
+              transform: isLocal ? 'scaleX(-1)' : 'none',
+              filter: getVideoFilter(filter)
+            }}
+          />
+          {/* Camera filter overlay */}
+          <CameraFilterOverlay filter={filter} />
+        </>
       )}
 
       {/* Audio element for remote participants */}
       {!isLocal && <audio ref={audioRef} autoPlay />}
 
       {/* Name badge */}
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
         <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full truncate max-w-[70%]">
           {isLocal ? 'Du' : participant.name}
         </span>
@@ -165,21 +182,6 @@ const LiveKitVideoTile = ({
           )}
         </div>
       </div>
-
-      {/* Dancing animation overlay */}
-      {!participant.isVideoOff && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          animate={{
-            background: [
-              'radial-gradient(circle at 20% 80%, rgba(255,100,100,0.1) 0%, transparent 50%)',
-              'radial-gradient(circle at 80% 20%, rgba(100,100,255,0.1) 0%, transparent 50%)',
-              'radial-gradient(circle at 20% 80%, rgba(255,100,100,0.1) 0%, transparent 50%)'
-            ]
-          }}
-          transition={{ duration: 3, repeat: Infinity }}
-        />
-      )}
     </motion.div>
   );
 };
@@ -232,6 +234,8 @@ export const DancePartySheet = ({
   } = useLiveKitRoom();
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [currentFilter, setCurrentFilter] = useState<CameraFilterType>('none');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Create room name from song
   const roomName = `dance-${songIdentifier.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 50)}`;
@@ -434,6 +438,7 @@ export const DancePartySheet = ({
                       }}
                       isLocal
                       room={room}
+                      filter={currentFilter}
                     />
                   )}
 
@@ -444,6 +449,7 @@ export const DancePartySheet = ({
                       participant={p}
                       isLocal={false}
                       room={room}
+                      filter={currentFilter}
                     />
                   ))}
                 </AnimatePresence>
@@ -461,6 +467,28 @@ export const DancePartySheet = ({
             )}
           </div>
 
+          {/* Filter Selector */}
+          {isConnected && (
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden border-t"
+                >
+                  <FilterSelector 
+                    currentFilter={currentFilter} 
+                    onFilterChange={(filter) => {
+                      setCurrentFilter(filter);
+                      toast.success(`${CAMERA_FILTERS[filter].emoji} ${CAMERA_FILTERS[filter].name} Filter aktiviert`);
+                    }} 
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+
           {/* Reactions Bar */}
           {isConnected && (
             <ReactionBar onReaction={sendReaction} />
@@ -473,6 +501,19 @@ export const DancePartySheet = ({
               animate={{ y: 0, opacity: 1 }}
               className="flex items-center justify-center gap-3 py-4 border-t"
             >
+              {/* Filter Button */}
+              <Button
+                variant={showFilters ? "default" : "outline"}
+                size="icon"
+                className={cn(
+                  "h-12 w-12 rounded-full",
+                  showFilters ? "" : "border-primary/50 hover:bg-primary/10"
+                )}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Palette className={cn("h-5 w-5", showFilters ? "" : "text-primary")} />
+              </Button>
+
               {/* Share/Invite Button */}
               <Button
                 variant="outline"
