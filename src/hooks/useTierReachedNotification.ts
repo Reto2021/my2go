@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useRadioStore } from '@/lib/radio-store';
+import { useRadioStore, getCelebratedTiers, addCelebratedTier } from '@/lib/radio-store';
 import { hapticSuccess } from '@/lib/haptics';
 
 // Tier thresholds in seconds (must match DB tiers)
@@ -55,11 +55,11 @@ export function useTierReachedNotification() {
   const [currentTierReward, setCurrentTierReward] = useState(0);
   const [currentTierName, setCurrentTierName] = useState('');
   const [nextTierInfo, setNextTierInfo] = useState<NextTierInfo | null>(null);
-  const lastTierIndexRef = useRef(-1);
+  const lastCheckedTierRef = useRef<string | null>(null);
   
   useEffect(() => {
     if (!isPlaying || !sessionStartTime) {
-      lastTierIndexRef.current = -1;
+      lastCheckedTierRef.current = null;
       setNextTierInfo(null);
       return;
     }
@@ -91,20 +91,27 @@ export function useTierReachedNotification() {
         setNextTierInfo(null); // All tiers reached
       }
       
-      // Detect tier upgrade
-      if (currentTierIndex > lastTierIndexRef.current && currentTierIndex >= 0) {
+      // Detect tier upgrade - check against sessionStorage to persist across refreshes
+      if (currentTierIndex >= 0) {
         const tier = TIERS[currentTierIndex];
-        setCurrentTierReward(tier.reward);
-        setCurrentTierName(tier.name);
-        setShowCelebration(true);
-        hapticSuccess();
-        playTierSound();
+        const celebratedTiers = getCelebratedTiers();
         
-        // Auto-hide after 4 seconds
-        setTimeout(() => setShowCelebration(false), 4000);
+        // Only celebrate if this tier hasn't been celebrated in this session
+        if (!celebratedTiers.includes(tier.name) && lastCheckedTierRef.current !== tier.name) {
+          setCurrentTierReward(tier.reward);
+          setCurrentTierName(tier.name);
+          setShowCelebration(true);
+          hapticSuccess();
+          playTierSound();
+          
+          // Mark as celebrated in sessionStorage
+          addCelebratedTier(tier.name);
+          lastCheckedTierRef.current = tier.name;
+          
+          // Auto-hide after 4 seconds
+          setTimeout(() => setShowCelebration(false), 4000);
+        }
       }
-      
-      lastTierIndexRef.current = currentTierIndex;
     };
     
     // Check every second
