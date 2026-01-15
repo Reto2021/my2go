@@ -7,7 +7,7 @@ import {
   Volume2, 
   VolumeX, 
   Radio, 
-  Music2, 
+  Music2,
   ChevronDown,
   Clock,
   Gift,
@@ -27,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
 import { TierCelebration } from '@/components/radio/TierCelebration';
+import { AnimatedVinylFallback } from '@/components/radio/AnimatedVinylFallback';
 
 interface ListeningTier {
   id: string;
@@ -633,9 +634,7 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
             }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-accent/30 to-primary/30 flex items-center justify-center">
-            <Music2 className="h-24 w-24 text-white/30" />
-          </div>
+          <AnimatedVinylFallback isPlaying={isPlaying} size="lg" />
         )}
         
         {/* Video hint overlay - shows when video is available but not playing */}
