@@ -270,6 +270,65 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_reviews: {
+        Row: {
+          author_name: string
+          author_photo_url: string | null
+          created_at: string
+          google_review_id: string | null
+          id: string
+          is_featured: boolean | null
+          is_visible: boolean | null
+          language: string | null
+          partner_id: string
+          rating: number
+          relative_time_description: string | null
+          review_time: string | null
+          synced_at: string | null
+          text: string | null
+        }
+        Insert: {
+          author_name: string
+          author_photo_url?: string | null
+          created_at?: string
+          google_review_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_visible?: boolean | null
+          language?: string | null
+          partner_id: string
+          rating: number
+          relative_time_description?: string | null
+          review_time?: string | null
+          synced_at?: string | null
+          text?: string | null
+        }
+        Update: {
+          author_name?: string
+          author_photo_url?: string | null
+          created_at?: string
+          google_review_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_visible?: boolean | null
+          language?: string | null
+          partner_id?: string
+          rating?: number
+          relative_time_description?: string | null
+          review_time?: string | null
+          synced_at?: string | null
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_reviews_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           address_number: string | null

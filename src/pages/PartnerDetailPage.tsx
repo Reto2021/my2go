@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { GoogleReviewCard } from '@/components/partner/GoogleReviewBadge';
+import { TestimonialCarousel } from '@/components/partner/TestimonialCarousel';
 import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { 
@@ -177,7 +178,7 @@ export default function PartnerDetailPage() {
           )}
         </div>
         
-        {/* Google Reviews */}
+        {/* Google Reviews Summary */}
         {partner.google_rating && (
           <GoogleReviewCard
             rating={partner.google_rating}
@@ -186,6 +187,13 @@ export default function PartnerDetailPage() {
             className="mb-4"
           />
         )}
+        
+        {/* Testimonial Carousel - 4-5 Star Reviews */}
+        <TestimonialCarousel 
+          partnerId={partner.id} 
+          minRating={4}
+          className="mb-6"
+        />
         
         {/* Address */}
         {address && (
