@@ -7,6 +7,7 @@ import { ExpandedRadioPlayer } from './radio-player-expanded';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { Confetti } from '@/components/ui/confetti';
 import { LiveChatButton } from '@/components/chat/LiveChatButton';
+import { DancePartyButton } from '@/components/video/DancePartyButton';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ListeningTier {
@@ -538,6 +539,19 @@ export function RadioPlayer({ className }: { className?: string }) {
                     songTitle={nowPlaying.title} 
                     songArtist={nowPlaying.artist}
                     className="h-6 w-6 text-[10px]"
+                  />
+                </div>
+              )}
+              {/* Dance Party Button */}
+              {nowPlaying && isPlaying && (
+                <div 
+                  className="absolute -top-1 -left-1"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DancePartyButton 
+                    songIdentifier={`${nowPlaying.title}-${nowPlaying.artist}`}
+                    songTitle={`${nowPlaying.title} - ${nowPlaying.artist}`}
+                    isCompact
                   />
                 </div>
               )}
