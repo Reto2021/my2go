@@ -165,7 +165,7 @@ export default function PartnerPage() {
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background border-b border-border/50">
+      <header className="sticky top-20 z-40 bg-background border-b border-border/50 before:absolute before:inset-x-0 before:bottom-full before:h-20 before:bg-background">
         <div className="container py-3 space-y-3">
           {/* Title + View Toggle + Clear Filters in one row */}
           <div className="flex items-center gap-3">
