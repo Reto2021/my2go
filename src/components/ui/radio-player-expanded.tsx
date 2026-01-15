@@ -137,25 +137,30 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   
   // Detect tier advancement and trigger celebration
   useEffect(() => {
-    if (currentTier && isAuthenticated && isOpen) {
-      if (lastReachedTierRef.current !== currentTier.id) {
-        // Only celebrate if this is an advancement (not initial load)
-        if (lastReachedTierRef.current !== null) {
+    if (currentTier && isAuthenticated && isOpen && isPlaying) {
+      // Check if this is a new tier (not yet celebrated)
+      const celebratedTiers = lastReachedTierRef.current ? lastReachedTierRef.current.split(',') : [];
+      
+      if (!celebratedTiers.includes(currentTier.id)) {
+        // Only celebrate if we've been tracking (not first load)
+        if (celebratedTiers.length > 0) {
           setCelebrationTaler(currentTier.taler_reward);
           setShowCelebration(true);
           hapticSuccess();
         }
-        lastReachedTierRef.current = currentTier.id;
+        // Add this tier to celebrated list
+        lastReachedTierRef.current = [...celebratedTiers, currentTier.id].join(',');
       }
     }
-  }, [currentTier?.id, isAuthenticated, isOpen]);
+  }, [currentTier?.id, isAuthenticated, isOpen, isPlaying]);
   
-  // Reset tier tracking when player closes
+  // Initialize tier tracking when player opens (but don't reset when closing)
   useEffect(() => {
-    if (!isOpen) {
-      lastReachedTierRef.current = null;
+    if (isOpen && currentTier && lastReachedTierRef.current === null) {
+      // Set initial tier so we know where we started
+      lastReachedTierRef.current = currentTier.id;
     }
-  }, [isOpen]);
+  }, [isOpen, currentTier?.id]);
   // Close on escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
