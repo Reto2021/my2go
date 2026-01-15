@@ -12,9 +12,9 @@ import {
   Sparkles,
   Music,
   Share2,
-  Copy,
   Check,
-  Palette
+  Palette,
+  ImageIcon
 } from 'lucide-react';
 import { useLiveKitRoom, Participant, REACTION_EMOJIS } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,17 @@ import {
   CAMERA_FILTERS 
 } from './CameraFilters';
 import { Confetti } from '@/components/ui/confetti';
+import { 
+  BackgroundSelector, 
+  BackgroundOverlay, 
+  VirtualBackgroundType,
+  VIRTUAL_BACKGROUNDS 
+} from './VirtualBackgrounds';
+import { 
+  GroupPhotoButton, 
+  GroupPhotoSheet, 
+  useGroupPhoto 
+} from './GroupPhoto';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -132,12 +143,14 @@ const LiveKitVideoTile = ({
   participant, 
   isLocal,
   room,
-  filter = 'none'
+  filter = 'none',
+  background = 'none'
 }: { 
   participant: Participant;
   isLocal: boolean;
   room: Room | null;
   filter?: CameraFilterType;
+  background?: VirtualBackgroundType;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -191,20 +204,26 @@ const LiveKitVideoTile = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
       className={cn(
-        "relative rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20",
+        "relative rounded-xl overflow-hidden",
         "aspect-[3/4] flex items-center justify-center",
         isLocal && "ring-2 ring-primary",
         participant.isSpeaking && "ring-2 ring-green-500 ring-offset-2"
       )}
     >
+      {/* Virtual background */}
+      <BackgroundOverlay background={background} />
       {participant.isVideoOff ? (
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 z-10">
           <Avatar className="h-16 w-16">
             <AvatarFallback className="bg-primary/30 text-primary text-xl">
               {initials}
             </AvatarFallback>
           </Avatar>
           <span className="text-sm text-muted-foreground">{participant.name}</span>
+          {/* Still show background when video is off */}
+          {background === 'none' && (
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 -z-10" />
+          )}
         </div>
       ) : (
         <>
@@ -213,10 +232,11 @@ const LiveKitVideoTile = ({
             autoPlay
             playsInline
             muted={isLocal}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover z-10"
             style={{ 
               transform: isLocal ? 'scaleX(-1)' : 'none',
-              filter: getVideoFilter(filter)
+              filter: getVideoFilter(filter),
+              mixBlendMode: background !== 'none' ? 'normal' : undefined
             }}
           />
           {/* Camera filter overlay */}
@@ -300,8 +320,20 @@ export const DancePartySheet = ({
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [currentFilter, setCurrentFilter] = useState<CameraFilterType>('none');
+  const [currentBackground, setCurrentBackground] = useState<VirtualBackgroundType>('none');
   const [showFilters, setShowFilters] = useState(false);
+  const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const videoGridRef = useRef<HTMLDivElement>(null);
+
+  // Group photo hook
+  const { 
+    isCapturing, 
+    photoDataUrl, 
+    showPhotoSheet, 
+    setShowPhotoSheet, 
+    capturePhoto 
+  } = useGroupPhoto(videoGridRef);
 
   // Create room name from song
   const roomName = `dance-${songIdentifier.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 50)}`;
@@ -512,7 +544,7 @@ export const DancePartySheet = ({
               </div>
             ) : (
               // Connected - show video grid
-              <div className="grid grid-cols-2 gap-3 p-2">
+              <div ref={videoGridRef} className="grid grid-cols-2 gap-3 p-2">
                 <AnimatePresence>
                   {/* Local participant */}
                   {localParticipant && (
@@ -526,6 +558,7 @@ export const DancePartySheet = ({
                       isLocal
                       room={room}
                       filter={currentFilter}
+                      background={currentBackground}
                     />
                   )}
 
@@ -537,6 +570,7 @@ export const DancePartySheet = ({
                       isLocal={false}
                       room={room}
                       filter={currentFilter}
+                      background={currentBackground}
                     />
                   ))}
                 </AnimatePresence>
@@ -554,7 +588,7 @@ export const DancePartySheet = ({
             )}
           </div>
 
-          {/* Filter Selector */}
+          {/* Filter & Background Selector */}
           {isConnected && (
             <AnimatePresence>
               {showFilters && (
@@ -569,6 +603,23 @@ export const DancePartySheet = ({
                     onFilterChange={(filter) => {
                       setCurrentFilter(filter);
                       toast.success(`${CAMERA_FILTERS[filter].emoji} ${CAMERA_FILTERS[filter].name} Filter aktiviert`);
+                    }} 
+                  />
+                </motion.div>
+              )}
+              {showBackgrounds && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden border-t"
+                >
+                  <BackgroundSelector 
+                    currentBackground={currentBackground} 
+                    onBackgroundChange={(bg) => {
+                      setCurrentBackground(bg);
+                      toast.success(`${VIRTUAL_BACKGROUNDS[bg].emoji} ${VIRTUAL_BACKGROUNDS[bg].name} Hintergrund`);
+                      setShowBackgrounds(false);
                     }} 
                   />
                 </motion.div>
@@ -588,6 +639,12 @@ export const DancePartySheet = ({
               animate={{ y: 0, opacity: 1 }}
               className="flex items-center justify-center gap-3 py-4 border-t"
             >
+              {/* Group Photo Button */}
+              <GroupPhotoButton 
+                onCapture={capturePhoto} 
+                isCapturing={isCapturing} 
+              />
+
               {/* Applause Button */}
               <Button
                 variant="outline"
@@ -598,6 +655,22 @@ export const DancePartySheet = ({
                 <span className="text-xl">👏</span>
               </Button>
 
+              {/* Background Button */}
+              <Button
+                variant={showBackgrounds ? "default" : "outline"}
+                size="icon"
+                className={cn(
+                  "h-12 w-12 rounded-full",
+                  showBackgrounds ? "" : "border-purple-500/50 hover:bg-purple-500/10"
+                )}
+                onClick={() => {
+                  setShowBackgrounds(!showBackgrounds);
+                  setShowFilters(false);
+                }}
+              >
+                <ImageIcon className={cn("h-5 w-5", showBackgrounds ? "" : "text-purple-500")} />
+              </Button>
+
               {/* Filter Button */}
               <Button
                 variant={showFilters ? "default" : "outline"}
@@ -606,10 +679,15 @@ export const DancePartySheet = ({
                   "h-12 w-12 rounded-full",
                   showFilters ? "" : "border-primary/50 hover:bg-primary/10"
                 )}
-                onClick={() => setShowFilters(!showFilters)}
+                onClick={() => {
+                  setShowFilters(!showFilters);
+                  setShowBackgrounds(false);
+                }}
               >
                 <Palette className={cn("h-5 w-5", showFilters ? "" : "text-primary")} />
               </Button>
+
+              {/* Share/Invite Button */}
 
               {/* Share/Invite Button */}
               <Button
@@ -655,6 +733,15 @@ export const DancePartySheet = ({
           )}
         </div>
       </SheetContent>
+
+      {/* Group Photo Sheet */}
+      <GroupPhotoSheet
+        open={showPhotoSheet}
+        onOpenChange={setShowPhotoSheet}
+        photoDataUrl={photoDataUrl}
+        songTitle={songTitle}
+        participantCount={totalParticipants}
+      />
     </Sheet>
   );
 };
