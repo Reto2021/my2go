@@ -67,7 +67,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   const [showVideo, setShowVideo] = useState(true);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationTaler, setCelebrationTaler] = useState(0);
+  const [celebrationTierName, setCelebrationTierName] = useState('');
   const lastReachedTierRef = useRef<string | null>(null);
+  const hasStartedTrackingRef = useRef(false);
 
   // Update session duration every second
   useEffect(() => {
@@ -142,9 +144,10 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
       const celebratedTiers = lastReachedTierRef.current ? lastReachedTierRef.current.split(',') : [];
       
       if (!celebratedTiers.includes(currentTier.id)) {
-        // Only celebrate if we've been tracking (not first load)
-        if (celebratedTiers.length > 0) {
+        // Only celebrate if we've been tracking (started playing from beginning)
+        if (hasStartedTrackingRef.current) {
           setCelebrationTaler(currentTier.taler_reward);
+          setCelebrationTierName(currentTier.name);
           setShowCelebration(true);
           hapticSuccess();
         }
@@ -154,13 +157,21 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     }
   }, [currentTier?.id, isAuthenticated, isOpen, isPlaying]);
   
-  // Initialize tier tracking when player opens (but don't reset when closing)
+  // Start tracking when playing begins
   useEffect(() => {
-    if (isOpen && currentTier && lastReachedTierRef.current === null) {
-      // Set initial tier so we know where we started
-      lastReachedTierRef.current = currentTier.id;
+    if (isPlaying && !hasStartedTrackingRef.current) {
+      hasStartedTrackingRef.current = true;
     }
-  }, [isOpen, currentTier?.id]);
+  }, [isPlaying]);
+  
+  // Reset tracking when radio stops
+  useEffect(() => {
+    if (!isPlaying) {
+      hasStartedTrackingRef.current = false;
+      lastReachedTierRef.current = null;
+    }
+  }, [isPlaying]);
+  
   // Close on escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -488,6 +499,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           <TierCelebration 
             isVisible={showCelebration}
             talerAmount={celebrationTaler}
+            tierName={celebrationTierName}
             onDismiss={() => setShowCelebration(false)}
           />
         </motion.div>
