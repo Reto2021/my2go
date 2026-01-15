@@ -435,22 +435,38 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                     <div className="flex items-center gap-2 text-xs text-secondary-foreground/60">
                       <span>{formatTime(elapsed)}</span>
                       
-                      {/* Balance + Session Bonus - only show when authenticated */}
+                      {/* Next tier countdown - always visible when playing */}
+                      {!isMaxTier && secondsToNextTier > 0 && (
+                        <>
+                          <span className="text-secondary-foreground/30">→</span>
+                          <div className="flex items-center gap-1 text-accent">
+                            <TalerIcon className="h-3 w-3" />
+                            <span className="font-semibold">+{pendingTaler}</span>
+                            <span className="text-secondary-foreground/50">in {formatTimeToTier(secondsToNextTier)}</span>
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Max tier reached */}
+                      {isMaxTier && (
+                        <>
+                          <span className="text-secondary-foreground/30">•</span>
+                          <span className="text-accent font-semibold">Max erreicht! 🏆</span>
+                        </>
+                      )}
+                      
+                      {/* Balance - only for authenticated */}
                       {isAuthenticated && (
                         <>
                           <span className="text-secondary-foreground/30">•</span>
                           <div className="flex items-center gap-1">
                             <TalerIcon className="h-3.5 w-3.5 text-accent" />
                             <span className="text-accent font-bold">{currentBalance}</span>
-                            {justReachedTier ? (
-                              <span className="text-accent font-bold">
-                                (+{earnedTaler} 🎉)
+                            {justReachedTier && (
+                              <span className="text-accent font-bold animate-pulse">
+                                +{earnedTaler} 🎉
                               </span>
-                            ) : earnedTaler > 0 ? (
-                              <span className="text-accent/70 font-medium">(+{earnedTaler})</span>
-                            ) : secondsToNextTier > 0 ? (
-                              <span className="opacity-60">+{pendingTaler} in {formatTimeToTier(secondsToNextTier)}</span>
-                            ) : null}
+                            )}
                           </div>
                         </>
                       )}
