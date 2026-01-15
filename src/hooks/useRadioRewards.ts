@@ -126,12 +126,10 @@ export function useRadioRewards() {
       endSession();
     }
     
-    // Cleanup on unmount
-    return () => {
-      if (sessionIdRef.current) {
-        endSession();
-      }
-    };
+    // NOTE: No cleanup on unmount!
+    // Mobile browsers may unmount/remount components when screen locks/unlocks
+    // while audio continues playing. We only end sessions on explicit stop (isPlaying=false)
+    // or page unload (handled separately with sendBeacon).
   }, [isPlaying, userId, startSession, endSession]);
   
   // Also end session on page unload
