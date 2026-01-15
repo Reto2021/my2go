@@ -41,6 +41,7 @@ import {
   GroupPhotoSheet, 
   useGroupPhoto 
 } from './GroupPhoto';
+import { MicrophoneVisualizer } from './AudioVisualizer';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -458,6 +459,13 @@ export const DancePartySheet = ({
               <Music className="h-3 w-3" />
               {songTitle}
             </p>
+          )}
+          
+          {/* Audio Visualizer */}
+          {isConnected && (
+            <div className="flex justify-center mt-2">
+              <MicrophoneVisualizer isActive={isConnected && !isMuted} className="h-6" />
+            </div>
           )}
         </SheetHeader>
 
