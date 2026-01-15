@@ -1,4 +1,15 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { 
+  Room, 
+  RoomEvent, 
+  RemoteParticipant, 
+  LocalParticipant,
+  Track,
+  RemoteTrackPublication,
+  LocalTrackPublication,
+  ConnectionState,
+  DataPacket_Kind
+} from 'livekit-client';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -6,10 +17,17 @@ import { toast } from 'sonner';
 export interface Participant {
   identity: string;
   name: string;
-  videoTrack: MediaStreamTrack | null;
-  audioTrack: MediaStreamTrack | null;
   isMuted: boolean;
   isVideoOff: boolean;
+  isSpeaking: boolean;
+}
+
+export interface Reaction {
+  id: string;
+  emoji: string;
+  participantId: string;
+  participantName: string;
+  timestamp: number;
 }
 
 export interface UseLiveKitRoomReturn {
@@ -18,13 +36,18 @@ export interface UseLiveKitRoomReturn {
   participants: Participant[];
   localParticipant: Participant | null;
   error: string | null;
+  room: Room | null;
   connect: (roomName: string) => Promise<void>;
   disconnect: () => void;
   toggleMute: () => void;
   toggleVideo: () => void;
+  sendReaction: (emoji: string) => void;
+  reactions: Reaction[];
   isMuted: boolean;
   isVideoOff: boolean;
 }
+
+const REACTION_EMOJIS = ['🔥', '💃', '🕺', '👏', '❤️', '🎉', '😍', '🙌'];
 
 export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
   const { user } = useAuth();
@@ -35,18 +58,29 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
   const [error, setError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [room, setRoom] = useState<Room | null>(null);
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
-  const roomNameRef = useRef<string>('');
+  const roomRef = useRef<Room | null>(null);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      disconnect();
+      if (roomRef.current) {
+        roomRef.current.disconnect();
+      }
     };
   }, []);
+
+  // Auto-remove reactions after 3 seconds
+  useEffect(() => {
+    if (reactions.length > 0) {
+      const timer = setTimeout(() => {
+        setReactions(prev => prev.filter(r => Date.now() - r.timestamp < 3000));
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [reactions]);
 
   const getToken = async (roomName: string): Promise<{ token: string; url: string; participantName: string } | null> => {
     try {
@@ -71,33 +105,24 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     }
   };
 
-  const setupLocalMedia = async (): Promise<MediaStream | null> => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'user'
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
+  const updateParticipants = useCallback((room: Room) => {
+    const remoteParticipants: Participant[] = [];
+    
+    room.remoteParticipants.forEach((p: RemoteParticipant) => {
+      const audioTrack = p.getTrackPublication(Track.Source.Microphone);
+      const videoTrack = p.getTrackPublication(Track.Source.Camera);
+      
+      remoteParticipants.push({
+        identity: p.identity,
+        name: p.name || p.identity,
+        isMuted: audioTrack?.isMuted ?? true,
+        isVideoOff: !videoTrack?.isSubscribed || videoTrack?.isMuted,
+        isSpeaking: p.isSpeaking
       });
+    });
 
-      localStreamRef.current = stream;
-
-      const videoTrack = stream.getVideoTracks()[0] || null;
-      const audioTrack = stream.getAudioTracks()[0] || null;
-
-      return stream;
-    } catch (err) {
-      console.error('[useLiveKitRoom] Media error:', err);
-      setError('Kamera/Mikrofon Zugriff verweigert');
-      return null;
-    }
-  };
+    setParticipants(remoteParticipants);
+  }, []);
 
   const connect = useCallback(async (roomName: string) => {
     if (!user) {
@@ -107,7 +132,6 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
 
     setIsConnecting(true);
     setError(null);
-    roomNameRef.current = roomName;
 
     try {
       console.log('[useLiveKitRoom] Connecting to room:', roomName);
@@ -119,150 +143,180 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
         return;
       }
 
-      // Setup local media
-      const localStream = await setupLocalMedia();
-      if (!localStream) {
-        setIsConnecting(false);
-        return;
-      }
+      console.log('[useLiveKitRoom] Token received, connecting to:', tokenData.url);
 
-      // Set local participant
-      const videoTrack = localStream.getVideoTracks()[0] || null;
-      const audioTrack = localStream.getAudioTracks()[0] || null;
-
-      setLocalParticipant({
-        identity: user.id,
-        name: tokenData.participantName,
-        videoTrack,
-        audioTrack,
-        isMuted: false,
-        isVideoOff: false
-      });
-
-      // Connect to LiveKit via WebSocket
-      // Note: For a full implementation, you'd use the LiveKit JS SDK
-      // This is a simplified version using Supabase Realtime for signaling
-      
-      const channel = supabase.channel(`dance-party:${roomName}`, {
-        config: {
-          presence: { key: user.id }
+      // Create room
+      const newRoom = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+        videoCaptureDefaults: {
+          resolution: { width: 640, height: 480, frameRate: 24 }
+        },
+        audioCaptureDefaults: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
         }
       });
 
-      channel
-        .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState();
-          console.log('[useLiveKitRoom] Presence sync:', state);
-          
-          const otherParticipants: Participant[] = [];
-          Object.entries(state).forEach(([key, presences]) => {
-            if (key !== user.id && presences.length > 0) {
-              const presence = presences[0] as any;
-              otherParticipants.push({
-                identity: key,
-                name: presence.name || 'Dancer',
-                videoTrack: null,
-                audioTrack: null,
-                isMuted: presence.isMuted || false,
-                isVideoOff: presence.isVideoOff || false
-              });
-            }
-          });
-          setParticipants(otherParticipants);
-        })
-        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-          console.log('[useLiveKitRoom] Join:', key, newPresences);
-          toast.success(`${(newPresences[0] as any)?.name || 'Someone'} ist beigetreten! 🎉`);
-        })
-        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-          console.log('[useLiveKitRoom] Leave:', key, leftPresences);
-          toast.info(`${(leftPresences[0] as any)?.name || 'Someone'} hat den Raum verlassen`);
-        })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            await channel.track({
-              name: tokenData.participantName,
-              joinedAt: new Date().toISOString(),
-              isMuted: false,
-              isVideoOff: false
-            });
-            
-            setIsConnected(true);
-            setIsConnecting(false);
-            toast.success('Dance Party beigetreten! 🕺💃');
-          }
+      roomRef.current = newRoom;
+      setRoom(newRoom);
+
+      // Set up event listeners
+      newRoom.on(RoomEvent.Connected, () => {
+        console.log('[useLiveKitRoom] Connected to room');
+        setIsConnected(true);
+        setIsConnecting(false);
+        
+        // Set local participant
+        const local = newRoom.localParticipant;
+        setLocalParticipant({
+          identity: local.identity,
+          name: local.name || tokenData.participantName,
+          isMuted: false,
+          isVideoOff: false,
+          isSpeaking: false
         });
 
-      wsRef.current = channel as any;
+        toast.success('Dance Party beigetreten! 🕺💃');
+      });
+
+      newRoom.on(RoomEvent.Disconnected, () => {
+        console.log('[useLiveKitRoom] Disconnected from room');
+        setIsConnected(false);
+        setParticipants([]);
+        setLocalParticipant(null);
+      });
+
+      newRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
+        console.log('[useLiveKitRoom] Participant joined:', participant.identity);
+        toast.success(`${participant.name || 'Someone'} ist beigetreten! 🎉`);
+        updateParticipants(newRoom);
+      });
+
+      newRoom.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
+        console.log('[useLiveKitRoom] Participant left:', participant.identity);
+        toast.info(`${participant.name || 'Someone'} hat den Raum verlassen`);
+        updateParticipants(newRoom);
+      });
+
+      newRoom.on(RoomEvent.TrackSubscribed, () => {
+        updateParticipants(newRoom);
+      });
+
+      newRoom.on(RoomEvent.TrackUnsubscribed, () => {
+        updateParticipants(newRoom);
+      });
+
+      newRoom.on(RoomEvent.TrackMuted, () => {
+        updateParticipants(newRoom);
+      });
+
+      newRoom.on(RoomEvent.TrackUnmuted, () => {
+        updateParticipants(newRoom);
+      });
+
+      newRoom.on(RoomEvent.ActiveSpeakersChanged, () => {
+        updateParticipants(newRoom);
+      });
+
+      // Handle incoming data (reactions)
+      newRoom.on(RoomEvent.DataReceived, (payload: Uint8Array, participant?: RemoteParticipant) => {
+        try {
+          const decoder = new TextDecoder();
+          const data = JSON.parse(decoder.decode(payload));
+          
+          if (data.type === 'reaction') {
+            setReactions(prev => [...prev, {
+              id: `${Date.now()}-${Math.random()}`,
+              emoji: data.emoji,
+              participantId: participant?.identity || 'unknown',
+              participantName: participant?.name || 'Someone',
+              timestamp: Date.now()
+            }]);
+          }
+        } catch (e) {
+          console.error('[useLiveKitRoom] Error parsing data:', e);
+        }
+      });
+
+      newRoom.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
+        console.log('[useLiveKitRoom] Connection state:', state);
+        if (state === ConnectionState.Reconnecting) {
+          toast.info('Verbindung wird wiederhergestellt...');
+        }
+      });
+
+      // Connect to room
+      await newRoom.connect(tokenData.url, tokenData.token);
+      
+      // Enable camera and microphone
+      await newRoom.localParticipant.enableCameraAndMicrophone();
+      
+      console.log('[useLiveKitRoom] Camera and microphone enabled');
 
     } catch (err) {
       console.error('[useLiveKitRoom] Connect error:', err);
-      setError('Verbindung fehlgeschlagen');
+      setError('Verbindung fehlgeschlagen. Bitte Kamera/Mikrofon erlauben.');
       setIsConnecting(false);
+      toast.error('Verbindung fehlgeschlagen');
     }
-  }, [user]);
+  }, [user, updateParticipants]);
 
   const disconnect = useCallback(() => {
     console.log('[useLiveKitRoom] Disconnecting');
 
-    // Stop local tracks
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      localStreamRef.current = null;
+    if (roomRef.current) {
+      roomRef.current.disconnect();
+      roomRef.current = null;
     }
 
-    // Close peer connections
-    peerConnectionsRef.current.forEach(pc => pc.close());
-    peerConnectionsRef.current.clear();
-
-    // Unsubscribe from channel
-    if (wsRef.current) {
-      supabase.removeChannel(wsRef.current as any);
-      wsRef.current = null;
-    }
-
+    setRoom(null);
     setIsConnected(false);
     setParticipants([]);
     setLocalParticipant(null);
     setIsMuted(false);
     setIsVideoOff(false);
+    setReactions([]);
   }, []);
 
-  const toggleMute = useCallback(() => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsMuted(!audioTrack.enabled);
-
-        // Update presence
-        if (wsRef.current) {
-          const channel = wsRef.current as any;
-          channel.track({
-            isMuted: !audioTrack.enabled
-          });
-        }
-      }
+  const toggleMute = useCallback(async () => {
+    if (roomRef.current) {
+      const local = roomRef.current.localParticipant;
+      const newMuteState = !isMuted;
+      
+      await local.setMicrophoneEnabled(!newMuteState);
+      setIsMuted(newMuteState);
     }
-  }, []);
+  }, [isMuted]);
 
-  const toggleVideo = useCallback(() => {
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoOff(!videoTrack.enabled);
-
-        // Update presence
-        if (wsRef.current) {
-          const channel = wsRef.current as any;
-          channel.track({
-            isVideoOff: !videoTrack.enabled
-          });
-        }
-      }
+  const toggleVideo = useCallback(async () => {
+    if (roomRef.current) {
+      const local = roomRef.current.localParticipant;
+      const newVideoOffState = !isVideoOff;
+      
+      await local.setCameraEnabled(!newVideoOffState);
+      setIsVideoOff(newVideoOffState);
     }
-  }, []);
+  }, [isVideoOff]);
+
+  const sendReaction = useCallback((emoji: string) => {
+    if (roomRef.current && isConnected) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(JSON.stringify({ type: 'reaction', emoji }));
+      
+      roomRef.current.localParticipant.publishData(data, { reliable: true });
+      
+      // Also show locally
+      setReactions(prev => [...prev, {
+        id: `${Date.now()}-${Math.random()}`,
+        emoji,
+        participantId: user?.id || 'local',
+        participantName: 'Du',
+        timestamp: Date.now()
+      }]);
+    }
+  }, [isConnected, user]);
 
   return {
     isConnected,
@@ -270,11 +324,16 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     participants,
     localParticipant,
     error,
+    room,
     connect,
     disconnect,
     toggleMute,
     toggleVideo,
+    sendReaction,
+    reactions,
     isMuted,
     isVideoOff
   };
 };
+
+export { REACTION_EMOJIS };
