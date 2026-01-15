@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRadioStore } from '@/lib/radio-store';
 import { hapticSuccess } from '@/lib/haptics';
 
@@ -16,6 +16,39 @@ interface NextTierInfo {
   secondsRemaining: number;
 }
 
+// Play tier sound - moved outside component to avoid hook issues
+function playTierSound() {
+  try {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    
+    const playNote = (freq: number, startTime: number, duration: number) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = freq;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime + startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
+      
+      oscillator.start(audioContext.currentTime + startTime);
+      oscillator.stop(audioContext.currentTime + startTime + duration);
+    };
+    
+    // Play ascending notes (C5, E5, G5, C6) - a happy fanfare
+    playNote(523.25, 0, 0.15);     // C5
+    playNote(659.25, 0.1, 0.15);   // E5
+    playNote(783.99, 0.2, 0.15);   // G5
+    playNote(1046.50, 0.3, 0.3);   // C6 (longer)
+  } catch (e) {
+    console.log('Could not play tier sound:', e);
+  }
+}
+
 export function useTierReachedNotification() {
   const { isPlaying, sessionStartTime } = useRadioStore();
   const [showCelebration, setShowCelebration] = useState(false);
@@ -23,41 +56,6 @@ export function useTierReachedNotification() {
   const [currentTierName, setCurrentTierName] = useState('');
   const [nextTierInfo, setNextTierInfo] = useState<NextTierInfo | null>(null);
   const lastTierIndexRef = useRef(-1);
-  
-  // Play tier sound
-  const playTierSound = useCallback(() => {
-    try {
-      // Create a simple success sound using Web Audio API
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // Create a pleasant "level up" sound with multiple notes
-      const playNote = (freq: number, startTime: number, duration: number) => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = freq;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime + startTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + startTime + 0.02);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
-        
-        oscillator.start(audioContext.currentTime + startTime);
-        oscillator.stop(audioContext.currentTime + startTime + duration);
-      };
-      
-      // Play ascending notes (C5, E5, G5, C6) - a happy fanfare
-      playNote(523.25, 0, 0.15);     // C5
-      playNote(659.25, 0.1, 0.15);   // E5
-      playNote(783.99, 0.2, 0.15);   // G5
-      playNote(1046.50, 0.3, 0.3);   // C6 (longer)
-    } catch (e) {
-      console.log('Could not play tier sound:', e);
-    }
-  }, []);
   
   useEffect(() => {
     if (!isPlaying || !sessionStartTime) {
@@ -114,7 +112,7 @@ export function useTierReachedNotification() {
     checkTier(); // Initial check
     
     return () => clearInterval(interval);
-  }, [isPlaying, sessionStartTime, playTierSound]);
+  }, [isPlaying, sessionStartTime]);
   
   const dismissCelebration = () => setShowCelebration(false);
   
