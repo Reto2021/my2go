@@ -15,7 +15,7 @@ import {
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
-import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
+import { ReferralGameCard } from '@/components/home/ReferralGameCard';
 import { InstallBanner } from '@/components/home/InstallBanner';
 import {
   Gift,
@@ -440,9 +440,9 @@ function SessionModeHome({
         <InstallBanner />
       </section>
       
-      {/* Referral Promo Banner - Compact */}
-      <section className="container pb-2">
-        <ReferralPromoBanner />
+      {/* Referral Game Card - Gamified */}
+      <section className="container pb-4">
+        <ReferralGameCard />
       </section>
       
       {/* Rewards - Primary Content */}
