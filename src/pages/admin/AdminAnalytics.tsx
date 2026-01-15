@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { ReferralShareAnalytics } from '@/components/admin/ReferralShareAnalytics';
 import { 
   Radio, 
   MapPin, 
@@ -995,6 +996,9 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Referral Share Analytics */}
+          <ReferralShareAnalytics />
         </TabsContent>
       </Tabs>
     </div>
