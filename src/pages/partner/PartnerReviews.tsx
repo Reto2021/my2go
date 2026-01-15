@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, 
   MessageSquare, 
@@ -12,7 +13,13 @@ import {
   AlertCircle,
   RefreshCw,
   Info,
-  CheckCircle
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Filter,
+  User,
+  Quote
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,9 +33,11 @@ import { usePartner } from '@/components/partner/PartnerGuard';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { GoogleReviewCard } from '@/components/partner/GoogleReviewBadge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface ReviewRequest {
   id: string;
@@ -55,10 +64,24 @@ interface PartnerData {
   review_request_delay_minutes: number | null;
 }
 
+interface PartnerReview {
+  id: string;
+  author_name: string;
+  author_photo_url: string | null;
+  rating: number;
+  text: string | null;
+  relative_time_description: string | null;
+  review_time: string | null;
+  is_featured: boolean;
+  is_visible: boolean;
+  synced_at: string;
+}
+
 export default function PartnerReviews() {
   const { partnerInfo } = usePartner();
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [testimonialFilter, setTestimonialFilter] = useState<'all' | 'visible' | 'hidden' | 'featured'>('all');
   const [settings, setSettings] = useState({
     googlePlaceId: '',
     reviewRequestEnabled: true,
@@ -152,6 +175,26 @@ export default function PartnerReviews() {
     enabled: !!partnerInfo?.partnerId,
   });
 
+  // Fetch Google testimonials for management
+  const { data: testimonials, isLoading: testimonialsLoading, refetch: refetchTestimonials } = useQuery({
+    queryKey: ['partner-testimonials', partnerInfo?.partnerId],
+    queryFn: async () => {
+      if (!partnerInfo?.partnerId) return [];
+
+      const { data, error } = await supabase
+        .from('partner_reviews')
+        .select('*')
+        .eq('partner_id', partnerInfo.partnerId)
+        .order('is_featured', { ascending: false })
+        .order('rating', { ascending: false })
+        .order('review_time', { ascending: false });
+
+      if (error) throw error;
+      return data as PartnerReview[];
+    },
+    enabled: !!partnerInfo?.partnerId,
+  });
+
   const handleSaveSettings = async () => {
     if (!partnerInfo?.partnerId) return;
 
@@ -191,12 +234,19 @@ export default function PartnerReviews() {
 
     setIsSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-google-reviews');
+      const { data, error } = await supabase.functions.invoke('sync-google-reviews', {
+        body: {
+          action: 'sync-single',
+          partnerId: partnerInfo?.partnerId,
+          minRating: 4
+        }
+      });
       
       if (error) throw error;
       
-      toast.success('Google Reviews erfolgreich synchronisiert');
+      toast.success(`${data?.reviewsSynced || 0} Reviews synchronisiert!`);
       refetchPartner();
+      refetchTestimonials();
     } catch (error) {
       console.error('Failed to sync Google reviews:', error);
       toast.error('Fehler beim Synchronisieren der Google Reviews');
@@ -204,6 +254,53 @@ export default function PartnerReviews() {
       setIsSyncing(false);
     }
   };
+
+  const toggleTestimonialVisibility = async (reviewId: string, currentValue: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('partner_reviews')
+        .update({ is_visible: !currentValue })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+      refetchTestimonials();
+      toast.success(!currentValue ? 'Review sichtbar' : 'Review ausgeblendet');
+    } catch (error) {
+      console.error('Error toggling visibility:', error);
+      toast.error('Fehler beim Aktualisieren');
+    }
+  };
+
+  const toggleTestimonialFeatured = async (reviewId: string, currentValue: boolean) => {
+    const featuredCount = testimonials?.filter(r => r.is_featured).length || 0;
+    if (!currentValue && featuredCount >= 3) {
+      toast.error('Maximal 3 Reviews können als Featured markiert werden');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('partner_reviews')
+        .update({ is_featured: !currentValue })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+      refetchTestimonials();
+      toast.success(!currentValue ? 'Als Featured markiert' : 'Featured entfernt');
+    } catch (error) {
+      console.error('Error toggling featured:', error);
+      toast.error('Fehler beim Aktualisieren');
+    }
+  };
+
+  const filteredTestimonials = testimonials?.filter(review => {
+    switch (testimonialFilter) {
+      case 'visible': return review.is_visible;
+      case 'hidden': return !review.is_visible;
+      case 'featured': return review.is_featured;
+      default: return true;
+    }
+  }) || [];
 
   const isLoading = statsLoading || partnerLoading;
   const hasGooglePlaceId = !!partnerData?.google_place_id;
@@ -337,20 +434,195 @@ export default function PartnerReviews() {
         </Card>
       </div>
 
-      <Tabs defaultValue={hasGooglePlaceId ? "feedback" : "settings"} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue={hasGooglePlaceId ? (testimonials && testimonials.length > 0 ? "testimonials" : "feedback") : "settings"} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="testimonials">
+            <Quote className="h-4 w-4 mr-2" />
+            Stimmen ({testimonials?.length || 0})
+          </TabsTrigger>
           <TabsTrigger value="feedback">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Feedback ({feedback?.length || 0})
+            Feedback
           </TabsTrigger>
           <TabsTrigger value="settings">
             <Settings className="h-4 w-4 mr-2" />
-            Einstellungen
+            Setup
             {!hasGooglePlaceId && (
               <span className="ml-1 flex h-2 w-2 rounded-full bg-yellow-500" />
             )}
           </TabsTrigger>
         </TabsList>
+
+        {/* Testimonials Tab */}
+        <TabsContent value="testimonials" className="mt-4 space-y-4">
+          {/* Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            {(['all', 'visible', 'hidden', 'featured'] as const).map((f) => (
+              <Button
+                key={f}
+                variant={testimonialFilter === f ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTestimonialFilter(f)}
+                className="flex-shrink-0"
+              >
+                {f === 'all' && 'Alle'}
+                {f === 'visible' && 'Sichtbar'}
+                {f === 'hidden' && 'Ausgeblendet'}
+                {f === 'featured' && '⭐ Featured'}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncGoogleReviews}
+              disabled={isSyncing || !hasGooglePlaceId}
+              className="ml-auto gap-1"
+            >
+              <RefreshCw className={cn("h-3 w-3", isSyncing && "animate-spin")} />
+              Sync
+            </Button>
+          </div>
+
+          {testimonialsLoading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner />
+            </div>
+          ) : !testimonials || testimonials.length === 0 ? (
+            <EmptyState
+              icon={Quote}
+              title="Keine Kundenstimmen"
+              description="Synchronisiere dein Google Business Profil um Reviews zu importieren."
+            />
+          ) : filteredTestimonials.length === 0 ? (
+            <EmptyState
+              icon={Filter}
+              title="Keine Reviews in dieser Kategorie"
+              description="Ändere den Filter um andere Reviews zu sehen."
+            />
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filteredTestimonials.map((review, index) => (
+                <motion.div
+                  key={review.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: index * 0.03 }}
+                  className={cn(
+                    "p-4 rounded-xl border transition-all",
+                    !review.is_visible && "opacity-60 bg-muted/30",
+                    review.is_featured && "ring-2 ring-yellow-500/50 bg-yellow-500/5"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      {review.author_photo_url ? (
+                        <img 
+                          src={review.author_photo_url} 
+                          alt={review.author_name}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <User className="h-5 w-5 text-secondary" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">{review.author_name}</span>
+                        {review.is_featured && (
+                          <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 text-xs">
+                            ⭐ Featured
+                          </Badge>
+                        )}
+                        {!review.is_visible && (
+                          <Badge variant="secondary" className="bg-muted text-muted-foreground text-xs">
+                            Ausgeblendet
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Rating & Time */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={cn(
+                                "h-3.5 w-3.5",
+                                i < review.rating 
+                                  ? "fill-yellow-400 text-yellow-400" 
+                                  : "fill-muted text-muted"
+                              )} 
+                            />
+                          ))}
+                        </div>
+                        {review.relative_time_description && (
+                          <span className="text-xs text-muted-foreground">
+                            · {review.relative_time_description}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Text */}
+                      {review.text && (
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-3">
+                          "{review.text}"
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleTestimonialFeatured(review.id, review.is_featured)}
+                        className={cn(
+                          "h-8 w-8",
+                          review.is_featured && "text-yellow-500"
+                        )}
+                        title={review.is_featured ? "Featured entfernen" : "Als Featured markieren"}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleTestimonialVisibility(review.id, review.is_visible)}
+                        className="h-8 w-8"
+                        title={review.is_visible ? "Ausblenden" : "Sichtbar machen"}
+                      >
+                        {review.is_visible ? (
+                          <Eye className="h-4 w-4 text-success" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
+
+          {/* Tip */}
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/30 border">
+            <Sparkles className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium mb-1">Tipps</p>
+              <ul className="text-muted-foreground space-y-1">
+                <li>• Max. 3 Reviews als "Featured" markieren - diese erscheinen prominent</li>
+                <li>• Reviews ohne Text ausblenden für bessere Wirkung</li>
+              </ul>
+            </div>
+          </div>
+        </TabsContent>
 
         <TabsContent value="feedback" className="mt-4">
           <Card>
