@@ -57,19 +57,25 @@ export default function HomePage() {
   
   const isAuthenticated = !!user;
   
+  const [locationInitialized, setLocationInitialized] = useState(false);
+  
   // Initialize location from storage on mount
   useEffect(() => {
     initFromStorage();
+    setLocationInitialized(true);
   }, []);
   
   // Show location prompt if not granted and not dismissed this session
   useEffect(() => {
+    // Wait until location state is initialized from storage
+    if (!locationInitialized) return;
+    
     if (!isLoading && isAuthenticated && !locationPermissionGranted && !promptDismissedThisSession) {
       // Small delay to let the page load first
       const timer = setTimeout(() => setShowLocationPrompt(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isAuthenticated, locationPermissionGranted, promptDismissedThisSession]);
+  }, [locationInitialized, isLoading, isAuthenticated, locationPermissionGranted, promptDismissedThisSession]);
   
   // Load content from Supabase
   useEffect(() => {
