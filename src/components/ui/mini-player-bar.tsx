@@ -150,6 +150,15 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
   const authContext = useAuthSafe();
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
   
+  // Determine current tier index for dot indicators
+  const currentTierIndex = TIERS.findIndex((tier, i) => {
+    const nextTier = TIERS[i + 1];
+    return elapsed >= tier.minSeconds && (!nextTier || elapsed < nextTier.minSeconds);
+  });
+  
+  // Check if we're close to next reward (glow effect)
+  const isAlmostThere = secondsToNextTier > 0 && secondsToNextTier <= 10;
+  
   const handleTogglePlay = () => {
     hapticToggle();
     togglePlay();
@@ -165,28 +174,59 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed bottom-[72px] left-0 right-0 z-40 px-3"
         >
-          <div className="mx-auto max-w-lg">
+          <div className="mx-auto max-w-lg relative">
+            {/* Glow effect when almost at next tier */}
+            <AnimatePresence>
+              {isAlmostThere && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0.4, 0.8, 0.4] }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute -inset-1 bg-accent/30 rounded-3xl blur-lg"
+                />
+              )}
+            </AnimatePresence>
+            
             <div 
               className={cn(
-                "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-pointer overflow-hidden transition-all duration-300",
-                justReachedTier && "ring-2 ring-accent ring-offset-2 ring-offset-background"
+                "relative rounded-2xl bg-secondary shadow-xl cursor-pointer overflow-hidden transition-all duration-300",
+                justReachedTier && "ring-2 ring-accent ring-offset-2 ring-offset-background",
+                isAlmostThere ? "shadow-accent/50 shadow-2xl" : "shadow-secondary/30"
               )}
               onClick={onExpand}
             >
-              {/* Progress bar at top */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-secondary-foreground/10">
-                <motion.div
-                  className={cn(
-                    "h-full transition-colors",
-                    isMaxTier ? "bg-accent" : "bg-accent/80"
-                  )}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
-                />
+              {/* Tier dots indicator at very top */}
+              <div className="absolute top-0 left-0 right-0 flex items-center justify-center gap-1.5 py-1 bg-black/20">
+                {TIERS.map((tier, index) => {
+                  const isReached = elapsed >= tier.minSeconds;
+                  const isNext = index === currentTierIndex + 1 || (currentTierIndex === -1 && index === 0);
+                  
+                  return (
+                    <motion.div
+                      key={tier.minSeconds}
+                      className={cn(
+                        "rounded-full transition-all duration-300",
+                        isReached 
+                          ? "w-2.5 h-2.5 bg-accent" 
+                          : isNext 
+                            ? "w-2 h-2 bg-accent/50" 
+                            : "w-1.5 h-1.5 bg-white/20"
+                      )}
+                      animate={isNext && secondsToNextTier <= 30 ? {
+                        scale: [1, 1.3, 1],
+                      } : {}}
+                      transition={{
+                        duration: 0.8,
+                        repeat: isNext && secondsToNextTier <= 30 ? Infinity : 0,
+                        repeatType: "reverse"
+                      }}
+                    />
+                  );
+                })}
               </div>
               
-              <div className="flex items-center gap-3 p-2 pt-3">
+              <div className="flex items-center gap-3 p-2 pt-4">
                 {/* Album Art or Equalizer */}
                 <div className={cn(
                   "h-12 w-12 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0 transition-all",
