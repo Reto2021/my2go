@@ -280,6 +280,12 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     // Prevent multiple clicks while loading
     if (isLoading) return;
     
+    // Stop any existing audio first to prevent duplicates
+    if (audio && !isPlaying) {
+      audio.pause();
+      audio.src = '';
+    }
+    
     let currentAudio = audio;
     if (!currentAudio) {
       currentAudio = new Audio(STREAM_URL);
@@ -298,7 +304,12 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       updateMediaSession(nowPlaying, false);
     } else {
       set({ isLoading: true });
+      
+      // Ensure we're not playing before starting new stream
+      currentAudio.pause();
       currentAudio.src = STREAM_URL;
+      currentAudio.load();
+      
       currentAudio.play()
         .then(() => {
           // Try to restore previous session first
