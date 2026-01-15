@@ -187,7 +187,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4 flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
             <ArrowLeft className="h-5 w-5" />
@@ -514,7 +514,7 @@ function ProfilePageSkeleton() {
   return (
     <div className="min-h-screen pb-24 bg-background">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4 flex items-center gap-3">
           <Skeleton className="h-10 w-10 rounded-lg" />
           <Skeleton className="h-5 w-24 rounded" />

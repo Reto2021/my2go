@@ -87,7 +87,7 @@ export default function MyQRPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
           <h1 className="text-display-sm">Mein QR-Code</h1>
         </div>
