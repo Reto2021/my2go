@@ -237,19 +237,37 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               onToggleMedia={() => setShowVideo(!showVideo)}
             />
 
-            {/* Song Info */}
+            {/* Song Info with change animation */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-center mb-4 sm:mb-8 max-w-md w-full"
             >
-              <h2 className="font-bold text-white mb-1 sm:mb-2 truncate text-xl sm:text-2xl">
-                {nowPlaying?.title || 'Radio 2Go'}
-              </h2>
-              <p className="text-white/60 truncate text-base sm:text-lg">
-                {nowPlaying?.artist || 'Live Stream'}
-              </p>
+              <AnimatePresence mode="wait">
+                <motion.h2 
+                  key={nowPlaying?.title || 'default'}
+                  initial={{ y: 20, opacity: 0, scale: 0.95 }}
+                  animate={{ y: 0, opacity: 1, scale: 1 }}
+                  exit={{ y: -20, opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="font-bold text-white mb-1 sm:mb-2 truncate text-xl sm:text-2xl"
+                >
+                  {nowPlaying?.title || 'Radio 2Go'}
+                </motion.h2>
+              </AnimatePresence>
+              <AnimatePresence mode="wait">
+                <motion.p 
+                  key={nowPlaying?.artist || 'default-artist'}
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -10, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut", delay: 0.05 }}
+                  className="text-white/60 truncate text-base sm:text-lg"
+                >
+                  {nowPlaying?.artist || 'Live Stream'}
+                </motion.p>
+              </AnimatePresence>
             </motion.div>
 
             {/* Progress Bar to Next Tier - or Login Prompt for unauthenticated */}
