@@ -432,45 +432,19 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                     <p className="text-sm font-semibold text-secondary-foreground truncate">
                       {isLocked ? `Gesperrt – ${lockRemaining}s` : (nowPlaying?.title || 'Radio 2Go')}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-secondary-foreground/60">
-                      <span>{formatTime(elapsed)}</span>
-                      
-                      {/* Next tier countdown - always visible when playing */}
-                      {!isMaxTier && secondsToNextTier > 0 && (
-                        <>
-                          <span className="text-secondary-foreground/30">→</span>
-                          <div className="flex items-center gap-1 text-accent">
-                            <TalerIcon className="h-3 w-3" />
-                            <span className="font-semibold">+{pendingTaler}</span>
-                            <span className="text-secondary-foreground/50">in {formatTimeToTier(secondsToNextTier)}</span>
-                          </div>
-                        </>
+                    <p className="text-xs text-secondary-foreground/60 truncate">
+                      {isMaxTier ? (
+                        <span className="text-accent font-medium">Max erreicht 🏆</span>
+                      ) : secondsToNextTier > 0 ? (
+                        <span className="flex items-center gap-1">
+                          <TalerIcon className="h-3 w-3 text-accent" />
+                          <span className="text-accent font-medium">+{pendingTaler}</span>
+                          <span>in {formatTimeToTier(secondsToNextTier)}</span>
+                        </span>
+                      ) : (
+                        <span>{nowPlaying?.artist || 'Live Stream'}</span>
                       )}
-                      
-                      {/* Max tier reached */}
-                      {isMaxTier && (
-                        <>
-                          <span className="text-secondary-foreground/30">•</span>
-                          <span className="text-accent font-semibold">Max erreicht! 🏆</span>
-                        </>
-                      )}
-                      
-                      {/* Balance - only for authenticated */}
-                      {isAuthenticated && (
-                        <>
-                          <span className="text-secondary-foreground/30">•</span>
-                          <div className="flex items-center gap-1">
-                            <TalerIcon className="h-3.5 w-3.5 text-accent" />
-                            <span className="text-accent font-bold">{currentBalance}</span>
-                            {justReachedTier && (
-                              <span className="text-accent font-bold animate-pulse">
-                                +{earnedTaler} 🎉
-                              </span>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    </p>
                   </div>
                   
                   {/* Mute Button */}
