@@ -578,6 +578,33 @@ function RewardTierRow({ tier, index }: { tier: ListeningTier; index: number }) 
   );
 }
 
+// Helper component that shows vinyl on image load error or if no artwork
+function ArtworkWithFallback({ 
+  src, 
+  alt, 
+  isPlaying 
+}: { 
+  src: string; 
+  alt?: string; 
+  isPlaying: boolean 
+}) {
+  const [hasError, setHasError] = useState(false);
+  
+  // Show vinyl if no src or on error
+  if (!src || hasError) {
+    return <AnimatedVinylFallback isPlaying={isPlaying} size="lg" />;
+  }
+  
+  return (
+    <img
+      src={src}
+      alt={alt || 'Album cover'}
+      className="w-full h-full object-cover"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
 // Storage key for video hint
 const VIDEO_HINT_SHOWN_KEY = 'radio2go_video_hint_shown';
 
@@ -647,17 +674,12 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
             playsInline
             className="w-full h-full object-cover"
           />
-        ) : artworkUrl ? (
-          <img
-            src={artworkUrl}
-            alt={title}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
         ) : (
-          <AnimatedVinylFallback isPlaying={isPlaying} size="lg" />
+          <ArtworkWithFallback 
+            src={artworkUrl || ''} 
+            alt={title} 
+            isPlaying={isPlaying}
+          />
         )}
         
         {/* Video hint overlay - shows when video is available but not playing */}
