@@ -233,13 +233,24 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       </span>
                     </div>
                     
-                    {/* Timer Display */}
+                    {/* Timer Display - Countdown to next reward */}
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Clock className="h-4 w-4 text-white/60" />
-                      <span className="text-base sm:text-lg font-bold text-white tabular-nums">
-                        {formatSessionDuration(currentSessionDuration)}
-                      </span>
-                      <span className="text-xs text-white/50">gehört</span>
+                      {nextTier ? (
+                        <>
+                          <span className="text-base sm:text-lg font-bold text-accent tabular-nums">
+                            {formatCountdown(nextTier.min_duration_seconds - currentSessionDuration)}
+                          </span>
+                          <span className="text-xs text-white/50">bis +{nextTier.taler_reward} Taler</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-base sm:text-lg font-bold text-green-400 tabular-nums">
+                            {formatSessionDuration(currentSessionDuration)}
+                          </span>
+                          <span className="text-xs text-white/50">Maximum erreicht! 🎉</span>
+                        </>
+                      )}
                     </div>
                     
                     {/* Progress Bar with Label */}
@@ -429,6 +440,19 @@ function formatSessionDuration(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function formatCountdown(remainingSeconds: number): string {
+  if (remainingSeconds <= 0) return '0:00';
+  
+  const hours = Math.floor(remainingSeconds / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
+  const seconds = remainingSeconds % 60;
   
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
