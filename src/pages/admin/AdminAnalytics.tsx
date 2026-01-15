@@ -82,14 +82,31 @@ export default function AdminAnalytics() {
       if (error) throw error;
       
       const dailyStats = new Map<string, { sessions: number; duration: number; taler: number }>();
+      const hourlyStats = new Map<number, { sessions: number; duration: number }>();
+      
+      // Initialize all hours
+      for (let i = 0; i < 24; i++) {
+        hourlyStats.set(i, { sessions: 0, duration: 0 });
+      }
       
       sessions?.forEach(session => {
-        const day = format(new Date(session.started_at), 'yyyy-MM-dd');
+        const sessionDate = new Date(session.started_at);
+        const day = format(sessionDate, 'yyyy-MM-dd');
+        const hour = sessionDate.getHours();
+        
+        // Daily stats
         const existing = dailyStats.get(day) || { sessions: 0, duration: 0, taler: 0 };
         dailyStats.set(day, {
           sessions: existing.sessions + 1,
           duration: existing.duration + (session.duration_seconds || 0),
           taler: existing.taler + (session.taler_awarded || 0)
+        });
+        
+        // Hourly stats
+        const hourlyExisting = hourlyStats.get(hour) || { sessions: 0, duration: 0 };
+        hourlyStats.set(hour, {
+          sessions: hourlyExisting.sessions + 1,
+          duration: hourlyExisting.duration + (session.duration_seconds || 0)
         });
       });
       
@@ -101,17 +118,32 @@ export default function AdminAnalytics() {
         taler: stats.taler
       }));
       
+      const hourlyChartData = Array.from(hourlyStats.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([hour, stats]) => ({
+          hour: `${hour.toString().padStart(2, '0')}:00`,
+          sessions: stats.sessions,
+          durationMinutes: Math.round(stats.duration / 60)
+        }));
+      
       const totalSessions = sessions?.length || 0;
       const totalDuration = sessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
       const totalTaler = sessions?.reduce((sum, s) => sum + (s.taler_awarded || 0), 0) || 0;
       const avgDuration = totalSessions > 0 ? Math.round(totalDuration / totalSessions / 60) : 0;
       
+      // Find peak hour
+      const peakHour = Array.from(hourlyStats.entries())
+        .sort((a, b) => b[1].sessions - a[1].sessions)[0];
+      
       return {
         chartData,
+        hourlyChartData,
         totalSessions,
         totalDurationHours: Math.round(totalDuration / 3600),
         totalTaler,
-        avgDurationMinutes: avgDuration
+        avgDurationMinutes: avgDuration,
+        peakHour: peakHour ? `${peakHour[0].toString().padStart(2, '0')}:00` : null,
+        peakHourSessions: peakHour?.[1].sessions || 0
       };
     }
   });
@@ -553,6 +585,60 @@ export default function AdminAnalytics() {
                       fillOpacity={0.2}
                     />
                   </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Hourly Analytics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Stündliche Aktivität
+                {listeningStats?.peakHour && (
+                  <span className="ml-auto text-sm font-normal text-muted-foreground">
+                    Peak: {listeningStats.peakHour} ({listeningStats.peakHourSessions} Sessions)
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingListening ? (
+                <Skeleton className="h-[250px] w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={listeningStats?.hourlyChartData || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="hour" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={11}
+                      interval={1}
+                      angle={-45}
+                      textAnchor="end"
+                      height={50}
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number, name: string) => {
+                        if (name === 'sessions') return [value, 'Sessions'];
+                        if (name === 'durationMinutes') return [`${value} min`, 'Gesamtdauer'];
+                        return [value, name];
+                      }}
+                    />
+                    <Bar 
+                      dataKey="sessions" 
+                      name="sessions"
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               )}
             </CardContent>
