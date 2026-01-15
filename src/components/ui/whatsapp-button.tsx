@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, X, Mic, Heart, ThumbsDown, Music } from 'lucide-react';
+import { MessageCircle, X, Mic, Heart, ThumbsDown, Music, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,6 +25,11 @@ const quickMessages = [
     icon: Mic, 
     label: 'Audio senden', 
     message: 'Hey Radio 2Go! 🎤 Ich schick euch gleich ein Audio!' 
+  },
+  { 
+    icon: Store, 
+    label: '2Go Taler-Partner vorschlagen', 
+    message: 'Hey Radio 2Go! 🏪 Ich möchte euch einen Taler-Partner vorschlagen:' 
   },
 ];
 
