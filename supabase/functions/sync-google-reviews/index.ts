@@ -5,11 +5,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface GoogleReview {
+  author_name: string;
+  author_url?: string;
+  profile_photo_url?: string;
+  rating: number;
+  relative_time_description: string;
+  text: string;
+  time: number;
+  language?: string;
+}
+
 interface GooglePlaceDetails {
   result?: {
     rating?: number;
     user_ratings_total?: number;
     name?: string;
+    reviews?: GoogleReview[];
     geometry?: {
       location: {
         lat: number;
@@ -35,6 +47,7 @@ interface SyncResult {
   success: boolean;
   rating?: number;
   reviewCount?: number;
+  reviewsSynced?: number;
   error?: string;
 }
 
@@ -63,17 +76,19 @@ Deno.serve(async (req) => {
     let action = "sync-all";
     let partnerId: string | null = null;
     let placeId: string | null = null;
+    let minRating = 4; // Default: only sync 4-5 star reviews
 
     try {
       const body = await req.json();
       action = body.action || "sync-all";
       partnerId = body.partnerId || null;
       placeId = body.placeId || null;
+      minRating = body.minRating ?? 4;
     } catch {
       // No body or invalid JSON - default to sync-all
     }
 
-    console.log(`Google Reviews Sync - Action: ${action}, PartnerId: ${partnerId}`);
+    console.log(`Google Reviews Sync - Action: ${action}, PartnerId: ${partnerId}, MinRating: ${minRating}`);
 
     switch (action) {
       case "sync-single": {
@@ -109,7 +124,7 @@ Deno.serve(async (req) => {
         }
 
         // Sync this partner
-        const result = await syncPartnerReviews(supabase, googleApiKey, partner, targetPlaceId);
+        const result = await syncPartnerReviews(supabase, googleApiKey, partner, targetPlaceId, minRating);
 
         return new Response(
           JSON.stringify(result),
@@ -185,11 +200,11 @@ Deno.serve(async (req) => {
           if (!partner.google_place_id) continue;
 
           try {
-            const result = await syncPartnerReviews(supabase, googleApiKey, partner, partner.google_place_id);
+            const result = await syncPartnerReviews(supabase, googleApiKey, partner, partner.google_place_id, minRating);
             results.push(result);
 
-            // Rate limiting: wait 100ms between requests
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            // Rate limiting: wait 200ms between requests
+            await new Promise((resolve) => setTimeout(resolve, 200));
           } catch (partnerError) {
             console.error(`Error processing partner ${partner.name}:`, partnerError);
             results.push({
@@ -203,8 +218,9 @@ Deno.serve(async (req) => {
 
         const successCount = results.filter((r) => r.success).length;
         const failCount = results.filter((r) => !r.success).length;
+        const totalReviewsSynced = results.reduce((acc, r) => acc + (r.reviewsSynced || 0), 0);
 
-        console.log(`Sync complete: ${successCount} successful, ${failCount} failed`);
+        console.log(`Sync complete: ${successCount} successful, ${failCount} failed, ${totalReviewsSynced} reviews synced`);
 
         return new Response(
           JSON.stringify({
@@ -212,6 +228,7 @@ Deno.serve(async (req) => {
             total: partners.length,
             successful: successCount,
             failed: failCount,
+            totalReviewsSynced,
             results,
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -246,20 +263,21 @@ function extractPlaceId(input: string): string {
 }
 
 /**
- * Sync a single partner's Google reviews
+ * Sync a single partner's Google reviews (rating + individual reviews)
  */
 async function syncPartnerReviews(
   supabase: any,
   googleApiKey: string,
   partner: Partner,
-  placeIdInput: string
+  placeIdInput: string,
+  minRating: number = 4
 ): Promise<SyncResult> {
   console.log(`Fetching Google reviews for: ${partner.name} (${placeIdInput})`);
 
   const placeId = extractPlaceId(placeIdInput);
 
-  // Call Google Places API
-  const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=rating,user_ratings_total,name,geometry&key=${googleApiKey}`;
+  // Call Google Places API with reviews field
+  const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=rating,user_ratings_total,name,geometry,reviews&key=${googleApiKey}`;
 
   const response = await fetch(placeDetailsUrl);
   const data: GooglePlaceDetails = await response.json();
@@ -276,10 +294,11 @@ async function syncPartnerReviews(
 
   const newRating = data.result?.rating ?? null;
   const newReviewCount = data.result?.user_ratings_total ?? null;
+  const googleReviews = data.result?.reviews || [];
 
-  // Prepare update object
+  // Update partner rating and count
   const updates = {
-    google_place_id: placeId, // Store the clean place_id
+    google_place_id: placeId,
     google_rating: newRating,
     google_review_count: newReviewCount,
     updated_at: new Date().toISOString(),
@@ -302,7 +321,44 @@ async function syncPartnerReviews(
     };
   }
 
-  console.log(`Updated ${partner.name}: rating=${newRating}, reviews=${newReviewCount}`);
+  // Filter reviews by minimum rating and sync to partner_reviews table
+  const filteredReviews = googleReviews.filter((r) => r.rating >= minRating);
+  let reviewsSynced = 0;
+
+  for (const review of filteredReviews) {
+    // Create a unique identifier for this review (author + time)
+    const googleReviewId = `${placeId}_${review.time}_${review.author_name.replace(/\s+/g, '_').substring(0, 20)}`;
+
+    const reviewData = {
+      partner_id: partner.id,
+      google_review_id: googleReviewId,
+      author_name: review.author_name,
+      author_photo_url: review.profile_photo_url || null,
+      rating: review.rating,
+      text: review.text || null,
+      relative_time_description: review.relative_time_description,
+      review_time: new Date(review.time * 1000).toISOString(),
+      language: review.language || 'de',
+      is_visible: true,
+      synced_at: new Date().toISOString(),
+    };
+
+    // Upsert - insert or update if already exists
+    const { error: reviewError } = await supabase
+      .from("partner_reviews")
+      .upsert(reviewData, { 
+        onConflict: 'google_review_id',
+        ignoreDuplicates: false 
+      });
+
+    if (reviewError) {
+      console.error(`Error syncing review for ${partner.name}:`, reviewError);
+    } else {
+      reviewsSynced++;
+    }
+  }
+
+  console.log(`Updated ${partner.name}: rating=${newRating}, reviews=${newReviewCount}, synced=${reviewsSynced} reviews`);
 
   return {
     partnerId: partner.id,
@@ -310,5 +366,6 @@ async function syncPartnerReviews(
     success: true,
     rating: newRating ?? undefined,
     reviewCount: newReviewCount ?? undefined,
+    reviewsSynced,
   };
 }
