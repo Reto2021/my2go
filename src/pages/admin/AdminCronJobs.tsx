@@ -57,31 +57,25 @@ export default function AdminCronJobs() {
   const loadCronData = async () => {
     setRefreshing(true);
     try {
-      // Load cron jobs
+      // Use raw SQL via edge function or direct rpc call with type assertion
       const { data: jobsData, error: jobsError } = await supabase
-        .rpc('get_cron_jobs');
+        .rpc('get_cron_jobs' as any);
 
       if (jobsError) {
         console.error('Error loading cron jobs:', jobsError);
-        // Try fallback query
-        const { data: fallbackData } = await supabase
-          .from('cron.job' as any)
-          .select('*');
-        if (fallbackData) {
-          setJobs(fallbackData as unknown as CronJob[]);
-        }
-      } else {
-        setJobs(jobsData || []);
+        // Jobs may not exist yet
+      } else if (jobsData) {
+        setJobs(jobsData as CronJob[]);
       }
 
       // Load recent job runs
       const { data: runsData, error: runsError } = await supabase
-        .rpc('get_cron_job_runs');
+        .rpc('get_cron_job_runs' as any);
 
       if (runsError) {
         console.error('Error loading cron runs:', runsError);
-      } else {
-        setRecentRuns(runsData || []);
+      } else if (runsData) {
+        setRecentRuns(runsData as CronJobRun[]);
       }
     } catch (error) {
       console.error('Failed to load cron data:', error);
