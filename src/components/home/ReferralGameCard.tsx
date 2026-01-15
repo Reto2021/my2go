@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Users, Share2, Trophy, Star, Sparkles, ChevronRight, Copy, Check, MessageCircle, Send, Mail, MoreHorizontal } from 'lucide-react';
 import { useAuth, useUserCode } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -67,11 +68,27 @@ export function ReferralGameCard() {
   // Total Taler earned from referrals
   const totalTalerEarned = referralCount * 25;
   
+  // Track share event in database
+  const trackShare = async (channel: string) => {
+    if (!user || !referralCode) return;
+    
+    try {
+      await supabase.from('referral_shares').insert({
+        user_id: user.id,
+        channel,
+        referral_code: referralCode,
+      });
+    } catch (error) {
+      console.error('Failed to track share:', error);
+    }
+  };
+  
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
       setCopied(true);
       toast.success('Link kopiert!');
+      trackShare('copy');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error('Kopieren fehlgeschlagen');
@@ -80,6 +97,7 @@ export function ReferralGameCard() {
   
   const handleShareChannel = (channel: typeof SHARE_CHANNELS[0]) => {
     const url = channel.getUrl(referralLink, shareText);
+    trackShare(channel.id);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
   
@@ -95,6 +113,7 @@ export function ReferralGameCard() {
         text: shareText,
         url: referralLink,
       });
+      trackShare('native');
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         handleCopy();

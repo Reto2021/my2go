@@ -724,6 +724,41 @@ export type Database = {
           },
         ]
       }
+      referral_shares: {
+        Row: {
+          channel: string
+          converted_referral_id: string | null
+          id: string
+          referral_code: string
+          shared_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          converted_referral_id?: string | null
+          id?: string
+          referral_code: string
+          shared_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          converted_referral_id?: string | null
+          id?: string
+          referral_code?: string
+          shared_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_shares_converted_referral_id_fkey"
+            columns: ["converted_referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           created_at: string
