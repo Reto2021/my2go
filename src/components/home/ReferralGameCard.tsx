@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Share2, Trophy, Star, Sparkles, ChevronRight, Copy, Check, MessageCircle, Send, Mail, MoreHorizontal } from 'lucide-react';
+import { Gift, Users, Share2, Trophy, Star, Sparkles, ChevronRight, Copy, Check, MessageCircle, Send, Mail, MoreHorizontal, Facebook, Instagram } from 'lucide-react';
 import { useAuth, useUserCode } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -34,15 +34,23 @@ const SHARE_CHANNELS = [
       `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`
   },
   { 
-    id: 'email', 
-    label: 'Email', 
-    icon: Mail, 
-    color: 'bg-muted-foreground',
+    id: 'facebook', 
+    label: 'Facebook', 
+    icon: Facebook, 
+    color: 'bg-[#1877F2]',
     getUrl: (link: string, text: string) => 
-      `mailto:?subject=${encodeURIComponent('Einladung zu My 2Go')}&body=${encodeURIComponent(text + '\n\n' + link)}`
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}&quote=${encodeURIComponent(text)}`
+  },
+  { 
+    id: 'instagram', 
+    label: 'Insta', 
+    icon: Instagram, 
+    color: 'bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737]',
+    // Instagram doesn't support direct link sharing - we copy and prompt
+    getUrl: (link: string, text: string) => 'instagram://app',
+    special: 'instagram'
   },
 ];
-
 export function ReferralGameCard() {
   const { user, profile } = useAuth();
   const userCode = useUserCode();
@@ -95,7 +103,23 @@ export function ReferralGameCard() {
     }
   };
   
-  const handleShareChannel = (channel: typeof SHARE_CHANNELS[0]) => {
+  const handleShareChannel = async (channel: typeof SHARE_CHANNELS[0]) => {
+    // Special handling for Instagram - copy link first, then open app
+    if (channel.special === 'instagram') {
+      try {
+        await navigator.clipboard.writeText(referralLink);
+        toast.success('Link kopiert! Füge ihn in deine Story ein 📸');
+        trackShare('instagram');
+        // Try to open Instagram app, fallback to website
+        setTimeout(() => {
+          window.open('https://instagram.com', '_blank', 'noopener,noreferrer');
+        }, 500);
+      } catch (error) {
+        toast.error('Kopieren fehlgeschlagen');
+      }
+      return;
+    }
+    
     const url = channel.getUrl(referralLink, shareText);
     trackShare(channel.id);
     window.open(url, '_blank', 'noopener,noreferrer');
