@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import { preloadSegmentationModel, isWebGPUAvailable } from '@/lib/background-removal';
 
 // Virtual background types and presets
-export type VirtualBackgroundType = 'none' | 'blur' | 'stage' | 'disco' | 'beach' | 'space' | 'neon-city';
+export type VirtualBackgroundType = 'none' | 'blur' | 'ai-remove' | 'stage' | 'disco' | 'beach' | 'space' | 'neon-city';
 
 export interface VirtualBackground {
   id: VirtualBackgroundType;
@@ -11,11 +13,18 @@ export interface VirtualBackground {
   emoji: string;
   gradient?: string;
   imageUrl?: string;
+  isAI?: boolean;
 }
 
 export const VIRTUAL_BACKGROUNDS: Record<VirtualBackgroundType, VirtualBackground> = {
   none: { id: 'none', name: 'Kein', emoji: '🚫' },
   blur: { id: 'blur', name: 'Weichzeichner', emoji: '🌫️' },
+  'ai-remove': { 
+    id: 'ai-remove', 
+    name: 'AI Entfernen', 
+    emoji: '✨',
+    isAI: true
+  },
   stage: { 
     id: 'stage', 
     name: 'Bühne', 
@@ -52,13 +61,34 @@ interface BackgroundSelectorProps {
   currentBackground: VirtualBackgroundType;
   onBackgroundChange: (bg: VirtualBackgroundType) => void;
   isProcessing?: boolean;
+  onAIBackgroundSelect?: () => void;
 }
 
 export const BackgroundSelector = ({ 
   currentBackground, 
   onBackgroundChange,
-  isProcessing 
+  isProcessing,
+  onAIBackgroundSelect
 }: BackgroundSelectorProps) => {
+  const [isAIAvailable, setIsAIAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check WebGPU availability and preload model
+    isWebGPUAvailable().then(available => {
+      setIsAIAvailable(available);
+      if (available) {
+        preloadSegmentationModel();
+      }
+    });
+  }, []);
+
+  const handleBackgroundSelect = (bg: VirtualBackgroundType) => {
+    if (bg === 'ai-remove' && onAIBackgroundSelect) {
+      onAIBackgroundSelect();
+    }
+    onBackgroundChange(bg);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -66,25 +96,38 @@ export const BackgroundSelector = ({
       className="py-3 px-2"
     >
       <div className="flex items-center justify-center gap-2 flex-wrap">
-        {Object.values(VIRTUAL_BACKGROUNDS).map((bg) => (
-          <motion.button
-            key={bg.id}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onBackgroundChange(bg.id)}
-            disabled={isProcessing}
-            className={cn(
-              "flex flex-col items-center gap-1 p-2 rounded-lg transition-all min-w-[60px]",
-              currentBackground === bg.id 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-muted/50 hover:bg-muted",
-              isProcessing && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <span className="text-xl">{bg.emoji}</span>
-            <span className="text-[10px] font-medium">{bg.name}</span>
-          </motion.button>
-        ))}
+        {Object.values(VIRTUAL_BACKGROUNDS).map((bg) => {
+          // Skip AI option if not available
+          if (bg.isAI && isAIAvailable === false) return null;
+          
+          return (
+            <motion.button
+              key={bg.id}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleBackgroundSelect(bg.id)}
+              disabled={isProcessing || (bg.isAI && isAIAvailable === null)}
+              className={cn(
+                "flex flex-col items-center gap-1 p-2 rounded-lg transition-all min-w-[60px]",
+                currentBackground === bg.id 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted/50 hover:bg-muted",
+                isProcessing && "opacity-50 cursor-not-allowed",
+                bg.isAI && "border border-purple-500/50"
+              )}
+            >
+              {bg.isAI ? (
+                <Sparkles className="h-5 w-5 text-purple-400" />
+              ) : (
+                <span className="text-xl">{bg.emoji}</span>
+              )}
+              <span className="text-[10px] font-medium">{bg.name}</span>
+              {bg.isAI && isAIAvailable === null && (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              )}
+            </motion.button>
+          );
+        })}
       </div>
       {isProcessing && (
         <motion.div 
@@ -93,7 +136,7 @@ export const BackgroundSelector = ({
           className="flex items-center justify-center gap-2 mt-2 text-xs text-muted-foreground"
         >
           <Loader2 className="h-3 w-3 animate-spin" />
-          Hintergrund wird verarbeitet...
+          AI verarbeitet Hintergrund...
         </motion.div>
       )}
     </motion.div>
