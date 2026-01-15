@@ -276,8 +276,8 @@ async function syncPartnerReviews(
 
   const placeId = extractPlaceId(placeIdInput);
 
-  // Call Google Places API with reviews field
-  const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=rating,user_ratings_total,name,geometry,reviews&key=${googleApiKey}`;
+  // Call Google Places API with reviews field - prefer German reviews
+  const placeDetailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=rating,user_ratings_total,name,geometry,reviews&language=de&reviews_sort=newest&key=${googleApiKey}`;
 
   const response = await fetch(placeDetailsUrl);
   const data: GooglePlaceDetails = await response.json();
