@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,11 +16,13 @@ import {
   AlertTriangle,
   Calendar,
   Timer,
-  Zap
+  Zap,
+  Mail,
+  Bell,
+  Save
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
-
 interface CronJob {
   jobid: number;
   schedule: string;
@@ -49,10 +53,73 @@ export default function AdminCronJobs() {
   const [recentRuns, setRecentRuns] = useState<CronJobRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [notificationEmail, setNotificationEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [testingNotification, setTestingNotification] = useState(false);
 
   useEffect(() => {
     loadCronData();
+    loadNotificationSettings();
   }, []);
+
+  const loadNotificationSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'admin_notification_email')
+        .single();
+
+      if (data?.value) {
+        setNotificationEmail(typeof data.value === 'string' ? data.value : String(data.value));
+      }
+    } catch (error) {
+      console.error('Error loading notification settings:', error);
+    }
+  };
+
+  const saveNotificationEmail = async () => {
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: 'admin_notification_email',
+          value: notificationEmail,
+          description: 'E-Mail-Adresse für Cron-Job Fehlerbenachrichtigungen',
+          is_public: false,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (error) throw error;
+      toast.success('Benachrichtigungs-E-Mail gespeichert');
+    } catch (error) {
+      console.error('Error saving notification email:', error);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSavingEmail(false);
+    }
+  };
+
+  const testFailureNotification = async () => {
+    setTestingNotification(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-cron-failures');
+      
+      if (error) throw error;
+      
+      if (data?.failedJobs > 0) {
+        toast.success(`Benachrichtigung gesendet! ${data.failedJobs} fehlgeschlagene Job(s) gefunden.`);
+      } else {
+        toast.info('Keine fehlgeschlagenen Jobs gefunden. Keine E-Mail gesendet.');
+      }
+    } catch (error) {
+      console.error('Error testing notification:', error);
+      toast.error('Fehler beim Testen der Benachrichtigung');
+    } finally {
+      setTestingNotification(false);
+    }
+  };
 
   const loadCronData = async () => {
     setRefreshing(true);
@@ -327,6 +394,67 @@ export default function AdminCronJobs() {
         </CardContent>
       </Card>
 
+      {/* Notification Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            Fehlerbenachrichtigungen
+          </CardTitle>
+          <CardDescription>
+            E-Mail-Benachrichtigungen bei fehlgeschlagenen Cron-Jobs
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success border border-success/20">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              Fehlerprüfung läuft alle 15 Minuten automatisch
+            </span>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="notification-email" className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              Benachrichtigungs-E-Mail
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="notification-email"
+                type="email"
+                placeholder="admin@example.com"
+                value={notificationEmail}
+                onChange={(e) => setNotificationEmail(e.target.value)}
+                className="flex-1"
+              />
+              <Button 
+                onClick={saveNotificationEmail}
+                disabled={savingEmail}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {savingEmail ? 'Speichern...' : 'Speichern'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Bei fehlgeschlagenen Cron-Jobs wird automatisch eine E-Mail an diese Adresse gesendet.
+            </p>
+          </div>
+          
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={testFailureNotification}
+              disabled={testingNotification}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              {testingNotification ? 'Prüfe...' : 'Jetzt prüfen'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Info Box */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="pt-6">
@@ -339,7 +467,8 @@ export default function AdminCronJobs() {
               <p className="text-sm text-muted-foreground">
                 Cron-Jobs werden automatisch im Hintergrund ausgeführt. Der Google Reviews Sync 
                 läuft täglich um 03:00 Uhr und synchronisiert die Bewertungen aller Partner mit 
-                gültiger Google Place ID. Bei Fehlern werden diese hier protokolliert.
+                gültiger Google Place ID. Die Fehlerprüfung läuft alle 15 Minuten und sendet 
+                bei Fehlern automatisch eine E-Mail-Benachrichtigung.
               </p>
             </div>
           </div>
