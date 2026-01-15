@@ -212,6 +212,15 @@ export function ReferralGameCard() {
                         {nextMilestoneLabel}
                       </p>
                     </div>
+                    {/* Mini progress bar in header */}
+                    <div className="h-1 bg-secondary-foreground/10 rounded-full overflow-hidden mt-2 w-full max-w-[200px]">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-accent to-accent/80 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(progressToNext, 100)}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                    </div>
                   </div>
                 </div>
                 <motion.div
