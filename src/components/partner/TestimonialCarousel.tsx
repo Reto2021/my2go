@@ -41,23 +41,48 @@ export function TestimonialCarousel({
     const fetchReviews = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // First try to fetch German reviews
+        const { data: germanData, error: germanError } = await supabase
           .from('partner_reviews')
           .select('id, author_name, author_photo_url, rating, text, relative_time_description, is_featured')
           .eq('partner_id', partnerId)
           .eq('is_visible', true)
+          .eq('language', 'de')
           .gte('rating', minRating)
           .order('is_featured', { ascending: false })
           .order('rating', { ascending: false })
           .order('review_time', { ascending: false })
           .limit(10);
 
-        if (error) {
-          console.error('Error fetching reviews:', error);
+        if (germanError) {
+          console.error('Error fetching German reviews:', germanError);
+        }
+
+        // Filter reviews that have text content
+        const germanReviews = (germanData || []).filter(r => r.text && r.text.trim().length > 10);
+
+        // If we have German reviews, use them
+        if (germanReviews.length > 0) {
+          setReviews(germanReviews);
         } else {
-          // Filter reviews that have text content
-          const reviewsWithText = (data || []).filter(r => r.text && r.text.trim().length > 10);
-          setReviews(reviewsWithText);
+          // Fallback: fetch all reviews regardless of language
+          const { data: allData, error: allError } = await supabase
+            .from('partner_reviews')
+            .select('id, author_name, author_photo_url, rating, text, relative_time_description, is_featured')
+            .eq('partner_id', partnerId)
+            .eq('is_visible', true)
+            .gte('rating', minRating)
+            .order('is_featured', { ascending: false })
+            .order('rating', { ascending: false })
+            .order('review_time', { ascending: false })
+            .limit(10);
+
+          if (allError) {
+            console.error('Error fetching reviews:', allError);
+          } else {
+            const allReviews = (allData || []).filter(r => r.text && r.text.trim().length > 10);
+            setReviews(allReviews);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch reviews:', err);
