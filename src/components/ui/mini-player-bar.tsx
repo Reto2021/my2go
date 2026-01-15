@@ -135,9 +135,13 @@ function formatTime(seconds: number): string {
 }
 
 function formatTimeToTier(seconds: number): string {
+  if (seconds <= 60) {
+    return `${seconds}s`;
+  }
   const mins = Math.floor(seconds / 60);
-  if (mins === 0) return `${seconds} Sek`;
-  return `${mins} Min`;
+  const secs = seconds % 60;
+  if (secs === 0) return `${mins}m`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
@@ -205,14 +209,14 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
                     {nowPlaying?.title || 'Radio 2Go'}
                   </p>
                   <div className="flex items-center gap-2 text-xs text-secondary-foreground/60">
-                    <span>{formatTime(elapsed)}</span>
-                    <span className="text-secondary-foreground/30">•</span>
-                    
-                    {/* Current Balance + Session Bonus */}
+                    {/* Current Balance */}
                     <div className="flex items-center gap-1">
                       <TalerIcon className="h-3 w-3 text-accent" />
                       <span className="text-accent font-bold">{currentBalance}</span>
-                      {justReachedTier ? (
+                      {earnedTaler > 0 && !justReachedTier && (
+                        <span className="text-accent/70 font-medium">(+{earnedTaler})</span>
+                      )}
+                      {justReachedTier && (
                         <motion.span 
                           className="text-accent font-bold"
                           initial={{ scale: 0.8 }}
@@ -221,12 +225,50 @@ export function MiniPlayerBar({ onExpand }: MiniPlayerBarProps) {
                         >
                           (+{earnedTaler} 🎉)
                         </motion.span>
-                      ) : earnedTaler > 0 ? (
-                        <span className="text-accent/70 font-medium">(+{earnedTaler})</span>
-                      ) : secondsToNextTier > 0 ? (
-                        <span className="opacity-60">• +{pendingTaler} in {formatTimeToTier(secondsToNextTier)}</span>
-                      ) : null}
+                      )}
                     </div>
+                    
+                    {/* Countdown to next tier - prominent display */}
+                    {!justReachedTier && secondsToNextTier > 0 && (
+                      <>
+                        <span className="text-secondary-foreground/30">•</span>
+                        <motion.div 
+                          className={cn(
+                            "flex items-center gap-1 px-1.5 py-0.5 rounded-md transition-colors",
+                            secondsToNextTier <= 30 
+                              ? "bg-accent/20 text-accent font-semibold" 
+                              : "text-secondary-foreground/60"
+                          )}
+                          animate={secondsToNextTier <= 30 ? { 
+                            scale: [1, 1.03, 1],
+                          } : {}}
+                          transition={{ 
+                            duration: 0.6, 
+                            repeat: secondsToNextTier <= 30 ? Infinity : 0,
+                            repeatType: "reverse"
+                          }}
+                        >
+                          <span className={cn(
+                            "tabular-nums",
+                            secondsToNextTier <= 30 && "font-bold"
+                          )}>
+                            {formatTimeToTier(secondsToNextTier)}
+                          </span>
+                          <span className="text-[10px]">→ +{pendingTaler}</span>
+                          {secondsToNextTier <= 30 && (
+                            <span className="text-[10px]">🔥</span>
+                          )}
+                        </motion.div>
+                      </>
+                    )}
+                    
+                    {/* Max tier indicator */}
+                    {isMaxTier && !justReachedTier && (
+                      <>
+                        <span className="text-secondary-foreground/30">•</span>
+                        <span className="text-accent text-[10px] font-semibold">MAX 🎉</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
