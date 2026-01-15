@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const LOCATION_GRANTED_KEY = 'location_permission_granted';
+
 interface Location {
   lat: number;
   lng: number;
@@ -10,19 +12,43 @@ interface LocationState {
   userLocation: Location | null;
   isRequestingLocation: boolean;
   locationError: string | null;
-  locationPermissionAsked: boolean;
+  // Only true if user has granted permission (persisted)
+  locationPermissionGranted: boolean;
+  // Temporary flag to hide prompt for current session after denial
+  promptDismissedThisSession: boolean;
   
   // Actions
   requestLocation: () => Promise<void>;
   clearLocation: () => void;
-  setLocationPermissionAsked: () => void;
+  dismissPromptForSession: () => void;
+  initFromStorage: () => void;
 }
+
+// Check if permission was previously granted
+const getStoredPermission = (): boolean => {
+  try {
+    return localStorage.getItem(LOCATION_GRANTED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
 
 export const useLocation = create<LocationState>((set, get) => ({
   userLocation: null,
   isRequestingLocation: false,
   locationError: null,
-  locationPermissionAsked: false,
+  locationPermissionGranted: getStoredPermission(),
+  promptDismissedThisSession: false,
+  
+  initFromStorage: () => {
+    const granted = getStoredPermission();
+    set({ locationPermissionGranted: granted });
+    
+    // If previously granted, try to get location automatically
+    if (granted) {
+      get().requestLocation();
+    }
+  },
   
   requestLocation: async () => {
     if (!navigator.geolocation) {
@@ -35,24 +61,31 @@ export const useLocation = create<LocationState>((set, get) => ({
     return new Promise<void>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // Success - persist permission
+          try {
+            localStorage.setItem(LOCATION_GRANTED_KEY, 'true');
+          } catch {}
+          
           set({
             userLocation: {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
             },
             isRequestingLocation: false,
-            locationPermissionAsked: true,
+            locationPermissionGranted: true,
+            promptDismissedThisSession: true,
           });
           resolve();
         },
         (err) => {
           console.error('Location error:', err);
+          // Don't persist on error - will ask again next session
           set({
             locationError: err.code === 1 
               ? 'Standortzugriff wurde verweigert.' 
               : 'Standort konnte nicht ermittelt werden.',
             isRequestingLocation: false,
-            locationPermissionAsked: true,
+            promptDismissedThisSession: true,
           });
           resolve();
         },
@@ -65,8 +98,9 @@ export const useLocation = create<LocationState>((set, get) => ({
     set({ userLocation: null, locationError: null });
   },
   
-  setLocationPermissionAsked: () => {
-    set({ locationPermissionAsked: true });
+  dismissPromptForSession: () => {
+    // Only dismiss for this session, will ask again next time
+    set({ promptDismissedThisSession: true });
   },
 }));
 

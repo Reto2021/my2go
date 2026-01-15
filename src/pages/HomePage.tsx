@@ -42,10 +42,12 @@ export default function HomePage() {
   const { 
     userLocation, 
     isRequestingLocation, 
-    locationPermissionAsked,
+    locationPermissionGranted,
+    promptDismissedThisSession,
     requestLocation, 
     clearLocation,
-    setLocationPermissionAsked 
+    dismissPromptForSession,
+    initFromStorage,
   } = useLocation();
   
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -55,14 +57,19 @@ export default function HomePage() {
   
   const isAuthenticated = !!user;
   
-  // Show location prompt if not asked yet (after session is loaded)
+  // Initialize location from storage on mount
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !locationPermissionAsked) {
+    initFromStorage();
+  }, []);
+  
+  // Show location prompt if not granted and not dismissed this session
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !locationPermissionGranted && !promptDismissedThisSession) {
       // Small delay to let the page load first
       const timer = setTimeout(() => setShowLocationPrompt(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, isAuthenticated, locationPermissionAsked]);
+  }, [isLoading, isAuthenticated, locationPermissionGranted, promptDismissedThisSession]);
   
   // Load content from Supabase
   useEffect(() => {
@@ -112,7 +119,7 @@ export default function HomePage() {
   
   const handleDenyLocation = () => {
     setShowLocationPrompt(false);
-    setLocationPermissionAsked();
+    dismissPromptForSession();
   };
   
   const handleLogin = () => {
