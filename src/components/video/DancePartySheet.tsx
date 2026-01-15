@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -29,6 +29,69 @@ import {
   CameraFilterType,
   CAMERA_FILTERS 
 } from './CameraFilters';
+import { Confetti } from '@/components/ui/confetti';
+
+// Applause sound generator
+const playApplauseSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = audioContext.currentTime;
+    
+    // Create applause-like sound with multiple noise bursts
+    for (let i = 0; i < 8; i++) {
+      const bufferSize = audioContext.sampleRate * 0.15;
+      const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      
+      for (let j = 0; j < bufferSize; j++) {
+        output[j] = (Math.random() * 2 - 1) * 0.3;
+      }
+      
+      const noise = audioContext.createBufferSource();
+      noise.buffer = noiseBuffer;
+      
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 800 + Math.random() * 400;
+      filter.Q.value = 0.5;
+      
+      const gainNode = audioContext.createGain();
+      const startTime = now + i * 0.08 + Math.random() * 0.05;
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.15 + Math.random() * 0.1, startTime + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.12);
+      
+      noise.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      noise.start(startTime);
+      noise.stop(startTime + 0.15);
+    }
+    
+    // Add a cheerful "ding" at the end
+    const playTone = (freq: number, time: number, dur: number, vol: number) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + dur);
+      osc.start(time);
+      osc.stop(time + dur);
+    };
+    
+    playTone(880, now + 0.6, 0.3, 0.1);
+    playTone(1108, now + 0.7, 0.3, 0.08);
+    playTone(1318, now + 0.8, 0.4, 0.1);
+    
+  } catch (error) {
+    console.log('Audio not supported');
+  }
+};
 
 interface DancePartySheetProps {
   open: boolean;
@@ -228,7 +291,9 @@ export const DancePartySheet = ({
     toggleMute,
     toggleVideo,
     sendReaction,
+    sendApplause,
     reactions,
+    applauseEvents,
     isMuted,
     isVideoOff
   } = useLiveKitRoom();
@@ -236,9 +301,29 @@ export const DancePartySheet = ({
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [currentFilter, setCurrentFilter] = useState<CameraFilterType>('none');
   const [showFilters, setShowFilters] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // Create room name from song
   const roomName = `dance-${songIdentifier.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 50)}`;
+
+  // Handle incoming applause events
+  useEffect(() => {
+    if (applauseEvents.length > 0) {
+      const latestEvent = applauseEvents[applauseEvents.length - 1];
+      // Check if this is a new event (within last 500ms)
+      if (Date.now() - latestEvent.timestamp < 500) {
+        playApplauseSound();
+        setShowConfetti(true);
+        // Reset confetti after animation
+        setTimeout(() => setShowConfetti(false), 100);
+      }
+    }
+  }, [applauseEvents]);
+
+  const handleApplause = useCallback(() => {
+    sendApplause();
+    // Local effect is handled by the applauseEvents useEffect
+  }, [sendApplause]);
 
   // Get local stream for preview
   useEffect(() => {
@@ -328,6 +413,8 @@ export const DancePartySheet = ({
         side="bottom" 
         className="h-[90vh] rounded-t-3xl bg-gradient-to-b from-background to-background/95"
       >
+        {/* Confetti overlay for applause */}
+        <Confetti isActive={showConfetti} particleCount={80} duration={3000} playSound={false} />
         <SheetHeader className="text-center pb-4">
           <SheetTitle className="flex items-center justify-center gap-2">
             <Sparkles className="h-5 w-5 text-primary animate-pulse" />
@@ -496,11 +583,21 @@ export const DancePartySheet = ({
 
           {/* Controls */}
           {isConnected && (
-            <motion.div 
+          <motion.div 
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="flex items-center justify-center gap-3 py-4 border-t"
             >
+              {/* Applause Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 rounded-full border-yellow-500/50 hover:bg-yellow-500/10 hover:border-yellow-500"
+                onClick={handleApplause}
+              >
+                <span className="text-xl">👏</span>
+              </Button>
+
               {/* Filter Button */}
               <Button
                 variant={showFilters ? "default" : "outline"}
