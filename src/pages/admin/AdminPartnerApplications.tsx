@@ -462,7 +462,28 @@ export default function AdminPartnerApplications() {
                   
                   if (error) throw error;
                   
-                  toast.success(`Partner "${selectedApplication.company_name}" wurde erfolgreich erstellt!`);
+                  // Send welcome email to partner
+                  try {
+                    const { error: emailError } = await supabase.functions.invoke('send-partner-welcome', {
+                      body: {
+                        partnerId: data.id,
+                        partnerName: selectedApplication.company_name,
+                        contactName: selectedApplication.contact_name,
+                        contactEmail: selectedApplication.contact_email,
+                      }
+                    });
+                    
+                    if (emailError) {
+                      console.error('Error sending welcome email:', emailError);
+                      toast.warning('Partner erstellt, aber Welcome-E-Mail konnte nicht gesendet werden');
+                    } else {
+                      toast.success(`Partner "${selectedApplication.company_name}" erstellt & Welcome-E-Mail gesendet!`);
+                    }
+                  } catch (emailErr) {
+                    console.error('Error sending welcome email:', emailErr);
+                    toast.success(`Partner "${selectedApplication.company_name}" wurde erfolgreich erstellt!`);
+                  }
+                  
                   setSelectedApplication(null);
                 } catch (error: any) {
                   console.error('Error creating partner:', error);
