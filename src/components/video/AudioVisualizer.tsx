@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useRadioStore } from '@/lib/radio-store';
 
 interface AudioVisualizerProps {
   audioElement?: HTMLAudioElement | null;
@@ -297,6 +298,246 @@ export const MicrophoneVisualizer = ({
           }}
           animate={{
             height: `${Math.max(4, height * 32)}px`,
+          }}
+          transition={{ duration: 0.05 }}
+        />
+      ))}
+    </motion.div>
+  );
+};
+
+// Radio Music Visualizer - visualizes the radio stream audio
+export const RadioMusicVisualizer = ({ 
+  isActive,
+  variant = 'bars',
+  className,
+  barCount = 32
+}: { 
+  isActive: boolean; 
+  variant?: 'bars' | 'wave' | 'pulse';
+  className?: string;
+  barCount?: number;
+}) => {
+  const isPlaying = useRadioStore((state) => state.isPlaying);
+  const [bars, setBars] = useState<number[]>(Array(barCount).fill(0));
+  const animationRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const connectedAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Find and connect to the radio audio element
+  const connectToRadioAudio = useCallback(() => {
+    // Look for the radio audio element in the DOM
+    const audioElements = document.querySelectorAll('audio');
+    let radioAudio: HTMLAudioElement | null = null;
+    
+    audioElements.forEach((audio) => {
+      // Check if this is the radio audio by checking source or if it's playing
+      if (audio.src.includes('streams') || audio.src.includes('radio') || 
+          audio.src.includes('icecast') || audio.src.includes('.mp3') ||
+          audio.src.includes('stream') || !audio.paused) {
+        radioAudio = audio;
+      }
+    });
+
+    return radioAudio;
+  }, []);
+
+  useEffect(() => {
+    if (!isActive || !isPlaying) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      setBars(Array(barCount).fill(0));
+      return;
+    }
+
+    const setup = async () => {
+      try {
+        const radioAudio = connectToRadioAudio();
+        
+        if (!radioAudio) {
+          // Fallback: generate simulated visualization based on time
+          const simulateVisualization = () => {
+            if (!isPlaying || !isActive) return;
+            
+            const now = Date.now();
+            const newBars = [];
+            for (let i = 0; i < barCount; i++) {
+              // Create semi-random but smooth visualization
+              const base = Math.sin((now / 300) + i * 0.5) * 0.3 + 0.5;
+              const variation = Math.sin((now / 150) + i * 0.3) * 0.2;
+              const randomPulse = Math.random() * 0.15;
+              newBars.push(Math.max(0.1, Math.min(1, base + variation + randomPulse)));
+            }
+            setBars(newBars);
+            animationRef.current = requestAnimationFrame(simulateVisualization);
+          };
+          
+          simulateVisualization();
+          return;
+        }
+
+        // Real audio analysis
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+
+        const audioContext = audioContextRef.current;
+
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+
+        if (!analyserRef.current) {
+          analyserRef.current = audioContext.createAnalyser();
+          analyserRef.current.fftSize = 128;
+          analyserRef.current.smoothingTimeConstant = 0.85;
+        }
+
+        // Only connect if we haven't connected this audio element yet
+        if (connectedAudioRef.current !== radioAudio && !sourceRef.current) {
+          try {
+            sourceRef.current = audioContext.createMediaElementSource(radioAudio);
+            sourceRef.current.connect(analyserRef.current);
+            analyserRef.current.connect(audioContext.destination);
+            connectedAudioRef.current = radioAudio;
+          } catch (e) {
+            console.log('Radio audio source may already be connected, using simulation');
+            // Fallback to simulation
+            const simulateVisualization = () => {
+              if (!isPlaying || !isActive) return;
+              
+              const now = Date.now();
+              const newBars = [];
+              for (let i = 0; i < barCount; i++) {
+                const base = Math.sin((now / 300) + i * 0.5) * 0.3 + 0.5;
+                const variation = Math.sin((now / 150) + i * 0.3) * 0.2;
+                const randomPulse = Math.random() * 0.15;
+                newBars.push(Math.max(0.1, Math.min(1, base + variation + randomPulse)));
+              }
+              setBars(newBars);
+              animationRef.current = requestAnimationFrame(simulateVisualization);
+            };
+            simulateVisualization();
+            return;
+          }
+        }
+
+        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+
+        const analyze = () => {
+          if (!analyserRef.current || !isPlaying || !isActive) return;
+          
+          analyserRef.current.getByteFrequencyData(dataArray);
+          
+          const newBars = [];
+          const step = Math.floor(dataArray.length / barCount);
+          for (let i = 0; i < barCount; i++) {
+            newBars.push(dataArray[i * step] / 255);
+          }
+          setBars(newBars);
+          
+          animationRef.current = requestAnimationFrame(analyze);
+        };
+
+        analyze();
+      } catch (error) {
+        console.error('Radio visualizer setup error:', error);
+      }
+    };
+
+    setup();
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [isActive, isPlaying, barCount, connectToRadioAudio]);
+
+  if (!isActive) return null;
+
+  if (variant === 'wave') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className={cn("flex items-center justify-center", className)}
+      >
+        <svg className="w-full h-full" viewBox="0 0 200 40" preserveAspectRatio="none">
+          <motion.path
+            d={`M 0,20 ${bars.map((h, i) => {
+              const x = (i / (bars.length - 1)) * 200;
+              const y = 20 - h * 18;
+              return `L ${x},${y}`;
+            }).join(' ')} L 200,20`}
+            fill="none"
+            stroke="url(#waveGradient)"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <defs>
+            <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="hsl(200, 50%, 66%)" />
+              <stop offset="50%" stopColor="hsl(280, 80%, 60%)" />
+              <stop offset="100%" stopColor="hsl(44, 98%, 49%)" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </motion.div>
+    );
+  }
+
+  if (variant === 'pulse') {
+    const avgLevel = bars.reduce((a, b) => a + b, 0) / bars.length;
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className={cn("flex items-center justify-center", className)}
+      >
+        <motion.div
+          className="rounded-full"
+          style={{
+            background: 'linear-gradient(135deg, hsl(200, 50%, 66%), hsl(280, 80%, 60%))',
+          }}
+          animate={{
+            width: `${20 + avgLevel * 40}px`,
+            height: `${20 + avgLevel * 40}px`,
+            boxShadow: `0 0 ${avgLevel * 30}px hsl(280, 80%, 60%)`,
+          }}
+          transition={{ duration: 0.05 }}
+        />
+      </motion.div>
+    );
+  }
+
+  // Default: bars variant
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className={cn("flex items-end justify-center gap-[2px]", className)}
+    >
+      {bars.map((height, i) => (
+        <motion.div
+          key={i}
+          className="rounded-full min-w-[3px]"
+          style={{
+            background: `linear-gradient(to top, hsl(200, 50%, 66%), hsl(280, 80%, 60%), hsl(44, 98%, 49%))`,
+            width: `${100 / barCount - 1}%`,
+          }}
+          animate={{
+            height: `${Math.max(4, height * 100)}%`,
+            opacity: 0.6 + height * 0.4,
           }}
           transition={{ duration: 0.05 }}
         />
