@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,7 +17,7 @@ import {
   Image
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { hapticToggle } from '@/lib/haptics';
+import { hapticToggle, hapticSuccess } from '@/lib/haptics';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
 import { Slider } from '@/components/ui/slider';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
+import { TierCelebration } from '@/components/radio/TierCelebration';
 
 interface ListeningTier {
   id: string;
@@ -62,7 +63,10 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   } = useRadioStore();
   
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
-  const [showVideo, setShowVideo] = useState(true); // Default to video when available
+  const [showVideo, setShowVideo] = useState(true);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationTaler, setCelebrationTaler] = useState(0);
+  const lastReachedTierRef = useRef<string | null>(null);
 
   // Update session duration every second
   useEffect(() => {
@@ -123,7 +127,34 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   };
 
   const { current: currentTier, next: nextTier, progress } = getCurrentAndNextTier();
-
+  
+  // Calculate remaining seconds for countdown animation
+  const remainingSeconds = nextTier 
+    ? nextTier.min_duration_seconds - currentSessionDuration 
+    : 0;
+  const isCountdownUrgent = remainingSeconds > 0 && remainingSeconds <= 30;
+  
+  // Detect tier advancement and trigger celebration
+  useEffect(() => {
+    if (currentTier && isAuthenticated && isOpen) {
+      if (lastReachedTierRef.current !== currentTier.id) {
+        // Only celebrate if this is an advancement (not initial load)
+        if (lastReachedTierRef.current !== null) {
+          setCelebrationTaler(currentTier.taler_reward);
+          setShowCelebration(true);
+          hapticSuccess();
+        }
+        lastReachedTierRef.current = currentTier.id;
+      }
+    }
+  }, [currentTier?.id, isAuthenticated, isOpen]);
+  
+  // Reset tier tracking when player closes
+  useEffect(() => {
+    if (!isOpen) {
+      lastReachedTierRef.current = null;
+    }
+  }, [isOpen]);
   // Close on escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -234,14 +265,47 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     </div>
                     
                     {/* Timer Display - Countdown to next reward */}
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <Clock className="h-4 w-4 text-white/60" />
+                    <div className={cn(
+                      "flex items-center justify-center gap-2 mb-2 transition-all",
+                      isCountdownUrgent && "animate-pulse"
+                    )}>
+                      <Clock className={cn(
+                        "h-4 w-4 transition-colors",
+                        isCountdownUrgent ? "text-accent" : "text-white/60"
+                      )} />
                       {nextTier ? (
                         <>
-                          <span className="text-base sm:text-lg font-bold text-accent tabular-nums">
-                            {formatCountdown(nextTier.min_duration_seconds - currentSessionDuration)}
+                          <motion.span 
+                            className={cn(
+                              "text-base sm:text-lg font-bold tabular-nums transition-colors",
+                              isCountdownUrgent ? "text-accent" : "text-accent"
+                            )}
+                            animate={isCountdownUrgent ? { 
+                              scale: [1, 1.05, 1],
+                            } : {}}
+                            transition={{ 
+                              duration: 0.5, 
+                              repeat: isCountdownUrgent ? Infinity : 0,
+                              repeatType: "reverse"
+                            }}
+                          >
+                            {formatCountdown(remainingSeconds)}
+                          </motion.span>
+                          <span className={cn(
+                            "text-xs transition-colors",
+                            isCountdownUrgent ? "text-accent/80 font-semibold" : "text-white/50"
+                          )}>
+                            bis +{nextTier.taler_reward} Taler
                           </span>
-                          <span className="text-xs text-white/50">bis +{nextTier.taler_reward} Taler</span>
+                          {isCountdownUrgent && (
+                            <motion.span
+                              initial={{ opacity: 0, scale: 0 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="text-lg"
+                            >
+                              🔥
+                            </motion.span>
+                          )}
                         </>
                       ) : (
                         <>
@@ -395,6 +459,13 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </motion.div>
             )}
           </div>
+          
+          {/* Tier Celebration Overlay */}
+          <TierCelebration 
+            isVisible={showCelebration}
+            talerAmount={celebrationTaler}
+            onDismiss={() => setShowCelebration(false)}
+          />
         </motion.div>
       )}
     </AnimatePresence>
