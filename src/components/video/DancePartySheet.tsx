@@ -10,19 +10,16 @@ import {
   PhoneOff, 
   Users,
   Sparkles,
-  Music
+  Music,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useLiveKitRoom, Participant, REACTION_EMOJIS } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  VideoTrack, 
-  AudioTrack,
-  useParticipants,
-  useTracks,
-  useLocalParticipant
-} from '@livekit/components-react';
+import { toast } from 'sonner';
 import { Track, Room } from 'livekit-client';
 
 interface DancePartySheetProps {
@@ -280,6 +277,45 @@ export const DancePartySheet = ({
     onOpenChange(false);
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const getShareUrl = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/?dance=${encodeURIComponent(roomName)}`;
+  };
+
+  const handleShare = async () => {
+    const shareUrl = getShareUrl();
+    const shareData = {
+      title: '🕺 Dance Party Einladung!',
+      text: songTitle 
+        ? `Komm zur Dance Party! Wir tanzen gerade zu "${songTitle}" 💃🎵`
+        : 'Komm zur Dance Party und tanz mit uns! 💃🕺',
+      url: shareUrl
+    };
+
+    try {
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        toast.success('Einladung geteilt! 🎉');
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        toast.success('Link kopiert! 📋');
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        // User cancelled share, not an error
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        toast.success('Link kopiert! 📋');
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
+  };
+
   const totalParticipants = (isConnected ? 1 : 0) + participants.length;
 
   return (
@@ -435,8 +471,22 @@ export const DancePartySheet = ({
             <motion.div 
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="flex items-center justify-center gap-4 py-4 border-t"
+              className="flex items-center justify-center gap-3 py-4 border-t"
             >
+              {/* Share/Invite Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-12 w-12 rounded-full border-primary/50 hover:bg-primary/10"
+                onClick={handleShare}
+              >
+                {copied ? (
+                  <Check className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Share2 className="h-5 w-5 text-primary" />
+                )}
+              </Button>
+
               <Button
                 variant={isMuted ? "destructive" : "secondary"}
                 size="icon"

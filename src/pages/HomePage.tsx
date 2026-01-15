@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
 import { getRewards, getPartnersWithMinRewardCost, Reward, PartnerWithMinCost } from '@/lib/supabase-helpers';
@@ -17,6 +17,7 @@ import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { ReferralGameCard } from '@/components/home/ReferralGameCard';
 import { InstallBanner } from '@/components/home/InstallBanner';
+import { DancePartySheet } from '@/components/video/DancePartySheet';
 import {
   Gift,
   MapPin,
@@ -39,6 +40,7 @@ if (typeof window !== 'undefined') {
 export default function HomePage() {
   const { user, profile, balance, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { 
     userLocation, 
     isRequestingLocation, 
@@ -55,9 +57,25 @@ export default function HomePage() {
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   
+  // Dance Party from URL
+  const [dancePartyRoom, setDancePartyRoom] = useState<string | null>(null);
+  const [showDanceParty, setShowDanceParty] = useState(false);
+  
   const isAuthenticated = !!user;
   
   const [locationInitialized, setLocationInitialized] = useState(false);
+  
+  // Check for dance party invite link
+  useEffect(() => {
+    const danceParam = searchParams.get('dance');
+    if (danceParam) {
+      setDancePartyRoom(danceParam);
+      setShowDanceParty(true);
+      // Remove the param from URL
+      searchParams.delete('dance');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   
   // Initialize location from storage on mount
   useEffect(() => {
@@ -182,6 +200,16 @@ export default function HomePage() {
         onRequestLocation={requestLocation}
         isRequestingLocation={isRequestingLocation}
       />
+      
+      {/* Dance Party from invite link */}
+      {dancePartyRoom && (
+        <DancePartySheet
+          open={showDanceParty}
+          onOpenChange={setShowDanceParty}
+          songIdentifier={dancePartyRoom}
+          songTitle="Dance Party Einladung"
+        />
+      )}
     </>
   );
 }
