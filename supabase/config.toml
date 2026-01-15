@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.ghl-sync]
 verify_jwt = false
+
+[functions.check-cron-failures]
+verify_jwt = false
