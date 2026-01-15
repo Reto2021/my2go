@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Confetti, useConfetti } from '@/components/ui/confetti';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { hapticToggle } from '@/lib/haptics';
 
 // Milestone definitions
 const MILESTONES = [
@@ -153,12 +154,23 @@ export function ReferralGameCard() {
     }
   };
   
+  // Handle collapsible open/close with haptics
+  const handleOpenChange = (open: boolean) => {
+    hapticToggle();
+    setIsOpen(open);
+  };
+  
+  // Get next milestone info for header preview
+  const nextMilestoneLabel = currentMilestone === -1 
+    ? '👑 Alle erreicht!' 
+    : `${nextMilestone.badge} ${referralCount}/${nextMilestone.count}`;
+  
   if (!user) return null;
   
   return (
     <>
       <Confetti isActive={showConfetti} particleCount={30} duration={2000} playSound={false} />
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -183,13 +195,23 @@ export function ReferralGameCard() {
                   >
                     <Gift className="h-5 w-5 text-accent" />
                   </motion.div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-extrabold text-secondary-foreground tracking-tight">
                       One for Me – One for You!
                     </h3>
-                    <p className="text-xs text-secondary-foreground/70 mt-0.5">
-                      25 Taler für euch beide • <span className="text-accent font-semibold">{referralCount} Freunde</span>
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-secondary-foreground/70">
+                        25 Taler für euch beide
+                      </p>
+                      <span className="text-[10px] text-secondary-foreground/40">•</span>
+                      <p className="text-xs text-accent font-semibold">
+                        {referralCount} Freunde
+                      </p>
+                      <span className="text-[10px] text-secondary-foreground/40">•</span>
+                      <p className="text-xs text-secondary-foreground/60">
+                        {nextMilestoneLabel}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <motion.div
