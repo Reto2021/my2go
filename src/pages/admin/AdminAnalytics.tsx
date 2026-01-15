@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { 
   Radio, 
   MapPin, 
@@ -31,13 +32,40 @@ import {
   Cell,
   Legend
 } from 'recharts';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
+const DATE_RANGE_OPTIONS = [
+  { label: '7 Tage', value: 7 },
+  { label: '30 Tage', value: 30 },
+  { label: '90 Tage', value: 90 },
+];
+
 export default function AdminAnalytics() {
-  const [dateRange] = useState(30); // Days to look back
+  const [dateRange, setDateRange] = useState(30);
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+
+  // Fetch Mapbox token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (!error && data?.token) {
+          setMapboxToken(data.token);
+        }
+      } catch (err) {
+        console.error('Failed to fetch Mapbox token:', err);
+      }
+    };
+    fetchToken();
+  }, []);
 
   // Fetch listening stats
   const { data: listeningStats, isLoading: loadingListening } = useQuery({
@@ -45,7 +73,6 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       const startDate = subDays(new Date(), dateRange);
       
-      // Get daily listening sessions
       const { data: sessions, error } = await supabase
         .from('radio_listening_sessions')
         .select('started_at, duration_seconds, taler_awarded')
@@ -54,7 +81,6 @@ export default function AdminAnalytics() {
       
       if (error) throw error;
       
-      // Group by day
       const dailyStats = new Map<string, { sessions: number; duration: number; taler: number }>();
       
       sessions?.forEach(session => {
@@ -67,7 +93,6 @@ export default function AdminAnalytics() {
         });
       });
       
-      // Convert to array for chart
       const chartData = Array.from(dailyStats.entries()).map(([date, stats]) => ({
         date: format(new Date(date), 'dd.MM', { locale: de }),
         fullDate: date,
@@ -76,7 +101,6 @@ export default function AdminAnalytics() {
         taler: stats.taler
       }));
       
-      // Calculate totals
       const totalSessions = sessions?.length || 0;
       const totalDuration = sessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
       const totalTaler = sessions?.reduce((sum, s) => sum + (s.taler_awarded || 0), 0) || 0;
@@ -92,39 +116,35 @@ export default function AdminAnalytics() {
     }
   });
 
-  // Fetch user activity stats
+  // Fetch user activity stats with location data
   const { data: userStats, isLoading: loadingUsers } = useQuery({
     queryKey: ['admin-user-stats', dateRange],
     queryFn: async () => {
       const startDate = subDays(new Date(), dateRange);
       
-      // Get profiles with activity
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('created_at, last_activity_at, city, current_streak')
+        .select('created_at, last_activity_at, city, postal_code, current_streak')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
       
-      // New users per day
       const dailyNewUsers = new Map<string, number>();
       const activeUsers = new Map<string, number>();
       
       profiles?.forEach(profile => {
-        // New users
         const createdDay = format(new Date(profile.created_at), 'yyyy-MM-dd');
         if (new Date(profile.created_at) >= startDate) {
           dailyNewUsers.set(createdDay, (dailyNewUsers.get(createdDay) || 0) + 1);
         }
         
-        // Active users (last activity in range)
         if (profile.last_activity_at && new Date(profile.last_activity_at) >= startDate) {
           const activeDay = format(new Date(profile.last_activity_at), 'yyyy-MM-dd');
           activeUsers.set(activeDay, (activeUsers.get(activeDay) || 0) + 1);
         }
       });
       
-      // City distribution
+      // City distribution with counts
       const cityDistribution = new Map<string, number>();
       profiles?.forEach(profile => {
         const city = profile.city || 'Unbekannt';
@@ -136,7 +156,18 @@ export default function AdminAnalytics() {
         .slice(0, 8)
         .map(([name, value]) => ({ name, value }));
       
-      // Chart data
+      // Postal code distribution for map (Swiss postal codes)
+      const postalCodeDistribution = new Map<string, { count: number; city: string }>();
+      profiles?.forEach(profile => {
+        if (profile.postal_code) {
+          const existing = postalCodeDistribution.get(profile.postal_code);
+          postalCodeDistribution.set(profile.postal_code, {
+            count: (existing?.count || 0) + 1,
+            city: profile.city || 'Unbekannt'
+          });
+        }
+      });
+      
       const dates: string[] = [];
       for (let i = dateRange - 1; i >= 0; i--) {
         dates.push(format(subDays(new Date(), i), 'yyyy-MM-dd'));
@@ -149,7 +180,6 @@ export default function AdminAnalytics() {
         activeUsers: activeUsers.get(date) || 0
       }));
       
-      // Streak distribution
       const streakDistribution = [
         { name: 'Kein Streak', value: profiles?.filter(p => !p.current_streak || p.current_streak === 0).length || 0 },
         { name: '1-3 Tage', value: profiles?.filter(p => p.current_streak && p.current_streak >= 1 && p.current_streak <= 3).length || 0 },
@@ -161,6 +191,11 @@ export default function AdminAnalytics() {
       return {
         chartData,
         topCities,
+        postalCodeDistribution: Array.from(postalCodeDistribution.entries()).map(([plz, data]) => ({
+          plz,
+          count: data.count,
+          city: data.city
+        })),
         streakDistribution,
         totalUsers: profiles?.length || 0,
         newUsersInRange: Array.from(dailyNewUsers.values()).reduce((a, b) => a + b, 0),
@@ -169,13 +204,141 @@ export default function AdminAnalytics() {
     }
   });
 
+  // Fetch partner locations for map
+  const { data: partnerLocations } = useQuery({
+    queryKey: ['admin-partner-locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('partners')
+        .select('id, name, city, lat, lng, is_active')
+        .eq('is_active', true)
+        .not('lat', 'is', null)
+        .not('lng', 'is', null);
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || !mapboxToken || map.current) return;
+
+    mapboxgl.accessToken = mapboxToken;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: [8.2275, 46.8182], // Switzerland center
+      zoom: 7,
+    });
+
+    map.current.addControl(
+      new mapboxgl.NavigationControl({
+        visualizePitch: true,
+      }),
+      'top-right'
+    );
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [mapboxToken]);
+
+  // Add markers for partners and user clusters
+  useEffect(() => {
+    if (!map.current || !partnerLocations) return;
+
+    // Clear existing markers
+    const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
+    existingMarkers.forEach(marker => marker.remove());
+
+    // Add partner markers
+    partnerLocations.forEach(partner => {
+      if (partner.lat && partner.lng) {
+        const el = document.createElement('div');
+        el.className = 'partner-marker';
+        el.style.cssText = `
+          width: 24px;
+          height: 24px;
+          background: hsl(var(--primary));
+          border: 2px solid white;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        `;
+        
+        new mapboxgl.Marker(el)
+          .setLngLat([partner.lng, partner.lat])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25 })
+              .setHTML(`<div style="padding: 8px; font-family: system-ui;"><strong>${partner.name}</strong><br/>${partner.city || ''}</div>`)
+          )
+          .addTo(map.current!);
+      }
+    });
+
+    // Add user cluster markers based on city data
+    if (userStats?.topCities) {
+      // Swiss city coordinates (approximate)
+      const cityCoords: Record<string, [number, number]> = {
+        'Zürich': [8.5417, 47.3769],
+        'Bern': [7.4474, 46.9480],
+        'Basel': [7.5886, 47.5596],
+        'Genf': [6.1432, 46.2044],
+        'Lausanne': [6.6323, 46.5197],
+        'Winterthur': [8.7290, 47.5001],
+        'St. Gallen': [9.3767, 47.4245],
+        'Luzern': [8.3093, 47.0502],
+        'Lugano': [8.9511, 46.0037],
+        'Biel': [7.2467, 47.1368],
+        'Thun': [7.6280, 46.7580],
+        'Aarau': [8.0444, 47.3925],
+        'Chur': [9.5316, 46.8508],
+        'Zug': [8.5159, 47.1662],
+        'Schaffhausen': [8.6333, 47.6958],
+      };
+
+      userStats.topCities.forEach(cityData => {
+        const coords = cityCoords[cityData.name];
+        if (coords && cityData.name !== 'Unbekannt') {
+          const el = document.createElement('div');
+          const size = Math.min(60, 20 + cityData.value * 2);
+          el.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            background: hsla(var(--accent), 0.7);
+            border: 2px solid hsl(var(--accent));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+          `;
+          el.textContent = String(cityData.value);
+          
+          new mapboxgl.Marker(el)
+            .setLngLat(coords)
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 })
+                .setHTML(`<div style="padding: 8px; font-family: system-ui;"><strong>${cityData.name}</strong><br/>${cityData.value} Nutzer</div>`)
+            )
+            .addTo(map.current!);
+        }
+      });
+    }
+  }, [partnerLocations, userStats?.topCities]);
+
   // Fetch app usage stats
   const { data: appUsageStats, isLoading: loadingUsage } = useQuery({
     queryKey: ['admin-app-usage', dateRange],
     queryFn: async () => {
       const startDate = subDays(new Date(), dateRange);
       
-      // Get transactions by source
       const { data: transactions, error } = await supabase
         .from('transactions')
         .select('source, type, amount, created_at')
@@ -183,7 +346,6 @@ export default function AdminAnalytics() {
       
       if (error) throw error;
       
-      // Source distribution
       const sourceDistribution = new Map<string, number>();
       transactions?.forEach(tx => {
         const source = tx.source || 'unknown';
@@ -208,7 +370,6 @@ export default function AdminAnalytics() {
         }))
         .sort((a, b) => b.value - a.value);
       
-      // Redemption stats
       const { data: redemptions, error: redemptionError } = await supabase
         .from('redemptions')
         .select('status, created_at')
@@ -230,7 +391,6 @@ export default function AdminAnalytics() {
         { name: 'Storniert', value: redemptionsByStatus.cancelled }
       ].filter(item => item.value > 0);
       
-      // Total taler earned vs spent
       const earned = transactions?.filter(t => t.type === 'earn').reduce((sum, t) => sum + t.amount, 0) || 0;
       const spent = transactions?.filter(t => t.type === 'spend').reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
       
@@ -248,9 +408,29 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">User Behavior Analytics</h1>
-        <p className="text-muted-foreground">Übersicht über Hörverhalten, Standorte und App-Nutzung der letzten {dateRange} Tage</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">User Behavior Analytics</h1>
+          <p className="text-muted-foreground">Übersicht über Hörverhalten, Standorte und App-Nutzung</p>
+        </div>
+        
+        {/* Date Range Selector */}
+        <div className="flex gap-2">
+          {DATE_RANGE_OPTIONS.map(option => (
+            <Button
+              key={option.value}
+              variant={dateRange === option.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDateRange(option.value)}
+              className={cn(
+                'min-w-[80px]',
+                dateRange === option.value && 'bg-primary text-primary-foreground'
+              )}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <Tabs defaultValue="listening" className="space-y-6">
@@ -271,7 +451,6 @@ export default function AdminAnalytics() {
 
         {/* Listening Tab */}
         <TabsContent value="listening" className="space-y-6">
-          {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-6">
@@ -338,7 +517,6 @@ export default function AdminAnalytics() {
             </Card>
           </div>
 
-          {/* Listening Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -353,15 +531,8 @@ export default function AdminAnalytics() {
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={listeningStats?.chartData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
@@ -390,7 +561,6 @@ export default function AdminAnalytics() {
 
         {/* Users & Locations Tab */}
         <TabsContent value="users" className="space-y-6">
-          {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
@@ -418,7 +588,7 @@ export default function AdminAnalytics() {
                     <p className="text-2xl font-bold text-foreground">
                       {loadingUsers ? <Skeleton className="h-8 w-16" /> : `+${userStats?.newUsersInRange}`}
                     </p>
-                    <p className="text-xs text-muted-foreground">Neue Nutzer</p>
+                    <p className="text-xs text-muted-foreground">Neue Nutzer ({dateRange}T)</p>
                   </div>
                 </div>
               </CardContent>
@@ -441,8 +611,38 @@ export default function AdminAnalytics() {
             </Card>
           </div>
 
+          {/* Geo Map */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Nutzer & Partner Standorte
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative w-full h-[400px] rounded-lg overflow-hidden">
+                {mapboxToken ? (
+                  <div ref={mapContainer} className="absolute inset-0" />
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-muted/50 rounded-lg">
+                    <p className="text-muted-foreground">Karte wird geladen...</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-6 mt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-primary border-2 border-white" />
+                  <span className="text-muted-foreground">Partner</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full bg-accent/70 border-2 border-accent" />
+                  <span className="text-muted-foreground">Nutzer-Cluster</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid md:grid-cols-2 gap-6">
-            {/* City Distribution */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -458,13 +658,7 @@ export default function AdminAnalytics() {
                     <BarChart data={userStats?.topCities || []} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <YAxis 
-                        type="category" 
-                        dataKey="name" 
-                        stroke="hsl(var(--muted-foreground))" 
-                        fontSize={12}
-                        width={80}
-                      />
+                      <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={80} />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--card))', 
@@ -479,7 +673,6 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Streak Distribution */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -521,7 +714,6 @@ export default function AdminAnalytics() {
             </Card>
           </div>
 
-          {/* User Growth Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -536,15 +728,8 @@ export default function AdminAnalytics() {
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={userStats?.chartData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                    />
+                    <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
@@ -577,7 +762,6 @@ export default function AdminAnalytics() {
 
         {/* App Usage Tab */}
         <TabsContent value="usage" className="space-y-6">
-          {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-6">
@@ -645,7 +829,6 @@ export default function AdminAnalytics() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Transaction Sources */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -686,7 +869,6 @@ export default function AdminAnalytics() {
               </CardContent>
             </Card>
 
-            {/* Redemption Status */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
