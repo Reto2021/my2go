@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen pb-24 bg-background">
-        <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
           <div className="container py-4 flex items-center gap-3">
             <Skeleton className="h-10 w-10 rounded-lg" />
             <div className="space-y-1">
@@ -146,7 +146,7 @@ export default function LeaderboardPage() {
         duration={4000}
       />
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="btn-ghost p-2 -ml-2">
