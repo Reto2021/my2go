@@ -1,16 +1,35 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Radio } from 'lucide-react';
+import { X, Radio, ChevronRight, Clock } from 'lucide-react';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { Confetti } from '@/components/ui/confetti';
+
+interface NextTierInfo {
+  name: string;
+  reward: number;
+  secondsRemaining: number;
+}
 
 interface TierCelebrationProps {
   isVisible: boolean;
   talerAmount: number;
   tierName?: string;
+  nextTierInfo?: NextTierInfo | null;
   onDismiss: () => void;
 }
 
-export function TierCelebration({ isVisible, talerAmount, tierName, onDismiss }: TierCelebrationProps) {
+function formatTimeRemaining(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds} Sek.`;
+  }
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (secs === 0) {
+    return `${minutes} Min.`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')} Min.`;
+}
+
+export function TierCelebration({ isVisible, talerAmount, tierName, nextTierInfo, onDismiss }: TierCelebrationProps) {
   return (
     <>
       {/* Confetti Animation */}
@@ -120,10 +139,46 @@ export function TierCelebration({ isVisible, talerAmount, tierName, onDismiss }:
                         <span className="text-2xl font-bold text-white">+{talerAmount}</span>
                         <span className="text-white/80 text-sm">Taler</span>
                       </motion.div>
-                      <p className="text-xs text-accent-foreground/70 mt-3">
-                        Weiter so! Du sammelst fleißig. 🔥
-                      </p>
                     </div>
+                    
+                    {/* Next tier preview */}
+                    {nextTierInfo && (
+                      <motion.div
+                        className="w-full bg-white/10 rounded-xl p-3 border border-white/20"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                      >
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 text-white/70">
+                            <ChevronRight className="h-4 w-4" />
+                            <span>Nächste Stufe:</span>
+                          </div>
+                          <span className="font-semibold text-white">{nextTierInfo.name}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-1.5 text-white/70 text-xs">
+                            <Clock className="h-3 w-3" />
+                            <span>in {formatTimeRemaining(nextTierInfo.secondsRemaining)}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-accent-foreground">
+                            <TalerIcon className="h-4 w-4" />
+                            <span className="font-bold">+{nextTierInfo.reward}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                    
+                    {!nextTierInfo && (
+                      <motion.p
+                        className="text-xs text-accent-foreground/80 bg-white/10 px-3 py-2 rounded-lg"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                      >
+                        🎉 Du hast alle Stufen erreicht! Maximaler Superfan!
+                      </motion.p>
+                    )}
                     
                     {/* Continue Button */}
                     <motion.button
@@ -131,7 +186,7 @@ export function TierCelebration({ isVisible, talerAmount, tierName, onDismiss }:
                       className="w-full flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 text-accent-foreground font-semibold py-3 px-5 rounded-xl transition-colors"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
+                      transition={{ delay: 0.7 }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >

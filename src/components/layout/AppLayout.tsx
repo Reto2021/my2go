@@ -26,7 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [showStreakDetails, setShowStreakDetails] = useState(false);
   
   // Tier reached celebration
-  const { showCelebration, currentTierReward, dismissCelebration } = useTierReachedNotification();
+  const { showCelebration, currentTierReward, currentTierName, nextTierInfo, dismissCelebration } = useTierReachedNotification();
   
   return (
     <BadgeNotificationProvider>
@@ -54,6 +54,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         <TierCelebration
           isVisible={showCelebration}
           talerAmount={currentTierReward}
+          tierName={currentTierName}
+          nextTierInfo={nextTierInfo}
           onDismiss={dismissCelebration}
         />
         

@@ -500,6 +500,11 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             isVisible={showCelebration}
             talerAmount={celebrationTaler}
             tierName={celebrationTierName}
+            nextTierInfo={nextTier ? {
+              name: nextTier.name,
+              reward: nextTier.taler_reward,
+              secondsRemaining: nextTier.min_duration_seconds - currentSessionDuration,
+            } : null}
             onDismiss={() => setShowCelebration(false)}
           />
         </motion.div>
