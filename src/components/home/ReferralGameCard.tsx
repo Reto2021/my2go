@@ -6,6 +6,7 @@ import { useAuth, useUserCode } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Confetti, useConfetti } from '@/components/ui/confetti';
 
 // Milestone definitions
 const MILESTONES = [
@@ -56,6 +57,7 @@ export function ReferralGameCard() {
   const userCode = useUserCode();
   const [copied, setCopied] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const { isActive: showConfetti, trigger: triggerConfetti } = useConfetti();
   
   const referralCount = profile?.referral_count || 0;
   const referralCode = userCode?.permanent_code || '';
@@ -97,6 +99,7 @@ export function ReferralGameCard() {
       setCopied(true);
       toast.success('Link kopiert!');
       trackShare('copy');
+      triggerConfetti();
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error('Kopieren fehlgeschlagen');
@@ -110,6 +113,7 @@ export function ReferralGameCard() {
         await navigator.clipboard.writeText(referralLink);
         toast.success('Link kopiert! Füge ihn in deine Story ein 📸');
         trackShare('instagram');
+        triggerConfetti();
         // Try to open Instagram app, fallback to website
         setTimeout(() => {
           window.open('https://instagram.com', '_blank', 'noopener,noreferrer');
@@ -122,6 +126,7 @@ export function ReferralGameCard() {
     
     const url = channel.getUrl(referralLink, shareText);
     trackShare(channel.id);
+    triggerConfetti();
     window.open(url, '_blank', 'noopener,noreferrer');
   };
   
@@ -138,6 +143,7 @@ export function ReferralGameCard() {
         url: referralLink,
       });
       trackShare('native');
+      triggerConfetti();
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
         handleCopy();
@@ -148,7 +154,9 @@ export function ReferralGameCard() {
   if (!user) return null;
   
   return (
-    <motion.div
+    <>
+      <Confetti isActive={showConfetti} particleCount={30} duration={2000} playSound={false} />
+      <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
@@ -347,5 +355,6 @@ export function ReferralGameCard() {
         </div>
       </div>
     </motion.div>
+    </>
   );
 }
