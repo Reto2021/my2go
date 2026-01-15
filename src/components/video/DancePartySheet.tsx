@@ -14,7 +14,8 @@ import {
   Share2,
   Check,
   Palette,
-  ImageIcon
+  ImageIcon,
+  Radio
 } from 'lucide-react';
 import { useLiveKitRoom, Participant, REACTION_EMOJIS } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,7 +42,9 @@ import {
   GroupPhotoSheet, 
   useGroupPhoto 
 } from './GroupPhoto';
-import { MicrophoneVisualizer } from './AudioVisualizer';
+import { MicrophoneVisualizer, RadioMusicVisualizer } from './AudioVisualizer';
+import { RealtimeBackgroundProcessor } from '@/lib/background-removal';
+import { useRadioStore } from '@/lib/radio-store';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -139,7 +142,7 @@ const FloatingReaction = ({ emoji, onComplete }: { emoji: string; onComplete: ()
   );
 };
 
-// Video tile using LiveKit components
+// Video tile using LiveKit components with real-time AI background
 const LiveKitVideoTile = ({ 
   participant, 
   isLocal,
@@ -155,6 +158,54 @@ const LiveKitVideoTile = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const processorRef = useRef<RealtimeBackgroundProcessor | null>(null);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [aiReady, setAiReady] = useState(false);
+
+  // Initialize AI processor when ai-remove background is selected
+  useEffect(() => {
+    if (background === 'ai-remove' && isLocal && !processorRef.current) {
+      const initProcessor = async () => {
+        setIsAIProcessing(true);
+        processorRef.current = new RealtimeBackgroundProcessor();
+        const success = await processorRef.current.initialize();
+        setAiReady(success);
+        setIsAIProcessing(false);
+        
+        if (success) {
+          toast.success('AI Hintergrund-Entfernung aktiviert! ✨');
+        } else {
+          toast.error('AI Hintergrund konnte nicht initialisiert werden');
+        }
+      };
+      initProcessor();
+    }
+
+    return () => {
+      if (processorRef.current) {
+        processorRef.current.destroy();
+        processorRef.current = null;
+      }
+    };
+  }, [background, isLocal]);
+
+  // Start/stop AI processing based on background selection
+  useEffect(() => {
+    if (background === 'ai-remove' && isLocal && aiReady && videoRef.current && canvasRef.current && processorRef.current) {
+      // Get virtual background gradient based on selected theme
+      const bgGradient = '#1a1a2e'; // Default dark background when AI removes
+      processorRef.current.startProcessing(videoRef.current, bgGradient, canvasRef.current, 12);
+    } else if (processorRef.current) {
+      processorRef.current.stopProcessing();
+    }
+
+    return () => {
+      if (processorRef.current) {
+        processorRef.current.stopProcessing();
+      }
+    };
+  }, [background, isLocal, aiReady]);
 
   useEffect(() => {
     if (!room || !videoRef.current) return;
@@ -199,6 +250,8 @@ const LiveKitVideoTile = ({
     .toUpperCase()
     .slice(0, 2);
 
+  const showAICanvas = background === 'ai-remove' && isLocal && aiReady;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
@@ -211,8 +264,23 @@ const LiveKitVideoTile = ({
         participant.isSpeaking && "ring-2 ring-green-500 ring-offset-2"
       )}
     >
-      {/* Virtual background */}
-      <BackgroundOverlay background={background} />
+      {/* Virtual background (non-AI) */}
+      {background !== 'ai-remove' && <BackgroundOverlay background={background} />}
+      
+      {/* AI Processing indicator */}
+      {isAIProcessing && isLocal && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-30">
+          <div className="text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="h-8 w-8 rounded-full border-2 border-purple-500 border-t-transparent mx-auto mb-2"
+            />
+            <span className="text-xs text-white">AI lädt...</span>
+          </div>
+        </div>
+      )}
+
       {participant.isVideoOff ? (
         <div className="flex flex-col items-center gap-2 z-10">
           <Avatar className="h-16 w-16">
@@ -228,18 +296,35 @@ const LiveKitVideoTile = ({
         </div>
       ) : (
         <>
+          {/* Original video (hidden when AI is processing) */}
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted={isLocal}
-            className="w-full h-full object-cover z-10"
+            className={cn(
+              "w-full h-full object-cover",
+              showAICanvas ? "hidden" : "z-10"
+            )}
             style={{ 
               transform: isLocal ? 'scaleX(-1)' : 'none',
               filter: getVideoFilter(filter),
-              mixBlendMode: background !== 'none' ? 'normal' : undefined
+              mixBlendMode: background !== 'none' && background !== 'ai-remove' ? 'normal' : undefined
             }}
           />
+          
+          {/* AI-processed canvas output */}
+          {showAICanvas && (
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full object-cover z-10"
+              style={{ 
+                transform: isLocal ? 'scaleX(-1)' : 'none',
+                filter: getVideoFilter(filter)
+              }}
+            />
+          )}
+          
           {/* Camera filter overlay */}
           <CameraFilterOverlay filter={filter} />
         </>
@@ -252,6 +337,7 @@ const LiveKitVideoTile = ({
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
         <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full truncate max-w-[70%]">
           {isLocal ? 'Du' : participant.name}
+          {showAICanvas && ' ✨'}
         </span>
         <div className="flex items-center gap-1">
           {participant.isSpeaking && (
@@ -325,7 +411,11 @@ export const DancePartySheet = ({
   const [showFilters, setShowFilters] = useState(false);
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showRadioVisualizer, setShowRadioVisualizer] = useState(true);
+  const [visualizerVariant, setVisualizerVariant] = useState<'bars' | 'wave' | 'pulse'>('bars');
   const videoGridRef = useRef<HTMLDivElement>(null);
+  
+  const isRadioPlaying = useRadioStore((state) => state.isPlaying);
 
   // Group photo hook
   const { 
@@ -461,8 +551,25 @@ export const DancePartySheet = ({
             </p>
           )}
           
-          {/* Audio Visualizer */}
-          {isConnected && (
+          {/* Radio Music Visualizer */}
+          {isConnected && isRadioPlaying && showRadioVisualizer && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2"
+            >
+              <RadioMusicVisualizer 
+                isActive={isRadioPlaying} 
+                variant={visualizerVariant}
+                className="h-12 w-full max-w-[280px] mx-auto" 
+                barCount={24}
+              />
+            </motion.div>
+          )}
+          
+          {/* Microphone Visualizer (fallback when radio not playing) */}
+          {isConnected && !isRadioPlaying && (
             <div className="flex justify-center mt-2">
               <MicrophoneVisualizer isActive={isConnected && !isMuted} className="h-6" />
             </div>
@@ -662,6 +769,33 @@ export const DancePartySheet = ({
               >
                 <span className="text-xl">👏</span>
               </Button>
+
+              {/* Radio Visualizer Toggle */}
+              {isRadioPlaying && (
+                <Button
+                  variant={showRadioVisualizer ? "default" : "outline"}
+                  size="icon"
+                  className={cn(
+                    "h-12 w-12 rounded-full",
+                    showRadioVisualizer ? "bg-gradient-to-r from-pink-500 to-purple-500" : "border-pink-500/50 hover:bg-pink-500/10"
+                  )}
+                  onClick={() => {
+                    if (showRadioVisualizer) {
+                      // Cycle through variants
+                      const variants: ('bars' | 'wave' | 'pulse')[] = ['bars', 'wave', 'pulse'];
+                      const currentIdx = variants.indexOf(visualizerVariant);
+                      const nextVariant = variants[(currentIdx + 1) % variants.length];
+                      setVisualizerVariant(nextVariant);
+                      toast.success(`Visualizer: ${nextVariant === 'bars' ? 'Balken' : nextVariant === 'wave' ? 'Welle' : 'Puls'} 🎵`);
+                    } else {
+                      setShowRadioVisualizer(true);
+                    }
+                  }}
+                  onDoubleClick={() => setShowRadioVisualizer(!showRadioVisualizer)}
+                >
+                  <Radio className={cn("h-5 w-5", showRadioVisualizer ? "text-white" : "text-pink-500")} />
+                </Button>
+              )}
 
               {/* Background Button */}
               <Button
