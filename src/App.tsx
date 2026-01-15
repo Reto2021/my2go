@@ -60,6 +60,7 @@ const AdminAirDrops = lazy(() => import("./pages/admin/AdminAirDrops"));
 const AdminBadges = lazy(() => import("./pages/admin/AdminBadges"));
 const AdminRadioTiers = lazy(() => import("./pages/admin/AdminRadioTiers"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminCronJobs = lazy(() => import("./pages/admin/AdminCronJobs"));
 const AdminPartnerApplications = lazy(() => import("./pages/admin/AdminPartnerApplications"));
 
 // Partner portal pages - lazy loaded
@@ -148,6 +149,7 @@ function AppContent() {
             <Route path="radio" element={<AdminRadioTiers />} />
             <Route path="airdrops" element={<AdminAirDrops />} />
             <Route path="applications" element={<AdminPartnerApplications />} />
+            <Route path="cron" element={<AdminCronJobs />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
           
