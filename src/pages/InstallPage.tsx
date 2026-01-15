@@ -82,7 +82,7 @@ export default function InstallPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
           <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-2">
             <ArrowLeft className="h-4 w-4" />
