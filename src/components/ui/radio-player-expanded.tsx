@@ -553,21 +553,6 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </div>
             </div>
             
-            {/* Chat Sheet */}
-            <LiveChatSheet
-              open={showChatSheet}
-              onOpenChange={setShowChatSheet}
-              songTitle={nowPlaying?.title || 'Radio 2Go'}
-              songArtist={nowPlaying?.artist}
-            />
-            
-            {/* Dance Party Sheet */}
-            <DancePartySheet
-              open={showPartySheet}
-              onOpenChange={setShowPartySheet}
-              songIdentifier={nowPlaying ? `${nowPlaying.title}-${nowPlaying.artist}` : 'radio-2go'}
-              songTitle={nowPlaying ? `${nowPlaying.title} - ${nowPlaying.artist}` : 'Radio 2Go'}
-            />
             
             {/* Song History - always show if available */}
             {songHistory.length > 0 && (
@@ -601,6 +586,22 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               secondsRemaining: nextTier.min_duration_seconds - currentSessionDuration,
             } : null}
             onDismiss={() => setShowCelebration(false)}
+          />
+          
+          {/* Chat Sheet - rendered outside scroll container for proper z-index */}
+          <LiveChatSheet
+            open={showChatSheet}
+            onOpenChange={setShowChatSheet}
+            songTitle={nowPlaying?.title || 'Radio 2Go'}
+            songArtist={nowPlaying?.artist}
+          />
+          
+          {/* Dance Party Sheet - rendered outside scroll container for proper z-index */}
+          <DancePartySheet
+            open={showPartySheet}
+            onOpenChange={setShowPartySheet}
+            songIdentifier={nowPlaying ? `${nowPlaying.title}-${nowPlaying.artist}` : 'radio-2go'}
+            songTitle={nowPlaying ? `${nowPlaying.title} - ${nowPlaying.artist}` : 'Radio 2Go'}
           />
         </motion.div>
       )}
