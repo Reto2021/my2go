@@ -12,6 +12,7 @@ import { useLiveChat } from '@/hooks/useLiveChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { hapticPress, hapticSuccess } from '@/lib/haptics';
+import { useRadioStore } from '@/lib/radio-store';
 
 interface LiveChatSheetProps {
   open: boolean;
@@ -247,6 +248,8 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
                 </p>
                 <Button
                   onClick={() => {
+                    // Save radio state before navigating
+                    useRadioStore.getState().saveStateForNavigation();
                     onOpenChange(false);
                     setTimeout(() => {
                       navigate('/auth');

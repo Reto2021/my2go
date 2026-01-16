@@ -834,6 +834,8 @@ export const DancePartySheet = ({
                       ) : (
                         <Button 
                           onClick={() => {
+                            // Save radio state before navigating
+                            useRadioStore.getState().saveStateForNavigation();
                             onOpenChange(false);
                             setTimeout(() => {
                               navigate('/auth');
