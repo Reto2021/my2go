@@ -239,7 +239,6 @@ interface BrowseModeHomeProps {
 
 function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
-  const [showLiveEvents, setShowLiveEvents] = useState(false);
   
   // Fetch and subscribe to live events
   useEffect(() => {
@@ -248,9 +247,9 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
     return () => unsubscribe();
   }, [fetchEvents, subscribeToRealtime]);
   
-  // Click on Live button opens the Live Events Panel
+  // Click on Live button redirects to login for non-authenticated users
   const handleLiveClick = () => {
-    setShowLiveEvents(true);
+    onLogin();
   };
   
   return (
@@ -410,12 +409,6 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
           </div>
         </div>
       </section>
-      
-      {/* Live Events Panel */}
-      <LiveEventsPanel 
-        isOpen={showLiveEvents} 
-        onClose={() => setShowLiveEvents(false)} 
-      />
     </div>
   );
 }
