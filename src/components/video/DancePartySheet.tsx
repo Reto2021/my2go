@@ -228,41 +228,69 @@ const LiveKitVideoTile = ({
     };
   }, [background, isLocal, aiReady]);
 
+  // Attach tracks when room is available
   useEffect(() => {
     if (!room || !videoRef.current) return;
 
-    const lkParticipant = isLocal 
-      ? room.localParticipant 
-      : room.remoteParticipants.get(participant.identity);
+    const attachTracks = () => {
+      const lkParticipant = isLocal 
+        ? room.localParticipant 
+        : room.remoteParticipants.get(participant.identity);
 
-    if (!lkParticipant) return;
+      if (!lkParticipant) return;
 
-    // Attach video track
-    const videoTrack = lkParticipant.getTrackPublication(Track.Source.Camera)?.track;
-    if (videoTrack && videoRef.current) {
-      videoTrack.attach(videoRef.current);
-    }
-
-    // Attach audio track (only for remote participants)
-    if (!isLocal) {
-      const audioTrack = lkParticipant.getTrackPublication(Track.Source.Microphone)?.track;
-      if (audioTrack && audioRef.current) {
-        audioTrack.attach(audioRef.current);
+      // Attach video track
+      const videoTrack = lkParticipant.getTrackPublication(Track.Source.Camera)?.track;
+      if (videoTrack && videoRef.current) {
+        console.log('[LiveKitVideoTile] Attaching video track for', isLocal ? 'local' : participant.identity);
+        videoTrack.attach(videoRef.current);
       }
-    }
 
-    return () => {
-      if (videoTrack) {
-        videoTrack.detach();
-      }
-      if (!isLocal) {
+      // Attach audio track (only for remote participants)
+      if (!isLocal && audioRef.current) {
         const audioTrack = lkParticipant.getTrackPublication(Track.Source.Microphone)?.track;
         if (audioTrack) {
-          audioTrack.detach();
+          audioTrack.attach(audioRef.current);
         }
       }
     };
-  }, [room, participant.identity, isLocal]);
+
+    // Initial attachment with small delay to ensure tracks are ready
+    const initialTimeout = setTimeout(attachTracks, 100);
+
+    // Also listen for track published events to re-attach
+    const handleTrackPublished = () => {
+      attachTracks();
+    };
+
+    room.on('trackPublished', handleTrackPublished);
+    room.on('localTrackPublished', handleTrackPublished);
+    room.on('trackSubscribed', handleTrackPublished);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      room.off('trackPublished', handleTrackPublished);
+      room.off('localTrackPublished', handleTrackPublished);
+      room.off('trackSubscribed', handleTrackPublished);
+      
+      const lkParticipant = isLocal 
+        ? room.localParticipant 
+        : room.remoteParticipants.get(participant.identity);
+      
+      if (lkParticipant) {
+        const videoTrack = lkParticipant.getTrackPublication(Track.Source.Camera)?.track;
+        if (videoTrack) {
+          videoTrack.detach();
+        }
+        if (!isLocal) {
+          const audioTrack = lkParticipant.getTrackPublication(Track.Source.Microphone)?.track;
+          if (audioTrack) {
+            audioTrack.detach();
+          }
+        }
+      }
+    };
+  }, [room, participant.identity, isLocal, participant.isVideoOff]);
 
   const initials = participant.name
     .split(' ')
@@ -514,14 +542,17 @@ export const DancePartySheet = ({
     // Local effect is handled by the applauseEvents useEffect
   }, [sendApplause]);
 
-  // Get local stream for preview - only once when sheet opens
+  // Get local stream for preview - only video (no audio to avoid interfering with radio stream)
   useEffect(() => {
     let mounted = true;
     
     if (open && !isConnected && !isConnecting && !localStream) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      // Only request video for preview - audio is not needed for preview
+      // This prevents interfering with the radio stream
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         .then((stream) => {
           if (mounted) {
+            console.log('[DancePartySheet] Preview stream acquired (video only)');
             setLocalStream(stream);
           } else {
             // Component unmounted, stop the stream
@@ -529,7 +560,7 @@ export const DancePartySheet = ({
           }
         })
         .catch((err) => {
-          console.error('Media access error:', err);
+          console.error('[DancePartySheet] Media access error:', err);
         });
     }
 
@@ -541,6 +572,7 @@ export const DancePartySheet = ({
   // Cleanup stream when sheet closes or connects
   useEffect(() => {
     if ((!open || isConnected) && localStream) {
+      console.log('[DancePartySheet] Cleaning up preview stream');
       localStream.getTracks().forEach(track => track.stop());
       setLocalStream(null);
     }
