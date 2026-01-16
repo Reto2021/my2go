@@ -185,6 +185,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   const [showConfetti, setShowConfetti] = useState(false);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
   const [sliderProgress, setSliderProgress] = useState(0);
+  const [hasWiggled, setHasWiggled] = useState(false);
   
   const lockTimerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -239,6 +240,44 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
       setHasClaimedToday(true);
     }
   }, [streakStatus]);
+  
+  // Wiggle animation on first render when slider is visible
+  useEffect(() => {
+    if (!isPlaying && !hasWiggled && sliderWidth.current > 0) {
+      // Small delay to let component mount
+      const timer = setTimeout(() => {
+        // Animate the x value to wiggle
+        animate(x, 24, { 
+          type: "spring", 
+          stiffness: 300, 
+          damping: 15,
+          onComplete: () => {
+            animate(x, 12, { 
+              type: "spring", 
+              stiffness: 400, 
+              damping: 20,
+              onComplete: () => {
+                animate(x, 18, { 
+                  type: "spring", 
+                  stiffness: 500, 
+                  damping: 25,
+                  onComplete: () => {
+                    animate(x, 0, { 
+                      type: "spring", 
+                      stiffness: 400, 
+                      damping: 25 
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+        setHasWiggled(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isPlaying, hasWiggled, x]);
   
   // Handle slide complete
   const handleSlideComplete = () => {
