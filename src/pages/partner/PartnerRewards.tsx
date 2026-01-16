@@ -7,6 +7,7 @@ import {
   ToggleLeft,
   ToggleRight
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,10 +30,11 @@ const rewardTypes = [
   { value: 'fixed_discount', label: 'Fixer Rabatt (CHF)' },
   { value: 'percent_discount', label: 'Prozent-Rabatt (%)' },
   { value: 'free_item', label: 'Gratis-Artikel' },
+  { value: 'two_for_one', label: '2 für 1' },
   { value: 'experience', label: 'Erlebnis' },
 ];
 
-type RewardType = 'fixed_discount' | 'percent_discount' | 'free_item' | 'topup_bonus' | 'experience';
+type RewardType = 'fixed_discount' | 'percent_discount' | 'free_item' | 'topup_bonus' | 'experience' | 'two_for_one';
 
 export default function PartnerRewards() {
   const { partnerInfo } = usePartner();
@@ -298,19 +300,46 @@ export default function PartnerRewards() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="max_per_user">Max. pro Kunde</Label>
-                  <Input
-                    id="max_per_user"
-                    type="number"
-                    min="1"
-                    value={formData.max_per_user || ''}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      max_per_user: e.target.value ? parseInt(e.target.value) : null 
-                    })}
-                    placeholder="Unbegrenzt"
-                  />
-                  <p className="text-xs text-muted-foreground">1 = einmalig einlösbar</p>
+                  <Label>Einlösung pro Kunde</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, max_per_user: 1 })}
+                      className={cn(
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
+                        formData.max_per_user === 1
+                          ? 'bg-secondary text-secondary-foreground border-secondary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      Einmalig
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, max_per_user: null })}
+                      className={cn(
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
+                        formData.max_per_user === null
+                          ? 'bg-secondary text-secondary-foreground border-secondary'
+                          : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                      )}
+                    >
+                      Unbegrenzt
+                    </button>
+                  </div>
+                  {formData.max_per_user !== null && formData.max_per_user !== 1 && (
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.max_per_user || ''}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        max_per_user: e.target.value ? parseInt(e.target.value) : null 
+                      })}
+                      placeholder="Anzahl"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -374,6 +403,7 @@ export default function PartnerRewards() {
                         {reward.reward_type === 'fixed_discount' && ` CHF ${reward.value_amount} Rabatt`}
                         {reward.reward_type === 'percent_discount' && ` ${reward.value_percent}% Rabatt`}
                         {reward.reward_type === 'free_item' && ' Gratis-Artikel'}
+                        {reward.reward_type === 'two_for_one' && ' 2 für 1'}
                         {reward.reward_type === 'experience' && ' Erlebnis'}
                         {reward.stock_total && ` • ${reward.stock_remaining}/${reward.stock_total} verfügbar`}
                         {(reward as any).max_per_user === 1 && ' • Einmalig'}

@@ -52,6 +52,7 @@ const categories = [
   { id: 'fixed_discount', label: 'CHF-Rabatt' },
   { id: 'percent_discount', label: '%-Rabatt' },
   { id: 'free_item', label: 'Produkte' },
+  { id: 'two_for_one', label: '2 für 1' },
   { id: 'experience', label: 'Erlebnisse' },
   { id: 'topup_bonus', label: 'Bonus' },
 ];

@@ -1,8 +1,9 @@
 import { Reward } from '@/lib/supabase-helpers';
 import { useBalance } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Sparkles, Check } from 'lucide-react';
+import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Sparkles, Check, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 interface RewardCardProps {
   reward: Reward;
@@ -17,6 +18,7 @@ const typeConfig = {
   percent_discount: { icon: Percent, colorClass: 'bg-success/15 text-success' },
   free_item: { icon: Gift, colorClass: 'bg-primary/30 text-secondary' },
   topup_bonus: { icon: Sparkles, colorClass: 'bg-secondary/10 text-secondary' },
+  two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
 };
 
 export function RewardCard({ reward, className, distance }: RewardCardProps) {
@@ -75,9 +77,16 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
             </span>
           )}
         </div>
-        <p className="text-sm text-foreground/70 line-clamp-1">
-          {partnerName}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm text-foreground/70 line-clamp-1">
+            {partnerName}
+          </p>
+          {(reward as any).max_per_user === 1 && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/15 text-accent border-0">
+              Einmalig
+            </Badge>
+          )}
+        </div>
         
         {/* Points Badge */}
         <div className="flex items-center gap-2 mt-1.5">
