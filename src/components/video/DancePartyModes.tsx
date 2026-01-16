@@ -62,32 +62,61 @@ export const PartyModeSelector = ({
   isConnected 
 }: PartyModeSelectorProps) => {
   return (
-    <div className="grid grid-cols-3 gap-2 p-2">
-      {Object.values(PARTY_MODES).map((mode) => {
-        const Icon = mode.icon;
-        const isActive = currentMode === mode.id;
-        
-        return (
-          <motion.button
-            key={mode.id}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onModeChange(mode.id)}
-            disabled={isConnected}
-            className={cn(
-              "flex flex-col items-center gap-1 p-3 rounded-xl transition-all",
-              "border-2",
-              isActive 
-                ? "bg-primary/10 border-primary text-primary" 
-                : "bg-muted/30 border-transparent hover:border-muted-foreground/20",
-              isConnected && !isActive && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <span className="text-2xl">{mode.emoji}</span>
-            <span className="text-xs font-medium">{mode.name}</span>
-          </motion.button>
-        );
-      })}
+    <div className="space-y-3 p-2">
+      {/* Mode buttons */}
+      <div className="grid grid-cols-3 gap-2">
+        {Object.values(PARTY_MODES).map((mode) => {
+          const Icon = mode.icon;
+          const isActive = currentMode === mode.id;
+          
+          return (
+            <motion.button
+              key={mode.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onModeChange(mode.id)}
+              disabled={isConnected}
+              className={cn(
+                "flex flex-col items-center gap-1 p-3 rounded-xl transition-all",
+                "border-2",
+                isActive 
+                  ? "bg-primary/10 border-primary text-primary" 
+                  : "bg-muted/30 border-transparent hover:border-muted-foreground/20",
+                isConnected && !isActive && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <span className="text-2xl">{mode.emoji}</span>
+              <span className="text-xs font-medium">{mode.name}</span>
+            </motion.button>
+          );
+        })}
+      </div>
+      
+      {/* Selected mode description */}
+      <motion.div 
+        key={currentMode}
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-muted/50 rounded-xl p-3 space-y-2"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{PARTY_MODES[currentMode].emoji}</span>
+          <span className="font-semibold text-sm">{PARTY_MODES[currentMode].name}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {PARTY_MODES[currentMode].description}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {PARTY_MODES[currentMode].features.map((feature, i) => (
+            <span 
+              key={i}
+              className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary rounded-full"
+            >
+              {feature}
+            </span>
+          ))}
+        </div>
+      </motion.div>
     </div>
   );
 };
