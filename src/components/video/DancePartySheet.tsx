@@ -713,15 +713,31 @@ export const DancePartySheet = ({
                   </p>
                 </div>
 
-                <Button 
-                  onClick={handleJoinClick}
-                  size="lg"
-                  className="gap-2"
-                  disabled={!user}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {user ? 'Party beitreten' : 'Bitte einloggen'}
-                </Button>
+                <div className="flex flex-col gap-3 w-full max-w-xs">
+                  <Button 
+                    onClick={handleJoinClick}
+                    size="lg"
+                    className="gap-2 w-full"
+                    disabled={!user}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {user ? 'Party beitreten' : 'Bitte einloggen'}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 w-full"
+                    onClick={handleShare}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Share2 className="h-4 w-4" />
+                    )}
+                    Freunde einladen
+                  </Button>
+                </div>
               </div>
             ) : isConnecting ? (
               // Connecting state
