@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Partner } from '@/lib/supabase-helpers';
 import { cn } from '@/lib/utils';
 import { MapPin, ChevronRight, Store, Coins } from 'lucide-react';
@@ -12,10 +13,16 @@ interface PartnerCardProps {
   className?: string;
   showArrow?: boolean;
   redemptionCount?: number;
-  minTalerCost?: number; // Minimum Taler cost for rewards at this partner
+  minTalerCost?: number;
 }
 
-export function PartnerCard({ partner, className, showArrow = true, redemptionCount, minTalerCost }: PartnerCardProps) {
+export const PartnerCard = memo(function PartnerCard({ 
+  partner, 
+  className, 
+  showArrow = true, 
+  redemptionCount, 
+  minTalerCost 
+}: PartnerCardProps) {
   // Use provided count or fetch it
   const { data: fetchedCount } = usePartnerRedemptionCount(partner.id);
   const displayCount = redemptionCount ?? fetchedCount ?? 0;
@@ -95,7 +102,7 @@ export function PartnerCard({ partner, className, showArrow = true, redemptionCo
       )}
     </Link>
   );
-}
+});
 
 // Re-export the content-aware skeleton
 export { SkeletonPartnerCard as PartnerCardSkeleton } from '@/components/ui/skeleton';

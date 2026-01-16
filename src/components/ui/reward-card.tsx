@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Reward } from '@/lib/supabase-helpers';
 import { useBalance } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -21,7 +22,7 @@ const typeConfig = {
   two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
 };
 
-export function RewardCard({ reward, className, distance }: RewardCardProps) {
+export const RewardCard = memo(function RewardCard({ reward, className, distance }: RewardCardProps) {
   const { balance } = useBalance();
   const config = typeConfig[reward.reward_type] || typeConfig.free_item;
   const Icon = config.icon;
@@ -109,7 +110,7 @@ export function RewardCard({ reward, className, distance }: RewardCardProps) {
       <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
     </Link>
   );
-}
+});
 
 // Re-export the content-aware skeleton
 export { SkeletonRewardCard as RewardCardSkeleton } from '@/components/ui/skeleton';
