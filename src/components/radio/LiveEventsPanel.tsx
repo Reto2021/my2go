@@ -8,7 +8,9 @@ import {
   ChevronRight, 
   X,
   Volume2,
-  ArrowLeft
+  ArrowLeft,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLiveEventsStore, LiveEvent, EVENT_TYPES } from '@/lib/live-events-store';
@@ -150,15 +152,24 @@ export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonPro
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm",
-        hasLiveEvents
-          ? "bg-green-600 text-white shadow-green-600/30"
-          : "bg-secondary text-secondary-foreground"
+        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all",
+        "bg-secondary/80 backdrop-blur-sm text-secondary-foreground"
       )}
     >
-      {hasLiveEvents && <LiveIndicator size="sm" />}
-      <Tv className="h-3.5 w-3.5" />
-      <span>Live</span>
+      {hasLiveEvents ? (
+        <>
+          <span className="relative flex items-center">
+            <Tv className="h-3.5 w-3.5 text-red-500" />
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+          </span>
+          <span>Live</span>
+        </>
+      ) : (
+        <>
+          <Tv className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-muted-foreground">Live</span>
+        </>
+      )}
     </button>
   );
 };
@@ -184,6 +195,7 @@ export const LiveEventsPanel = ({ isOpen, onClose }: LiveEventsPanelProps) => {
   
   const { isPlaying: isRadioPlaying, setVolume: setRadioVolume } = useRadioStore();
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Fetch events on mount
   useEffect(() => {
@@ -216,12 +228,23 @@ export const LiveEventsPanel = ({ isOpen, onClose }: LiveEventsPanelProps) => {
     }
   }, [eventVolume]);
   
+  // Reset fullscreen when closing
+  useEffect(() => {
+    if (!isOpen) {
+      setIsFullscreen(false);
+    }
+  }, [isOpen]);
+  
   const handleJoinEvent = (eventId: string) => {
     crossfadeToEvent(eventId);
   };
   
   const handleBackToRadio = () => {
     crossfadeToRadio();
+  };
+  
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
   
   const liveEvents = events.filter(e => e.isLive);
@@ -245,7 +268,12 @@ export const LiveEventsPanel = ({ isOpen, onClose }: LiveEventsPanelProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 bg-background rounded-t-2xl z-50 max-h-[80vh] overflow-hidden"
+            className={cn(
+              "fixed bg-background z-50 overflow-hidden transition-all duration-300",
+              isFullscreen 
+                ? "inset-0 rounded-none max-h-full" 
+                : "bottom-0 left-0 right-0 rounded-t-2xl max-h-[80vh]"
+            )}
           >
             {/* Hidden audio element for event playback */}
             <audio ref={audioRef} />
@@ -279,13 +307,27 @@ export const LiveEventsPanel = ({ isOpen, onClose }: LiveEventsPanelProps) => {
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {isEventPlaying && (
+                  <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+                    {isFullscreen ? (
+                      <Minimize2 className="h-5 w-5" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5" />
+                    )}
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={onClose}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
             
             {/* Content */}
-            <div className="overflow-y-auto max-h-[60vh] p-4">
+            <div className={cn(
+              "overflow-y-auto p-4",
+              isFullscreen ? "max-h-[calc(100vh-80px)]" : "max-h-[60vh]"
+            )}>
               {isEventPlaying && currentEvent ? (
                 // Event player view
                 <div className="space-y-4">
