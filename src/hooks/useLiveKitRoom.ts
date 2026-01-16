@@ -301,6 +301,18 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
         updateParticipants(newRoom);
       });
 
+      // Listen for local track published to trigger re-render
+      newRoom.on(RoomEvent.LocalTrackPublished, () => {
+        console.log('[useLiveKitRoom] Local track published');
+        // Force update local participant to trigger re-render
+        const local = newRoom.localParticipant;
+        setLocalParticipant(prev => prev ? {
+          ...prev,
+          isMuted: !local.isMicrophoneEnabled,
+          isVideoOff: !local.isCameraEnabled
+        } : null);
+      });
+
       newRoom.on(RoomEvent.ActiveSpeakersChanged, () => {
         updateParticipants(newRoom);
       });
