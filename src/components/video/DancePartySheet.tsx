@@ -498,22 +498,37 @@ export const DancePartySheet = ({
     // Local effect is handled by the applauseEvents useEffect
   }, [sendApplause]);
 
-  // Get local stream for preview
+  // Get local stream for preview - only once when sheet opens
   useEffect(() => {
-    if (open && !isConnected && !isConnecting) {
+    let mounted = true;
+    
+    if (open && !isConnected && !isConnecting && !localStream) {
       navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(setLocalStream)
+        .then((stream) => {
+          if (mounted) {
+            setLocalStream(stream);
+          } else {
+            // Component unmounted, stop the stream
+            stream.getTracks().forEach(track => track.stop());
+          }
+        })
         .catch((err) => {
           console.error('Media access error:', err);
         });
     }
 
     return () => {
-      if (localStream && !isConnected) {
-        localStream.getTracks().forEach(track => track.stop());
-      }
+      mounted = false;
     };
-  }, [open, isConnected, isConnecting]);
+  }, [open, isConnected, isConnecting, localStream]);
+  
+  // Cleanup stream when sheet closes or connects
+  useEffect(() => {
+    if ((!open || isConnected) && localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      setLocalStream(null);
+    }
+  }, [open, isConnected, localStream]);
 
   const handleJoin = async (role?: ParticipantRole) => {
     // Stop preview stream before connecting
