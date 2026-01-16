@@ -49,6 +49,7 @@ export default function PartnerRewards() {
     value_percent: 10,
     terms: '',
     stock_total: null as number | null,
+    max_per_user: null as number | null,
     is_active: true,
   });
 
@@ -79,6 +80,7 @@ export default function PartnerRewards() {
       value_percent: 10,
       terms: '',
       stock_total: null,
+      max_per_user: null,
       is_active: true,
     });
     setEditingReward(null);
@@ -95,6 +97,7 @@ export default function PartnerRewards() {
       value_percent: reward.value_percent || 10,
       terms: reward.terms || '',
       stock_total: reward.stock_total,
+      max_per_user: (reward as any).max_per_user ?? null,
       is_active: reward.is_active ?? true,
     });
     setEditingReward(reward);
@@ -116,6 +119,7 @@ export default function PartnerRewards() {
       terms: formData.terms || null,
       stock_total: formData.stock_total,
       stock_remaining: formData.stock_total,
+      max_per_user: formData.max_per_user,
       is_active: formData.is_active,
     };
 
@@ -276,9 +280,9 @@ export default function PartnerRewards() {
                 )}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stock_total">Limitierte Stückzahl (leer = unbegrenzt)</Label>
+                  <Label htmlFor="stock_total">Limitierte Stückzahl</Label>
                   <Input
                     id="stock_total"
                     type="number"
@@ -290,6 +294,23 @@ export default function PartnerRewards() {
                     })}
                     placeholder="Unbegrenzt"
                   />
+                  <p className="text-xs text-muted-foreground">Leer = unbegrenzt</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="max_per_user">Max. pro Kunde</Label>
+                  <Input
+                    id="max_per_user"
+                    type="number"
+                    min="1"
+                    value={formData.max_per_user || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      max_per_user: e.target.value ? parseInt(e.target.value) : null 
+                    })}
+                    placeholder="Unbegrenzt"
+                  />
+                  <p className="text-xs text-muted-foreground">1 = einmalig einlösbar</p>
                 </div>
 
                 <div className="space-y-2">
@@ -355,6 +376,8 @@ export default function PartnerRewards() {
                         {reward.reward_type === 'free_item' && ' Gratis-Artikel'}
                         {reward.reward_type === 'experience' && ' Erlebnis'}
                         {reward.stock_total && ` • ${reward.stock_remaining}/${reward.stock_total} verfügbar`}
+                        {(reward as any).max_per_user === 1 && ' • Einmalig'}
+                        {(reward as any).max_per_user && (reward as any).max_per_user > 1 && ` • Max. ${(reward as any).max_per_user}x pro Kunde`}
                       </p>
                     </div>
                   </div>
