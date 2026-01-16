@@ -63,7 +63,7 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[80vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50"
+        className="h-[80vh] rounded-t-3xl bg-background/95 backdrop-blur-xl border-t border-border/50 z-[250]"
       >
         <SheetHeader className="pb-2">
           <div className="flex items-center justify-between">
