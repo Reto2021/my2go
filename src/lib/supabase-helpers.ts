@@ -85,7 +85,7 @@ export interface Reward {
   title: string;
   description: string | null;
   image_url: string | null;
-  reward_type: 'fixed_discount' | 'percent_discount' | 'free_item' | 'topup_bonus' | 'experience';
+  reward_type: 'fixed_discount' | 'percent_discount' | 'free_item' | 'topup_bonus' | 'experience' | 'two_for_one';
   taler_cost: number;
   value_amount: number | null;
   value_percent: number | null;

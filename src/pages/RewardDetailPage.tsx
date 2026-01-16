@@ -29,7 +29,8 @@ import {
   RefreshCw,
   AlertCircle,
   Percent,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -41,6 +42,7 @@ const rewardTypeIcons = {
   percent_discount: Percent,
   free_item: Gift,
   topup_bonus: Sparkles,
+  two_for_one: Users,
 };
 
 const rewardTypeLabels = {
@@ -49,6 +51,7 @@ const rewardTypeLabels = {
   percent_discount: 'Prozent-Rabatt',
   free_item: 'Gratis-Produkt',
   topup_bonus: 'Bonus',
+  two_for_one: '2 für 1',
 };
 
 // RAILGUARD: Redemption expires after 60 minutes

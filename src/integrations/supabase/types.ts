@@ -1609,6 +1609,7 @@ export type Database = {
         | "free_item"
         | "topup_bonus"
         | "experience"
+        | "two_for_one"
       transaction_source:
         | "signup_bonus"
         | "air_drop"
@@ -1755,6 +1756,7 @@ export const Constants = {
         "free_item",
         "topup_bonus",
         "experience",
+        "two_for_one",
       ],
       transaction_source: [
         "signup_bonus",
