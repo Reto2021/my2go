@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { 
   getRewardById, 
   redeemReward,
+  getUserRemainingRedemptions,
   Reward,
   Redemption 
 } from '@/lib/supabase-helpers';
@@ -71,6 +72,7 @@ export default function RewardDetailPage() {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [redemptionStatus, setRedemptionStatus] = useState<'pending' | 'used' | 'expired' | 'cancelled' | null>(null);
+  const [remainingRedemptions, setRemainingRedemptions] = useState<number>(-1); // -1 = unlimited
   
   const loadReward = async () => {
     if (!id) return;
@@ -90,6 +92,16 @@ export default function RewardDetailPage() {
   useEffect(() => {
     loadReward();
   }, [id]);
+  
+  // Load remaining redemptions for user
+  useEffect(() => {
+    const loadRemainingRedemptions = async () => {
+      if (!user?.id || !id) return;
+      const remaining = await getUserRemainingRedemptions(user.id, id);
+      setRemainingRedemptions(remaining);
+    };
+    loadRemainingRedemptions();
+  }, [user?.id, id]);
   
   // RAILGUARD: Countdown timer for redemption expiry
   useEffect(() => {
@@ -653,7 +665,27 @@ export default function RewardDetailPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {!canAfford && (
+              {/* Already redeemed limit reached */}
+              {remainingRedemptions === 0 && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-warning/10 border border-warning/20">
+                  <CheckCircle2 className="h-5 w-5 text-warning flex-shrink-0" />
+                  <p className="text-sm text-warning">
+                    Du hast diesen Gutschein bereits eingelöst.
+                  </p>
+                </div>
+              )}
+              
+              {/* Limited redemption info */}
+              {remainingRedemptions > 0 && remainingRedemptions <= 3 && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-accent/10 border border-accent/20">
+                  <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
+                  <p className="text-sm text-accent-foreground">
+                    Du kannst diesen Gutschein noch <span className="font-semibold">{remainingRedemptions}x</span> einlösen.
+                  </p>
+                </div>
+              )}
+              
+              {!canAfford && remainingRedemptions !== 0 && (
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted">
                   <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <p className="text-sm text-muted-foreground">
@@ -663,10 +695,12 @@ export default function RewardDetailPage() {
               )}
               <button 
                 className="btn-primary w-full"
-                disabled={!canAfford || isRedeeming}
+                disabled={!canAfford || isRedeeming || remainingRedemptions === 0}
                 onClick={handleRedeem}
               >
-                {isRedeeming ? 'Wird eingelöst...' : `Für ${reward.taler_cost.toLocaleString('de-CH')} Taler einlösen`}
+                {isRedeeming ? 'Wird eingelöst...' : 
+                  remainingRedemptions === 0 ? 'Bereits eingelöst' :
+                  `Für ${reward.taler_cost.toLocaleString('de-CH')} Taler einlösen`}
               </button>
               <p className="text-xs text-center text-muted-foreground">
                 Der Code ist {REDEMPTION_EXPIRY_MINUTES} Minuten gültig.

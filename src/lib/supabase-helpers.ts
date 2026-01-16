@@ -445,13 +445,28 @@ export async function redeemReward(
   partnerId: string,
   talerCost: number
 ): Promise<{ redemption: Redemption | null; error: string | null }> {
-  // 1. Check balance
+  // 1. Check if user can redeem this reward (max_per_user limit)
+  const { data: canRedeem, error: canRedeemError } = await supabase.rpc('can_user_redeem_reward', {
+    _user_id: userId,
+    _reward_id: rewardId
+  });
+  
+  if (canRedeemError) {
+    console.error('Error checking redemption limit:', canRedeemError);
+    return { redemption: null, error: 'Fehler bei der Prüfung' };
+  }
+  
+  if (!canRedeem) {
+    return { redemption: null, error: 'Du hast diesen Gutschein bereits eingelöst' };
+  }
+  
+  // 2. Check balance
   const balance = await getUserBalance(userId);
   if (balance.taler_balance < talerCost) {
     return { redemption: null, error: 'Nicht genügend Taler' };
   }
   
-  // 2. Generate cryptographically secure redemption code using database function
+  // 3. Generate cryptographically secure redemption code using database function
   const { data: codeData, error: codeError } = await supabase.rpc('generate_redemption_code');
   if (codeError || !codeData) {
     console.error('Error generating redemption code:', codeError);
@@ -460,7 +475,7 @@ export async function redeemReward(
   const redemptionCode = codeData as string;
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 60 minutes validity
   
-  // 3. Create redemption
+  // 4. Create redemption
   const { data: redemption, error: redemptionError } = await supabase
     .from('redemptions')
     .insert({
@@ -480,7 +495,7 @@ export async function redeemReward(
     return { redemption: null, error: 'Fehler beim Einlösen' };
   }
   
-  // 4. Create spend transaction
+  // 5. Create spend transaction
   const { error: transactionError } = await supabase
     .from('transactions')
     .insert({
@@ -498,12 +513,33 @@ export async function redeemReward(
     // Redemption was created, but transaction failed - should not happen with proper setup
   }
   
-  // 5. Trigger GHL contact sync (fire-and-forget, non-blocking)
+  // 6. Trigger GHL contact sync (fire-and-forget, non-blocking)
   syncContactToGHLOnRedemption(userId, partnerId).catch(err => {
     console.warn('GHL contact sync failed (non-blocking):', err);
   });
   
   return { redemption, error: null };
+}
+
+/**
+ * Checks if a user can redeem a specific reward (based on max_per_user limit)
+ * Returns remaining redemptions count (-1 = unlimited, 0 = limit reached)
+ */
+export async function getUserRemainingRedemptions(
+  userId: string,
+  rewardId: string
+): Promise<number> {
+  const { data, error } = await supabase.rpc('get_user_remaining_redemptions', {
+    _user_id: userId,
+    _reward_id: rewardId
+  });
+  
+  if (error) {
+    console.error('Error getting remaining redemptions:', error);
+    return -1; // Assume unlimited on error
+  }
+  
+  return data as number;
 }
 
 /**
