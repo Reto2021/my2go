@@ -18,7 +18,8 @@ import {
   Radio,
   Crown,
   Film,
-  Gift
+  Gift,
+  Mic2
 } from 'lucide-react';
 import { useLiveKitRoom, Participant, REACTION_EMOJIS, ParticipantRole } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +62,8 @@ import { AudioEffectsPanel } from './AudioEffectsPanel';
 import { AudioEffectType } from '@/lib/audio-effects';
 import { GiftPanel, GiftButton, FloatingGift } from './GiftPanel';
 import { VIRTUAL_GIFTS, useGiftStore, SentGift } from '@/lib/gifts-store';
+import { KaraokeButton, KaraokeOverlay } from './KaraokeDisplay';
+import { useLyricsStore } from '@/lib/lyrics-store';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -452,8 +455,12 @@ export const DancePartySheet = ({
   const { recentGifts, clearOldGifts, addReceivedGift } = useGiftStore();
   
   const isRadioPlaying = useRadioStore((state) => state.isPlaying);
+  const nowPlaying = useRadioStore((state) => state.nowPlaying);
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
-
+  
+  // Karaoke state
+  const [isKaraokeActive, setIsKaraokeActive] = useState(false);
+  const { fetchLyrics, currentLyrics, clearLyrics } = useLyricsStore();
   // Clear old gifts periodically
   useEffect(() => {
     const interval = setInterval(clearOldGifts, 1000);
@@ -768,6 +775,9 @@ export const DancePartySheet = ({
                     </div>
                   </div>
                 )}
+                
+                {/* Karaoke Overlay */}
+                <KaraokeOverlay isActive={isKaraokeActive && isConnected} />
               </div>
             )}
           </div>
@@ -849,6 +859,21 @@ export const DancePartySheet = ({
                   isDisabled={!isConnected}
                 />
               )}
+
+              {/* Karaoke Button */}
+              <KaraokeButton
+                isActive={isKaraokeActive}
+                onToggle={() => {
+                  const newActive = !isKaraokeActive;
+                  setIsKaraokeActive(newActive);
+                  if (newActive && nowPlaying) {
+                    fetchLyrics(nowPlaying.title, nowPlaying.artist);
+                  } else if (!newActive) {
+                    clearLyrics();
+                  }
+                }}
+                hasLyrics={!!currentLyrics}
+              />
 
               {/* Applause Button */}
               <Button
