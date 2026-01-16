@@ -45,7 +45,8 @@ interface LiveEventCardProps {
 }
 
 export const LiveEventCard = ({ event, isActive, onJoin }: LiveEventCardProps) => {
-  const typeInfo = EVENT_TYPES[event.type];
+  // Fallback to 'other' type if event type is not recognized
+  const typeInfo = EVENT_TYPES[event.type] || EVENT_TYPES['other'];
   
   return (
     <motion.button
@@ -289,19 +290,24 @@ export const LiveEventsPanel = ({ isOpen, onClose }: LiveEventsPanelProps) => {
                 // Event player view
                 <div className="space-y-4">
                   {/* Event thumbnail/visual */}
-                  <div className={cn(
-                    "aspect-video rounded-xl flex items-center justify-center",
-                    "bg-gradient-to-br",
-                    EVENT_TYPES[currentEvent.type].color
-                  )}>
-                    <div className="text-center text-white">
-                      <span className="text-6xl">{EVENT_TYPES[currentEvent.type].emoji}</span>
-                      <div className="mt-2 flex items-center justify-center gap-2">
-                        <LiveIndicator size="md" />
-                        <span className="text-sm font-medium">Live</span>
+                  {(() => {
+                    const eventTypeInfo = EVENT_TYPES[currentEvent.type] || EVENT_TYPES['other'];
+                    return (
+                      <div className={cn(
+                        "aspect-video rounded-xl flex items-center justify-center",
+                        "bg-gradient-to-br",
+                        eventTypeInfo.color
+                      )}>
+                        <div className="text-center text-white">
+                          <span className="text-6xl">{eventTypeInfo.emoji}</span>
+                          <div className="mt-2 flex items-center justify-center gap-2">
+                            <LiveIndicator size="md" />
+                            <span className="text-sm font-medium">Live</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                   
                   {/* Volume control */}
                   <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-xl">
