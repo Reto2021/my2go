@@ -40,20 +40,14 @@ export function AppLayout({ children }: AppLayoutProps) {
         
         {/* Unified Radio Player Bar - Slider + Mini Player */}
         <RadioPlayerBar 
-          onExpand={() => {
-            console.log('[AppLayout] onExpand called, setting isPlayerExpanded to true');
-            setPlayerExpanded(true);
-          }} 
+          onExpand={() => setPlayerExpanded(true)} 
           onStreakDetailsOpen={() => setShowStreakDetails(true)}
         />
         
         {/* Expanded Player Bottom Sheet */}
         <ExpandedRadioPlayer 
           isOpen={isPlayerExpanded} 
-          onClose={() => {
-            console.log('[AppLayout] onClose called, setting isPlayerExpanded to false');
-            setPlayerExpanded(false);
-          }} 
+          onClose={() => setPlayerExpanded(false)} 
         />
         
         {/* Tier Reached Celebration */}
