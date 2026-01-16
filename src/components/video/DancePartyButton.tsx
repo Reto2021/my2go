@@ -29,6 +29,7 @@ export const DancePartyButton = ({
         variant="ghost"
         size="icon"
         onClick={handleClick}
+        data-party-trigger
         className={cn(
           "relative",
           isCompact ? "h-8 w-8" : "h-10 w-10"

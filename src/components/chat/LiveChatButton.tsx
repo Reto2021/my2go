@@ -26,6 +26,7 @@ export function LiveChatButton({ songTitle, songArtist, className }: LiveChatBut
     <>
       <motion.button
         onClick={handleOpen}
+        data-chat-trigger
         className={cn(
           'relative flex items-center justify-center rounded-full',
           'bg-gradient-to-br from-pink-500/20 to-rose-500/20',
