@@ -149,14 +149,14 @@ export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonPro
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all",
+        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm",
         hasLiveEvents
-          ? "bg-green-500/15 text-green-600 dark:text-green-400"
-          : "bg-muted/50 text-muted-foreground"
+          ? "bg-green-600 text-white shadow-green-600/30"
+          : "bg-secondary text-secondary-foreground"
       )}
     >
       {hasLiveEvents && <LiveIndicator size="sm" />}
-      <Tv className="h-3 w-3" />
+      <Tv className="h-3.5 w-3.5" />
       <span>Live</span>
     </button>
   );
