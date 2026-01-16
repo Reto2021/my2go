@@ -392,7 +392,10 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
                   "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-grab active:cursor-grabbing overflow-hidden transition-colors duration-300 outline-none isolate touch-pan-x",
                   justReachedTier && "ring-2 ring-accent"
                 )}
-                onClick={onExpand}
+                onClick={(e) => {
+                  console.log('[RadioPlayerBar] Mini player clicked, calling onExpand');
+                  onExpand();
+                }}
                 tabIndex={-1}
               >
                 {/* Swipe indicator */}
