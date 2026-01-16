@@ -365,8 +365,23 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
       
       // Enable camera and microphone only if not spectator
       if (role !== 'spectator') {
-        await newRoom.localParticipant.enableCameraAndMicrophone();
-        console.log('[useLiveKitRoom] Camera and microphone enabled');
+        try {
+          await newRoom.localParticipant.enableCameraAndMicrophone();
+          console.log('[useLiveKitRoom] Camera and microphone enabled');
+          
+          // Update local participant state after tracks are enabled
+          setLocalParticipant(prev => prev ? {
+            ...prev,
+            isMuted: false,
+            isVideoOff: false
+          } : null);
+          setIsMuted(false);
+          setIsVideoOff(false);
+        } catch (mediaErr) {
+          console.error('[useLiveKitRoom] Media enable error:', mediaErr);
+          // Still connected but without media
+          toast.error('Kamera/Mikrofon konnte nicht aktiviert werden');
+        }
       } else {
         // Spectators don't publish video/audio
         console.log('[useLiveKitRoom] Joined as spectator (no media)');

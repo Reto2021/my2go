@@ -479,6 +479,7 @@ export const DancePartySheet = ({
   const [showDuetRecorder, setShowDuetRecorder] = useState(false);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [previewRequested, setPreviewRequested] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<CameraFilterType>('none');
   const [currentBackground, setCurrentBackground] = useState<VirtualBackgroundType>('none');
   const [showFilters, setShowFilters] = useState(false);
@@ -542,41 +543,44 @@ export const DancePartySheet = ({
     // Local effect is handled by the applauseEvents useEffect
   }, [sendApplause]);
 
-  // Get local stream for preview - only video (no audio to avoid interfering with radio stream)
-  useEffect(() => {
-    let mounted = true;
+  // Get local stream for preview - only when user explicitly requests it
+  // This prevents interfering with the radio stream on sheet open
+  const requestPreview = useCallback(() => {
+    if (localStream || isConnected || isConnecting) return;
     
-    if (open && !isConnected && !isConnecting && !localStream) {
-      // Only request video for preview - audio is not needed for preview
-      // This prevents interfering with the radio stream
-      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        .then((stream) => {
-          if (mounted) {
-            console.log('[DancePartySheet] Preview stream acquired (video only)');
-            setLocalStream(stream);
-          } else {
-            // Component unmounted, stop the stream
-            stream.getTracks().forEach(track => track.stop());
-          }
-        })
-        .catch((err) => {
-          console.error('[DancePartySheet] Media access error:', err);
-        });
-    }
+    setPreviewRequested(true);
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        console.log('[DancePartySheet] Preview stream acquired (video only)');
+        setLocalStream(stream);
+      })
+      .catch((err) => {
+        console.error('[DancePartySheet] Media access error:', err);
+        setPreviewRequested(false);
+      });
+  }, [localStream, isConnected, isConnecting]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [open, isConnected, isConnecting, localStream]);
-  
   // Cleanup stream when sheet closes or connects
   useEffect(() => {
-    if ((!open || isConnected) && localStream) {
-      console.log('[DancePartySheet] Cleaning up preview stream');
+    if (!open) {
+      // Reset preview state when sheet closes
+      setPreviewRequested(false);
+      if (localStream) {
+        console.log('[DancePartySheet] Cleaning up preview stream (sheet closed)');
+        localStream.getTracks().forEach(track => track.stop());
+        setLocalStream(null);
+      }
+    }
+  }, [open, localStream]);
+
+  // Also cleanup when connecting
+  useEffect(() => {
+    if (isConnected && localStream) {
+      console.log('[DancePartySheet] Cleaning up preview stream (connected)');
       localStream.getTracks().forEach(track => track.stop());
       setLocalStream(null);
     }
-  }, [open, isConnected, localStream]);
+  }, [isConnected, localStream]);
   
   // Attach stream to video element when available
   useEffect(() => {
@@ -834,13 +838,25 @@ export const DancePartySheet = ({
                           PREVIEW
                         </div>
                       </>
-                    ) : (
+                    ) : previewRequested ? (
                       <div className="flex flex-col items-center justify-center h-full gap-3">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                          className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent"
+                        />
+                        <span className="text-white/50 text-sm">Kamera wird geladen...</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={requestPreview}
+                        className="flex flex-col items-center justify-center h-full gap-3 w-full hover:bg-white/5 transition-colors"
+                      >
                         <div className="h-16 w-16 rounded-2xl bg-white/10 flex items-center justify-center">
                           <Video className="h-8 w-8 text-white/50" />
                         </div>
-                        <span className="text-white/50 text-sm">Kamera wird geladen...</span>
-                      </div>
+                        <span className="text-white/50 text-sm">Tippe für Vorschau</span>
+                      </button>
                     )}
                   </motion.div>
                   
