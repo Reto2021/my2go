@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SwipeableSheetContent, SwipeHandle } from '@/components/ui/swipeable-sheet';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -657,18 +658,17 @@ export const DancePartySheet = ({
         {/* Confetti overlay for applause */}
         <Confetti isActive={showConfetti} particleCount={80} duration={3000} playSound={false} />
         
-        {/* Content */}
-        <div className="relative h-full flex flex-col">
+        {/* Swipeable Content */}
+        <SwipeableSheetContent onClose={handleClose} className="relative flex flex-col">
+          {/* Swipe Handle */}
+          <SwipeHandle />
+          
           {/* Header */}
           <motion.div 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex-shrink-0 px-5 pt-4 pb-3"
+            className="flex-shrink-0 px-5 pb-3"
           >
-            {/* Swipe indicator */}
-            <div className="flex justify-center mb-4">
-              <div className="w-10 h-1 rounded-full bg-white/30" />
-            </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1141,7 +1141,7 @@ export const DancePartySheet = ({
             </motion.div>
           )}
         </div>
-      </div>
+        </SwipeableSheetContent>
       </SheetContent>
 
       {/* Group Photo Sheet */}
