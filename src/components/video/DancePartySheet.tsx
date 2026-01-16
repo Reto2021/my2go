@@ -818,32 +818,45 @@ export const DancePartySheet = ({
                     </p>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-3 w-full max-w-xs">
-                    <Button 
-                      onClick={handleJoinClick}
-                      size="lg"
-                      className="gap-2 w-full h-14 rounded-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-bold shadow-lg shadow-accent/30"
-                      disabled={!user}
-                    >
-                      <Sparkles className="h-5 w-5" />
-                      {user ? 'Party beitreten' : 'Bitte einloggen'}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="gap-2 w-full h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white"
-                      onClick={handleShare}
-                    >
-                      {copied ? (
-                        <Check className="h-4 w-4 text-success" />
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-3 w-full max-w-xs">
+                      {user ? (
+                        <Button 
+                          onClick={handleJoinClick}
+                          size="lg"
+                          className="gap-2 w-full h-14 rounded-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-bold shadow-lg shadow-accent/30"
+                        >
+                          <Sparkles className="h-5 w-5" />
+                          Party beitreten
+                        </Button>
                       ) : (
-                        <Share2 className="h-4 w-4" />
+                        <Button 
+                          onClick={() => {
+                            onOpenChange(false);
+                            window.location.href = '/auth';
+                          }}
+                          size="lg"
+                          className="gap-2 w-full h-14 rounded-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-bold shadow-lg shadow-accent/30"
+                        >
+                          <Sparkles className="h-5 w-5" />
+                          Jetzt einloggen
+                        </Button>
                       )}
-                      Freunde einladen
-                    </Button>
-                  </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="gap-2 w-full h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                        onClick={handleShare}
+                      >
+                        {copied ? (
+                          <Check className="h-4 w-4 text-success" />
+                        ) : (
+                          <Share2 className="h-4 w-4" />
+                        )}
+                        Freunde einladen
+                      </Button>
+                    </div>
                 </motion.div>
             ) : isConnecting ? (
               // Connecting state

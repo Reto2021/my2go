@@ -239,10 +239,19 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
                 </Button>
               </div>
             ) : (
-              <div className="text-center py-3 px-4 rounded-2xl bg-white/5 border border-white/10">
+              <div className="text-center py-4 px-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                 <p className="text-sm text-white/70">
                   Melde dich an, um mitzuchatten 💬
                 </p>
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                    window.location.href = '/auth';
+                  }}
+                  className="w-full h-11 rounded-xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-semibold shadow-lg shadow-accent/30"
+                >
+                  Jetzt einloggen
+                </Button>
               </div>
             )}
           </motion.div>
