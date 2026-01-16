@@ -144,9 +144,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     : 0;
   const isCountdownUrgent = remainingSeconds > 0 && remainingSeconds <= 30;
   
-  // Detect tier advancement and trigger celebration
+  // Detect tier advancement and trigger celebration (for all users, logged in or not)
   useEffect(() => {
-    if (currentTier && isAuthenticated && isOpen && isPlaying) {
+    if (currentTier && isOpen && isPlaying) {
       // Check if this is a new tier (not yet celebrated)
       const celebratedTiers = lastReachedTierRef.current ? lastReachedTierRef.current.split(',') : [];
       
@@ -162,7 +162,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
         lastReachedTierRef.current = [...celebratedTiers, currentTier.id].join(',');
       }
     }
-  }, [currentTier?.id, isAuthenticated, isOpen, isPlaying]);
+  }, [currentTier?.id, isOpen, isPlaying]);
   
   // Start tracking when playing begins
   useEffect(() => {
@@ -447,11 +447,15 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     </p>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         onClose();
-                        navigate('/auth');
+                        setTimeout(() => {
+                          navigate('/auth');
+                        }, 100);
                       }}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-accent text-accent-foreground font-semibold text-sm active:scale-95 transition-transform touch-manipulation"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-accent text-accent-foreground font-semibold text-sm active:scale-95 transition-transform touch-manipulation z-50 relative"
                     >
                       <Wallet className="h-4 w-4" />
                       {currentTier ? 'Taler sichern & anmelden' : 'Kostenlos anmelden'}
