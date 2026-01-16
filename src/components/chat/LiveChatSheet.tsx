@@ -248,7 +248,9 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
                 <Button
                   onClick={() => {
                     onOpenChange(false);
-                    navigate('/auth');
+                    setTimeout(() => {
+                      navigate('/auth');
+                    }, 300);
                   }}
                   className="w-full h-11 rounded-xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-semibold shadow-lg shadow-accent/30"
                 >
