@@ -241,42 +241,51 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
     }
   }, [streakStatus]);
   
-  // Wiggle animation on first render when slider is visible
+  // Wiggle animation - repeat every 10 seconds while slider is visible and not used
   useEffect(() => {
-    if (!isPlaying && !hasWiggled && sliderWidth.current > 0) {
-      // Small delay to let component mount
-      const timer = setTimeout(() => {
-        // Animate the x value to wiggle
-        animate(x, 24, { 
-          type: "spring", 
-          stiffness: 300, 
-          damping: 15,
-          onComplete: () => {
-            animate(x, 12, { 
-              type: "spring", 
-              stiffness: 400, 
-              damping: 20,
-              onComplete: () => {
-                animate(x, 18, { 
-                  type: "spring", 
-                  stiffness: 500, 
-                  damping: 25,
-                  onComplete: () => {
-                    animate(x, 0, { 
-                      type: "spring", 
-                      stiffness: 400, 
-                      damping: 25 
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-        setHasWiggled(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
+    if (isPlaying || hasWiggled) return;
+    
+    const doWiggle = () => {
+      if (sliderWidth.current <= 0) return;
+      
+      animate(x, 24, { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 15,
+        onComplete: () => {
+          animate(x, 12, { 
+            type: "spring", 
+            stiffness: 400, 
+            damping: 20,
+            onComplete: () => {
+              animate(x, 18, { 
+                type: "spring", 
+                stiffness: 500, 
+                damping: 25,
+                onComplete: () => {
+                  animate(x, 0, { 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 25 
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    };
+    
+    // Initial wiggle after short delay
+    const initialTimer = setTimeout(doWiggle, 800);
+    
+    // Repeat every 10 seconds
+    const intervalTimer = setInterval(doWiggle, 10000);
+    
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(intervalTimer);
+    };
   }, [isPlaying, hasWiggled, x]);
   
   // Handle slide complete
@@ -360,6 +369,9 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   
   // Handle drag end
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // Stop wiggle animation once user interacts
+    setHasWiggled(true);
+    
     const percentage = info.offset.x / sliderWidth.current;
     
     if (percentage > 0.75) {
