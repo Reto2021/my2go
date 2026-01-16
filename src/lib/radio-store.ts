@@ -6,23 +6,29 @@ const ARTWORK_BASE = 'https://api.broadcast.radio';
 const DEFAULT_ARTWORK = '/pwa-512x512.png';
 const ITUNES_SEARCH_API = 'https://itunes.apple.com/search';
 
-// SessionStorage keys for persistence
-const SESSION_STORAGE_KEY = 'radio2go_session';
-const CELEBRATED_TIERS_KEY = 'radio2go_celebrated_tiers';
+// LocalStorage keys for persistence (survives page reloads and navigation)
+const LOCAL_STORAGE_KEY = 'radio2go_session';
+const RADIO_STATE_KEY = 'radio2go_state';
 
 interface PersistedSession {
   startTime: string; // ISO string
   celebratedTiers: string[]; // Tier IDs that were already celebrated
 }
 
-// Helper functions for session persistence
+interface PersistedRadioState {
+  wasPlaying: boolean;
+  volume: number;
+  savedAt: number; // timestamp
+}
+
+// Helper functions for session persistence (using localStorage for persistence across page reloads)
 function saveSessionToStorage(startTime: Date, celebratedTiers: string[] = []) {
   try {
     const session: PersistedSession = {
       startTime: startTime.toISOString(),
       celebratedTiers,
     };
-    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(session));
   } catch (e) {
     console.warn('Could not save session to storage:', e);
   }
@@ -30,7 +36,7 @@ function saveSessionToStorage(startTime: Date, celebratedTiers: string[] = []) {
 
 function loadSessionFromStorage(): PersistedSession | null {
   try {
-    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored) {
       return JSON.parse(stored);
     }
@@ -42,7 +48,7 @@ function loadSessionFromStorage(): PersistedSession | null {
 
 function clearSessionFromStorage() {
   try {
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
   } catch (e) {
     console.warn('Could not clear session from storage:', e);
   }
@@ -50,7 +56,7 @@ function clearSessionFromStorage() {
 
 export function getCelebratedTiers(): string[] {
   try {
-    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored) {
       const session: PersistedSession = JSON.parse(stored);
       return session.celebratedTiers || [];
@@ -63,16 +69,56 @@ export function getCelebratedTiers(): string[] {
 
 export function addCelebratedTier(tierName: string) {
   try {
-    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (stored) {
       const session: PersistedSession = JSON.parse(stored);
       if (!session.celebratedTiers.includes(tierName)) {
         session.celebratedTiers.push(tierName);
-        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(session));
       }
     }
   } catch (e) {
     console.warn('Could not add celebrated tier:', e);
+  }
+}
+
+// Helper functions for radio state persistence (for auto-resume after login)
+export function saveRadioState(wasPlaying: boolean, volume: number) {
+  try {
+    const state: PersistedRadioState = {
+      wasPlaying,
+      volume,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(RADIO_STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Could not save radio state:', e);
+  }
+}
+
+export function loadRadioState(): PersistedRadioState | null {
+  try {
+    const stored = localStorage.getItem(RADIO_STATE_KEY);
+    if (stored) {
+      const state: PersistedRadioState = JSON.parse(stored);
+      // Only restore if saved within last 5 minutes (user was navigating to login)
+      if (Date.now() - state.savedAt < 5 * 60 * 1000) {
+        return state;
+      }
+      // Clear stale state
+      localStorage.removeItem(RADIO_STATE_KEY);
+    }
+  } catch (e) {
+    console.warn('Could not load radio state:', e);
+  }
+  return null;
+}
+
+export function clearRadioState() {
+  try {
+    localStorage.removeItem(RADIO_STATE_KEY);
+  } catch (e) {
+    console.warn('Could not clear radio state:', e);
   }
 }
 
@@ -111,6 +157,8 @@ interface RadioStore {
   setPlayerExpanded: (expanded: boolean) => void;
   setPlayerMinimized: (minimized: boolean) => void;
   restoreSession: () => boolean; // Returns true if session was restored
+  saveStateForNavigation: () => void; // Save state before navigating away
+  autoResumeIfNeeded: () => void; // Resume playback if navigated back
 }
 
 interface iTunesMediaResult {
@@ -347,5 +395,28 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       audio.volume = volume;
     }
     set({ volume, isMuted: volume === 0 });
+  },
+
+  saveStateForNavigation: () => {
+    const { isPlaying, volume } = get();
+    if (isPlaying) {
+      saveRadioState(true, volume);
+    }
+  },
+
+  autoResumeIfNeeded: () => {
+    const state = loadRadioState();
+    if (state && state.wasPlaying) {
+      clearRadioState();
+      // Set volume first, then trigger play
+      set({ volume: state.volume });
+      // Small delay to ensure component is mounted
+      setTimeout(() => {
+        const { isPlaying, togglePlay } = get();
+        if (!isPlaying) {
+          togglePlay();
+        }
+      }, 500);
+    }
   },
 }));

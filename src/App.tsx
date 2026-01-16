@@ -19,6 +19,7 @@ import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger"
 import { InstallPrompt } from "./components/ui/install-prompt";
 import { FunnelLayout } from "./components/funnel/FunnelLayout";
 import { RouteLoader } from "./components/ui/route-loader";
+import { useRadioStore } from "./lib/radio-store";
 
 import { OfflinePrefetchProvider } from "./hooks/useOfflinePrefetch";
 
@@ -125,8 +126,18 @@ function useServiceWorkerMessages() {
   }, []);
 }
 
+// Auto-resume radio playback after login/navigation
+function useRadioAutoResume() {
+  useEffect(() => {
+    // Check if there's a saved state to resume (e.g., after login)
+    const autoResume = useRadioStore.getState().autoResumeIfNeeded;
+    autoResume();
+  }, []);
+}
+
 function AppContent() {
   useServiceWorkerMessages();
+  useRadioAutoResume();
   
   return (
     <BrowserRouter>

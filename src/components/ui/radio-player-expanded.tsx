@@ -450,6 +450,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        // Save radio state before navigating
+                        useRadioStore.getState().saveStateForNavigation();
                         onClose();
                         setTimeout(() => {
                           navigate('/auth');
