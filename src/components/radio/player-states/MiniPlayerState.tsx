@@ -1,0 +1,193 @@
+import { motion } from "framer-motion";
+import { Lock, Loader2, Pause, VolumeX, Volume2, ChevronUp } from "lucide-react";
+import { TalerIcon } from "@/components/icons/TalerIcon";
+import { cn } from "@/lib/utils";
+import { hapticToggle } from "@/lib/haptics";
+import { Equalizer } from "../Equalizer";
+import { formatTimeToTier } from "../utils";
+
+interface NowPlaying {
+  title?: string;
+  artist?: string;
+  artworkUrl?: string;
+}
+
+interface MiniPlayerStateProps {
+  nowPlaying: NowPlaying | null;
+  isPlaying: boolean;
+  isRadioLoading: boolean;
+  isMuted: boolean;
+  isLocked: boolean;
+  lockRemaining: number;
+  earnedTaler: number;
+  pendingTaler: number;
+  secondsToNextTier: number;
+  isMaxTier: boolean;
+  progress: number;
+  justReachedTier: boolean;
+  onExpand: () => void;
+  onTogglePlay: (e?: React.MouseEvent) => void;
+  onToggleMute: (e?: React.MouseEvent) => void;
+  onMinimize: () => void;
+}
+
+export function MiniPlayerState({
+  nowPlaying,
+  isPlaying,
+  isRadioLoading,
+  isMuted,
+  isLocked,
+  lockRemaining,
+  pendingTaler,
+  secondsToNextTier,
+  isMaxTier,
+  progress,
+  justReachedTier,
+  onExpand,
+  onTogglePlay,
+  onToggleMute,
+  onMinimize,
+}: MiniPlayerStateProps) {
+  return (
+    <motion.div
+      key="mini-player"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: 20, opacity: 0 }}
+      transition={{
+        type: "spring",
+        damping: 25,
+        stiffness: 300,
+        opacity: { duration: 0.15 },
+      }}
+      drag="y"
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0.3, bottom: 0.5 }}
+      onDragEnd={(_, info) => {
+        // Swipe up to expand player
+        if (info.offset.y < -40 || info.velocity.y < -200) {
+          hapticToggle();
+          onExpand();
+        }
+        // Swipe down to minimize
+        else if (info.offset.y > 60 || info.velocity.y > 300) {
+          hapticToggle();
+          onMinimize();
+        }
+      }}
+      className={cn(
+        "relative rounded-2xl bg-secondary shadow-xl shadow-secondary/30 cursor-grab active:cursor-grabbing overflow-hidden transition-colors duration-300 outline-none isolate touch-pan-x",
+        justReachedTier && "ring-2 ring-accent"
+      )}
+      onClick={onExpand}
+      tabIndex={-1}
+    >
+      {/* Swipe indicator */}
+      <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-secondary-foreground/20" />
+
+      {/* Progress bar at top */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-secondary-foreground/10">
+        <motion.div
+          className={cn(
+            "h-full transition-colors",
+            isMaxTier ? "bg-accent" : "bg-accent/80"
+          )}
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+      </div>
+
+      {/* Lock progress bar */}
+      {isLocked && (
+        <div className="absolute top-1 left-0 right-0 h-0.5 bg-white/10">
+          <motion.div
+            initial={{ width: "100%" }}
+            animate={{ width: `${(lockRemaining / 65) * 100}%` }}
+            transition={{ duration: 1, ease: "linear" }}
+            className="h-full bg-gradient-to-r from-accent to-amber-400"
+          />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 p-2.5 pt-4">
+        {/* Album Art or Equalizer */}
+        <div
+          className={cn(
+            "h-12 w-12 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center flex-shrink-0 transition-all",
+            justReachedTier && "animate-pulse"
+          )}
+        >
+          {nowPlaying?.artworkUrl ? (
+            <img
+              src={nowPlaying.artworkUrl}
+              alt={nowPlaying.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Equalizer />
+          )}
+        </div>
+
+        {/* Song Info + Session Progress */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-secondary-foreground truncate">
+            {isLocked
+              ? `Gesperrt – ${lockRemaining}s`
+              : nowPlaying?.title || "Radio 2Go"}
+          </p>
+          <p className="text-xs text-secondary-foreground/60 truncate">
+            {isMaxTier ? (
+              <span className="text-accent font-medium">Max erreicht 🏆</span>
+            ) : secondsToNextTier > 0 ? (
+              <span className="flex items-center gap-1">
+                <TalerIcon className="h-3 w-3 text-accent" />
+                <span className="text-accent font-medium">+{pendingTaler}</span>
+                <span>in {formatTimeToTier(secondsToNextTier)}</span>
+              </span>
+            ) : (
+              <span>{nowPlaying?.artist || "Live Stream"}</span>
+            )}
+          </p>
+        </div>
+
+        {/* Mute Button */}
+        <button
+          onClick={onToggleMute}
+          className={cn(
+            "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
+            isMuted ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white/70"
+          )}
+        >
+          {isMuted ? (
+            <VolumeX className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Play/Pause Button */}
+        <button
+          onClick={onTogglePlay}
+          disabled={isRadioLoading || isLocked}
+          className={cn(
+            "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
+            "bg-accent text-accent-foreground",
+            isLocked && "opacity-70"
+          )}
+        >
+          {isRadioLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isLocked ? (
+            <Lock className="h-4 w-4" />
+          ) : (
+            <Pause className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Expand indicator */}
+        <ChevronUp className="h-4 w-4 text-secondary-foreground/40 shrink-0" />
+      </div>
+    </motion.div>
+  );
+}
