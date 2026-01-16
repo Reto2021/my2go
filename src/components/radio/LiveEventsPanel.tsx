@@ -152,24 +152,18 @@ export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonPro
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all",
-        "bg-secondary/80 backdrop-blur-sm text-secondary-foreground"
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+        "border border-white/80 bg-transparent",
+        hasLiveEvents 
+          ? "text-accent shadow-[0_0_12px_2px_hsl(var(--accent)/0.5)]" 
+          : "text-white/90"
       )}
     >
-      {hasLiveEvents ? (
-        <>
-          <span className="relative flex items-center">
-            <Tv className="h-3.5 w-3.5 text-red-500" />
-            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-          </span>
-          <span>Live</span>
-        </>
-      ) : (
-        <>
-          <Tv className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-muted-foreground">Live</span>
-        </>
-      )}
+      <Tv className={cn(
+        "h-3.5 w-3.5",
+        hasLiveEvents ? "text-accent" : "text-white/90"
+      )} />
+      <span>Live</span>
     </button>
   );
 };
