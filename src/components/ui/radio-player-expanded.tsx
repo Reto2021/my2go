@@ -14,8 +14,10 @@ import {
   Coins,
   Wallet,
   Video,
-  Image
+  Image,
+  MessageCircle
 } from 'lucide-react';
+import { LiveChatButton } from '@/components/chat/LiveChatButton';
 import { cn } from '@/lib/utils';
 import { hapticToggle, hapticSuccess } from '@/lib/haptics';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
@@ -483,30 +485,44 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </div>
             </motion.div>
 
-            {/* Play/Pause Button */}
-            <button
-              type="button"
-              onClick={() => {
-                hapticToggle();
-                togglePlay();
-              }}
-              disabled={isLoading}
-              className={cn(
-                "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0 touch-manipulation active:scale-95",
-                isPlaying 
-                  ? "bg-white text-secondary hover:bg-white/90" 
-                  : "bg-accent text-accent-foreground hover:bg-accent/90",
-                isLoading && "opacity-50"
+            {/* Controls Row: Chat + Play/Pause */}
+            <div className="flex items-center justify-center gap-6 mb-2">
+              {/* Chat Button */}
+              {nowPlaying && (
+                <LiveChatButton 
+                  songTitle={nowPlaying.title || 'Radio 2Go'} 
+                  songArtist={nowPlaying.artist}
+                />
               )}
-            >
-              {isLoading ? (
-                <div className="h-6 w-6 sm:h-8 sm:w-8 border-3 border-current border-t-transparent rounded-full animate-spin" />
-              ) : isPlaying ? (
-                <Pause className="h-6 w-6 sm:h-8 sm:w-8" />
-              ) : (
-                <Play className="h-6 w-6 sm:h-8 sm:w-8 ml-1" />
-              )}
-            </button>
+              
+              {/* Play/Pause Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  hapticToggle();
+                  togglePlay();
+                }}
+                disabled={isLoading}
+                className={cn(
+                  "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0 touch-manipulation active:scale-95",
+                  isPlaying 
+                    ? "bg-white text-secondary hover:bg-white/90" 
+                    : "bg-accent text-accent-foreground hover:bg-accent/90",
+                  isLoading && "opacity-50"
+                )}
+              >
+                {isLoading ? (
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 border-3 border-current border-t-transparent rounded-full animate-spin" />
+                ) : isPlaying ? (
+                  <Pause className="h-6 w-6 sm:h-8 sm:w-8" />
+                ) : (
+                  <Play className="h-6 w-6 sm:h-8 sm:w-8 ml-1" />
+                )}
+              </button>
+              
+              {/* Placeholder for symmetry */}
+              <div className="h-10 w-10" />
+            </div>
             
             {/* Song History - always show if available */}
             {songHistory.length > 0 && (
