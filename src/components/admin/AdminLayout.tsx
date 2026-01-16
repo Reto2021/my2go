@@ -12,7 +12,8 @@ import {
   FileText,
   Zap,
   Clock,
-  BarChart3
+  BarChart3,
+  Tv
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
@@ -26,6 +27,7 @@ const navItems = [
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
   { path: '/admin/badges', icon: Award, label: 'Badges' },
   { path: '/admin/radio', icon: Radio, label: 'Radio-Belohnungen' },
+  { path: '/admin/live-events', icon: Tv, label: 'Live Events' },
   { path: '/admin/airdrops', icon: QrCode, label: 'Air Drops' },
   { path: '/admin/cron', icon: Clock, label: 'Cron-Jobs' },
   { path: '/admin/settings', icon: Settings, label: 'Einstellungen' },

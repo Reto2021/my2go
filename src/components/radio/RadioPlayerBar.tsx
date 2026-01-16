@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, animate, PanInfo, AnimatePresence } from "framer-motion";
 import { 
   Flame, Play, Pause, Lock, VolumeX, Volume2, Loader2, 
-  ChevronRight, Radio, ChevronUp 
+  ChevronRight, Radio, ChevronUp, Tv 
 } from "lucide-react";
 import { useRadioStore } from "@/lib/radio-store";
 import { useStreak } from "@/hooks/useStreak";
@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { hapticToggle } from "@/lib/haptics";
 import { supabase } from "@/integrations/supabase/client";
+import { LiveEventsBadge, LiveEventsPanel, LiveIndicator } from "./LiveEventsPanel";
+import { useLiveEventsStore } from "@/lib/live-events-store";
 
 interface RadioPlayerBarProps {
   onExpand: () => void;
@@ -166,6 +168,16 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   const authContext = useAuthSafe();
   const isAuthenticated = !!authContext?.user;
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
+  
+  // Live events
+  const { events, fetchEvents } = useLiveEventsStore();
+  const [showLiveEvents, setShowLiveEvents] = useState(false);
+  const liveEventsCount = events.filter(e => e.isLive).length;
+  
+  // Fetch live events on mount
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
   
   const [isLocked, setIsLocked] = useState(false);
   const [lockRemaining, setLockRemaining] = useState(0);
@@ -691,8 +703,24 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
               </motion.div>
             )}
           </AnimatePresence>
+          
+          {/* Live Events Badge - shows when events are live */}
+          {liveEventsCount > 0 && !showMiniPlayer && (
+            <div className="absolute -top-12 right-0">
+              <LiveEventsBadge 
+                onClick={() => setShowLiveEvents(true)} 
+                eventCount={liveEventsCount} 
+              />
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Live Events Panel */}
+      <LiveEventsPanel 
+        isOpen={showLiveEvents} 
+        onClose={() => setShowLiveEvents(false)} 
+      />
     </>
   );
 }

@@ -17,7 +17,8 @@ import {
   ImageIcon,
   Radio,
   Crown,
-  Film
+  Film,
+  Gift
 } from 'lucide-react';
 import { useLiveKitRoom, Participant, REACTION_EMOJIS, ParticipantRole } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,6 +57,10 @@ import {
 } from './DancePartyModes';
 import { LiveStageView } from './LiveStageView';
 import { DuetRecorder } from './DuetRecorder';
+import { AudioEffectsPanel } from './AudioEffectsPanel';
+import { AudioEffectType } from '@/lib/audio-effects';
+import { GiftPanel, GiftButton, FloatingGift } from './GiftPanel';
+import { VIRTUAL_GIFTS, useGiftStore, SentGift } from '@/lib/gifts-store';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -396,7 +401,8 @@ export const DancePartySheet = ({
   songIdentifier,
   songTitle
 }: DancePartySheetProps) => {
-  const { user } = useAuth();
+  const authContext = useAuth();
+  const user = authContext?.user;
   const {
     isConnected,
     isConnecting,
@@ -436,7 +442,23 @@ export const DancePartySheet = ({
   const [visualizerVariant, setVisualizerVariant] = useState<'bars' | 'wave' | 'pulse'>('bars');
   const videoGridRef = useRef<HTMLDivElement>(null);
   
+  // Audio effects state (for hosts)
+  const [currentAudioEffect, setCurrentAudioEffect] = useState<AudioEffectType>('none');
+  const [showAudioEffects, setShowAudioEffects] = useState(false);
+  
+  // Gift system state
+  const [showGiftPanel, setShowGiftPanel] = useState(false);
+  const [giftTargetHost, setGiftTargetHost] = useState<Participant | null>(null);
+  const { recentGifts, clearOldGifts, addReceivedGift } = useGiftStore();
+  
   const isRadioPlaying = useRadioStore((state) => state.isPlaying);
+  const currentBalance = authContext?.balance?.taler_balance ?? 0;
+
+  // Clear old gifts periodically
+  useEffect(() => {
+    const interval = setInterval(clearOldGifts, 1000);
+    return () => clearInterval(interval);
+  }, [clearOldGifts]);
 
   // Group photo hook
   const { 
@@ -807,6 +829,27 @@ export const DancePartySheet = ({
                 isCapturing={isCapturing} 
               />
 
+              {/* Gift Button (for spectators to send to hosts) */}
+              {localRole === 'spectator' && hosts.length > 0 && (
+                <GiftButton 
+                  onClick={() => {
+                    setGiftTargetHost(hosts[0]); // Default to first host
+                    setShowGiftPanel(true);
+                  }}
+                  hasGifts={recentGifts.length > 0}
+                />
+              )}
+
+              {/* Audio Effects Button (for hosts only) */}
+              {(localRole === 'host' || localRole === 'standard') && (
+                <AudioEffectsPanel
+                  currentEffect={currentAudioEffect}
+                  onEffectChange={setCurrentAudioEffect}
+                  isCompact
+                  isDisabled={!isConnected}
+                />
+              )}
+
               {/* Applause Button */}
               <Button
                 variant="outline"
@@ -931,6 +974,33 @@ export const DancePartySheet = ({
         songTitle={songTitle}
         participantCount={totalParticipants}
       />
+
+      {/* Gift Panel */}
+      {giftTargetHost && user && (
+        <GiftPanel
+          isOpen={showGiftPanel}
+          onClose={() => setShowGiftPanel(false)}
+          recipientId={giftTargetHost.identity}
+          recipientName={giftTargetHost.name}
+          senderId={user.id}
+          senderName={user.user_metadata?.display_name || 'User'}
+          currentBalance={currentBalance}
+          onGiftSent={(gift) => {
+            toast.success(`${gift.emoji} gesendet!`);
+          }}
+        />
+      )}
+
+      {/* Floating gifts animation */}
+      <AnimatePresence>
+        {recentGifts.map((gift) => {
+          const giftInfo = VIRTUAL_GIFTS.find(g => g.id === gift.giftId);
+          if (!giftInfo) return null;
+          return (
+            <FloatingGift key={gift.id} gift={gift} giftInfo={giftInfo} />
+          );
+        })}
+      </AnimatePresence>
     </Sheet>
   );
 };
