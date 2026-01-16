@@ -238,6 +238,16 @@ interface BrowseModeHomeProps {
 }
 
 function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
+  const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
+  const [showLiveEvents, setShowLiveEvents] = useState(false);
+  
+  // Fetch and subscribe to live events
+  useEffect(() => {
+    fetchEvents();
+    const unsubscribe = subscribeToRealtime();
+    return () => unsubscribe();
+  }, [fetchEvents, subscribeToRealtime]);
+  
   return (
     <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section with Skyline */}
@@ -262,9 +272,13 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
         </div>
         
         <div className="container relative z-10 pt-6 pb-32">
-          {/* Install Banner for guests */}
-          <div className="mb-4">
+          {/* Header row with Install Banner and Live Button */}
+          <div className="flex items-center justify-between mb-4">
             <InstallBanner />
+            <LiveHeaderButton 
+              onClick={() => setShowLiveEvents(true)}
+              hasLiveEvents={hasLiveEvents}
+            />
           </div>
           
           <div className="animate-in">
@@ -391,6 +405,12 @@ function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHom
           </div>
         </div>
       </section>
+      
+      {/* Live Events Panel */}
+      <LiveEventsPanel 
+        isOpen={showLiveEvents} 
+        onClose={() => setShowLiveEvents(false)} 
+      />
     </div>
   );
 }
