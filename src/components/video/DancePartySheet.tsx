@@ -277,10 +277,11 @@ const LiveKitVideoTile = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
       className={cn(
-        "relative rounded-xl overflow-hidden",
+        "relative rounded-2xl overflow-hidden shadow-xl",
         "aspect-[3/4] flex items-center justify-center",
-        isLocal && "ring-2 ring-primary",
-        participant.isSpeaking && "ring-2 ring-green-500 ring-offset-2"
+        "bg-gradient-to-br from-secondary/50 to-black/50 backdrop-blur-sm",
+        isLocal && "ring-2 ring-accent shadow-accent/20",
+        participant.isSpeaking && "ring-2 ring-success ring-offset-2 ring-offset-secondary"
       )}
     >
       {/* Virtual background (non-AI) */}
@@ -288,29 +289,29 @@ const LiveKitVideoTile = ({
       
       {/* AI Processing indicator */}
       {isAIProcessing && isLocal && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-30">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-30">
           <div className="text-center">
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="h-8 w-8 rounded-full border-2 border-purple-500 border-t-transparent mx-auto mb-2"
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              className="h-10 w-10 rounded-full border-2 border-accent border-t-transparent mx-auto mb-3"
             />
-            <span className="text-xs text-white">AI lädt...</span>
+            <span className="text-xs text-white font-medium">AI lädt...</span>
           </div>
         </div>
       )}
 
       {participant.isVideoOff ? (
-        <div className="flex flex-col items-center gap-2 z-10">
-          <Avatar className="h-16 w-16">
-            <AvatarFallback className="bg-primary/30 text-primary text-xl">
+        <div className="flex flex-col items-center gap-3 z-10">
+          <Avatar className="h-20 w-20 ring-2 ring-white/20">
+            <AvatarFallback className="bg-gradient-to-br from-accent to-primary text-white text-2xl font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm text-muted-foreground">{participant.name}</span>
+          <span className="text-sm text-white/80 font-medium">{participant.name}</span>
           {/* Still show background when video is off */}
           {background === 'none' && (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 -z-10" />
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary via-secondary/80 to-black -z-10" />
           )}
         </div>
       ) : (
@@ -344,6 +345,9 @@ const LiveKitVideoTile = ({
             />
           )}
           
+          {/* Gradient overlay for better text visibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none z-15" />
+          
           {/* Camera filter overlay */}
           <CameraFilterOverlay filter={filter} />
         </>
@@ -354,23 +358,31 @@ const LiveKitVideoTile = ({
 
       {/* Name badge */}
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
-        <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full truncate max-w-[70%]">
+        <span className="bg-black/70 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full truncate max-w-[70%] font-medium">
           {isLocal ? 'Du' : participant.name}
           {showAICanvas && ' ✨'}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {participant.isSpeaking && (
-            <span className="bg-green-500/80 p-1 rounded-full animate-pulse">
+            <span className="bg-success/90 p-1.5 rounded-full animate-pulse shadow-lg shadow-success/30">
               <div className="h-2 w-2 bg-white rounded-full" />
             </span>
           )}
           {participant.isMuted && (
-            <span className="bg-red-500/80 p-1 rounded-full">
+            <span className="bg-destructive/90 p-1.5 rounded-full shadow-lg">
               <MicOff className="h-3 w-3 text-white" />
             </span>
           )}
         </div>
       </div>
+      
+      {/* Local badge */}
+      {isLocal && (
+        <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-accent/90 text-accent-foreground text-[10px] font-bold flex items-center gap-1 z-20">
+          <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground animate-pulse" />
+          LIVE
+        </div>
+      )}
     </motion.div>
   );
 };
@@ -633,146 +645,223 @@ export const DancePartySheet = ({
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
         side="bottom" 
-        className="h-[90vh] rounded-t-3xl bg-gradient-to-b from-background to-background/95 z-[250]"
+        className="h-[92vh] rounded-t-[2rem] border-0 p-0 z-[250] overflow-hidden"
       >
+        {/* Premium gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary/95 to-black" />
+        
+        {/* Decorative glows */}
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-accent/20 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-20 right-1/4 w-48 h-48 bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
+        
         {/* Confetti overlay for applause */}
         <Confetti isActive={showConfetti} particleCount={80} duration={3000} playSound={false} />
-        <SheetHeader className="text-center pb-4">
-          <SheetTitle className="flex items-center justify-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-            Dance Party
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-          </SheetTitle>
-          {songTitle && (
-            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-              <Music className="h-3 w-3" />
-              {songTitle}
-            </p>
-          )}
-          
-          {/* Radio Music Visualizer */}
-          {isConnected && isRadioPlaying && showRadioVisualizer && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-2"
-            >
-              <RadioMusicVisualizer 
-                isActive={isRadioPlaying} 
-                variant={visualizerVariant}
-                className="h-12 w-full max-w-[280px] mx-auto" 
-                barCount={24}
-              />
-            </motion.div>
-          )}
-          
-          {/* Microphone Visualizer (fallback when radio not playing) */}
-          {isConnected && !isRadioPlaying && (
-            <div className="flex justify-center mt-2">
-              <MicrophoneVisualizer isActive={isConnected && !isMuted} className="h-6" />
+        
+        {/* Content */}
+        <div className="relative h-full flex flex-col">
+          {/* Header */}
+          <motion.div 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="flex-shrink-0 px-5 pt-4 pb-3"
+          >
+            {/* Swipe indicator */}
+            <div className="flex justify-center mb-4">
+              <div className="w-10 h-1 rounded-full bg-white/30" />
             </div>
-          )}
-        </SheetHeader>
-
-        <div className="flex flex-col h-[calc(100%-5rem)] relative">
-          {/* Floating Reactions */}
-          <AnimatePresence>
-            {reactions.map((reaction) => (
-              <FloatingReaction
-                key={reaction.id}
-                emoji={reaction.emoji}
-                onComplete={() => {}}
-              />
-            ))}
-          </AnimatePresence>
-
-          {/* Participant count */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              {isConnected 
-                ? `${totalParticipants} ${totalParticipants === 1 ? 'Tänzer' : 'Tänzer'} im Raum`
-                : 'Bereit zum Tanzen?'
-              }
-            </span>
-          </div>
-
-          {/* Error message */}
-          {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg mb-4 text-center">
-              {error}
-            </div>
-          )}
-
-          {/* Video grid */}
-          <div className="flex-1 overflow-auto">
-            {!isConnected && !isConnecting ? (
-              // Preview before joining
-              <div className="flex flex-col items-center justify-center h-full gap-6">
-                <div className="relative w-48 aspect-[3/4] rounded-xl overflow-hidden bg-muted">
-                  {localStream ? (
-                    <video
-                      ref={previewVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover"
-                      style={{ transform: 'scaleX(-1)' }}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <Video className="h-12 w-12 text-muted-foreground" />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", delay: 0.1 }}
+                  className="h-12 w-12 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg shadow-accent/30"
+                >
+                  <Sparkles className="h-6 w-6 text-accent-foreground" />
+                </motion.div>
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    Dance Party
+                    <motion.span
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                    >
+                      🕺
+                    </motion.span>
+                  </h2>
+                  {songTitle && (
+                    <div className="flex items-center gap-2 text-xs text-white/60">
+                      <Music className="h-3 w-3" />
+                      <span className="truncate max-w-[180px]">{songTitle}</span>
                     </div>
                   )}
                 </div>
-                
-                <div className="text-center space-y-2">
-                  <h3 className="font-semibold">Bereit für die Dance Party?</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tanz gemeinsam mit anderen zur Musik!
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3 w-full max-w-xs">
-                  <Button 
-                    onClick={handleJoinClick}
-                    size="lg"
-                    className="gap-2 w-full"
-                    disabled={!user}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {user ? 'Party beitreten' : 'Bitte einloggen'}
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="gap-2 w-full"
-                    onClick={handleShare}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Share2 className="h-4 w-4" />
-                    )}
-                    Freunde einladen
-                  </Button>
-                </div>
               </div>
+              
+              {/* Participants indicator */}
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.2 }}
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/10"
+              >
+                <Users className="h-4 w-4 text-white/70" />
+                <span className="text-sm font-semibold text-white">{totalParticipants}</span>
+                {isConnected && (
+                  <div className="relative ml-1">
+                    <div className="w-2 h-2 rounded-full bg-success" />
+                    <div className="absolute inset-0 w-2 h-2 rounded-full bg-success animate-ping" />
+                  </div>
+                )}
+              </motion.div>
+            </div>
+            
+            {/* Radio Music Visualizer */}
+            {isConnected && isRadioPlaying && showRadioVisualizer && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4"
+              >
+                <RadioMusicVisualizer 
+                  isActive={isRadioPlaying} 
+                  variant={visualizerVariant}
+                  className="h-10 w-full max-w-[280px] mx-auto" 
+                  barCount={24}
+                />
+              </motion.div>
+            )}
+            
+            {/* Microphone Visualizer (fallback when radio not playing) */}
+            {isConnected && !isRadioPlaying && (
+              <div className="flex justify-center mt-3">
+                <MicrophoneVisualizer isActive={isConnected && !isMuted} className="h-6" />
+              </div>
+            )}
+          </motion.div>
+
+          {/* Main content area */}
+          <div className="flex-1 flex flex-col overflow-hidden px-4">
+            {/* Floating Reactions */}
+            <AnimatePresence>
+              {reactions.map((reaction) => (
+                <FloatingReaction
+                  key={reaction.id}
+                  emoji={reaction.emoji}
+                  onComplete={() => {}}
+                />
+              ))}
+            </AnimatePresence>
+
+            {/* Error message */}
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-destructive/20 backdrop-blur-sm text-white text-sm p-3 rounded-2xl mb-4 text-center border border-destructive/30"
+              >
+                {error}
+              </motion.div>
+            )}
+
+            {/* Video grid */}
+            <div className="flex-1 overflow-auto">
+              {!isConnected && !isConnecting ? (
+                // Preview before joining
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center justify-center h-full gap-6"
+                >
+                  {/* Camera Preview */}
+                  <motion.div 
+                    initial={{ scale: 0.9 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring" }}
+                    className="relative w-52 aspect-[3/4] rounded-3xl overflow-hidden bg-black/30 backdrop-blur-sm border-2 border-white/20 shadow-2xl"
+                  >
+                    {localStream ? (
+                      <>
+                        <video
+                          ref={previewVideoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                          style={{ transform: 'scaleX(-1)' }}
+                        />
+                        {/* Overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+                        {/* Live badge */}
+                        <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-accent/90 text-accent-foreground text-[10px] font-bold flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-accent-foreground animate-pulse" />
+                          PREVIEW
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full gap-3">
+                        <div className="h-16 w-16 rounded-2xl bg-white/10 flex items-center justify-center">
+                          <Video className="h-8 w-8 text-white/50" />
+                        </div>
+                        <span className="text-white/50 text-sm">Kamera wird geladen...</span>
+                      </div>
+                    )}
+                  </motion.div>
+                  
+                  {/* Text */}
+                  <div className="text-center space-y-2">
+                    <h3 className="text-xl font-bold text-white">Bereit für die Dance Party? 🎉</h3>
+                    <p className="text-sm text-white/60 max-w-[250px]">
+                      Tanz gemeinsam mit anderen zur Musik und hab Spaß!
+                    </p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-3 w-full max-w-xs">
+                    <Button 
+                      onClick={handleJoinClick}
+                      size="lg"
+                      className="gap-2 w-full h-14 rounded-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-bold shadow-lg shadow-accent/30"
+                      disabled={!user}
+                    >
+                      <Sparkles className="h-5 w-5" />
+                      {user ? 'Party beitreten' : 'Bitte einloggen'}
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="gap-2 w-full h-12 rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                      onClick={handleShare}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-success" />
+                      ) : (
+                        <Share2 className="h-4 w-4" />
+                      )}
+                      Freunde einladen
+                    </Button>
+                  </div>
+                </motion.div>
             ) : isConnecting ? (
               // Connecting state
-              <div className="flex flex-col items-center justify-center h-full gap-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center h-full gap-4"
+              >
                 <motion.div
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent"
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                  className="h-14 w-14 rounded-full border-3 border-accent border-t-transparent"
                 />
-                <p className="text-muted-foreground">Verbinde zur Party...</p>
-              </div>
+                <p className="text-white/70 font-medium">Verbinde zur Party...</p>
+              </motion.div>
             ) : (
               // Connected - show video grid
-              <div ref={videoGridRef} className="grid grid-cols-2 gap-3 p-2">
+              <div ref={videoGridRef} className="grid grid-cols-2 gap-3">
                 <AnimatePresence>
                   {/* Local participant */}
                   {localParticipant && (
@@ -805,12 +894,25 @@ export const DancePartySheet = ({
 
                 {/* Empty slots hint */}
                 {participants.length === 0 && (
-                  <div className="aspect-[3/4] rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                    <div className="text-center text-muted-foreground text-sm p-4">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="aspect-[3/4] rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-sm"
+                  >
+                    <div className="text-center text-white/50 text-sm p-4">
                       <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      Warte auf andere Tänzer...
+                      <p>Warte auf andere Tänzer...</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-3 text-accent hover:text-accent/80"
+                        onClick={handleShare}
+                      >
+                        <Share2 className="h-4 w-4 mr-1" />
+                        Einladen
+                      </Button>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
                 
                 {/* Karaoke Overlay */}
@@ -1026,6 +1128,7 @@ export const DancePartySheet = ({
             </motion.div>
           )}
         </div>
+      </div>
       </SheetContent>
 
       {/* Group Photo Sheet */}
