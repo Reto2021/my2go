@@ -15,10 +15,9 @@ import {
   Wallet,
   Video,
   Image,
-  MessageCircle
+  MessageCircle,
+  Sparkles
 } from 'lucide-react';
-import { LiveChatButton } from '@/components/chat/LiveChatButton';
-import { DancePartyButton } from '@/components/video/DancePartyButton';
 import { cn } from '@/lib/utils';
 import { hapticToggle, hapticSuccess } from '@/lib/haptics';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
@@ -46,6 +45,9 @@ interface ExpandedRadioPlayerProps {
   onClose: () => void;
 }
 
+import { LiveChatSheet } from '@/components/chat/LiveChatSheet';
+import { DancePartySheet } from '@/components/video/DancePartySheet';
+
 export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProps) {
   const navigate = useNavigate();
   const auth = useAuthSafe();
@@ -70,6 +72,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   const [showVideo, setShowVideo] = useState(true);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationTaler, setCelebrationTaler] = useState(0);
+  const [showChatSheet, setShowChatSheet] = useState(false);
+  const [showPartySheet, setShowPartySheet] = useState(false);
   const [celebrationTierName, setCelebrationTierName] = useState('');
   const lastReachedTierRef = useRef<string | null>(null);
   const hasStartedTrackingRef = useRef(false);
@@ -486,54 +490,84 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </div>
             </motion.div>
 
-            {/* Controls Row: Chat + Play/Pause */}
-            <div className="flex items-center justify-center gap-6 mb-2">
-              {/* Chat Button */}
-              {nowPlaying && (
-                <LiveChatButton 
-                  songTitle={nowPlaying.title || 'Radio 2Go'} 
-                  songArtist={nowPlaying.artist}
-                />
-              )}
+            {/* Controls Row: Chat + Play/Pause + Party */}
+            <div className="flex items-center justify-center gap-8 mb-4">
+              {/* Chat Button with Label */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticToggle();
+                    setShowChatSheet(true);
+                  }}
+                  className="h-12 w-12 rounded-full flex items-center justify-center bg-pink-500/20 border border-pink-500/30 hover:bg-pink-500/30 active:scale-95 transition-all touch-manipulation"
+                >
+                  <MessageCircle className="h-5 w-5 text-pink-400" />
+                </button>
+                <span className="text-xs text-white/60">Chat</span>
+              </div>
               
               {/* Play/Pause Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  hapticToggle();
-                  togglePlay();
-                }}
-                disabled={isLoading}
-                className={cn(
-                  "h-16 w-16 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0 touch-manipulation active:scale-95",
-                  isPlaying 
-                    ? "bg-white text-secondary hover:bg-white/90" 
-                    : "bg-accent text-accent-foreground hover:bg-accent/90",
-                  isLoading && "opacity-50"
-                )}
-              >
-                {isLoading ? (
-                  <div className="h-6 w-6 sm:h-8 sm:w-8 border-3 border-current border-t-transparent rounded-full animate-spin" />
-                ) : isPlaying ? (
-                  <Pause className="h-6 w-6 sm:h-8 sm:w-8" />
-                ) : (
-                  <Play className="h-6 w-6 sm:h-8 sm:w-8 ml-1" />
-                )}
-              </button>
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticToggle();
+                    togglePlay();
+                  }}
+                  disabled={isLoading}
+                  className={cn(
+                    "h-18 w-18 sm:h-20 sm:w-20 rounded-full flex items-center justify-center transition-all flex-shrink-0 touch-manipulation active:scale-95",
+                    isPlaying 
+                      ? "bg-white text-secondary hover:bg-white/90" 
+                      : "bg-accent text-accent-foreground hover:bg-accent/90",
+                    isLoading && "opacity-50"
+                  )}
+                >
+                  {isLoading ? (
+                    <div className="h-6 w-6 sm:h-8 sm:w-8 border-3 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="h-7 w-7 sm:h-8 sm:w-8" />
+                  ) : (
+                    <Play className="h-7 w-7 sm:h-8 sm:w-8 ml-1" />
+                  )}
+                </button>
+              </div>
               
-              {/* Dance Party Button - für Live Stage, Karaoke, Duett */}
-              {nowPlaying && isPlaying && (
-                <DancePartyButton 
-                  songIdentifier={`${nowPlaying.title}-${nowPlaying.artist}`}
-                  songTitle={`${nowPlaying.title} - ${nowPlaying.artist}`}
-                />
-              )}
-              
-              {/* Placeholder when not playing */}
-              {(!nowPlaying || !isPlaying) && (
-                <div className="h-10 w-10" />
-              )}
+              {/* Dance Party Button with Label - always visible */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticToggle();
+                    setShowPartySheet(true);
+                  }}
+                  className="h-12 w-12 rounded-full flex items-center justify-center bg-primary/20 border border-primary/30 hover:bg-primary/30 active:scale-95 transition-all touch-manipulation relative"
+                >
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  {isPlaying && (
+                    <span className="absolute inset-0 rounded-full animate-ping bg-primary/20 pointer-events-none" />
+                  )}
+                </button>
+                <span className="text-xs text-white/60">Party</span>
+              </div>
             </div>
+            
+            {/* Chat Sheet */}
+            <LiveChatSheet
+              open={showChatSheet}
+              onOpenChange={setShowChatSheet}
+              songTitle={nowPlaying?.title || 'Radio 2Go'}
+              songArtist={nowPlaying?.artist}
+            />
+            
+            {/* Dance Party Sheet */}
+            <DancePartySheet
+              open={showPartySheet}
+              onOpenChange={setShowPartySheet}
+              songIdentifier={nowPlaying ? `${nowPlaying.title}-${nowPlaying.artist}` : 'radio-2go'}
+              songTitle={nowPlaying ? `${nowPlaying.title} - ${nowPlaying.artist}` : 'Radio 2Go'}
+            />
             
             {/* Song History - always show if available */}
             {songHistory.length > 0 && (
