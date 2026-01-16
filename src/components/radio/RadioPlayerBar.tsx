@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { hapticToggle } from "@/lib/haptics";
 import { supabase } from "@/integrations/supabase/client";
-import { LiveEventsBadge, LiveEventsPanel, LiveIndicator } from "./LiveEventsPanel";
+import { LiveEventsPanel, LiveIndicator } from "./LiveEventsPanel";
 import { useLiveEventsStore } from "@/lib/live-events-store";
 
 interface RadioPlayerBarProps {
@@ -170,9 +170,8 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
   
   // Live events
-  const { events, fetchEvents, hasLiveEvents, subscribeToRealtime } = useLiveEventsStore();
+  const { fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const [showLiveEvents, setShowLiveEvents] = useState(false);
-  const liveEventsCount = events.filter(e => e.isLive).length;
   
   // Fetch live events on mount and subscribe to realtime
   useEffect(() => {
@@ -706,16 +705,7 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
             )}
           </AnimatePresence>
           
-          {/* Live Events Badge - always visible but styled based on status */}
-          {!showMiniPlayer && (
-            <div className="absolute -top-12 right-0">
-              <LiveEventsBadge 
-                onClick={() => setShowLiveEvents(true)} 
-                eventCount={liveEventsCount}
-                hasLiveEvents={hasLiveEvents}
-              />
-            </div>
-          )}
+          {/* Live Events Badge removed - now in header only */}
         </div>
       </div>
       
