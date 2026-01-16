@@ -835,7 +835,9 @@ export const DancePartySheet = ({
                         <Button 
                           onClick={() => {
                             onOpenChange(false);
-                            navigate('/auth');
+                            setTimeout(() => {
+                              navigate('/auth');
+                            }, 300);
                           }}
                           size="lg"
                           className="gap-2 w-full h-14 rounded-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-bold shadow-lg shadow-accent/30"
