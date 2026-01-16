@@ -610,7 +610,7 @@ export const DancePartySheet = ({
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent 
         side="bottom" 
-        className="h-[90vh] rounded-t-3xl bg-gradient-to-b from-background to-background/95"
+        className="h-[90vh] rounded-t-3xl bg-gradient-to-b from-background to-background/95 z-[250]"
       >
         {/* Confetti overlay for applause */}
         <Confetti isActive={showConfetti} particleCount={80} duration={3000} playSound={false} />
