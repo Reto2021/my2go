@@ -976,6 +976,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean | null
+          max_per_user: number | null
           partner_id: string
           reward_type: Database["public"]["Enums"]["reward_type"]
           stock_remaining: number | null
@@ -995,6 +996,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          max_per_user?: number | null
           partner_id: string
           reward_type?: Database["public"]["Enums"]["reward_type"]
           stock_remaining?: number | null
@@ -1014,6 +1016,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          max_per_user?: number | null
           partner_id?: string
           reward_type?: Database["public"]["Enums"]["reward_type"]
           stock_remaining?: number | null
@@ -1272,6 +1275,10 @@ export type Database = {
       award_review_bonus: {
         Args: { _review_request_id: string; _user_id: string }
         Returns: Json
+      }
+      can_user_redeem_reward: {
+        Args: { _reward_id: string; _user_id: string }
+        Returns: boolean
       }
       check_and_award_badges: {
         Args: { _user_id: string }
@@ -1543,6 +1550,10 @@ export type Database = {
           lifetime_spent: number
           taler_balance: number
         }[]
+      }
+      get_user_remaining_redemptions: {
+        Args: { _reward_id: string; _user_id: string }
+        Returns: number
       }
       get_user_weekly_rank: {
         Args: { _user_id: string }
