@@ -170,14 +170,16 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
   
   // Live events
-  const { events, fetchEvents } = useLiveEventsStore();
+  const { events, fetchEvents, hasLiveEvents, subscribeToRealtime } = useLiveEventsStore();
   const [showLiveEvents, setShowLiveEvents] = useState(false);
   const liveEventsCount = events.filter(e => e.isLive).length;
   
-  // Fetch live events on mount
+  // Fetch live events on mount and subscribe to realtime
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    const unsubscribe = subscribeToRealtime();
+    return () => unsubscribe();
+  }, [fetchEvents, subscribeToRealtime]);
   
   const [isLocked, setIsLocked] = useState(false);
   const [lockRemaining, setLockRemaining] = useState(0);
@@ -704,12 +706,13 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
             )}
           </AnimatePresence>
           
-          {/* Live Events Badge - shows when events are live */}
-          {liveEventsCount > 0 && !showMiniPlayer && (
+          {/* Live Events Badge - always visible but styled based on status */}
+          {!showMiniPlayer && (
             <div className="absolute -top-12 right-0">
               <LiveEventsBadge 
                 onClick={() => setShowLiveEvents(true)} 
-                eventCount={liveEventsCount} 
+                eventCount={liveEventsCount}
+                hasLiveEvents={hasLiveEvents}
               />
             </div>
           )}
