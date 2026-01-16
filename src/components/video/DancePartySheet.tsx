@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { SwipeableSheetContent, SwipeHandle } from '@/components/ui/swipeable-sheet';
 import { Button } from '@/components/ui/button';
@@ -417,6 +418,7 @@ export const DancePartySheet = ({
   songIdentifier,
   songTitle
 }: DancePartySheetProps) => {
+  const navigate = useNavigate();
   const authContext = useAuth();
   const user = authContext?.user;
   const {
@@ -833,7 +835,7 @@ export const DancePartySheet = ({
                         <Button 
                           onClick={() => {
                             onOpenChange(false);
-                            window.location.href = '/auth';
+                            navigate('/auth');
                           }}
                           size="lg"
                           className="gap-2 w-full h-14 rounded-2xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-bold shadow-lg shadow-accent/30"
