@@ -14,12 +14,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+export type ParticipantRole = 'host' | 'spectator' | 'standard';
+
 export interface Participant {
   identity: string;
   name: string;
   isMuted: boolean;
   isVideoOff: boolean;
   isSpeaking: boolean;
+  role?: ParticipantRole;
 }
 
 export interface Reaction {
@@ -37,6 +40,15 @@ export interface ApplauseEvent {
   timestamp: number;
 }
 
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  message: string;
+  timestamp: number;
+  type: 'message' | 'join' | 'reaction';
+}
+
 export interface UseLiveKitRoomReturn {
   isConnected: boolean;
   isConnecting: boolean;
@@ -44,16 +56,21 @@ export interface UseLiveKitRoomReturn {
   localParticipant: Participant | null;
   error: string | null;
   room: Room | null;
-  connect: (roomName: string) => Promise<void>;
+  connect: (roomName: string, role?: ParticipantRole) => Promise<void>;
   disconnect: () => void;
   toggleMute: () => void;
   toggleVideo: () => void;
   sendReaction: (emoji: string) => void;
   sendApplause: () => void;
+  sendChatMessage: (message: string) => void;
   reactions: Reaction[];
   applauseEvents: ApplauseEvent[];
+  chatMessages: ChatMessage[];
   isMuted: boolean;
   isVideoOff: boolean;
+  localRole: ParticipantRole;
+  hosts: Participant[];
+  spectatorCount: number;
 }
 
 const REACTION_EMOJIS = ['🔥', '💃', '🕺', '👏', '❤️', '🎉', '😍', '🙌'];
@@ -69,7 +86,9 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [applauseEvents, setApplauseEvents] = useState<ApplauseEvent[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<Room | null>(null);
+  const [localRole, setLocalRole] = useState<ParticipantRole>('standard');
 
   const roomRef = useRef<Room | null>(null);
 
@@ -102,6 +121,11 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     }
   }, [applauseEvents]);
 
+  // Compute hosts and spectator count
+  const hosts = participants.filter(p => p.role === 'host' || !p.role);
+  const spectatorCount = participants.filter(p => p.role === 'spectator').length + 
+                         (localRole === 'spectator' ? 1 : 0);
+
   const getToken = async (roomName: string): Promise<{ token: string; url: string; participantName: string } | null> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -132,19 +156,29 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
       const audioTrack = p.getTrackPublication(Track.Source.Microphone);
       const videoTrack = p.getTrackPublication(Track.Source.Camera);
       
+      // Determine role from metadata if available
+      let role: ParticipantRole = 'standard';
+      try {
+        const metadata = p.metadata ? JSON.parse(p.metadata) : {};
+        role = metadata.role || 'standard';
+      } catch (e) {
+        // Ignore parse errors
+      }
+      
       remoteParticipants.push({
         identity: p.identity,
         name: p.name || p.identity,
         isMuted: audioTrack?.isMuted ?? true,
         isVideoOff: !videoTrack?.isSubscribed || videoTrack?.isMuted,
-        isSpeaking: p.isSpeaking
+        isSpeaking: p.isSpeaking,
+        role
       });
     });
 
     setParticipants(remoteParticipants);
   }, []);
 
-  const connect = useCallback(async (roomName: string) => {
+  const connect = useCallback(async (roomName: string, role: ParticipantRole = 'standard') => {
     if (!user) {
       toast.error('Bitte zuerst einloggen');
       return;
@@ -152,9 +186,10 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
 
     setIsConnecting(true);
     setError(null);
+    setLocalRole(role);
 
     try {
-      console.log('[useLiveKitRoom] Connecting to room:', roomName);
+      console.log('[useLiveKitRoom] Connecting to room:', roomName, 'as', role);
 
       // Get token
       const tokenData = await getToken(roomName);
@@ -183,22 +218,41 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
       setRoom(newRoom);
 
       // Set up event listeners
-      newRoom.on(RoomEvent.Connected, () => {
+      newRoom.on(RoomEvent.Connected, async () => {
         console.log('[useLiveKitRoom] Connected to room');
         setIsConnected(true);
         setIsConnecting(false);
+        
+        // Set metadata for role
+        try {
+          await newRoom.localParticipant.setMetadata(JSON.stringify({ role }));
+        } catch (e) {
+          console.warn('[useLiveKitRoom] Could not set metadata:', e);
+        }
         
         // Set local participant
         const local = newRoom.localParticipant;
         setLocalParticipant({
           identity: local.identity,
           name: local.name || tokenData.participantName,
-          isMuted: false,
-          isVideoOff: false,
-          isSpeaking: false
+          isMuted: role === 'spectator',
+          isVideoOff: role === 'spectator',
+          isSpeaking: false,
+          role
         });
 
-        toast.success('Dance Party beigetreten! 🕺💃');
+        // Add join message to chat
+        setChatMessages(prev => [...prev, {
+          id: `${Date.now()}-join`,
+          userId: user.id,
+          userName: tokenData.participantName,
+          message: '',
+          timestamp: Date.now(),
+          type: 'join'
+        }]);
+
+        const roleText = role === 'host' ? 'als Host' : role === 'spectator' ? 'als Zuschauer' : '';
+        toast.success(`Dance Party beigetreten ${roleText}! 🕺💃`);
       });
 
       newRoom.on(RoomEvent.Disconnected, () => {
@@ -206,12 +260,23 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
         setIsConnected(false);
         setParticipants([]);
         setLocalParticipant(null);
+        setChatMessages([]);
       });
 
       newRoom.on(RoomEvent.ParticipantConnected, (participant: RemoteParticipant) => {
         console.log('[useLiveKitRoom] Participant joined:', participant.identity);
         toast.success(`${participant.name || 'Someone'} ist beigetreten! 🎉`);
         updateParticipants(newRoom);
+        
+        // Add to chat
+        setChatMessages(prev => [...prev, {
+          id: `${Date.now()}-join-${participant.identity}`,
+          userId: participant.identity,
+          userName: participant.name || 'Someone',
+          message: '',
+          timestamp: Date.now(),
+          type: 'join'
+        }]);
       });
 
       newRoom.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
@@ -240,7 +305,7 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
         updateParticipants(newRoom);
       });
 
-      // Handle incoming data (reactions and applause)
+      // Handle incoming data (reactions, applause, and chat)
       newRoom.on(RoomEvent.DataReceived, (payload: Uint8Array, participant?: RemoteParticipant) => {
         try {
           const decoder = new TextDecoder();
@@ -261,6 +326,15 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
               participantName: participant?.name || 'Someone',
               timestamp: Date.now()
             }]);
+          } else if (data.type === 'chat') {
+            setChatMessages(prev => [...prev, {
+              id: `${Date.now()}-${Math.random()}`,
+              userId: participant?.identity || 'unknown',
+              userName: participant?.name || 'Someone',
+              message: data.message,
+              timestamp: Date.now(),
+              type: 'message'
+            }]);
           }
         } catch (e) {
           console.error('[useLiveKitRoom] Error parsing data:', e);
@@ -277,10 +351,16 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
       // Connect to room
       await newRoom.connect(tokenData.url, tokenData.token);
       
-      // Enable camera and microphone
-      await newRoom.localParticipant.enableCameraAndMicrophone();
-      
-      console.log('[useLiveKitRoom] Camera and microphone enabled');
+      // Enable camera and microphone only if not spectator
+      if (role !== 'spectator') {
+        await newRoom.localParticipant.enableCameraAndMicrophone();
+        console.log('[useLiveKitRoom] Camera and microphone enabled');
+      } else {
+        // Spectators don't publish video/audio
+        console.log('[useLiveKitRoom] Joined as spectator (no media)');
+        setIsMuted(true);
+        setIsVideoOff(true);
+      }
 
     } catch (err) {
       console.error('[useLiveKitRoom] Connect error:', err);
@@ -306,27 +386,29 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     setIsVideoOff(false);
     setReactions([]);
     setApplauseEvents([]);
+    setChatMessages([]);
+    setLocalRole('standard');
   }, []);
 
   const toggleMute = useCallback(async () => {
-    if (roomRef.current) {
+    if (roomRef.current && localRole !== 'spectator') {
       const local = roomRef.current.localParticipant;
       const newMuteState = !isMuted;
       
       await local.setMicrophoneEnabled(!newMuteState);
       setIsMuted(newMuteState);
     }
-  }, [isMuted]);
+  }, [isMuted, localRole]);
 
   const toggleVideo = useCallback(async () => {
-    if (roomRef.current) {
+    if (roomRef.current && localRole !== 'spectator') {
       const local = roomRef.current.localParticipant;
       const newVideoOffState = !isVideoOff;
       
       await local.setCameraEnabled(!newVideoOffState);
       setIsVideoOff(newVideoOffState);
     }
-  }, [isVideoOff]);
+  }, [isVideoOff, localRole]);
 
   const sendReaction = useCallback((emoji: string) => {
     if (roomRef.current && isConnected) {
@@ -363,6 +445,25 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     }
   }, [isConnected, user]);
 
+  const sendChatMessage = useCallback((message: string) => {
+    if (roomRef.current && isConnected && message.trim()) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(JSON.stringify({ type: 'chat', message: message.trim() }));
+      
+      roomRef.current.localParticipant.publishData(data, { reliable: true });
+      
+      // Also show locally
+      setChatMessages(prev => [...prev, {
+        id: `${Date.now()}-${Math.random()}`,
+        userId: user?.id || 'local',
+        userName: 'Du',
+        message: message.trim(),
+        timestamp: Date.now(),
+        type: 'message'
+      }]);
+    }
+  }, [isConnected, user]);
+
   return {
     isConnected,
     isConnecting,
@@ -376,10 +477,15 @@ export const useLiveKitRoom = (): UseLiveKitRoomReturn => {
     toggleVideo,
     sendReaction,
     sendApplause,
+    sendChatMessage,
     reactions,
     applauseEvents,
+    chatMessages,
     isMuted,
-    isVideoOff
+    isVideoOff,
+    localRole,
+    hosts,
+    spectatorCount
   };
 };
 
