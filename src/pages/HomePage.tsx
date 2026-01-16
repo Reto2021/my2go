@@ -239,14 +239,14 @@ interface BrowseModeHomeProps {
 
 function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
-  
-  // Fetch and subscribe to live events
+
+  // Fetch and subscribe to live events on mount
   useEffect(() => {
     fetchEvents();
     const unsubscribe = subscribeToRealtime();
     return () => unsubscribe();
   }, [fetchEvents, subscribeToRealtime]);
-  
+
   // Click on Live button redirects to login for non-authenticated users
   const handleLiveClick = () => {
     onLogin();
