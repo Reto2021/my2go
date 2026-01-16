@@ -444,6 +444,7 @@ export const DancePartySheet = ({
   const [showRadioVisualizer, setShowRadioVisualizer] = useState(true);
   const [visualizerVariant, setVisualizerVariant] = useState<'bars' | 'wave' | 'pulse'>('bars');
   const videoGridRef = useRef<HTMLDivElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
   
   // Audio effects state (for hosts)
   const [currentAudioEffect, setCurrentAudioEffect] = useState<AudioEffectType>('none');
@@ -529,6 +530,13 @@ export const DancePartySheet = ({
       setLocalStream(null);
     }
   }, [open, isConnected, localStream]);
+  
+  // Attach stream to video element when available
+  useEffect(() => {
+    if (previewVideoRef.current && localStream) {
+      previewVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
 
   const handleJoin = async (role?: ParticipantRole) => {
     // Stop preview stream before connecting
@@ -705,12 +713,10 @@ export const DancePartySheet = ({
                 <div className="relative w-48 aspect-[3/4] rounded-xl overflow-hidden bg-muted">
                   {localStream ? (
                     <video
+                      ref={previewVideoRef}
                       autoPlay
                       playsInline
                       muted
-                      ref={(el) => {
-                        if (el) el.srcObject = localStream;
-                      }}
                       className="w-full h-full object-cover"
                       style={{ transform: 'scaleX(-1)' }}
                     />
