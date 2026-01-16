@@ -15,9 +15,11 @@ import {
   Check,
   Palette,
   ImageIcon,
-  Radio
+  Radio,
+  Crown,
+  Film
 } from 'lucide-react';
-import { useLiveKitRoom, Participant, REACTION_EMOJIS } from '@/hooks/useLiveKitRoom';
+import { useLiveKitRoom, Participant, REACTION_EMOJIS, ParticipantRole } from '@/hooks/useLiveKitRoom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -45,6 +47,15 @@ import {
 import { MicrophoneVisualizer, RadioMusicVisualizer } from './AudioVisualizer';
 import { RealtimeBackgroundProcessor } from '@/lib/background-removal';
 import { useRadioStore } from '@/lib/radio-store';
+import { 
+  PartyModeSelector, 
+  PartyMode, 
+  PARTY_MODES, 
+  RoleSelector, 
+  StageRole 
+} from './DancePartyModes';
+import { LiveStageView } from './LiveStageView';
+import { DuetRecorder } from './DuetRecorder';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -399,11 +410,21 @@ export const DancePartySheet = ({
     toggleVideo,
     sendReaction,
     sendApplause,
+    sendChatMessage,
     reactions,
     applauseEvents,
+    chatMessages,
     isMuted,
-    isVideoOff
+    isVideoOff,
+    localRole,
+    hosts,
+    spectatorCount
   } = useLiveKitRoom();
+
+  // Party mode state
+  const [partyMode, setPartyMode] = useState<PartyMode>('standard');
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [showDuetRecorder, setShowDuetRecorder] = useState(false);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [currentFilter, setCurrentFilter] = useState<CameraFilterType>('none');
@@ -465,13 +486,39 @@ export const DancePartySheet = ({
     };
   }, [open, isConnected, isConnecting]);
 
-  const handleJoin = async () => {
+  const handleJoin = async (role?: ParticipantRole) => {
     // Stop preview stream before connecting
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
       setLocalStream(null);
     }
-    await connect(roomName);
+    
+    // For live-stage mode, we need to know the role
+    const connectRole = partyMode === 'live-stage' ? (role || 'spectator') : 
+                        partyMode === 'duet' ? 'host' : 'standard';
+    
+    await connect(roomName, connectRole);
+    setShowRoleSelector(false);
+  };
+
+  const handleModeChange = (mode: PartyMode) => {
+    setPartyMode(mode);
+    // Reset role selector when mode changes
+    setShowRoleSelector(false);
+    setShowDuetRecorder(false);
+  };
+
+  const handleJoinClick = () => {
+    if (partyMode === 'live-stage') {
+      // Show role selector for live stage
+      setShowRoleSelector(true);
+    } else {
+      handleJoin();
+    }
+  };
+
+  const handleRoleSelect = (role: StageRole) => {
+    handleJoin(role);
   };
 
   const handleLeave = () => {
@@ -638,7 +685,7 @@ export const DancePartySheet = ({
                 </div>
 
                 <Button 
-                  onClick={handleJoin}
+                  onClick={handleJoinClick}
                   size="lg"
                   className="gap-2"
                   disabled={!user}
