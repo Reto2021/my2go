@@ -191,8 +191,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           initial={{ opacity: 0, y: '100%' }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          transition={{ type: 'spring', damping: 30, stiffness: 350, mass: 0.8 }}
           className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
+          style={{ willChange: 'transform, opacity' }}
         >
           {/* Header with integrated close button and swipe indicator */}
           <div 
@@ -395,14 +396,47 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     </div>
                   </div>
                 ) : (
-                  /* Login Prompt for unauthenticated users */
+                  /* Login Prompt for unauthenticated users - show earned points */
                   <div className="bg-white/10 rounded-2xl p-4 text-center">
-                    <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="flex items-center justify-center gap-2 mb-2">
                       <Coins className="h-5 w-5 text-accent" />
                       <span className="text-base font-bold text-white">2Go Taler verdienen</span>
                     </div>
+                    
+                    {/* Show earned points even when not logged in */}
+                    {currentTier && (
+                      <div className="flex items-center justify-center gap-2 mb-3 py-2 px-4 bg-accent/20 rounded-xl">
+                        <span className="text-accent font-bold text-lg">+{currentTier.taler_reward}</span>
+                        <span className="text-white/80 text-sm">Taler gesammelt!</span>
+                      </div>
+                    )}
+                    
+                    {/* Progress to next tier */}
+                    {nextTier && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <Clock className="h-3.5 w-3.5 text-white/60" />
+                          <span className="text-accent font-semibold text-sm tabular-nums">
+                            {formatCountdown(remainingSeconds)}
+                          </span>
+                          <span className="text-white/50 text-xs">bis +{nextTier.taler_reward} Taler</span>
+                        </div>
+                        <div className="relative h-2 bg-white/10 rounded-full overflow-hidden">
+                          <motion.div
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-primary rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-white/70 mb-4">
-                      Melde dich an, um beim Radiohören Taler zu sammeln und exklusive Gutscheine einzulösen!
+                      {currentTier 
+                        ? 'Jetzt anmelden, um deine Taler zu sichern!'
+                        : 'Melde dich an, um beim Radiohören Taler zu sammeln!'
+                      }
                     </p>
                     <button
                       type="button"
@@ -413,7 +447,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-accent text-accent-foreground font-semibold text-sm active:scale-95 transition-transform touch-manipulation"
                     >
                       <Wallet className="h-4 w-4" />
-                      Kostenlos anmelden
+                      {currentTier ? 'Taler sichern & anmelden' : 'Kostenlos anmelden'}
                     </button>
                   </div>
                 )}
