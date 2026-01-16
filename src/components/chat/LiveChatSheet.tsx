@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, MessageCircleHeart, Users, Music, Sparkles } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -20,6 +21,7 @@ interface LiveChatSheetProps {
 }
 
 export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: LiveChatSheetProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const songIdentifier = `${songTitle}${songArtist ? `-${songArtist}` : ''}`.toLowerCase().replace(/\s+/g, '-');
   const { messages, isLoading, sendMessage, onlineCount } = useLiveChat(songIdentifier);
@@ -246,7 +248,7 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
                 <Button
                   onClick={() => {
                     onOpenChange(false);
-                    window.location.href = '/auth';
+                    navigate('/auth');
                   }}
                   className="w-full h-11 rounded-xl bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 text-accent-foreground font-semibold shadow-lg shadow-accent/30"
                 >
