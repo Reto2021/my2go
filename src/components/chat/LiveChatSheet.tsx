@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, MessageCircleHeart, Users, Music, Sparkles } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { SwipeableSheetContent, SwipeHandle } from '@/components/ui/swipeable-sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -70,18 +71,17 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
         {/* Decorative glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-40 bg-gradient-to-b from-accent/20 via-primary/10 to-transparent blur-3xl pointer-events-none" />
         
-        {/* Content */}
-        <div className="relative h-full flex flex-col">
+        {/* Swipeable Content */}
+        <SwipeableSheetContent onClose={() => onOpenChange(false)} className="relative flex flex-col">
+          {/* Swipe Handle */}
+          <SwipeHandle />
+          
           {/* Header */}
           <motion.div 
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="flex-shrink-0 px-5 pt-4 pb-3"
+            className="flex-shrink-0 px-5 pb-3"
           >
-            {/* Swipe indicator */}
-            <div className="flex justify-center mb-4">
-              <div className="w-10 h-1 rounded-full bg-white/30" />
-            </div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -255,7 +255,7 @@ export function LiveChatSheet({ open, onOpenChange, songTitle, songArtist }: Liv
               </div>
             )}
           </motion.div>
-        </div>
+        </SwipeableSheetContent>
       </SheetContent>
     </Sheet>
   );
