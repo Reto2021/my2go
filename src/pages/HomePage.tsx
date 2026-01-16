@@ -5,7 +5,7 @@ import { useLocation } from '@/lib/location';
 import { getRewards, getPartnersWithMinRewardCost, Reward, PartnerWithMinCost } from '@/lib/supabase-helpers';
 import { prefetchCommonRoutes } from '@/lib/route-prefetch';
 import { DancePartySheet } from '@/components/video/DancePartySheet';
-import { Navigation, X } from 'lucide-react';
+import { LocationPermissionPrompt } from '@/components/location/LocationPermissionPrompt';
 
 // Extracted components
 import { 
@@ -148,34 +148,12 @@ export default function HomePage() {
   return (
     <>
       {/* Location Permission Prompt */}
-      {showLocationPrompt && (
-        <div className="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="card-base p-6 max-w-sm w-full text-center shadow-strong animate-in">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full mx-auto mb-4 bg-accent/10">
-              <Navigation className="h-8 w-8 text-accent" />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Gutscheine in deiner Nähe</h2>
-            <p className="text-muted-foreground mb-6">
-              Erlaube Standortzugriff, um nur Gutscheine von Partnern in deiner Region zu sehen.
-            </p>
-            <div className="space-y-3">
-              <button 
-                className="btn-primary w-full"
-                onClick={handleAllowLocation}
-                disabled={isRequestingLocation}
-              >
-                {isRequestingLocation ? 'Wird ermittelt...' : 'Standort erlauben'}
-              </button>
-              <button 
-                className="btn-ghost w-full text-muted-foreground"
-                onClick={handleDenyLocation}
-              >
-                Später
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LocationPermissionPrompt
+        isOpen={showLocationPrompt}
+        isRequesting={isRequestingLocation}
+        onAllow={handleAllowLocation}
+        onDeny={handleDenyLocation}
+      />
       
       <SessionModeHome 
         displayName={profile?.display_name || profile?.first_name} 
