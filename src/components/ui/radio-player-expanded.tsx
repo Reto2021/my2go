@@ -18,6 +18,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { LiveChatButton } from '@/components/chat/LiveChatButton';
+import { DancePartyButton } from '@/components/video/DancePartyButton';
 import { cn } from '@/lib/utils';
 import { hapticToggle, hapticSuccess } from '@/lib/haptics';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
@@ -520,8 +521,18 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 )}
               </button>
               
-              {/* Placeholder for symmetry */}
-              <div className="h-10 w-10" />
+              {/* Dance Party Button - für Live Stage, Karaoke, Duett */}
+              {nowPlaying && isPlaying && (
+                <DancePartyButton 
+                  songIdentifier={`${nowPlaying.title}-${nowPlaying.artist}`}
+                  songTitle={`${nowPlaying.title} - ${nowPlaying.artist}`}
+                />
+              )}
+              
+              {/* Placeholder when not playing */}
+              {(!nowPlaying || !isPlaying) && (
+                <div className="h-10 w-10" />
+              )}
             </div>
             
             {/* Song History - always show if available */}
