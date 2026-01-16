@@ -154,6 +154,78 @@ export type Database = {
         }
         Relationships: []
       }
+      live_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ended_at: string | null
+          event_type: string
+          host_avatar_url: string | null
+          host_name: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          is_live: boolean
+          peak_viewers: number | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          started_at: string | null
+          stream_url: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          viewer_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ended_at?: string | null
+          event_type?: string
+          host_avatar_url?: string | null
+          host_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_live?: boolean
+          peak_viewers?: number | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          started_at?: string | null
+          stream_url: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          viewer_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ended_at?: string | null
+          event_type?: string
+          host_avatar_url?: string | null
+          host_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_live?: boolean
+          peak_viewers?: number | null
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          started_at?: string | null
+          stream_url?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
       partner_admins: {
         Row: {
           can_confirm_redemptions: boolean | null

@@ -18,6 +18,9 @@ import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { ReferralGameCard } from '@/components/home/ReferralGameCard';
 import { InstallBanner } from '@/components/home/InstallBanner';
 import { DancePartySheet } from '@/components/video/DancePartySheet';
+import { LiveHeaderButton } from '@/components/radio/LiveEventsPanel';
+import { LiveEventsPanel } from '@/components/radio/LiveEventsPanel';
+import { useLiveEventsStore } from '@/lib/live-events-store';
 import {
   Gift,
   MapPin,
@@ -440,6 +443,16 @@ function SessionModeHome({
   onRequestLocation,
   isRequestingLocation
 }: SessionModeHomeProps) {
+  const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
+  const [showLiveEvents, setShowLiveEvents] = useState(false);
+  
+  // Fetch and subscribe to live events
+  useEffect(() => {
+    fetchEvents();
+    const unsubscribe = subscribeToRealtime();
+    return () => unsubscribe();
+  }, [fetchEvents, subscribeToRealtime]);
+  
   // Time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -450,18 +463,30 @@ function SessionModeHome({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Compact Header with Greeting + Live Activity */}
+      {/* Compact Header with Greeting + Live Activity + Live Button */}
       <header className="container pt-4 pb-3">
         <div className="animate-in space-y-2">
-          {/* Greeting row */}
-          <p className="text-muted-foreground">
-            {getGreeting()}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
-          </p>
+          {/* Greeting row with Live button */}
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">
+              {getGreeting()}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
+            </p>
+            <LiveHeaderButton 
+              onClick={() => setShowLiveEvents(true)}
+              hasLiveEvents={hasLiveEvents}
+            />
+          </div>
           
           {/* Live Activity Ticker - Social Proof */}
           <ActivityTicker className="text-xs" />
         </div>
       </header>
+      
+      {/* Live Events Panel */}
+      <LiveEventsPanel 
+        isOpen={showLiveEvents} 
+        onClose={() => setShowLiveEvents(false)} 
+      />
       
       {/* Install Banner - for users who haven't installed the PWA */}
       <section className="container pb-3">

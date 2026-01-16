@@ -10,7 +10,8 @@ import {
   Trash2,
   Plus,
   ExternalLink,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,39 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { LiveIndicator } from '@/components/radio/LiveEventsPanel';
-import { EVENT_TYPES, EventType, LiveEvent } from '@/lib/live-events-store';
-
-// Mock data for now - in production this would come from Supabase
-const mockEvents: LiveEvent[] = [
-  {
-    id: '1',
-    title: 'Sonntagskonzert',
-    description: 'Live-Übertragung aus der Konzerthalle',
-    type: 'concert',
-    streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    hostName: 'Konzerthalle Berlin',
-    startTime: new Date(),
-    isLive: true,
-    viewerCount: 234,
-    category: 'Musik',
-    tags: ['klassik', 'orchester'],
-    isFeatured: true
-  },
-  {
-    id: '2',
-    title: 'Abendgottesdienst',
-    description: 'Livestream aus der Stadtkirche',
-    type: 'church',
-    streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    hostName: 'Stadtkirche Köln',
-    startTime: new Date(),
-    isLive: false,
-    viewerCount: 0,
-    category: 'Kirche',
-    tags: ['gottesdienst', 'gemeinde'],
-    isFeatured: false
-  }
-];
+import { EVENT_TYPES, EventType, LiveEvent, useLiveEventsStore } from '@/lib/live-events-store';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EventFormData {
   title: string;
@@ -76,10 +46,16 @@ const initialFormData: EventFormData = {
 };
 
 const AdminLiveEvents = () => {
-  const [events, setEvents] = useState<LiveEvent[]>(mockEvents);
+  const { events, fetchEvents, isLoadingEvents } = useLiveEventsStore();
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<EventFormData>(initialFormData);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Fetch events on mount
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
   
   const handleCreate = () => {
     setIsCreating(true);
@@ -92,55 +68,102 @@ const AdminLiveEvents = () => {
     setIsCreating(false);
     setFormData({
       title: event.title,
-      description: event.description,
+      description: event.description || '',
       type: event.type,
       streamUrl: event.streamUrl,
-      hostName: event.hostName,
+      hostName: event.hostName || '',
       isLive: event.isLive,
       isFeatured: event.isFeatured
     });
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.title || !formData.streamUrl) {
       toast.error('Titel und Stream-URL sind erforderlich');
       return;
     }
     
-    if (isCreating) {
-      const newEvent: LiveEvent = {
-        id: Date.now().toString(),
-        ...formData,
-        startTime: new Date(),
-        viewerCount: 0,
-        category: EVENT_TYPES[formData.type].label,
-        tags: []
-      };
-      setEvents([...events, newEvent]);
-      toast.success('Event erstellt!');
-    } else if (editingId) {
-      setEvents(events.map(e => 
-        e.id === editingId 
-          ? { ...e, ...formData }
-          : e
-      ));
-      toast.success('Event aktualisiert!');
-    }
+    setIsSaving(true);
     
-    setIsCreating(false);
-    setEditingId(null);
-    setFormData(initialFormData);
+    try {
+      if (isCreating) {
+        const { error } = await supabase
+          .from('live_events')
+          .insert({
+            title: formData.title,
+            description: formData.description || null,
+            event_type: formData.type,
+            stream_url: formData.streamUrl,
+            host_name: formData.hostName || null,
+            is_live: formData.isLive,
+            is_featured: formData.isFeatured
+          });
+        
+        if (error) throw error;
+        toast.success('Event erstellt!');
+      } else if (editingId) {
+        const { error } = await supabase
+          .from('live_events')
+          .update({
+            title: formData.title,
+            description: formData.description || null,
+            event_type: formData.type,
+            stream_url: formData.streamUrl,
+            host_name: formData.hostName || null,
+            is_live: formData.isLive,
+            is_featured: formData.isFeatured,
+            started_at: formData.isLive ? new Date().toISOString() : null
+          })
+          .eq('id', editingId);
+        
+        if (error) throw error;
+        toast.success('Event aktualisiert!');
+      }
+      
+      await fetchEvents();
+      setIsCreating(false);
+      setEditingId(null);
+      setFormData(initialFormData);
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setIsSaving(false);
+    }
   };
   
-  const handleDelete = (id: string) => {
-    setEvents(events.filter(e => e.id !== id));
-    toast.success('Event gelöscht');
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('live_events')
+        .update({ is_active: false })
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast.success('Event gelöscht');
+      await fetchEvents();
+    } catch (error) {
+      toast.error('Fehler beim Löschen');
+    }
   };
   
-  const handleToggleLive = (id: string) => {
-    setEvents(events.map(e => 
-      e.id === id ? { ...e, isLive: !e.isLive } : e
-    ));
+  const handleToggleLive = async (id: string, currentlyLive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('live_events')
+        .update({ 
+          is_live: !currentlyLive,
+          started_at: !currentlyLive ? new Date().toISOString() : null,
+          ended_at: currentlyLive ? new Date().toISOString() : null
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      await fetchEvents();
+      toast.success(currentlyLive ? 'Stream beendet' : 'Stream gestartet!');
+    } catch (error) {
+      toast.error('Fehler beim Aktualisieren');
+    }
   };
   
   const liveCount = events.filter(e => e.isLive).length;
@@ -271,8 +294,12 @@ const AdminLiveEvents = () => {
                 </div>
                 
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={handleSave} className="gap-2">
-                    <Save className="h-4 w-4" />
+                  <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
                     Speichern
                   </Button>
                   <Button 
@@ -293,7 +320,11 @@ const AdminLiveEvents = () => {
       
       {/* Events List */}
       <div className="grid gap-4">
-        {events.length === 0 ? (
+        {isLoadingEvents ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : events.length === 0 ? (
           <Card className="p-8 text-center">
             <Tv className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
             <p className="text-muted-foreground">Noch keine Events erstellt</p>
@@ -303,7 +334,7 @@ const AdminLiveEvents = () => {
           </Card>
         ) : (
           events.map((event) => {
-            const typeInfo = EVENT_TYPES[event.type];
+            const typeInfo = EVENT_TYPES[event.type] || EVENT_TYPES.other;
             
             return (
               <Card key={event.id} className={cn(
@@ -333,7 +364,7 @@ const AdminLiveEvents = () => {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        {event.hostName}
+                        {event.hostName || 'Kein Host angegeben'}
                       </p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -351,7 +382,7 @@ const AdminLiveEvents = () => {
                       <Button
                         variant={event.isLive ? "default" : "outline"}
                         size="sm"
-                        onClick={() => handleToggleLive(event.id)}
+                        onClick={() => handleToggleLive(event.id, event.isLive)}
                         className={cn(
                           "gap-1",
                           event.isLive && "bg-green-500 hover:bg-green-600"

@@ -103,11 +103,11 @@ export const LiveEventCard = ({ event, isActive, onJoin }: LiveEventCardProps) =
 interface LiveEventsBadgeProps {
   onClick: () => void;
   eventCount: number;
+  hasLiveEvents: boolean;
 }
 
-export const LiveEventsBadge = ({ onClick, eventCount }: LiveEventsBadgeProps) => {
-  if (eventCount === 0) return null;
-  
+export const LiveEventsBadge = ({ onClick, eventCount, hasLiveEvents }: LiveEventsBadgeProps) => {
+  // Always show badge, but with different styles based on live status
   return (
     <motion.button
       initial={{ opacity: 0, scale: 0.8 }}
@@ -116,15 +116,49 @@ export const LiveEventsBadge = ({ onClick, eventCount }: LiveEventsBadgeProps) =
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full",
-        "bg-gradient-to-r from-green-500 to-emerald-500 text-white",
-        "shadow-lg shadow-green-500/20"
+        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all",
+        hasLiveEvents
+          ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/20"
+          : "bg-muted text-muted-foreground border border-border"
       )}
     >
-      <LiveIndicator size="sm" />
-      <Tv className="h-3.5 w-3.5" />
-      <span className="text-xs font-medium">{eventCount} Live</span>
+      {hasLiveEvents ? (
+        <>
+          <LiveIndicator size="sm" />
+          <Tv className="h-3.5 w-3.5" />
+          <span className="text-xs font-medium">{eventCount} Live</span>
+        </>
+      ) : (
+        <>
+          <Tv className="h-3.5 w-3.5" />
+          <span className="text-xs">Live</span>
+        </>
+      )}
     </motion.button>
+  );
+};
+
+// Compact header button for homepage
+interface LiveHeaderButtonProps {
+  onClick: () => void;
+  hasLiveEvents: boolean;
+}
+
+export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonProps) => {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all",
+        hasLiveEvents
+          ? "bg-green-500/15 text-green-600 dark:text-green-400"
+          : "bg-muted/50 text-muted-foreground"
+      )}
+    >
+      {hasLiveEvents && <LiveIndicator size="sm" />}
+      <Tv className="h-3 w-3" />
+      <span>Live</span>
+    </button>
   );
 };
 
