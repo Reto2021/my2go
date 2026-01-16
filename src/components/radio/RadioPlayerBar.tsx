@@ -359,19 +359,19 @@ export function RadioPlayerBar({ onExpand, onStreakDetailsOpen }: RadioPlayerBar
       {/* Fixed bar above BottomNav - using higher z-index and fixed pixel value for consistency */}
       <div className="fixed bottom-[100px] left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-3 pointer-events-none" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="relative pointer-events-auto">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {showMiniPlayer ? (
               /* ===== STATE 3: Mini Player (Radio Playing) ===== */
               <motion.div
                 key="mini-player"
-                initial={{ y: 60, opacity: 0, scale: 0.9 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ y: 100, opacity: 0, scale: 0.9 }}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
                 transition={{ 
                   type: "spring", 
-                  damping: 30, 
-                  stiffness: 200,
-                  opacity: { duration: 0.25 }
+                  damping: 25, 
+                  stiffness: 300,
+                  opacity: { duration: 0.15 }
                 }}
                 drag="y"
                 dragConstraints={{ top: 0, bottom: 0 }}
