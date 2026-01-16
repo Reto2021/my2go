@@ -52,7 +52,7 @@ export function TierCelebration({ isVisible, talerAmount, tierName, nextTierInfo
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none"
             >
               <div className="relative w-full max-w-xs pointer-events-auto">
                 {/* Glow effect */}
