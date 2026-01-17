@@ -1,7 +1,12 @@
 import { QuizAnswers } from '@/lib/partner-quiz-calculations';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { TrendingUp, Users, Handshake, Zap } from 'lucide-react';
+import { TrendingUp, Users, Handshake, Zap, Star, MessageSquare, BarChart3 } from 'lucide-react';
+import { 
+  REVIEW_COUNT_OPTIONS, 
+  REVIEW_RATING_OPTIONS, 
+  REVIEW_PROCESS_OPTIONS 
+} from '@/lib/partner-quiz-config';
 
 interface Props {
   answers: QuizAnswers;
@@ -14,11 +19,11 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
       <div className="text-center mb-4">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-medium mb-3">
           <TrendingUp className="w-4 h-4" />
-          Optional – Bonus-Potenzial
+          Mehrbesuche & Wachstum
         </div>
-        <h3 className="font-semibold text-lg mb-1">Uplift berechnen</h3>
+        <h3 className="font-semibold text-lg mb-1">So sieht My2Go bei Ihnen nach 12 Monaten aus</h3>
         <p className="text-sm text-muted-foreground">
-          Schätzen Sie das zusätzliche Umsatzpotenzial (keine Garantie, nur Orientierung).
+          Mehrbesuche sind der Kernhebel im Gastro/Retail. Schätzen Sie Ihr Potenzial.
         </p>
       </div>
 
@@ -130,6 +135,92 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
               onClick={() => updateAnswers({ partnerCommitment: opt.value as any })}
               className={`w-full text-left p-4 rounded-xl transition-all ${
                 answers.partnerCommitment === opt.value
+                  ? 'bg-primary/10 border-2 border-primary'
+                  : 'bg-card border-2 border-border hover:border-primary/50'
+              }`}
+            >
+              <p className="font-medium">{opt.label}</p>
+              <p className="text-sm text-muted-foreground">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="relative py-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-4 text-sm text-muted-foreground flex items-center gap-2">
+            <Star className="w-4 h-4 text-amber-500" />
+            Review-Management
+          </span>
+        </div>
+      </div>
+
+      {/* Q_R1: Google Reviews Count */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-muted-foreground" />
+          Anzahl Google-Bewertungen
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {REVIEW_COUNT_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => updateAnswers({ reviewCount: opt.value })}
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 min-w-[100px] ${
+                answers.reviewCount === opt.value
+                  ? 'bg-primary text-primary-foreground border-2 border-primary'
+                  : 'bg-card border-2 border-border hover:border-primary/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Q_R2: Average Rating */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <Star className="w-4 h-4 text-amber-500" />
+          Durchschnittliche Bewertung
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {REVIEW_RATING_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => updateAnswers({ reviewRating: opt.value })}
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 min-w-[100px] ${
+                answers.reviewRating === opt.value
+                  ? 'bg-primary text-primary-foreground border-2 border-primary'
+                  : 'bg-card border-2 border-border hover:border-primary/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Q_R3: Review Process */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <MessageSquare className="w-4 h-4 text-muted-foreground" />
+          Wie fragen Sie nach Bewertungen?
+        </Label>
+        <div className="space-y-2">
+          {REVIEW_PROCESS_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => updateAnswers({ reviewProcess: opt.value })}
+              className={`w-full text-left p-4 rounded-xl transition-all ${
+                answers.reviewProcess === opt.value
                   ? 'bg-primary/10 border-2 border-primary'
                   : 'bg-card border-2 border-border hover:border-primary/50'
               }`}
