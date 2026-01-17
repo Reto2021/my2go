@@ -328,16 +328,15 @@ export default function PartnerPOSMaterials() {
 
       {/* Hidden Elements for PDF Generation */}
       <div className="fixed left-[-9999px] top-0" aria-hidden="true">
-        {/* QR Card Template */}
+        {/* QR Card Template - Clean, minimal A6 design */}
         <div 
           ref={qrCardRef} 
           style={{ 
             width: '420px', 
             height: '595px', 
-            padding: '40px',
-            backgroundColor: 'white',
+            backgroundColor: '#ffffff',
             display: 'none',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
           <div style={{ 
@@ -347,183 +346,197 @@ export default function PartnerPOSMaterials() {
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            border: '2px solid #e5e5e5',
-            borderRadius: '24px',
-            padding: '40px',
+            padding: '48px',
           }}>
-            <img 
-              src={logo2Go} 
-              alt="My 2Go" 
-              style={{ height: '48px', marginBottom: '24px' }}
-              crossOrigin="anonymous"
-            />
-            <h2 style={{ 
-              fontSize: '28px', 
-              fontWeight: 'bold', 
-              marginBottom: '8px',
-              color: '#1a1a1a',
-            }}>
-              Sammle Taler!
-            </h2>
-            <p style={{ 
-              fontSize: '16px', 
-              color: '#666',
-              marginBottom: '32px',
-            }}>
-              Scanne den QR-Code und erhalte Belohnungen
-            </p>
+            {/* QR Code - main focus */}
             <div style={{
-              padding: '16px',
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              border: '1px solid #e5e5e5',
-              marginBottom: '24px',
+              padding: '20px',
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              boxShadow: '0 2px 16px rgba(0,0,0,0.06)',
+              marginBottom: '40px',
             }}>
               <QRCodeSVG 
                 value={partnerUrl || 'https://my2go.lovable.app'} 
-                size={180}
-                level="M"
+                size={200}
+                level="H"
+                bgColor="#ffffff"
+                fgColor="#18181b"
               />
             </div>
+            
+            {/* Partner Name */}
             <p style={{ 
-              fontSize: '18px', 
+              fontSize: '22px', 
               fontWeight: '600',
-              color: '#1a1a1a',
-              marginBottom: '4px',
+              color: '#18181b',
+              marginBottom: '8px',
+              letterSpacing: '-0.02em',
             }}>
               {partner?.name}
             </p>
+            
+            {/* Simple CTA */}
             <p style={{ 
-              fontSize: '12px', 
-              color: '#999',
+              fontSize: '15px', 
+              color: '#71717a',
+              marginBottom: '48px',
+              fontWeight: '400',
             }}>
-              my2go.lovable.app
+              Scannen & Vorteile sichern
             </p>
+            
+            {/* Subtle branding */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              opacity: 0.6,
+            }}>
+              <img 
+                src={logo2Go} 
+                alt="My 2Go" 
+                style={{ height: '20px' }}
+                crossOrigin="anonymous"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Sticker Template */}
+        {/* Sticker Template - Minimalist circle */}
         <div 
           ref={stickerRef}
           style={{ 
-            width: '300px', 
-            height: '300px', 
-            backgroundColor: 'white',
+            width: '320px', 
+            height: '320px', 
+            backgroundColor: '#ffffff',
             display: 'none',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            padding: '10px',
           }}
         >
           <div style={{ 
-            width: '100%',
-            height: '100%',
+            width: '300px',
+            height: '300px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
             borderRadius: '50%',
-            border: '4px solid #6366f1',
-            backgroundColor: 'white',
-            padding: '24px',
+            border: '2px solid #e4e4e7',
+            backgroundColor: '#ffffff',
           }}>
-            <p style={{ 
-              fontSize: '12px', 
-              fontWeight: '600',
-              color: '#6366f1',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              marginBottom: '8px',
-            }}>
-              Partner von
-            </p>
-            <img 
-              src={logo2Go} 
-              alt="My 2Go" 
-              style={{ height: '28px', marginBottom: '12px' }}
-              crossOrigin="anonymous"
-            />
+            {/* QR Code */}
             <div style={{
-              padding: '8px',
-              backgroundColor: 'white',
-              borderRadius: '8px',
+              marginBottom: '12px',
             }}>
               <QRCodeSVG 
                 value={partnerUrl || 'https://my2go.lovable.app'} 
-                size={100}
-                level="M"
+                size={120}
+                level="H"
+                bgColor="#ffffff"
+                fgColor="#18181b"
               />
             </div>
+            
+            {/* Minimal text */}
             <p style={{ 
-              fontSize: '10px', 
-              color: '#666',
-              marginTop: '8px',
+              fontSize: '11px', 
+              fontWeight: '500',
+              color: '#71717a',
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
             }}>
-              Scanne & sammle Taler
+              Scannen für Vorteile
             </p>
+            
+            {/* Small logo */}
+            <img 
+              src={logo2Go} 
+              alt="My 2Go" 
+              style={{ height: '14px', marginTop: '10px', opacity: 0.5 }}
+              crossOrigin="anonymous"
+            />
           </div>
         </div>
 
-        {/* Table Card Template */}
+        {/* Table Card Template - Clean tent card design */}
         <div 
           ref={tableCardRef}
           style={{ 
-            width: '400px', 
-            height: '260px', 
-            backgroundColor: 'white',
+            width: '440px', 
+            height: '280px', 
+            backgroundColor: '#ffffff',
             display: 'none',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
           <div style={{ 
             height: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '32px',
-            border: '2px dashed #e5e5e5',
-            borderRadius: '16px',
+            padding: '40px',
+            gap: '40px',
           }}>
-            <div style={{ flex: 1 }}>
-              <img 
-                src={logo2Go} 
-                alt="My 2Go" 
-                style={{ height: '32px', marginBottom: '16px' }}
-                crossOrigin="anonymous"
-              />
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold',
-                color: '#1a1a1a',
-                marginBottom: '8px',
-              }}>
-                Taler sammeln bei
-              </h3>
-              <p style={{ 
-                fontSize: '18px', 
-                fontWeight: '600',
-                color: '#6366f1',
-                marginBottom: '12px',
-              }}>
-                {partner?.name}
-              </p>
-              <p style={{ 
-                fontSize: '12px', 
-                color: '#666',
-                maxWidth: '160px',
-              }}>
-                Scanne den QR-Code und erhalte exklusive Belohnungen!
-              </p>
-            </div>
+            {/* QR Code side */}
             <div style={{
-              padding: '12px',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              border: '1px solid #e5e5e5',
+              padding: '16px',
+              backgroundColor: '#fafafa',
+              borderRadius: '16px',
+              flexShrink: 0,
             }}>
               <QRCodeSVG 
                 value={partnerUrl || 'https://my2go.lovable.app'} 
-                size={140}
-                level="M"
+                size={150}
+                level="H"
+                bgColor="#fafafa"
+                fgColor="#18181b"
+              />
+            </div>
+            
+            {/* Text side */}
+            <div style={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}>
+              <p style={{ 
+                fontSize: '13px', 
+                color: '#a1a1aa',
+                fontWeight: '500',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                marginBottom: '8px',
+              }}>
+                Exklusiv bei
+              </p>
+              
+              <p style={{ 
+                fontSize: '24px', 
+                fontWeight: '600',
+                color: '#18181b',
+                marginBottom: '16px',
+                letterSpacing: '-0.02em',
+              }}>
+                {partner?.name}
+              </p>
+              
+              <p style={{ 
+                fontSize: '14px', 
+                color: '#71717a',
+                lineHeight: 1.5,
+                marginBottom: '20px',
+              }}>
+                QR-Code scannen und Vorteile als Stammkunde sichern.
+              </p>
+              
+              <img 
+                src={logo2Go} 
+                alt="My 2Go" 
+                style={{ height: '18px', opacity: 0.4 }}
+                crossOrigin="anonymous"
               />
             </div>
           </div>
