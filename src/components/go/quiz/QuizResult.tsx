@@ -47,6 +47,7 @@ import { NextStepCTA } from './NextStepCTA';
 import { generatePDFReport } from './pdfExport';
 import { MissingInfoChecklist } from './MissingInfoChecklist';
 import { SendToCFOModal } from './SendToCFOModal';
+import { ReportPreviewSheet } from './ReportPreviewSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -67,6 +68,7 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onScrollToBuy, o
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [showCFOModal, setShowCFOModal] = useState(false);
+  const [showReportPreview, setShowReportPreview] = useState(false);
   const [cfoView, setCfoView] = useState(false);
 
   // Size check for emphasis
@@ -493,33 +495,46 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
           <FileDown className="w-4 h-4 text-primary" />
           Report speichern oder teilen
         </p>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2">
+          {/* Preview Button - Primary Action */}
           <Button
-            variant="outline"
             size="lg"
-            className="flex-1 h-12 rounded-xl"
-            onClick={handleExportPDF}
-            disabled={isExporting}
+            className="w-full h-12 rounded-xl"
+            onClick={() => setShowReportPreview(true)}
           >
-            {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
-            Report herunterladen
+            <Eye className="w-4 h-4 mr-2" />
+            Report Vorschau & Versand
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className={`flex-1 h-12 rounded-xl ${emailSent ? 'border-green-500 text-green-600' : ''}`}
-            onClick={handleSendEmail}
-            disabled={isSendingEmail || emailSent}
-          >
-            {isSendingEmail ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : emailSent ? (
-              <CheckCheck className="w-4 h-4 mr-2" />
-            ) : (
-              <Mail className="w-4 h-4 mr-2" />
-            )}
-            {emailSent ? 'Gesendet!' : 'Report per E-Mail senden'}
-          </Button>
+          
+          {/* Quick Actions */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 h-10 rounded-xl"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+            >
+              {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+              PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className={`flex-1 h-10 rounded-xl ${emailSent ? 'border-green-500 text-green-600' : ''}`}
+              onClick={handleSendEmail}
+              disabled={isSendingEmail || emailSent}
+            >
+              {isSendingEmail ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : emailSent ? (
+                <CheckCheck className="w-4 h-4 mr-2" />
+              ) : (
+                <Mail className="w-4 h-4 mr-2" />
+              )}
+              {emailSent ? 'Gesendet!' : 'E-Mail'}
+            </Button>
+          </div>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
           Ihre Angaben werden nur für die Analyse und das Zusenden des Reports verwendet.
@@ -566,6 +581,23 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
         planName={plan.name}
         planPrice={plan.priceCHF}
         includesGHL={plan.includesGHL}
+      />
+
+      {/* Report Preview Sheet */}
+      <ReportPreviewSheet
+        open={showReportPreview}
+        onOpenChange={setShowReportPreview}
+        answers={answers}
+        fitResult={fitResult}
+        refinancing={refinancing}
+        uplift={uplift}
+        planName={plan.name}
+        planPrice={plan.priceCHF}
+        onDownloadPDF={handleExportPDF}
+        onSendEmail={handleSendEmail}
+        isExporting={isExporting}
+        isSendingEmail={isSendingEmail}
+        emailSent={emailSent}
       />
     </div>
   );
