@@ -238,6 +238,12 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               </div>
             </div>
             
+            {/* Info about manual address entry */}
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Info className="w-3 h-3" />
+              Adresse bitte ergänzen (Zefix liefert nur den Sitz)
+            </p>
+            
             {/* Editable address fields after Zefix selection */}
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2">
@@ -245,7 +251,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
                 <Input
                   value={answers.companyAddress || ''}
                   onChange={(e) => updateAnswers({ companyAddress: e.target.value })}
-                  placeholder="Musterstrasse 1"
+                  placeholder="z.B. Bahnhofstrasse 1"
                   className="h-10"
                 />
               </div>
@@ -254,7 +260,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
                 <Input
                   value={answers.companyPostalCode || ''}
                   onChange={(e) => updateAnswers({ companyPostalCode: e.target.value })}
-                  placeholder="8000"
+                  placeholder="z.B. 5200"
                   className="h-10"
                 />
               </div>
