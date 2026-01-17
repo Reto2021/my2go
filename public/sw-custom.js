@@ -238,6 +238,77 @@ self.addEventListener('fetch', function(event) {
   }
 });
 
+// Badge count management
+const BADGE_COUNT_KEY = 'my2go_badge_count';
+
+async function incrementBadgeCount() {
+  try {
+    // Get current count from IndexedDB or default to 0
+    let currentCount = 0;
+    try {
+      // Try to read from a simple cache
+      const cache = await caches.open('badge-count');
+      const response = await cache.match('/badge-count');
+      if (response) {
+        const data = await response.json();
+        currentCount = data.count || 0;
+      }
+    } catch (e) {
+      console.log('[SW] Could not read badge count cache:', e);
+    }
+    
+    const newCount = currentCount + 1;
+    
+    // Save new count
+    try {
+      const cache = await caches.open('badge-count');
+      await cache.put('/badge-count', new Response(JSON.stringify({ count: newCount })));
+    } catch (e) {
+      console.log('[SW] Could not write badge count cache:', e);
+    }
+    
+    // Set the app badge if supported
+    if ('setAppBadge' in navigator) {
+      await navigator.setAppBadge(newCount);
+      console.log('[SW] Badge set to:', newCount);
+    }
+    
+    // Also notify the app to update its state
+    const allClients = await clients.matchAll({ type: 'window' });
+    allClients.forEach(client => {
+      client.postMessage({
+        type: 'BADGE_COUNT_UPDATED',
+        count: newCount
+      });
+    });
+    
+    return newCount;
+  } catch (error) {
+    console.error('[SW] Error incrementing badge:', error);
+    return 0;
+  }
+}
+
+async function clearBadgeCount() {
+  try {
+    // Clear the cache
+    try {
+      const cache = await caches.open('badge-count');
+      await cache.put('/badge-count', new Response(JSON.stringify({ count: 0 })));
+    } catch (e) {
+      console.log('[SW] Could not clear badge count cache:', e);
+    }
+    
+    // Clear the app badge if supported
+    if ('clearAppBadge' in navigator) {
+      await navigator.clearAppBadge();
+      console.log('[SW] Badge cleared');
+    }
+  } catch (error) {
+    console.error('[SW] Error clearing badge:', error);
+  }
+}
+
 // Push notification handler
 self.addEventListener('push', function(event) {
   console.log('[SW] Push received:', event);
@@ -269,7 +340,10 @@ self.addEventListener('push', function(event) {
   };
   
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    Promise.all([
+      self.registration.showNotification(title, options),
+      incrementBadgeCount()
+    ])
   );
 });
 
@@ -283,7 +357,10 @@ self.addEventListener('notificationclick', function(event) {
   let targetUrl = data.url || '/';
   
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+    // Clear badge when notification is clicked
+    clearBadgeCount().then(function() {
+      return clients.matchAll({ type: 'window', includeUncontrolled: true });
+    }).then(function(clientList) {
       // Check if app is already open
       for (const client of clientList) {
         if ('focus' in client) {
@@ -295,6 +372,11 @@ self.addEventListener('notificationclick', function(event) {
               partnerId: data.partnerId,
             });
           }
+          // Notify app that badge was cleared
+          client.postMessage({
+            type: 'BADGE_COUNT_UPDATED',
+            count: 0
+          });
           return client.focus();
         }
       }
