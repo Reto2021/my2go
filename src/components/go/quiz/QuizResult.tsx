@@ -58,11 +58,10 @@ interface Props {
   answers: QuizAnswers;
   updateAnswers: (updates: Partial<QuizAnswers>) => void;
   dbPercent: number;
-  onScrollToBuy: () => void;
   onReset: () => void;
 }
 
-export function QuizResult({ answers, updateAnswers, dbPercent, onScrollToBuy, onReset }: Props) {
+export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props) {
   const [activeTab, setActiveTab] = useState<'mehrbesuche' | 'absicherung'>('mehrbesuche');
   const [showCHF, setShowCHF] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -208,7 +207,9 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onScrollToBuy, o
 
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
-        <Button size="lg" className="flex-1 h-14 font-bold rounded-xl" onClick={onScrollToBuy}>Jetzt starten<ArrowRight className="w-5 h-5 ml-2" /></Button>
+        <Button size="lg" className="flex-1 h-14 font-bold rounded-xl" asChild>
+          <a href="/go/checkout">Jetzt starten<ArrowRight className="w-5 h-5 ml-2" /></a>
+        </Button>
         <Button variant="outline" size="lg" className="h-14 rounded-xl" onClick={copyResult}><Copy className="w-4 h-4 mr-2" />{copied ? 'Kopiert!' : 'Kopieren'}</Button>
         <Button variant="ghost" size="lg" className="h-14 rounded-xl" onClick={onReset}><RotateCcw className="w-4 h-4 mr-2" />Neu</Button>
       </div>
