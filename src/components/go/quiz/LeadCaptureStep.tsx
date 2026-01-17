@@ -20,8 +20,7 @@ import {
   Info,
   Check,
   X,
-  ChevronDown,
-  CheckCircle2
+  ChevronDown
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizAnswers, UserRole, EmployeeRange } from '@/lib/partner-quiz-calculations';
@@ -99,7 +98,8 @@ function AccordionItem({
   isCompleted,
   isDisabled,
   children,
-  stepNumber
+  stepNumber,
+  onHeaderClick
 }: { 
   id: AccordionSection;
   title: string;
@@ -109,7 +109,10 @@ function AccordionItem({
   isDisabled: boolean;
   children: React.ReactNode;
   stepNumber: number;
+  onHeaderClick?: () => void;
 }) {
+  const canClick = !isDisabled && (isCompleted || isOpen);
+  
   return (
     <div className={`rounded-xl border-2 overflow-hidden transition-all ${
       isOpen ? 'border-primary bg-card shadow-lg' : 
@@ -117,9 +120,17 @@ function AccordionItem({
       isDisabled ? 'border-border/50 bg-muted/30 opacity-60' :
       'border-border bg-card'
     }`}>
-      {/* Header */}
-      <div className={`flex items-center gap-3 p-4 ${isDisabled ? 'cursor-not-allowed' : ''}`}>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+      {/* Header - Clickable when completed */}
+      <button
+        type="button"
+        onClick={canClick ? onHeaderClick : undefined}
+        disabled={isDisabled}
+        className={`w-full flex items-center gap-3 p-4 text-left transition-colors ${
+          canClick ? 'cursor-pointer hover:bg-muted/50' : 
+          isDisabled ? 'cursor-not-allowed' : ''
+        }`}
+      >
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all ${
           isCompleted ? 'bg-green-500 text-white' :
           isOpen ? 'bg-primary text-primary-foreground' :
           'bg-muted text-muted-foreground'
@@ -131,12 +142,12 @@ function AccordionItem({
           <span className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : ''}`}>{title}</span>
         </div>
         {isCompleted && !isOpen && (
-          <CheckCircle2 className="w-5 h-5 text-green-500" />
+          <ChevronDown className="w-5 h-5 text-green-500 transition-transform" />
         )}
         {isOpen && (
-          <ChevronDown className="w-5 h-5 text-primary" />
+          <ChevronDown className="w-5 h-5 text-primary rotate-180 transition-transform" />
         )}
-      </div>
+      </button>
       
       {/* Content */}
       <AnimatePresence>
@@ -339,18 +350,39 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
 
   const roleHint = answers.userRole ? ROLE_HINTS[answers.userRole] : null;
 
+  // Calculate progress
+  const sections: AccordionSection[] = ['company', 'contact', 'role', 'employees', 'terms'];
+  const completedCount = sections.filter(s => sectionValidation[s]).length;
+  const progressPercent = (completedCount / sections.length) * 100;
+
   return (
     <div className="space-y-4">
+      {/* Progress Bar */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Fortschritt</span>
+          <span className="font-medium text-primary">{completedCount} von {sections.length}</span>
+        </div>
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <motion.div 
+            className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          />
+        </div>
+      </div>
+
       <motion.div 
-        className="text-center mb-6"
+        className="text-center mb-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-semibold mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-semibold mb-3">
           <Sparkles className="w-4 h-4" />
           Kostenloser Check
         </div>
-        <h3 className="text-xl font-bold mb-2">
+        <h3 className="text-xl font-bold mb-1">
           Wer sind Sie?
         </h3>
         <p className="text-muted-foreground text-sm">
@@ -367,6 +399,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         isCompleted={sectionValidation.company && activeSection !== 'company'}
         isDisabled={false}
         stepNumber={1}
+        onHeaderClick={() => setActiveSection('company')}
       >
         {answers.companyName && !manualMode ? (
           <div className="space-y-3">
@@ -547,6 +580,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         isCompleted={sectionValidation.contact && activeSection !== 'contact'}
         isDisabled={!sectionValidation.company}
         stepNumber={2}
+        onHeaderClick={() => sectionValidation.company && setActiveSection('contact')}
       >
         <div className="space-y-3">
           {foundPersons.length > 0 && (
@@ -627,6 +661,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         isCompleted={sectionValidation.role && activeSection !== 'role'}
         isDisabled={!sectionValidation.contact}
         stepNumber={3}
+        onHeaderClick={() => sectionValidation.contact && setActiveSection('role')}
       >
         <div className="space-y-2">
           {ROLE_OPTIONS.map(opt => (
@@ -686,6 +721,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         isCompleted={sectionValidation.employees && activeSection !== 'employees'}
         isDisabled={!sectionValidation.role}
         stepNumber={4}
+        onHeaderClick={() => sectionValidation.role && setActiveSection('employees')}
       >
         <ChipSelect
           options={EMPLOYEE_OPTIONS}
@@ -704,6 +740,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         isCompleted={sectionValidation.terms && activeSection !== 'terms'}
         isDisabled={!sectionValidation.employees}
         stepNumber={5}
+        onHeaderClick={() => sectionValidation.employees && setActiveSection('terms')}
       >
         <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
           <Checkbox
