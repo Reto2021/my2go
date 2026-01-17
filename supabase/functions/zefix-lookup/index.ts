@@ -104,42 +104,43 @@ serve(async (req) => {
     const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
 
     // ==========================================
-    // MODE 1: Fetch details for a selected company (with scraping + Google Places fallback)
+    // MODE 1: Fetch details for a selected company (Google Places first, then scraping)
     // ==========================================
     if (fetchDetails && uid && registryOfCommerceId) {
       const companyName = body.companyName;
       console.log(`Fetching details for UID: ${uid}, Registry: ${registryOfCommerceId}, LegalSeat: ${legalSeat}, Company: ${companyName}`);
       
-      // Try scraping first
-      let scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey, legalSeat);
+      let address: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined;
+      let persons: { name: string; role: string; signature?: string }[] = [];
       
-      // If scraping didn't find complete address, try Google Places API
-      if (googlePlacesApiKey && companyName && (!scraped?.address?.street || !scraped?.address?.swissZipCode)) {
-        console.log('Scraping incomplete, trying Google Places API...');
+      // Step 1: Try Google Places API first (faster)
+      if (googlePlacesApiKey && companyName) {
+        console.log('Trying Google Places API first...');
         const googleAddress = await lookupAddressViaGooglePlaces(companyName, legalSeat, googlePlacesApiKey);
-        
-        if (googleAddress) {
-          console.log('Google Places found address:', JSON.stringify(googleAddress));
-          scraped = {
-            address: {
-              ...scraped?.address,
-              ...googleAddress,
-              // Prefer scraped data if available
-              street: scraped?.address?.street || googleAddress.street,
-              houseNumber: scraped?.address?.houseNumber || googleAddress.houseNumber,
-              swissZipCode: scraped?.address?.swissZipCode || googleAddress.swissZipCode,
-              city: scraped?.address?.city || googleAddress.city,
-            },
-            persons: scraped?.persons || []
-          };
+        if (googleAddress && googleAddress.street && googleAddress.swissZipCode) {
+          console.log('Google Places found complete address:', JSON.stringify(googleAddress));
+          address = googleAddress;
         }
+      }
+      
+      // Step 2: Try scraping for persons (and address fallback if needed)
+      const scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey, legalSeat);
+      
+      // Use scraped persons
+      if (scraped?.persons && scraped.persons.length > 0) {
+        persons = scraped.persons;
+      }
+      
+      // Use scraped address if Google didn't find one
+      if (!address && scraped?.address) {
+        address = scraped.address;
       }
       
       return new Response(
         JSON.stringify({ 
           success: true,
-          address: scraped?.address,
-          persons: scraped?.persons 
+          address,
+          persons 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

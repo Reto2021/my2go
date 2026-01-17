@@ -439,75 +439,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         )}
       </div>
 
-      {/* Role Selection */}
-      <div className="pt-4 border-t border-border">
-        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
-          <Briefcase className="w-4 h-4 text-muted-foreground" />
-          Ihre Rolle im Unternehmen *
-        </Label>
-        <div className="space-y-2">
-          {ROLE_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => updateAnswers({ userRole: opt.value, userRoleOther: opt.value === 'other' ? answers.userRoleOther : undefined })}
-              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                answers.userRole === opt.value
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border hover:border-primary/50 text-foreground'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-        
-        {/* Free text field for "Sonstiges" */}
-        {answers.userRole === 'other' && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3"
-          >
-            <Input
-              value={answers.userRoleOther || ''}
-              onChange={(e) => updateAnswers({ userRoleOther: e.target.value })}
-              placeholder="Ihre Rolle beschreiben..."
-              className="h-12"
-            />
-          </motion.div>
-        )}
-        
-        {/* Role Hint */}
-        {roleHint && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20"
-          >
-            <p className="text-sm text-primary flex items-start gap-2">
-              <Info className="w-4 h-4 shrink-0 mt-0.5" />
-              {roleHint}
-            </p>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Employee Count */}
-      <div>
-        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
-          <Users className="w-4 h-4 text-muted-foreground" />
-          Anzahl Mitarbeitende
-        </Label>
-        <ChipSelect
-          options={EMPLOYEE_OPTIONS}
-          value={answers.employees}
-          onChange={(v) => updateAnswers({ employees: v as EmployeeRange })}
-          columns={4}
-        />
-      </div>
-
-      {/* Contact Details - SINGLE SECTION */}
+      {/* Contact Details - Name Block */}
       <div className="pt-4 border-t border-border space-y-4">
         {/* Person Selection from HR */}
         {foundPersons.length > 0 && (
@@ -593,6 +525,74 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             autoComplete="email"
           />
         </div>
+      </div>
+
+      {/* Role Selection */}
+      <div className="pt-4 border-t border-border">
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-muted-foreground" />
+          Ihre Rolle im Unternehmen *
+        </Label>
+        <div className="space-y-2">
+          {ROLE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => updateAnswers({ userRole: opt.value, userRoleOther: opt.value === 'other' ? answers.userRoleOther : undefined })}
+              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                answers.userRole === opt.value
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border hover:border-primary/50 text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Free text field for "Sonstiges" */}
+        {answers.userRole === 'other' && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-3"
+          >
+            <Input
+              value={answers.userRoleOther || ''}
+              onChange={(e) => updateAnswers({ userRoleOther: e.target.value })}
+              placeholder="Ihre Rolle beschreiben..."
+              className="h-12"
+            />
+          </motion.div>
+        )}
+        
+        {/* Role Hint */}
+        {roleHint && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20"
+          >
+            <p className="text-sm text-primary flex items-start gap-2">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              {roleHint}
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Employee Count */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <Users className="w-4 h-4 text-muted-foreground" />
+          Anzahl Mitarbeitende
+        </Label>
+        <ChipSelect
+          options={EMPLOYEE_OPTIONS}
+          value={answers.employees}
+          onChange={(v) => updateAnswers({ employees: v as EmployeeRange })}
+          columns={4}
+        />
       </div>
 
       {/* Terms */}
