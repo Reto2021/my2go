@@ -113,27 +113,39 @@ export const SPONSORING_POTENTIAL = {
 
 // -------------------------------------------------------------
 // UPLIFT FACTORS (Mehrbesuche-Modell)
+// Based on industry benchmarks for loyalty programs
 // -------------------------------------------------------------
 export const UPLIFT_FACTORS = {
-  enrollment90Days: { conservative: 0.08, realistic: 0.15, ambitious: 0.28 },
-  activeRate: { conservative: 0.25, realistic: 0.40, ambitious: 0.55 },
-  freqLift: { conservative: 0.02, realistic: 0.05, ambitious: 0.10 },
-  // NEW: Extra visits per active member per year
-  extraVisitsPerActiveMemberPerYear: { conservative: 0.5, realistic: 1.2, ambitious: 2.0 },
+  // Enrollment rate within 90 days (% of repeat customers who join)
+  // Industry benchmark: 20-50% for good loyalty programs
+  enrollment90Days: { conservative: 0.20, realistic: 0.35, ambitious: 0.50 },
+  
+  // Active rate (% of enrolled members who actively participate)
+  // Industry benchmark: 40-70% for engaging programs
+  activeRate: { conservative: 0.40, realistic: 0.55, ambitious: 0.70 },
+  
+  // Frequency lift (% increase in purchase frequency for active members)
+  freqLift: { conservative: 0.05, realistic: 0.12, ambitious: 0.20 },
+  
+  // Extra visits per active member per year
+  // Industry benchmark: Active loyalty members visit 2-5x more often
+  extraVisitsPerActiveMemberPerYear: { conservative: 2.0, realistic: 3.5, ambitious: 5.0 },
+  
   networkLift: {
-    'action': { conservative: 0.005, realistic: 0.02, ambitious: 0.05 },
-    'listing': { conservative: 0.000, realistic: 0.005, ambitious: 0.015 },
-    'unclear': { conservative: 0.000, realistic: 0.003, ambitious: 0.010 }
+    'action': { conservative: 0.01, realistic: 0.03, ambitious: 0.06 },
+    'listing': { conservative: 0.005, realistic: 0.015, ambitious: 0.03 },
+    'unclear': { conservative: 0.002, realistic: 0.008, ambitious: 0.02 }
   },
   ghlConvLift: {
-    noFollowUp: { conservative: 0.05, realistic: 0.15, ambitious: 0.30 },
-    withFollowUp: { conservative: 0.02, realistic: 0.05, ambitious: 0.10 }
+    noFollowUp: { conservative: 0.08, realistic: 0.20, ambitious: 0.35 },
+    withFollowUp: { conservative: 0.03, realistic: 0.08, ambitious: 0.15 }
   },
-  // NEW: Review uplift (as fraction of monthly transactions)
+  // Review uplift (as fraction of monthly transactions converted to new visits)
+  // Better reviews → more new customers discovering the business
   reviewUplift: {
-    conservative: 0.0,
-    realistic: 0.002, // 0.2% of monthly transactions
-    ambitious: 0.005  // 0.5% of monthly transactions
+    conservative: 0.01,  // 1% of monthly transactions
+    realistic: 0.025,    // 2.5% of monthly transactions  
+    ambitious: 0.05      // 5% of monthly transactions
   }
 } as const;
 
