@@ -30,7 +30,8 @@ import {
   Egg,
   Flame,
   Flag,
-  Calendar
+  Calendar,
+  GalleryHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +45,7 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logo2Go from '@/assets/logo-2go.png';
+import { SeasonalGallerySlideshow } from '@/components/partner/SeasonalGallerySlideshow';
 
 interface PartnerDetails {
   id: string;
@@ -722,11 +724,17 @@ export default function PartnerPOSMaterials() {
           </div>
         </TabsContent>
 
-        <TabsContent value="seasonal" className="space-y-3">
-          <div className="rounded-xl bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4 mb-3 border border-accent/20">
-            <p className="text-sm text-center font-medium">
-              🎉 11 festliche Vorlagen für das ganze Jahr – passend zu jedem Anlass!
-            </p>
+        <TabsContent value="seasonal" className="space-y-4">
+          {/* Animated Slideshow Gallery */}
+          <SeasonalGallerySlideshow 
+            partnerName={partner?.name || 'Dein Geschäft'}
+            qrUrl={getTrackedUrl('seasonal-gallery')}
+          />
+
+          {/* Download Section */}
+          <div className="flex items-center gap-2 mt-6 mb-3">
+            <GalleryHorizontal className="h-5 w-5 text-accent" />
+            <h3 className="font-semibold">Alle Vorlagen zum Download</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {seasonalMaterials.map((material) => (
