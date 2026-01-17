@@ -33,9 +33,9 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
             <button
               key={opt}
               type="button"
-              onClick={() => updateAnswers({ leadsPerMonth: opt })}
+              onClick={() => updateAnswers({ leadsPerMonth: opt, unknownLeads: false })}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 min-w-[80px] ${
-                answers.leadsPerMonth === opt
+                answers.leadsPerMonth === opt && !answers.unknownLeads
                   ? 'bg-primary text-primary-foreground border-2 border-primary'
                   : 'bg-card border-2 border-border hover:border-primary/50'
               }`}
@@ -43,6 +43,18 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
               {opt.replace('-', ' – ')}
             </button>
           ))}
+          {/* Weiss nicht Option */}
+          <button
+            type="button"
+            onClick={() => updateAnswers({ leadsPerMonth: null, unknownLeads: true })}
+            className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              answers.unknownLeads
+                ? 'bg-amber-200 text-amber-900 border-2 border-amber-400'
+                : 'bg-card border-2 border-border hover:border-amber-300 text-muted-foreground'
+            }`}
+          >
+            Weiss nicht
+          </button>
         </div>
       </div>
 
@@ -75,9 +87,9 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
             <button
               key={opt}
               type="button"
-              onClick={() => updateAnswers({ conversionRate: opt })}
+              onClick={() => updateAnswers({ conversionRate: opt, unknownConversion: false })}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 min-w-[80px] ${
-                answers.conversionRate === opt
+                answers.conversionRate === opt && !answers.unknownConversion
                   ? 'bg-primary text-primary-foreground border-2 border-primary'
                   : 'bg-card border-2 border-border hover:border-primary/50'
               }`}
@@ -85,6 +97,18 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
               {opt}
             </button>
           ))}
+          {/* Weiss nicht Option */}
+          <button
+            type="button"
+            onClick={() => updateAnswers({ conversionRate: null, unknownConversion: true })}
+            className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              answers.unknownConversion
+                ? 'bg-amber-200 text-amber-900 border-2 border-amber-400'
+                : 'bg-card border-2 border-border hover:border-amber-300 text-muted-foreground'
+            }`}
+          >
+            Weiss nicht
+          </button>
         </div>
       </div>
 
