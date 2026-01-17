@@ -19,7 +19,18 @@ import {
   FileText,
   Instagram,
   Share2,
-  Layers
+  Layers,
+  Snowflake,
+  Sun,
+  PartyPopper,
+  Flower2,
+  Leaf,
+  Ghost,
+  Heart,
+  Egg,
+  Flame,
+  Flag,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +57,8 @@ type PreviewType =
   | 'qr-card' | 'sticker' | 'table-card' 
   | 'gastro-menu' | 'cafe-counter' | 'retail-checkout' | 'beauty-card'
   | 'a4-poster' | 'instagram-story' | 'instagram-post' 
+  | 'christmas' | 'summer' | 'anniversary' | 'carnival' | 'spring' 
+  | 'autumn' | 'halloween' | 'valentine' | 'easter' | 'midsummer' | 'swiss-national'
   | null;
 
 export default function PartnerPOSMaterials() {
@@ -65,6 +78,19 @@ export default function PartnerPOSMaterials() {
   const a4PosterRef = useRef<HTMLDivElement>(null);
   const instagramStoryRef = useRef<HTMLDivElement>(null);
   const instagramPostRef = useRef<HTMLDivElement>(null);
+  
+  // Seasonal refs
+  const christmasRef = useRef<HTMLDivElement>(null);
+  const summerRef = useRef<HTMLDivElement>(null);
+  const anniversaryRef = useRef<HTMLDivElement>(null);
+  const carnivalRef = useRef<HTMLDivElement>(null);
+  const springRef = useRef<HTMLDivElement>(null);
+  const autumnRef = useRef<HTMLDivElement>(null);
+  const halloweenRef = useRef<HTMLDivElement>(null);
+  const valentineRef = useRef<HTMLDivElement>(null);
+  const easterRef = useRef<HTMLDivElement>(null);
+  const midsummerRef = useRef<HTMLDivElement>(null);
+  const swissNationalRef = useRef<HTMLDivElement>(null);
 
   const { data: partner, isLoading } = useQuery({
     queryKey: ['partner-details-pos', partnerInfo?.partnerId],
@@ -250,6 +276,17 @@ export default function PartnerPOSMaterials() {
       'a4-poster': { ref: a4PosterRef },
       'instagram-story': { ref: instagramStoryRef, isImage: true },
       'instagram-post': { ref: instagramPostRef, isImage: true },
+      'christmas': { ref: christmasRef },
+      'summer': { ref: summerRef },
+      'anniversary': { ref: anniversaryRef },
+      'carnival': { ref: carnivalRef },
+      'spring': { ref: springRef },
+      'autumn': { ref: autumnRef },
+      'halloween': { ref: halloweenRef },
+      'valentine': { ref: valentineRef },
+      'easter': { ref: easterRef },
+      'midsummer': { ref: midsummerRef },
+      'swiss-national': { ref: swissNationalRef },
     };
 
     const config = refMap[previewType];
@@ -274,6 +311,17 @@ export default function PartnerPOSMaterials() {
       'a4-poster': 'A4 Poster',
       'instagram-story': 'Instagram Story',
       'instagram-post': 'Instagram Post',
+      'christmas': 'Weihnachts-Edition',
+      'summer': 'Sommer-Aktion',
+      'anniversary': 'Jubiläums-Template',
+      'carnival': 'Fasnacht',
+      'spring': 'Frühlings-Edition',
+      'autumn': 'Herbst-Edition',
+      'halloween': 'Halloween',
+      'valentine': 'Valentinstag',
+      'easter': 'Oster-Edition',
+      'midsummer': 'Midsummer',
+      'swiss-national': '1. August',
     };
     return titles[previewType || ''] || 'Vorschau';
   };
@@ -374,6 +422,109 @@ export default function PartnerPOSMaterials() {
     },
   ];
 
+  // Seasonal materials
+  const seasonalMaterials = [
+    {
+      id: 'christmas' as const,
+      title: 'Weihnachts-Edition',
+      description: 'Festliches Design mit Schneeflocken',
+      icon: Snowflake,
+      color: 'from-red-500/20 to-green-500/10',
+      borderColor: 'border-red-500/20',
+      season: 'Winter',
+    },
+    {
+      id: 'valentine' as const,
+      title: 'Valentinstag',
+      description: 'Romantisches Herz-Design',
+      icon: Heart,
+      color: 'from-rose-500/20 to-pink-500/10',
+      borderColor: 'border-rose-500/20',
+      season: 'Februar',
+    },
+    {
+      id: 'carnival' as const,
+      title: 'Fasnacht',
+      description: 'Buntes Konfetti-Design',
+      icon: PartyPopper,
+      color: 'from-violet-500/20 to-yellow-500/10',
+      borderColor: 'border-violet-500/20',
+      season: 'Fasnacht',
+    },
+    {
+      id: 'easter' as const,
+      title: 'Oster-Edition',
+      description: 'Frühlingshafte Oster-Motive',
+      icon: Egg,
+      color: 'from-yellow-400/20 to-lime-400/10',
+      borderColor: 'border-yellow-400/20',
+      season: 'Ostern',
+    },
+    {
+      id: 'spring' as const,
+      title: 'Frühlings-Edition',
+      description: 'Blühende Frühlingsfarben',
+      icon: Flower2,
+      color: 'from-pink-400/20 to-green-400/10',
+      borderColor: 'border-pink-400/20',
+      season: 'Frühling',
+    },
+    {
+      id: 'midsummer' as const,
+      title: 'Midsummer',
+      description: 'Skandinavisches Sommerfest',
+      icon: Sun,
+      color: 'from-yellow-500/20 to-sky-400/10',
+      borderColor: 'border-yellow-500/20',
+      season: 'Juni',
+    },
+    {
+      id: 'summer' as const,
+      title: 'Sommer-Aktion',
+      description: 'Sonnige Sommer-Vibes',
+      icon: Sun,
+      color: 'from-orange-400/20 to-cyan-400/10',
+      borderColor: 'border-orange-400/20',
+      season: 'Sommer',
+    },
+    {
+      id: 'swiss-national' as const,
+      title: '1. August',
+      description: 'Schweizer Nationalfeiertag',
+      icon: Flag,
+      color: 'from-red-600/20 to-red-500/10',
+      borderColor: 'border-red-600/20',
+      season: 'August',
+    },
+    {
+      id: 'autumn' as const,
+      title: 'Herbst-Edition',
+      description: 'Warme Herbstfarben',
+      icon: Leaf,
+      color: 'from-orange-500/20 to-amber-600/10',
+      borderColor: 'border-orange-500/20',
+      season: 'Herbst',
+    },
+    {
+      id: 'halloween' as const,
+      title: 'Halloween',
+      description: 'Gruseliges Kürbis-Design',
+      icon: Ghost,
+      color: 'from-orange-600/20 to-purple-900/10',
+      borderColor: 'border-orange-600/20',
+      season: 'Oktober',
+    },
+    {
+      id: 'anniversary' as const,
+      title: 'Jubiläums-Template',
+      description: 'Feiere besondere Anlässe',
+      icon: Calendar,
+      color: 'from-amber-500/20 to-purple-500/10',
+      borderColor: 'border-amber-500/20',
+      season: 'Ganzjährig',
+    },
+  ];
+
   interface MaterialItem {
     id: string;
     title: string;
@@ -382,6 +533,7 @@ export default function PartnerPOSMaterials() {
     color: string;
     borderColor: string;
     industry?: string;
+    season?: string;
   }
 
   const MaterialCard = ({ material, downloadAction, previewAction }: { 
@@ -399,11 +551,16 @@ export default function PartnerPOSMaterials() {
             <material.icon className="h-5 w-5 text-foreground" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-sm">{material.title}</h3>
               {material.industry && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/80 text-muted-foreground">
                   {material.industry}
+                </span>
+              )}
+              {material.season && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/80 text-muted-foreground">
+                  {material.season}
                 </span>
               )}
             </div>
@@ -485,7 +642,7 @@ export default function PartnerPOSMaterials() {
 
       {/* Tabbed Materials */}
       <Tabs defaultValue="standard" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
           <TabsTrigger value="standard" className="text-xs">
             <Layers className="h-3.5 w-3.5 mr-1.5" />
             Standard
@@ -493,6 +650,10 @@ export default function PartnerPOSMaterials() {
           <TabsTrigger value="industry" className="text-xs">
             <UtensilsCrossed className="h-3.5 w-3.5 mr-1.5" />
             Branchen
+          </TabsTrigger>
+          <TabsTrigger value="seasonal" className="text-xs">
+            <Calendar className="h-3.5 w-3.5 mr-1.5" />
+            Saisonal
           </TabsTrigger>
           <TabsTrigger value="social" className="text-xs">
             <Instagram className="h-3.5 w-3.5 mr-1.5" />
@@ -553,6 +714,37 @@ export default function PartnerPOSMaterials() {
                   material.id === 'cafe-counter' ? cafeCounterRef :
                   material.id === 'retail-checkout' ? retailCheckoutRef :
                   beautyCardRef,
+                  `${partner?.name || 'Partner'}-${material.title}`
+                )}
+                previewAction={() => openPreview(material.id)}
+              />
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="seasonal" className="space-y-3">
+          <div className="rounded-xl bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4 mb-3 border border-accent/20">
+            <p className="text-sm text-center font-medium">
+              🎉 11 festliche Vorlagen für das ganze Jahr – passend zu jedem Anlass!
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {seasonalMaterials.map((material) => (
+              <MaterialCard
+                key={material.id}
+                material={material}
+                downloadAction={() => downloadPDF(
+                  material.id === 'christmas' ? christmasRef :
+                  material.id === 'summer' ? summerRef :
+                  material.id === 'anniversary' ? anniversaryRef :
+                  material.id === 'carnival' ? carnivalRef :
+                  material.id === 'spring' ? springRef :
+                  material.id === 'autumn' ? autumnRef :
+                  material.id === 'halloween' ? halloweenRef :
+                  material.id === 'valentine' ? valentineRef :
+                  material.id === 'easter' ? easterRef :
+                  material.id === 'midsummer' ? midsummerRef :
+                  swissNationalRef,
                   `${partner?.name || 'Partner'}-${material.title}`
                 )}
                 previewAction={() => openPreview(material.id)}
@@ -785,6 +977,183 @@ export default function PartnerPOSMaterials() {
                   </div>
                 </div>
               )}
+
+              {/* Seasonal Previews */}
+              {previewType === 'christmas' && (
+                <div className="bg-gradient-to-br from-red-700 via-red-600 to-green-700 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">❄️🎄❄️</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('christmas') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Frohe Weihnachten!</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'valentine' && (
+                <div className="bg-gradient-to-br from-rose-500 via-pink-500 to-red-400 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">💕💝💕</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('valentine') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Mit Liebe schenken</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'carnival' && (
+                <div className="bg-gradient-to-br from-violet-600 via-fuchsia-500 to-yellow-400 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">🎭🎊🎉</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('carnival') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Fasnacht feiern!</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'easter' && (
+                <div className="bg-gradient-to-br from-yellow-300 via-lime-300 to-pink-300 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between">
+                    <div className="text-2xl">🐰🥚🌷</div>
+                    <div className="p-3 bg-white rounded-xl shadow-sm">
+                      <QRCodeSVG value={getTrackedUrl('easter') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-amber-800">Frohe Ostern!</p>
+                      <p className="text-[10px] text-amber-700 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-50" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'spring' && (
+                <div className="bg-gradient-to-br from-pink-400 via-rose-300 to-green-400 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between">
+                    <div className="text-2xl">🌸🌺🌼</div>
+                    <div className="p-3 bg-white/90 rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('spring') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-pink-800">Frühlings-Aktion</p>
+                      <p className="text-[10px] text-pink-700 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-50" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'midsummer' && (
+                <div className="bg-gradient-to-br from-yellow-400 via-sky-400 to-blue-500 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">☀️🌻🌊</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('midsummer') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Midsummer-Fest</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'summer' && (
+                <div className="bg-gradient-to-br from-orange-400 via-amber-400 to-cyan-500 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">🏖️🍹🌴</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('summer') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Sommer-Aktion</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'swiss-national' && (
+                <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">🇨🇭🎆🏔️</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('swiss-national') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">1. August</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'autumn' && (
+                <div className="bg-gradient-to-br from-orange-500 via-amber-600 to-red-700 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">🍂🎃🍁</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('autumn') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Herbst-Aktion</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'halloween' && (
+                <div className="bg-gradient-to-br from-orange-600 via-purple-900 to-black rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">🎃👻🦇</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('halloween') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Happy Halloween!</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
+
+              {previewType === 'anniversary' && (
+                <div className="bg-gradient-to-br from-amber-500 via-purple-600 to-pink-500 rounded-xl shadow-lg p-5 text-center" style={{ width: '200px', height: '260px' }}>
+                  <div className="h-full flex flex-col items-center justify-between text-white">
+                    <div className="text-2xl">🎉🥳🎊</div>
+                    <div className="p-3 bg-white rounded-xl">
+                      <QRCodeSVG value={getTrackedUrl('anniversary') || 'https://my2go.lovable.app'} size={80} level="H" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Wir feiern!</p>
+                      <p className="text-[10px] opacity-90 mt-1">{partner?.name}</p>
+                    </div>
+                    <img src={logo2Go} alt="My 2Go" className="h-3 opacity-70 invert" />
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Actions */}
@@ -967,6 +1336,215 @@ export default function PartnerPOSMaterials() {
             <div>
               <p style={{ fontSize: '28px', color: 'rgba(255,255,255,0.9)', marginBottom: '24px' }}>QR-Code scannen & Taler sammeln</p>
               <img src={logo2Go} alt="My 2Go" style={{ height: '40px', opacity: 0.7, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Christmas Template */}
+        <div ref={christmasRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #b91c1c 0%, #15803d 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>❄️🎄❄️</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Frohe Weihnachten</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('christmas') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Scannen & Taler sammeln</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Festliche Vorteile warten auf dich!</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Valentine Template */}
+        <div ref={valentineRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #fb7185 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>💕💝💕</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Happy Valentinstag</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('valentine') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Mit Liebe schenken</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & Vorteile für Verliebte sichern</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Carnival Template */}
+        <div ref={carnivalRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #facc15 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>🎭🎊🎉</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Konfetti & Taler</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('carnival') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Fasnacht feiern!</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & närrische Vorteile sammeln</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Easter Template */}
+        <div ref={easterRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #fde047 0%, #a3e635 50%, #f9a8d4 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#78350f' }}>
+            <div style={{ fontSize: '48px' }}>🐰🥚🌷</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.8 }}>Frohe Ostern</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}>
+                <QRCodeSVG value={getTrackedUrl('easter') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Oster-Taler sammeln</p>
+              <p style={{ fontSize: '13px', opacity: 0.7, marginBottom: '24px' }}>Scannen & frühlingshafte Vorteile entdecken</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.5 }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Spring Template */}
+        <div ref={springRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #f472b6 0%, #a7f3d0 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#be185d' }}>
+            <div style={{ fontSize: '48px' }}>🌸🌺🌼</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.8 }}>Frühlings-Erwachen</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('spring') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Blühende Vorteile</p>
+              <p style={{ fontSize: '13px', opacity: 0.7, marginBottom: '24px' }}>Scannen & Frühlings-Taler sammeln</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.5 }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Midsummer Template */}
+        <div ref={midsummerRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #facc15 0%, #38bdf8 50%, #3b82f6 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>☀️🌻🌊</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Midsummer-Fest</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('midsummer') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Längster Tag – Beste Deals</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & Midsummer-Taler sammeln</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Summer Template */}
+        <div ref={summerRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #fb923c 0%, #fbbf24 50%, #06b6d4 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>🏖️🍹🌴</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Sommer-Vibes</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('summer') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Sommer-Aktion</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & sommerliche Taler sammeln</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Swiss National Day Template */}
+        <div ref={swissNationalRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>🇨🇭🎆🏔️</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>1. August</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('swiss-national') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Nationalfeiertag</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Schweizer Vorteile sammeln!</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Autumn Template */}
+        <div ref={autumnRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #f97316 0%, #d97706 50%, #b91c1c 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>🍂🎃🍁</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Herbst-Zeit</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('autumn') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Herbst-Aktion</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & goldene Taler sammeln</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Halloween Template */}
+        <div ref={halloweenRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #f97316 0%, #581c87 50%, #18181b 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>🎃👻🦇</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Trick or Treat</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('halloween') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Happy Halloween!</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & gruselige Taler sammeln</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
+            </div>
+          </div>
+        </div>
+
+        {/* Anniversary Template */}
+        <div ref={anniversaryRef} style={{ width: '420px', height: '595px', background: 'linear-gradient(135deg, #f59e0b 0%, #a855f7 50%, #ec4899 100%)', display: 'none', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', padding: '48px', color: '#ffffff' }}>
+            <div style={{ fontSize: '48px' }}>🎉🥳🎊</div>
+            <div>
+              <p style={{ fontSize: '14px', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px', opacity: 0.9 }}>Jubiläum</p>
+              <p style={{ fontSize: '28px', fontWeight: '700', marginBottom: '32px' }}>{partner?.name}</p>
+              <div style={{ padding: '20px', backgroundColor: '#ffffff', borderRadius: '24px', display: 'inline-block' }}>
+                <QRCodeSVG value={getTrackedUrl('anniversary') || 'https://my2go.lovable.app'} size={180} level="H" bgColor="#ffffff" fgColor="#18181b" />
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Wir feiern!</p>
+              <p style={{ fontSize: '13px', opacity: 0.8, marginBottom: '24px' }}>Scannen & Jubiläums-Taler sichern</p>
+              <img src={logo2Go} alt="My 2Go" style={{ height: '20px', opacity: 0.8, filter: 'invert(1)' }} crossOrigin="anonymous" />
             </div>
           </div>
         </div>
