@@ -44,8 +44,11 @@ import {
   Users,
   Calendar,
   Star,
-  Shield
+  Shield,
+  Info,
+  ExternalLink
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ActionLauncher } from './ActionLauncher';
 import { generatePDFReport } from './pdfExport';
 import { MissingInfoChecklist } from './MissingInfoChecklist';
@@ -132,7 +135,30 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
         <TabsContent value="mehrbesuche" className="space-y-4">
           <Card className="p-5 border-2 border-green-200 bg-green-50/50">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2"><Calendar className="w-5 h-5 text-green-600" /><h4 className="font-bold">Uplift nach 12 Monaten</h4></div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-green-600" />
+                <h4 className="font-bold">Uplift nach 12 Monaten</h4>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="text-muted-foreground hover:text-foreground transition-colors">
+                        <Info className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs p-3 text-xs">
+                      <p className="font-semibold mb-2">Berechnungsgrundlage</p>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>• Enrollment: 20-50% der Stammkunden</li>
+                        <li>• Aktiv-Rate: 40-70% der Mitglieder</li>
+                        <li>• Mehrbesuche: 2-5x/Jahr pro Aktivem</li>
+                      </ul>
+                      <p className="mt-2 text-muted-foreground italic">
+                        Basierend auf Branchenbenchmarks (Bond Loyalty Report, Antavo)
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="flex items-center gap-2"><span className="text-xs text-muted-foreground">CHF</span><Switch checked={showCHF} onCheckedChange={setShowCHF} /></div>
             </div>
             <div className="grid grid-cols-3 gap-3 mb-4">
@@ -146,7 +172,71 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
                 </div>
               ))}
             </div>
-            {showCHF && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-2">⚠️ CHF-Schätzung basiert auf Ø Bon. Keine Garantie.</p>}
+            
+            {/* Benchmark sources */}
+            <Collapsible>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 border border-blue-100 hover:bg-blue-50 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <Info className="w-4 h-4" />
+                    <span className="font-medium">Methodik & Quellen</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-blue-500" />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 p-4 rounded-lg bg-blue-50/30 border border-blue-100 text-xs space-y-3">
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Berechnungsmodell</p>
+                    <p className="text-muted-foreground">
+                      Mehrbesuche = Stammkunden × Enrollment × Aktiv-Rate × Extra-Besuche/Jahr
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Annahmen (realistisch)</p>
+                    <ul className="text-muted-foreground space-y-0.5">
+                      <li>• <strong>35%</strong> der Stammkunden registrieren sich (90 Tage)</li>
+                      <li>• <strong>55%</strong> davon nutzen aktiv das Programm</li>
+                      <li>• Aktive Mitglieder besuchen <strong>3.5×/Jahr</strong> zusätzlich</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Branchenquellen</p>
+                    <div className="flex flex-wrap gap-2">
+                      <a 
+                        href="https://www.bondbrandloyalty.com/the-loyalty-report" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        Bond Loyalty Report <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://antavo.com/blog/loyalty-program-statistics/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        Antavo Statistics <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.yotpo.com/loyalty-programs-statistics/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        Yotpo Research <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground italic pt-2 border-t">
+                    Hinweis: Ergebnisse variieren je nach Branche, Standort und Umsetzung. Keine Garantie.
+                  </p>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+            
+            {showCHF && <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-2 mt-3">⚠️ CHF-Schätzung basiert auf Ø Bon. Keine Garantie.</p>}
             {fitResult.recommendReviewBooster && <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mt-4 flex items-start gap-2"><Star className="w-5 h-5 text-amber-500" /><div><p className="text-sm font-medium text-amber-900">Review-Booster empfohlen</p></div></div>}
           </Card>
         </TabsContent>
