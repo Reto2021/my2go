@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ArrowRight, Shield, HelpCircle, Radio, Sparkles } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Shield, HelpCircle, Radio, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,18 @@ export default function PartnerPricingPage() {
         </div>
         
         <div className="container relative z-10 max-w-5xl mx-auto px-4">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            asChild
+            className="mb-6"
+          >
+            <Link to="/go">
+              <ArrowLeft className="mr-2 w-4 h-4" />
+              Zurück zur Übersicht
+            </Link>
+          </Button>
+          
           <motion.div 
             className="text-center"
             initial={{ opacity: 0, y: 20 }}
