@@ -33,6 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import logoRadio2go from "@/assets/logo-radio2go.png";
 import logo2go from "@/assets/logo-2go.png";
+import logo2goWhite from "@/assets/logo-2go-white.png";
 import { PartnerFitQuiz } from "@/components/go/quiz";
 
 // Testimonials with realistic personas across industries
@@ -714,7 +715,7 @@ export default function PartnerLandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <img src={logo2go} alt="My 2Go" className="h-14 w-auto mx-auto mb-8 invert" />
+            <img src={logo2goWhite} alt="My 2Go" className="h-14 w-auto mx-auto mb-8" />
             
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
               Bereit für mehr Stammkunden?
@@ -739,7 +740,7 @@ export default function PartnerLandingPage() {
                 asChild 
                 variant="outline" 
                 size="lg" 
-                className="h-16 px-10 text-lg font-semibold rounded-2xl border-white/30 text-white hover:bg-white/10 transition-all"
+                className="h-16 px-10 text-lg font-semibold rounded-2xl bg-white/90 border-white/50 text-secondary hover:bg-white transition-all"
               >
                 <a href="#quiz">
                   Erst den Quiz machen
