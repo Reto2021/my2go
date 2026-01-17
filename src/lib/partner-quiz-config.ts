@@ -112,12 +112,14 @@ export const SPONSORING_POTENTIAL = {
 } as const;
 
 // -------------------------------------------------------------
-// UPLIFT FACTORS
+// UPLIFT FACTORS (Mehrbesuche-Modell)
 // -------------------------------------------------------------
 export const UPLIFT_FACTORS = {
   enrollment90Days: { conservative: 0.08, realistic: 0.15, ambitious: 0.28 },
   activeRate: { conservative: 0.25, realistic: 0.40, ambitious: 0.55 },
   freqLift: { conservative: 0.02, realistic: 0.05, ambitious: 0.10 },
+  // NEW: Extra visits per active member per year
+  extraVisitsPerActiveMemberPerYear: { conservative: 0.5, realistic: 1.2, ambitious: 2.0 },
   networkLift: {
     'action': { conservative: 0.005, realistic: 0.02, ambitious: 0.05 },
     'listing': { conservative: 0.000, realistic: 0.005, ambitious: 0.015 },
@@ -126,8 +128,43 @@ export const UPLIFT_FACTORS = {
   ghlConvLift: {
     noFollowUp: { conservative: 0.05, realistic: 0.15, ambitious: 0.30 },
     withFollowUp: { conservative: 0.02, realistic: 0.05, ambitious: 0.10 }
+  },
+  // NEW: Review uplift (as fraction of monthly transactions)
+  reviewUplift: {
+    conservative: 0.0,
+    realistic: 0.002, // 0.2% of monthly transactions
+    ambitious: 0.005  // 0.5% of monthly transactions
   }
 } as const;
+
+// -------------------------------------------------------------
+// REVIEW MANAGEMENT OPTIONS
+// -------------------------------------------------------------
+export const REVIEW_COUNT_OPTIONS = [
+  { value: '0-19' as const, label: '0–19 Bewertungen' },
+  { value: '20-49' as const, label: '20–49 Bewertungen' },
+  { value: '50-199' as const, label: '50–199 Bewertungen' },
+  { value: '200+' as const, label: '200+ Bewertungen' },
+  { value: 'unknown' as const, label: 'Weiss nicht' }
+] as const;
+
+export const REVIEW_RATING_OPTIONS = [
+  { value: '<4.2' as const, label: 'Unter 4.2 ⭐' },
+  { value: '4.2-4.5' as const, label: '4.2 – 4.5 ⭐' },
+  { value: '4.6-4.8' as const, label: '4.6 – 4.8 ⭐' },
+  { value: '4.9+' as const, label: '4.9+ ⭐' },
+  { value: 'unknown' as const, label: 'Weiss nicht' }
+] as const;
+
+export const REVIEW_PROCESS_OPTIONS = [
+  { value: 'never' as const, label: 'Fragen nie aktiv nach Reviews', desc: 'Passiv – warten auf spontane Bewertungen' },
+  { value: 'sometimes' as const, label: 'Manchmal, nicht systematisch', desc: 'Ab und zu, wenn wir daran denken' },
+  { value: 'systematic' as const, label: 'Systematisch nach jedem Besuch', desc: 'Automatisiert oder konsequent manuell' }
+] as const;
+
+export type ReviewCount = typeof REVIEW_COUNT_OPTIONS[number]['value'];
+export type ReviewRating = typeof REVIEW_RATING_OPTIONS[number]['value'];
+export type ReviewProcess = typeof REVIEW_PROCESS_OPTIONS[number]['value'];
 
 // -------------------------------------------------------------
 // SPONSOR CATEGORIES

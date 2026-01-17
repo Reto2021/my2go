@@ -11,7 +11,10 @@ import {
   RANGE_MIDPOINTS,
   FIXCOST_ITEMS,
   PlanKey,
-  getMidpoint
+  getMidpoint,
+  ReviewCount,
+  ReviewRating,
+  ReviewProcess
 } from './partner-quiz-config';
 
 // -------------------------------------------------------------
@@ -67,6 +70,11 @@ export interface QuizAnswers {
   unknownLeads?: boolean;
   unknownConversion?: boolean;
   
+  // NEW: Review Management
+  reviewCount: ReviewCount | null;
+  reviewRating: ReviewRating | null;
+  reviewProcess: ReviewProcess | null;
+  
   // Company data
   companyName: string;
   companyAddress: string;
@@ -83,6 +91,7 @@ export interface FitResult {
   recommendedPlan: PlanKey;
   modules: string[];
   setupHints: string[];
+  recommendReviewBooster: boolean;
 }
 
 export interface RefinancingResult {
@@ -100,12 +109,34 @@ export interface RefinancingResult {
   } | null;
 }
 
+// NEW: Mehrbesuche-based uplift result
+export interface MehrbesucheResult {
+  extraVisitsPerMonth: { conservative: number; realistic: number; ambitious: number };
+  extraVisitsPerYear: { conservative: number; realistic: number; ambitious: number };
+  reviewVisitsPerMonth: { conservative: number; realistic: number; ambitious: number };
+  totalVisitsPerMonth: { conservative: number; realistic: number; ambitious: number };
+  totalVisitsPerYear: { conservative: number; realistic: number; ambitious: number };
+  // Optional CHF estimates
+  upliftCHFPerMonth: { conservative: number; realistic: number; ambitious: number };
+  // Assumptions for display
+  assumptions: {
+    transactionsPerMonth: number;
+    avgBasket: number;
+    repeatShare: number;
+    enrollmentRate: string;
+    activeRate: string;
+    hasReviewGap: boolean;
+  };
+}
+
 export interface UpliftResult {
   loyaltyUplift: { conservative: number; realistic: number; ambitious: number };
   networkUplift: { conservative: number; realistic: number; ambitious: number };
   ghlUplift: { conservative: number; realistic: number; ambitious: number };
   total: { conservative: number; realistic: number; ambitious: number };
   baselineRevenue: number;
+  // NEW: Mehrbesuche model
+  mehrbesuche: MehrbesucheResult;
 }
 
 // -------------------------------------------------------------
@@ -173,7 +204,16 @@ export function calculateFitScore(answers: QuizAnswers): FitResult {
     setupHints.push('Kundenerfassung am POS einrichten');
   }
 
-  return { score, recommendedPlan, modules, setupHints };
+  // NEW: Review Booster recommendation
+  const hasReviewGap = 
+    answers.reviewProcess !== 'systematic' || 
+    answers.reviewCount === '0-19' || 
+    answers.reviewCount === '20-49' ||
+    answers.reviewRating === '<4.2';
+  
+  const recommendReviewBooster = hasReviewGap;
+
+  return { score, recommendedPlan, modules, setupHints, recommendReviewBooster };
 }
 
 // -------------------------------------------------------------
@@ -266,19 +306,101 @@ export function calculateRefinancing(
 }
 
 // -------------------------------------------------------------
-// UPLIFT CALCULATION
+// UPLIFT CALCULATION (Legacy CHF-based + NEW Mehrbesuche model)
 // -------------------------------------------------------------
 export function calculateUplift(
   answers: QuizAnswers,
   includeGHL: boolean
 ): UpliftResult {
-  // Baseline revenue
+  // Baseline values
   const transactionsMid = getMidpoint(answers.transactionsPerMonth || '<30', 'transactions');
   const avgTicketMid = getMidpoint(answers.avgTicket || '<30', 'avgTicket');
+  const loyaltyShareMid = getMidpoint(answers.loyaltyShare || '<20%', 'loyalty') / 100;
   const baselineRevenue = transactionsMid * avgTicketMid;
 
-  // Loyalty Uplift
   const scenarios = ['conservative', 'realistic', 'ambitious'] as const;
+  
+  // =====================================================
+  // NEW: MEHRBESUCHE MODEL (12-month visit projection)
+  // =====================================================
+  
+  // Inputs:
+  // T = transactions per month (midpoint from Q2)
+  // B = avg basket (midpoint from Q3)
+  // S = repeat customer share (midpoint from Q4 - loyaltyShare)
+  // ActiveShare = Enrollment * ActiveRate
+  
+  const T = transactionsMid;
+  const B = avgTicketMid;
+  const S = loyaltyShareMid;
+  
+  // repeat_tx_per_month = T * S
+  const repeatTxPerMonth = T * S;
+  
+  // Check for review gap
+  const hasReviewGap = 
+    answers.reviewProcess !== 'systematic' || 
+    answers.reviewCount === '0-19' || 
+    answers.reviewCount === '20-49' ||
+    answers.reviewRating === '<4.2';
+  
+  const extraVisitsPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
+  const extraVisitsPerYear = { conservative: 0, realistic: 0, ambitious: 0 };
+  const reviewVisitsPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
+  const totalVisitsPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
+  const totalVisitsPerYear = { conservative: 0, realistic: 0, ambitious: 0 };
+  const upliftCHFPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
+  
+  scenarios.forEach(scenario => {
+    const enrollment = UPLIFT_FACTORS.enrollment90Days[scenario];
+    const activeRate = UPLIFT_FACTORS.activeRate[scenario];
+    const activeShare = enrollment * activeRate;
+    const extraVisitsPerActiveMemberPerYear = UPLIFT_FACTORS.extraVisitsPerActiveMemberPerYear[scenario];
+    
+    // active_repeat_tx_per_month = repeat_tx_per_month * ActiveShare
+    const activeRepeatTxPerMonth = repeatTxPerMonth * activeShare;
+    
+    // extra_visits_per_month = active_repeat_tx_per_month * (extraVisitsPerActiveMemberPerYear / 12)
+    const extraVisits = activeRepeatTxPerMonth * (extraVisitsPerActiveMemberPerYear / 12);
+    extraVisitsPerMonth[scenario] = extraVisits;
+    extraVisitsPerYear[scenario] = extraVisits * 12;
+    
+    // Review uplift (if gap detected)
+    if (hasReviewGap) {
+      const reviewLift = T * UPLIFT_FACTORS.reviewUplift[scenario];
+      reviewVisitsPerMonth[scenario] = reviewLift;
+    }
+    
+    // Totals
+    totalVisitsPerMonth[scenario] = extraVisitsPerMonth[scenario] + reviewVisitsPerMonth[scenario];
+    totalVisitsPerYear[scenario] = totalVisitsPerMonth[scenario] * 12;
+    
+    // Optional CHF estimate
+    upliftCHFPerMonth[scenario] = totalVisitsPerMonth[scenario] * B;
+  });
+  
+  const mehrbesuche: MehrbesucheResult = {
+    extraVisitsPerMonth,
+    extraVisitsPerYear,
+    reviewVisitsPerMonth,
+    totalVisitsPerMonth,
+    totalVisitsPerYear,
+    upliftCHFPerMonth,
+    assumptions: {
+      transactionsPerMonth: T,
+      avgBasket: B,
+      repeatShare: S,
+      enrollmentRate: `${Math.round(UPLIFT_FACTORS.enrollment90Days.realistic * 100)}%`,
+      activeRate: `${Math.round(UPLIFT_FACTORS.activeRate.realistic * 100)}%`,
+      hasReviewGap
+    }
+  };
+  
+  // =====================================================
+  // LEGACY: CHF-based Uplift (kept for backward compat)
+  // =====================================================
+  
+  // Loyalty Uplift
   const loyaltyUplift = { conservative: 0, realistic: 0, ambitious: 0 };
   
   scenarios.forEach(scenario => {
@@ -319,7 +441,7 @@ export function calculateUplift(
     });
   }
 
-  // Total
+  // Total (legacy CHF)
   const total = { conservative: 0, realistic: 0, ambitious: 0 };
   scenarios.forEach(scenario => {
     total[scenario] = loyaltyUplift[scenario] + networkUplift[scenario] + ghlUplift[scenario];
@@ -330,7 +452,8 @@ export function calculateUplift(
     networkUplift,
     ghlUplift,
     total,
-    baselineRevenue
+    baselineRevenue,
+    mehrbesuche
   };
 }
 

@@ -67,6 +67,11 @@ const initialAnswers: QuizAnswers = {
   unknownLeads: false,
   unknownConversion: false,
   
+  // Review Management
+  reviewCount: null,
+  reviewRating: null,
+  reviewProcess: null,
+  
   // Company data
   companyName: '',
   companyAddress: '',
