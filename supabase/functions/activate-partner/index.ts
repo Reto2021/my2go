@@ -264,7 +264,7 @@ serve(async (req) => {
           <tr>
             <td style="padding: 20px; text-align: center;">
               <p style="margin: 0; font-size: 12px; color: #888;">
-                2Go Media AG • c/o Impact Hub Zürich • Sihlquai 131 • 8005 Zürich<br>
+                2Go Media AG • Industriestrasse 19 • 5200 Brugg<br>
                 <a href="https://www.2gomedia.ch" style="color: #7AB8D6;">www.2gomedia.ch</a> • partner@my2go.app
               </p>
             </td>
