@@ -344,20 +344,70 @@ export default function PartnerLandingPage() {
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="py-24 md:py-32">
+      <section className="py-16 md:py-24">
         <div className="container max-w-5xl mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-10 md:mb-14"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+            <h2 className="text-2xl md:text-4xl font-bold text-foreground">
               Das sagen unsere Partner
             </h2>
           </motion.div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Mobile: Horizontal scroll carousel */}
+          <div className="md:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-4 pb-4" style={{ width: 'max-content' }}>
+              {TESTIMONIALS.map((testimonial, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="w-[85vw] max-w-[320px] flex-shrink-0"
+                >
+                  <Card className="p-5 h-full bg-white border-0 shadow-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, j) => (
+                          <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        ))}
+                      </div>
+                      <Badge className="bg-green-100 text-green-700 font-semibold text-xs">
+                        {testimonial.metric}
+                      </Badge>
+                    </div>
+                    
+                    <blockquote className="text-sm text-foreground mb-5 leading-relaxed line-clamp-4">
+                      "{testimonial.quote}"
+                    </blockquote>
+                    
+                    <div className="flex items-center gap-3 pt-4 border-t">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-xl flex-shrink-0">
+                        {testimonial.avatar}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm text-foreground truncate">{testimonial.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{testimonial.role}</div>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+            {/* Scroll indicator */}
+            <div className="flex justify-center gap-1.5 mt-3">
+              {TESTIMONIALS.map((_, i) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop: Grid layout */}
+          <div className="hidden md:grid md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((testimonial, i) => (
               <motion.div
                 key={i}
@@ -366,19 +416,19 @@ export default function PartnerLandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="p-8 h-full bg-white border-0 shadow-lg">
-                  <div className="flex items-center gap-1 mb-6">
+                <Card className="p-6 h-full bg-white border-0 shadow-lg">
+                  <div className="flex items-center gap-1 mb-5">
                     {[...Array(5)].map((_, j) => (
                       <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
                   
-                  <blockquote className="text-foreground mb-8 leading-relaxed">
+                  <blockquote className="text-foreground mb-6 leading-relaxed">
                     "{testimonial.quote}"
                   </blockquote>
                   
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-xl">
                       {testimonial.avatar}
                     </div>
                     <div>
@@ -387,7 +437,7 @@ export default function PartnerLandingPage() {
                     </div>
                   </div>
                   
-                  <div className="mt-6 pt-6 border-t">
+                  <div className="mt-5 pt-5 border-t">
                     <Badge className="bg-green-100 text-green-700 font-semibold">
                       {testimonial.metric}
                     </Badge>
