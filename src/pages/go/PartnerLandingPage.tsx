@@ -525,7 +525,7 @@ export default function PartnerLandingPage() {
       </section>
 
       {/* ===== NON-PROFIT ===== */}
-      <section className="py-16 bg-gradient-to-br from-pink-50 via-pink-50/50 to-background">
+      <section id="nonprofit" className="py-16 bg-gradient-to-br from-pink-50 via-pink-50/50 to-background">
         <div className="container max-w-3xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
