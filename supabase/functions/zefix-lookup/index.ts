@@ -26,33 +26,42 @@ interface ZefixCompany {
 }
 
 // Map of registry IDs to cantonal subdomains
+// NOTE: Zefix API returns different IDs than expected - this mapping covers both
 const REGISTRY_DOMAINS: Record<number, string> = {
-  100: 'zh', // Zürich
-  150: 'be', // Bern
-  170: 'lu', // Luzern
-  190: 'ur', // Uri
-  200: 'sz', // Schwyz
-  210: 'ow', // Obwalden
-  220: 'nw', // Nidwalden
-  230: 'gl', // Glarus
-  240: 'zg', // Zug
-  270: 'so', // Solothurn
-  280: 'bs', // Basel-Stadt
-  290: 'bl', // Basel-Landschaft
-  300: 'sh', // Schaffhausen
-  310: 'ar', // Appenzell Ausserrhoden
-  320: 'ai', // Appenzell Innerrhoden
-  330: 'sg', // St. Gallen
-  340: 'gr', // Graubünden
-  400: 'ag', // Aargau
-  410: 'tg', // Thurgau
-  500: 'ti', // Ticino
-  550: 'vd', // Vaud
-  560: 'vs', // Valais
-  600: 'ne', // Neuchâtel
-  620: 'ge', // Genève
-  670: 'ju', // Jura
-  250: 'fr', // Fribourg
+  // Main registry IDs (as returned by Zefix API)
+  20: 'zh',   // Zürich (Zefix returns 20)
+  1: 'zh',    // Alternative Zürich ID
+  2: 'be',    // Bern
+  3: 'lu',    // Luzern
+  4: 'ur',    // Uri
+  5: 'sz',    // Schwyz
+  6: 'ow',    // Obwalden
+  7: 'nw',    // Nidwalden
+  8: 'gl',    // Glarus
+  9: 'zg',    // Zug
+  10: 'fr',   // Fribourg
+  11: 'so',   // Solothurn
+  12: 'bs',   // Basel-Stadt
+  13: 'bl',   // Basel-Landschaft
+  14: 'sh',   // Schaffhausen
+  15: 'ar',   // Appenzell Ausserrhoden
+  16: 'ai',   // Appenzell Innerrhoden
+  17: 'sg',   // St. Gallen
+  18: 'gr',   // Graubünden
+  19: 'ag',   // Aargau
+  21: 'tg',   // Thurgau
+  22: 'ti',   // Ticino
+  23: 'vd',   // Vaud
+  24: 'vs',   // Valais
+  25: 'ne',   // Neuchâtel
+  26: 'ge',   // Genève
+  27: 'ju',   // Jura
+  // Legacy IDs (just in case)
+  100: 'zh', 150: 'be', 170: 'lu', 190: 'ur', 200: 'sz',
+  210: 'ow', 220: 'nw', 230: 'gl', 240: 'zg', 250: 'fr',
+  270: 'so', 280: 'bs', 290: 'bl', 300: 'sh', 310: 'ar',
+  320: 'ai', 330: 'sg', 340: 'gr', 400: 'ag', 410: 'tg',
+  500: 'ti', 550: 'vd', 560: 'vs', 600: 'ne', 620: 'ge', 670: 'ju',
 };
 
 // Format UID properly: CHE130920325 -> CHE-130.920.325
