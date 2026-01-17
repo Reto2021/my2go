@@ -116,13 +116,13 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
       <div>
         <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
           <Handshake className="w-4 h-4 text-muted-foreground" />
-          Partner-Commitment im Netzwerk
+          Wie aktiv möchten Sie Deals bewerben?
         </Label>
         <div className="space-y-2">
           {[
-            { value: 'action', label: 'Gemeinsame Aktion 1–2×/Monat', desc: 'Aktive Kampagnen mit Partnern' },
-            { value: 'listing', label: 'Nur Listing', desc: 'Präsenz ohne aktive Aktionen' },
-            { value: 'unclear', label: 'Noch unklar', desc: 'Entscheidung offen' }
+            { value: 'action', label: 'Aktiv: Deals 1–2× pro Monat pushen', desc: 'Sie bewerben Angebote aktiv über Social Media, Newsletter etc.' },
+            { value: 'listing', label: 'Passiv: Nur Präsenz im Netzwerk', desc: 'Ihre Deals sind sichtbar, aber Sie machen keine aktive Werbung' },
+            { value: 'unclear', label: 'Weiss noch nicht', desc: 'Entscheide ich später' }
           ].map(opt => (
             <button
               key={opt.value}
@@ -144,8 +144,8 @@ export function QuizStep3Uplift({ answers, updateAnswers }: Props) {
       {/* Info box */}
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
         <p className="text-sm text-amber-800">
-          <strong>Hinweis:</strong> GHL-Automationen (Reminder, Follow-up) sind nur ab dem Plan "Growth" verfügbar. 
-          Der Uplift-Rechner berücksichtigt dies automatisch.
+          <strong>Hinweis:</strong> Automatische Reminder (E-Mail, SMS, WhatsApp) sind erst ab dem Plan "Growth" enthalten. 
+          Der Rechner berücksichtigt das automatisch bei der Empfehlung.
         </p>
       </div>
     </div>

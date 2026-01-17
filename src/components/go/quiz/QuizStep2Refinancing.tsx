@@ -106,6 +106,7 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
         {FIXCOST_ITEMS.map(item => {
           const isSelected = answers.fixcosts[item.key]?.selected ?? false;
           const selectedRange = answers.fixcosts[item.key]?.range;
+          const itemWithUnit = item as typeof item & { unit?: string; multipleAllowed?: boolean };
           
           return (
             <div 
@@ -119,7 +120,12 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
                   <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                     {FIXCOST_ICONS[item.key]}
                   </div>
-                  <span className="font-medium">{item.label}</span>
+                  <div>
+                    <span className="font-medium">{item.label}</span>
+                    {itemWithUnit.unit && (
+                      <span className="text-xs text-muted-foreground ml-1">({itemWithUnit.unit})</span>
+                    )}
+                  </div>
                 </div>
                 <Switch
                   checked={isSelected}
@@ -128,34 +134,41 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
               </div>
               
               {isSelected && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {item.ranges.map((range, idx) => (
+                <>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {item.ranges.map((range, idx) => (
+                      <button
+                        key={range}
+                        type="button"
+                        onClick={() => setFixcostRange(item.key, range, item.midpoints[idx])}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                          selectedRange === range && !answers.fixcosts[item.key]?.unknown
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted hover:bg-muted/80 text-foreground'
+                        }`}
+                      >
+                        CHF {range}
+                      </button>
+                    ))}
+                    {/* Weiss nicht Option */}
                     <button
-                      key={range}
                       type="button"
-                      onClick={() => setFixcostRange(item.key, range, item.midpoints[idx])}
+                      onClick={() => setFixcostUnknown(item.key)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                        selectedRange === range && !answers.fixcosts[item.key]?.unknown
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted hover:bg-muted/80 text-foreground'
+                        answers.fixcosts[item.key]?.unknown
+                          ? 'bg-amber-200 text-amber-900'
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                       }`}
                     >
-                      CHF {range}
+                      Weiss nicht
                     </button>
-                  ))}
-                  {/* Weiss nicht Option */}
-                  <button
-                    type="button"
-                    onClick={() => setFixcostUnknown(item.key)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      answers.fixcosts[item.key]?.unknown
-                        ? 'bg-amber-200 text-amber-900'
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                    }`}
-                  >
-                    Weiss nicht
-                  </button>
-                </div>
+                  </div>
+                  {itemWithUnit.multipleAllowed && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      💡 Tipp: Summieren Sie alle Versicherungen (UVG, BVG, Haftpflicht, etc.)
+                    </p>
+                  )}
+                </>
               )}
 
               {/* Web/Hosting extras */}

@@ -192,12 +192,12 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
           {plan.name} empfohlen
         </h3>
         <p className="text-3xl font-bold text-primary">
-          {formatCHF(plan.priceCHF)}<span className="text-base font-normal text-muted-foreground">/Monat</span>
+        {formatCHF(plan.priceCHF)}<span className="text-base font-normal text-muted-foreground">/Monat</span>
         </p>
         {plan.includesGHL && (
           <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center gap-1">
             <Zap className="w-4 h-4 text-amber-500" />
-            Inkl. GHL/Automationen
+            Inkl. automatische Reminder (E-Mail, SMS, WhatsApp)
           </p>
         )}
       </motion.div>
@@ -257,7 +257,7 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
             </div>
           )}
           <div className="border-t border-border pt-2 mt-2 flex justify-between font-bold">
-            <span>Total Einsparungen</span>
+            <span>Total Einsparungen <span className="text-xs font-normal text-muted-foreground">/Monat</span></span>
             <span className="text-green-600">{formatCHF(refinancing.totalSavings)}</span>
           </div>
           {!isCovered && refinancing.miniPriceLever && (
@@ -311,7 +311,7 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
           <Card className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors cursor-pointer">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-500" />
-              <span className="font-medium">Uplift-Potenzial anzeigen</span>
+              <span className="font-medium">Zusätzliches Umsatzpotenzial</span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Bonus</span>
             </div>
             {showUplift ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -341,6 +341,12 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
                   </p>
                 </div>
               ))}
+            </div>
+            <div className="mt-4 p-3 bg-white rounded-lg border border-green-200 text-xs space-y-1">
+              <p className="font-medium text-green-800 mb-2">Wie berechnet?</p>
+              <p className="text-muted-foreground">• <strong>Stammkunden-Aktivierung:</strong> Mehr Wiederkäufe durch Taler-Punkte (+{formatPercent(0.05)} Frequenz)</p>
+              <p className="text-muted-foreground">• <strong>Netzwerk-Effekt:</strong> Neukunden durch Partner-Deals ({answers.partnerCommitment === 'action' ? 'aktiv beworben' : 'passive Präsenz'})</p>
+              {plan.includesGHL && <p className="text-muted-foreground">• <strong>Automatische Reminder:</strong> Weniger verlorene Leads durch Follow-up Nachrichten</p>}
             </div>
             <p className="text-xs text-center text-muted-foreground mt-3">
               Basis: {formatCHF(uplift.baselineRevenue)} geschätzter Monatsumsatz

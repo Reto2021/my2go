@@ -28,6 +28,7 @@ import {
   Loader2,
   CheckCheck
 } from 'lucide-react';
+import logo2Go from '@/assets/logo-2go.png';
 
 interface Props {
   open: boolean;
@@ -83,17 +84,19 @@ export function ReportPreviewSheet({
 
         <ScrollArea className="flex-1 h-[calc(90vh-140px)]">
           <div className="p-6 space-y-6 bg-muted/30">
-            {/* Letterhead Preview */}
+            {/* Letterhead Preview with 2Go Logo */}
             <div className="bg-gradient-to-r from-primary to-primary/80 rounded-t-xl p-6 text-white">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="bg-white text-primary font-bold px-3 py-1 rounded-lg inline-block text-lg">
-                    2Go
-                  </div>
+                  <img 
+                    src={logo2Go} 
+                    alt="2Go" 
+                    className="h-10 bg-white rounded-lg px-2 py-1"
+                  />
                   <p className="text-sm mt-2 opacity-90">Das Loyalitäts-Netzwerk</p>
                 </div>
                 <div className="text-right text-sm opacity-90">
-                  <p className="font-semibold">2Go GmbH</p>
+                  <p className="font-semibold">My2Go GmbH</p>
                   <p>Bahnhofstrasse 10, 8001 Zürich</p>
                   <p>partner@my2go.app</p>
                 </div>
@@ -189,7 +192,7 @@ export function ReportPreviewSheet({
                     </div>
                   )}
                   <div className="flex justify-between py-3 bg-green-50 rounded-lg px-3 -mx-3 font-bold">
-                    <span>🎉 Total</span>
+                    <span>🎉 Total <span className="text-xs font-normal text-muted-foreground">/Monat</span></span>
                     <span className="text-green-600 text-lg">{formatCHF(refinancing.totalSavings)}</span>
                   </div>
                 </div>
