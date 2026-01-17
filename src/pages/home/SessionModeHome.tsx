@@ -7,6 +7,7 @@ import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
 import { ReferralGameCard } from '@/components/home/ReferralGameCard';
 import { InstallBanner } from '@/components/home/InstallBanner';
+import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
 import { LiveHeaderButton, LiveEventsPanel } from '@/components/radio/LiveEventsPanel';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { ChevronRight, Navigation, X } from 'lucide-react';
@@ -69,6 +70,11 @@ export function SessionModeHome({
       {/* Install Banner - for users who haven't installed the PWA */}
       <section className="container pb-3">
         <InstallBanner />
+      </section>
+      
+      {/* New Partner Banner - Show when new partners are in user's area */}
+      <section className="container pb-3">
+        <NewPartnerBanner />
       </section>
       
       {/* Referral Game Card - Gamified */}

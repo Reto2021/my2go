@@ -237,6 +237,73 @@ export type Database = {
           },
         ]
       }
+      new_partner_alert_dismissals: {
+        Row: {
+          alert_id: string
+          dismissed_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          dismissed_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          dismissed_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_partner_alert_dismissals_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "new_partner_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      new_partner_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          partner_city: string | null
+          partner_id: string
+          partner_lat: number | null
+          partner_lng: number | null
+          partner_postal_code: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          partner_city?: string | null
+          partner_id: string
+          partner_lat?: number | null
+          partner_lng?: number | null
+          partner_postal_code?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          partner_city?: string | null
+          partner_id?: string
+          partner_lat?: number | null
+          partner_lng?: number | null
+          partner_postal_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "new_partner_alerts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_admins: {
         Row: {
           can_confirm_redemptions: boolean | null

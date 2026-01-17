@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.activate-partner]
 verify_jwt = false
+
+[functions.notify-new-partner]
+verify_jwt = false
