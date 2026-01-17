@@ -130,7 +130,13 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
       setIsFetchingDetails(true);
       try {
         const { data } = await supabase.functions.invoke('zefix-lookup', {
-          body: { registryId: company.registryOfCommerceId }
+          body: { 
+            fetchDetails: true,
+            uid: company.uid,
+            registryOfCommerceId: company.registryOfCommerceId,
+            legalSeat: company.legalSeat,
+            companyName: company.name
+          }
         });
 
         if (data?.address) {
