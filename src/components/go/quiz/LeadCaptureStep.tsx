@@ -455,16 +455,19 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
       </div>
 
       {/* Terms */}
-      <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
+      <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl border border-primary/20">
         <Checkbox
           id="terms"
           checked={acceptedTerms}
           onCheckedChange={(c) => setAcceptedTerms(c === true)}
           className="mt-0.5"
         />
-        <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-          Ich bin einverstanden, dass meine Daten zur Erstellung einer personalisierten Empfehlung 
-          verwendet werden. <a href="/go/legal/datenschutz" target="_blank" className="underline">Datenschutz</a>
+        <label htmlFor="terms" className="text-sm cursor-pointer">
+          <span className="font-medium text-foreground">Ja, ich will mein Sparpotenzial erfahren!</span>
+          {' '}
+          <span className="text-muted-foreground">
+            Ihre Angaben werden nur für die Analyse verwendet. <a href="/go/legal/datenschutz" target="_blank" className="underline hover:text-primary">Datenschutz</a>
+          </span>
         </label>
       </div>
 
