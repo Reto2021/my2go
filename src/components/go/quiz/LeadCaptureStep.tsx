@@ -36,12 +36,18 @@ interface ZefixCompany {
   name: string;
   legalSeat: string;
   legalForm: string;
+  registryOfCommerceId?: number;
   address?: {
     street?: string;
     houseNumber?: string;
     swissZipCode?: string;
     city?: string;
   };
+  persons?: {
+    name: string;
+    role: string;
+    signature?: string;
+  }[];
 }
 
 interface ChipOption<T> {
@@ -83,11 +89,13 @@ function ChipSelect<T extends string>({
 export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
   const [searchResults, setSearchResults] = useState<ZefixCompany[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manualMode, setManualMode] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<ZefixCompany | null>(null);
 
   // Debounced autocomplete search
   const searchZefix = useCallback(async (query: string) => {
@@ -144,25 +152,57 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, manualMode, answers.companyName, searchZefix]);
 
-  const selectCompany = (company: ZefixCompany) => {
-    const address = company.address 
-      ? `${company.address.street || ''} ${company.address.houseNumber || ''}`.trim()
-      : '';
-    
+  const selectCompany = async (company: ZefixCompany) => {
+    // Immediately set name and city from search results
     updateAnswers({
       companyName: company.name,
-      companyAddress: address,
-      companyPostalCode: company.address?.swissZipCode || '',
-      companyCity: company.address?.city || company.legalSeat || ''
+      companyCity: company.legalSeat || ''
     });
     
+    setSelectedCompany(company);
     setShowResults(false);
     setSearchQuery('');
     setManualMode(false);
+    
+    // Fetch details (address, persons) in background
+    if (company.uid && company.registryOfCommerceId) {
+      setIsFetchingDetails(true);
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('zefix-lookup', {
+          body: { 
+            fetchDetails: true,
+            uid: company.uid,
+            registryOfCommerceId: company.registryOfCommerceId
+          }
+        });
+        
+        if (!fnError && data?.success) {
+          if (data.address) {
+            const addressStr = `${data.address.street || ''} ${data.address.houseNumber || ''}`.trim();
+            updateAnswers({
+              companyAddress: addressStr,
+              companyPostalCode: data.address.swissZipCode || '',
+              companyCity: data.address.city || company.legalSeat || ''
+            });
+          }
+          // Store persons for later use if needed
+          if (data.persons && data.persons.length > 0) {
+            console.log('Found persons:', data.persons);
+            // Could auto-fill contact person from first person
+            // For now just log it
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching company details:', err);
+      } finally {
+        setIsFetchingDetails(false);
+      }
+    }
   };
 
   const clearCompany = () => {
-    updateAnswers({ 
+    setSelectedCompany(null);
+    updateAnswers({
       companyName: '', 
       companyAddress: '', 
       companyPostalCode: '', 
@@ -238,11 +278,18 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               </div>
             </div>
             
-            {/* Info about manual address entry */}
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Info className="w-3 h-3" />
-              Adresse bitte ergänzen (Zefix liefert nur den Sitz)
-            </p>
+            {/* Loading indicator for address fetch */}
+            {isFetchingDetails ? (
+              <p className="text-xs text-primary flex items-center gap-2">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Lade Adressdaten aus dem Handelsregister...
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="w-3 h-3" />
+                {answers.companyAddress ? 'Adresse aus HR übernommen (editierbar)' : 'Adresse bitte ergänzen'}
+              </p>
+            )}
             
             {/* Editable address fields after Zefix selection */}
             <div className="grid grid-cols-3 gap-2">

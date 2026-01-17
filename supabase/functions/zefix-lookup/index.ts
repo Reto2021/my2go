@@ -55,6 +55,16 @@ const REGISTRY_DOMAINS: Record<number, string> = {
   250: 'fr', // Fribourg
 };
 
+// Format UID properly: CHE130920325 -> CHE-130.920.325
+function formatUidForUrl(uid: string): string {
+  const digits = uid.replace(/[^0-9]/g, '');
+  if (digits.length !== 9) {
+    console.log(`Invalid UID digits length: ${digits.length} for ${uid}`);
+    return uid;
+  }
+  return `CHE-${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}`;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -62,15 +72,9 @@ serve(async (req) => {
   }
 
   try {
-    const { query, uid } = await req.json();
+    const body = await req.json();
+    const { query, uid, fetchDetails, registryOfCommerceId } = body;
     
-    if (!query && !uid) {
-      return new Response(
-        JSON.stringify({ error: 'Query or UID required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Get credentials from environment
     const apiUser = Deno.env.get('ZEFIX_API_USER');
     const apiPassword = Deno.env.get('ZEFIX_API_PASSWORD');
@@ -84,18 +88,41 @@ serve(async (req) => {
       );
     }
 
-    // Create Basic Auth header
     const credentials = btoa(`${apiUser}:${apiPassword}`);
     const authHeader = `Basic ${credentials}`;
+    const baseUrl = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
+
+    // ==========================================
+    // MODE 1: Fetch details for a selected company (with scraping)
+    // ==========================================
+    if (fetchDetails && uid && registryOfCommerceId) {
+      console.log(`Fetching details for UID: ${uid}, Registry: ${registryOfCommerceId}`);
+      
+      const scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          address: scraped?.address,
+          persons: scraped?.persons 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ==========================================
+    // MODE 2: Quick search (no scraping)
+    // ==========================================
+    if (!query && !uid) {
+      return new Response(
+        JSON.stringify({ error: 'Query or UID required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     console.log(`Zefix lookup: query="${query}", uid="${uid}"`);
 
     const searchTerm = uid || query;
-    
-    // Use the official Zefix Public REST API with authentication
-    const baseUrl = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
-    
-    // First try company search
     const searchUrl = `${baseUrl}/company/search`;
     
     const searchBody = {
@@ -119,16 +146,9 @@ serve(async (req) => {
 
     console.log(`Zefix search response status: ${response.status}`);
 
-    // If exact search fails or returns no results, try similar search
+    // If exact search fails, try similar search
     if (!response.ok || response.status === 204) {
       console.log('Trying similar search...');
-      
-      const similarBody = {
-        name: searchTerm,
-        searchType: "similar",
-        maxEntries: 10,
-        offset: 0
-      };
       
       response = await fetch(searchUrl, {
         method: 'POST',
@@ -137,26 +157,15 @@ serve(async (req) => {
           'Content-Type': 'application/json',
           'Authorization': authHeader
         },
-        body: JSON.stringify(similarBody)
+        body: JSON.stringify({
+          name: searchTerm,
+          searchType: "similar",
+          maxEntries: 10,
+          offset: 0
+        })
       });
       
       console.log(`Zefix similar search response status: ${response.status}`);
-    }
-
-    // If still no results, try the suggest endpoint
-    if (!response.ok || response.status === 204) {
-      console.log('Trying suggest endpoint...');
-      
-      const suggestUrl = `${baseUrl}/company/search/suggest?query=${encodeURIComponent(searchTerm)}`;
-      
-      response = await fetch(suggestUrl, {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': authHeader
-        }
-      });
-
-      console.log(`Zefix suggest response status: ${response.status}`);
     }
 
     if (!response.ok) {
@@ -175,249 +184,26 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Search response:', JSON.stringify(data).slice(0, 500));
     
-    // Transform to our format
+    const results = data.list || data.results || data;
     let companies: ZefixCompany[] = [];
     
-    // Handle different response structures
-    const results = data.list || data.results || data;
-    
-    // Helper function to scrape cantonal register for address and persons
-    async function scrapeCantonalRegister(companyUid: string, registryId: number): Promise<{
-      address?: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string };
-      persons?: { name: string; role: string; signature?: string }[];
-    } | null> {
-      if (!firecrawlApiKey) {
-        console.log('Firecrawl API key not configured, skipping scrape');
-        return null;
-      }
-      
-      // Get cantonal domain
-      const canton = REGISTRY_DOMAINS[registryId];
-      if (!canton) {
-        console.log(`Unknown registry ID: ${registryId}`);
-        return null;
-      }
-      
-      // Format UID for URL (CHE-XXX.XXX.XXX)
-      const cleanUid = companyUid.replace(/[^0-9]/g, '');
-      const formattedUid = `CHE-${cleanUid.slice(3, 6)}.${cleanUid.slice(6, 9)}.${cleanUid.slice(9, 12)}`;
-      
-      // Build cantonal register URL
-      const registerUrl = `https://${canton}.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=${formattedUid}`;
-      console.log(`Scraping cantonal register: ${registerUrl}`);
-      
-      try {
-        const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${firecrawlApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: registerUrl,
-            formats: ['markdown'],
-            onlyMainContent: true,
-            waitFor: 3000, // Wait for dynamic content
-          }),
-        });
-        
-        if (!scrapeResponse.ok) {
-          console.error(`Firecrawl error: ${scrapeResponse.status}`);
-          return null;
-        }
-        
-        const scrapeData = await scrapeResponse.json();
-        const markdown = scrapeData.data?.markdown || scrapeData.markdown || '';
-        
-        console.log(`Scraped content length: ${markdown.length}`);
-        console.log(`Scraped content preview: ${markdown.slice(0, 1000)}`);
-        
-        // Parse address from markdown
-        const address = parseAddressFromMarkdown(markdown);
-        
-        // Parse persons from markdown
-        const persons = parsePersonsFromMarkdown(markdown);
-        
-        console.log(`Parsed address:`, JSON.stringify(address));
-        console.log(`Parsed ${persons.length} persons`);
-        
-        return { address, persons };
-      } catch (e) {
-        console.error('Scraping error:', e);
-        return null;
-      }
-    }
-    
-    // Parse address from HR markdown content
-    function parseAddressFromMarkdown(markdown: string): { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined {
-      // Common patterns in Swiss HR extracts
-      // Look for address section - typically after "Sitz" or "Domizil" or in a specific format
-      
-      // Pattern 1: "Strasse Nr., PLZ Ort" format
-      const addressMatch = markdown.match(/(?:Sitz|Domizil|Adresse|c\/o)[:\s]*([^\n]+)/i);
-      if (addressMatch) {
-        const addressLine = addressMatch[1].trim();
-        // Try to parse "Strasse Nr., PLZ Ort" or "Strasse Nr., CH-PLZ Ort"
-        const parsed = parseSwissAddress(addressLine);
-        if (parsed) return parsed;
-      }
-      
-      // Pattern 2: Look for PLZ + City pattern anywhere
-      const plzCityMatch = markdown.match(/(\d{4})\s+([A-ZÄÖÜa-zäöü][A-ZÄÖÜa-zäöü\s-]+?)(?:\s*\n|\s*$|\s*,)/);
-      if (plzCityMatch) {
-        return {
-          swissZipCode: plzCityMatch[1],
-          city: plzCityMatch[2].trim()
-        };
-      }
-      
-      return undefined;
-    }
-    
-    function parseSwissAddress(line: string): { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined {
-      // Pattern: "Bahnhofstrasse 10, 5000 Aarau" or "Bahnhofstrasse 10, CH-5000 Aarau"
-      const fullMatch = line.match(/^(.+?)\s+(\d+[a-zA-Z]?)\s*,\s*(?:CH-)?(\d{4})\s+(.+?)$/);
-      if (fullMatch) {
-        return {
-          street: fullMatch[1].trim(),
-          houseNumber: fullMatch[2].trim(),
-          swissZipCode: fullMatch[3],
-          city: fullMatch[4].trim()
-        };
-      }
-      
-      // Pattern without house number: "Hauptstrasse, 5000 Aarau"
-      const noNumberMatch = line.match(/^(.+?)\s*,\s*(?:CH-)?(\d{4})\s+(.+?)$/);
-      if (noNumberMatch) {
-        return {
-          street: noNumberMatch[1].trim(),
-          swissZipCode: noNumberMatch[2],
-          city: noNumberMatch[3].trim()
-        };
-      }
-      
-      return undefined;
-    }
-    
-    // Parse persons/organs from HR markdown content
-    function parsePersonsFromMarkdown(markdown: string): { name: string; role: string; signature?: string }[] {
-      const persons: { name: string; role: string; signature?: string }[] = [];
-      
-      // Look for person entries - common patterns in Swiss HR extracts
-      // Pattern: Name, Role, possibly signature type
-      
-      // Common role keywords
-      const rolePatterns = [
-        /(?:Verwaltungsrat|VR|Präsident|Vizepräsident|Mitglied|Geschäftsführer|Direktor|CEO|CFO|Sekretär|Prokurist)[^:]*:\s*([^,\n]+)/gi,
-        /([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+)+)\s*,\s*(Präsident|Mitglied|Geschäftsführer|Direktor|Einzelunterschrift|Kollektivunterschrift)/gi,
-      ];
-      
-      // Try to find the "Organe" or "Zeichnungsberechtigte" section
-      const organeSection = markdown.match(/(?:Organe|Zeichnungsberechtigte|Personen)[^\n]*\n([\s\S]*?)(?:\n\n|\n#|$)/i);
-      const searchText = organeSection ? organeSection[1] : markdown;
-      
-      // Pattern: "Name Vorname, Rolle, Unterschrift"
-      const personLines = searchText.match(/([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+)+)\s*,?\s*((?:Präsident|Mitglied|Geschäftsführer|Direktor|Sekretär)[^,\n]*)/gi);
-      
-      if (personLines) {
-        for (const line of personLines) {
-          const match = line.match(/([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+)+)\s*,?\s*((?:Präsident|Mitglied|Geschäftsführer|Direktor|Sekretär)[^,\n]*)/i);
-          if (match) {
-            // Check for signature type
-            const signatureMatch = line.match(/(Einzelunterschrift|Kollektivunterschrift\s*zu\s*\w+|Kollektivunterschrift)/i);
-            persons.push({
-              name: match[1].trim(),
-              role: match[2].trim(),
-              signature: signatureMatch ? signatureMatch[1].trim() : undefined
-            });
-          }
-        }
-      }
-      
-      // Deduplicate by name
-      const seen = new Set<string>();
-      return persons.filter(p => {
-        if (seen.has(p.name)) return false;
-        seen.add(p.name);
-        return true;
-      });
-    }
-    
     if (Array.isArray(results)) {
-      // For the first result only, try to scrape the cantonal register (to avoid timeout)
-      const detailPromises = results.slice(0, 3).map(async (c: any, index: number) => {
-        let address = c.address;
-        let persons: { name: string; role: string; signature?: string }[] | undefined;
-        
-        // Only scrape the first result to avoid timeouts
-        if (index === 0 && c.uid && c.registryOfCommerceId) {
-          const scraped = await scrapeCantonalRegister(c.uid, c.registryOfCommerceId);
-          if (scraped) {
-            if (scraped.address) address = scraped.address;
-            if (scraped.persons && scraped.persons.length > 0) persons = scraped.persons;
-          }
-        }
-        
-        return {
-          uid: c.uid || c.chid || c.ehpiNumber || '',
-          name: c.name || c.shabName || '',
-          legalSeat: c.legalSeat || c.seat || '',
-          legalForm: c.legalForm?.name?.de || c.legalForm?.shortName?.de || c.legalFormId || '',
-          status: c.status,
-          registryOfCommerceId: c.registryOfCommerceId,
-          address: address ? {
-            street: address.street || address.addressLine1 || '',
-            houseNumber: address.houseNumber || address.buildingNumber || '',
-            swissZipCode: address.swissZipCode || address.postCode || address.zip || '',
-            city: address.city || address.town || c.legalSeat || ''
-          } : undefined,
-          persons
-        };
-      });
-      
-      companies = await Promise.all(detailPromises);
-      
-      // Add remaining results without scraping
-      if (results.length > 3) {
-        const remaining = results.slice(3).map((c: any) => ({
-          uid: c.uid || c.chid || c.ehpiNumber || '',
-          name: c.name || c.shabName || '',
-          legalSeat: c.legalSeat || c.seat || '',
-          legalForm: c.legalForm?.name?.de || c.legalForm?.shortName?.de || c.legalFormId || '',
-          status: c.status,
-          registryOfCommerceId: c.registryOfCommerceId,
-          address: undefined,
-          persons: undefined
-        }));
-        companies = [...companies, ...remaining];
-      }
+      companies = results.slice(0, 10).map((c: any) => ({
+        uid: c.uid || c.chid || c.ehpiNumber || '',
+        name: c.name || c.shabName || '',
+        legalSeat: c.legalSeat || c.seat || '',
+        legalForm: c.legalForm?.name?.de || c.legalForm?.shortName?.de || c.legalFormId || '',
+        status: c.status,
+        registryOfCommerceId: c.registryOfCommerceId
+      }));
     } else if (data && (data.uid || data.name)) {
-      // Single result - scrape details
-      let address = data.address;
-      let persons: { name: string; role: string; signature?: string }[] | undefined;
-      
-      if (data.uid && data.registryOfCommerceId) {
-        const scraped = await scrapeCantonalRegister(data.uid, data.registryOfCommerceId);
-        if (scraped) {
-          if (scraped.address) address = scraped.address;
-          if (scraped.persons && scraped.persons.length > 0) persons = scraped.persons;
-        }
-      }
-      
       companies = [{
         uid: data.uid || data.chid || data.ehpiNumber || '',
         name: data.name || data.shabName || '',
         legalSeat: data.legalSeat || '',
         legalForm: data.legalForm?.name?.de || data.legalForm?.shortName?.de || data.legalFormId || '',
         status: data.status,
-        registryOfCommerceId: data.registryOfCommerceId,
-        address: address ? {
-          street: address.street || address.addressLine1 || '',
-          houseNumber: address.houseNumber || address.buildingNumber || '',
-          swissZipCode: address.swissZipCode || address.postCode || address.zip || '',
-          city: address.city || address.town || data.legalSeat || ''
-        } : undefined,
-        persons
+        registryOfCommerceId: data.registryOfCommerceId
       }];
     }
 
@@ -438,5 +224,191 @@ serve(async (req) => {
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+  }
+  
+  // ==========================================
+  // Helper: Scrape cantonal register
+  // ==========================================
+  async function scrapeCantonalRegister(
+    companyUid: string, 
+    registryId: number,
+    firecrawlApiKey: string | undefined
+  ): Promise<{
+    address?: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string };
+    persons?: { name: string; role: string; signature?: string }[];
+  } | null> {
+    if (!firecrawlApiKey) {
+      console.log('Firecrawl API key not configured');
+      return null;
+    }
+    
+    const canton = REGISTRY_DOMAINS[registryId];
+    if (!canton) {
+      console.log(`Unknown registry ID: ${registryId}`);
+      return null;
+    }
+    
+    const formattedUid = formatUidForUrl(companyUid);
+    const registerUrl = `https://${canton}.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=${formattedUid}`;
+    console.log(`Scraping cantonal register: ${registerUrl}`);
+    
+    try {
+      const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${firecrawlApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: registerUrl,
+          formats: ['markdown'],
+          onlyMainContent: true,
+          waitFor: 5000,
+        }),
+      });
+      
+      if (!scrapeResponse.ok) {
+        const errText = await scrapeResponse.text();
+        console.error(`Firecrawl error ${scrapeResponse.status}: ${errText.slice(0, 200)}`);
+        return null;
+      }
+      
+      const scrapeData = await scrapeResponse.json();
+      const markdown = scrapeData.data?.markdown || scrapeData.markdown || '';
+      
+      console.log(`Scraped content length: ${markdown.length}`);
+      console.log(`Scraped content preview: ${markdown.slice(0, 2000)}`);
+      
+      const address = parseAddressFromMarkdown(markdown);
+      const persons = parsePersonsFromMarkdown(markdown);
+      
+      console.log(`Parsed address:`, JSON.stringify(address));
+      console.log(`Parsed ${persons.length} persons:`, JSON.stringify(persons.slice(0, 3)));
+      
+      return { address, persons };
+    } catch (e) {
+      console.error('Scraping error:', e);
+      return null;
+    }
+  }
+  
+  function parseAddressFromMarkdown(markdown: string): { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined {
+    // Look for common HR address patterns
+    // Pattern: "Domizil: Strasse Nr, PLZ Ort" or address in table format
+    
+    // Pattern 1: Look for "Domizil" or "Sitz" line
+    const domizilMatch = markdown.match(/(?:Domizil|Geschäftsadresse|Adresse)[:\s]*([^\n]+)/i);
+    if (domizilMatch) {
+      const parsed = parseSwissAddress(domizilMatch[1].trim());
+      if (parsed && parsed.swissZipCode) return parsed;
+    }
+    
+    // Pattern 2: Look for address pattern with PLZ
+    // e.g., "Bahnhofstrasse 10, 5200 Brugg" or "Bahnhofstrasse 10\n5200 Brugg"
+    const addressPattern = /([A-ZÄÖÜa-zäöü][A-ZÄÖÜa-zäöü\s-]+(?:strasse|weg|platz|gasse|allee|ring))\s*(\d+[a-zA-Z]?)?\s*[,\n]\s*(?:CH-)?(\d{4})\s+([A-ZÄÖÜa-zäöü][A-ZÄÖÜa-zäöü\s-]+)/i;
+    const addressMatch = markdown.match(addressPattern);
+    if (addressMatch) {
+      return {
+        street: addressMatch[1].trim(),
+        houseNumber: addressMatch[2]?.trim() || '',
+        swissZipCode: addressMatch[3],
+        city: addressMatch[4].trim()
+      };
+    }
+    
+    // Pattern 3: Just find PLZ + City
+    const plzMatch = markdown.match(/(?:CH-)?(\d{4})\s+([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-Za-zäöü]+)?)/);
+    if (plzMatch) {
+      return {
+        swissZipCode: plzMatch[1],
+        city: plzMatch[2].trim()
+      };
+    }
+    
+    return undefined;
+  }
+  
+  function parseSwissAddress(line: string): { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined {
+    // "Bahnhofstrasse 10, 5000 Aarau" or "Bahnhofstrasse 10, CH-5000 Aarau"
+    const fullMatch = line.match(/^(.+?)\s+(\d+[a-zA-Z]?)\s*,\s*(?:CH-)?(\d{4})\s+(.+?)$/);
+    if (fullMatch) {
+      return {
+        street: fullMatch[1].trim(),
+        houseNumber: fullMatch[2].trim(),
+        swissZipCode: fullMatch[3],
+        city: fullMatch[4].trim()
+      };
+    }
+    
+    // Without house number
+    const noNumMatch = line.match(/^(.+?)\s*,\s*(?:CH-)?(\d{4})\s+(.+?)$/);
+    if (noNumMatch) {
+      return {
+        street: noNumMatch[1].trim(),
+        swissZipCode: noNumMatch[2],
+        city: noNumMatch[3].trim()
+      };
+    }
+    
+    return undefined;
+  }
+  
+  function parsePersonsFromMarkdown(markdown: string): { name: string; role: string; signature?: string }[] {
+    const persons: { name: string; role: string; signature?: string }[] = [];
+    
+    // Swiss HR person patterns - typically in format:
+    // "Nachname Vorname, von Ort, in Ort, Rolle, Unterschrift"
+    // or table rows with Name | Role | Signature
+    
+    // Pattern 1: Look for common role keywords with names
+    const roleKeywords = [
+      'Präsident', 'Vizepräsident', 'Mitglied', 'Sekretär',
+      'Geschäftsführer', 'Direktor', 'Vorsitzender',
+      'Verwaltungsratspräsident', 'CEO', 'CFO', 'COO'
+    ];
+    
+    const rolePattern = new RegExp(
+      `([A-ZÄÖÜ][a-zäöü]+(?:\\s+[A-ZÄÖÜ][a-zäöü]+)+)\\s*,?\\s*(${roleKeywords.join('|')})([^\\n]*)`,
+      'gi'
+    );
+    
+    let match;
+    while ((match = rolePattern.exec(markdown)) !== null) {
+      const name = match[1].trim();
+      const role = match[2].trim();
+      const rest = match[3] || '';
+      
+      // Check for signature type
+      let signature: string | undefined;
+      if (rest.includes('Einzelunterschrift') || rest.includes('Einzelzeichnung')) {
+        signature = 'Einzelunterschrift';
+      } else if (rest.includes('Kollektivunterschrift') || rest.includes('Kollektivzeichnung')) {
+        const kollMatch = rest.match(/Kollektiv(?:unterschrift|zeichnung)\s*(?:zu\s*(\w+))?/i);
+        signature = kollMatch ? `Kollektivunterschrift${kollMatch[1] ? ' zu ' + kollMatch[1] : ''}` : 'Kollektivunterschrift';
+      }
+      
+      persons.push({ name, role, signature });
+    }
+    
+    // Pattern 2: Look for "Eingetragene Personen" section
+    const personSection = markdown.match(/(?:Eingetragene Personen|Organe|Zeichnungsberechtigte)[:\s]*\n([\s\S]*?)(?:\n\n|\n#|$)/i);
+    if (personSection) {
+      const sectionText = personSection[1];
+      
+      // Try to find "Name, Role" patterns
+      const linePattern = /([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+){1,3})\s*[,;]\s*((?:Präsident|Mitglied|Geschäftsführer|Direktor)[^,;\n]*)/gi;
+      
+      while ((match = linePattern.exec(sectionText)) !== null) {
+        const name = match[1].trim();
+        const role = match[2].trim();
+        
+        // Avoid duplicates
+        if (!persons.find(p => p.name === name)) {
+          persons.push({ name, role });
+        }
+      }
+    }
+    
+    return persons;
   }
 });
