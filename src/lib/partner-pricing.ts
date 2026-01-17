@@ -147,6 +147,15 @@ export const GUARANTEE_CONDITIONS = [
   'Antrag bis spätestens Tag 30 eingereicht'
 ];
 
+// Audio Credit costs
+export const AUDIO_CREDIT_COSTS = {
+  air_drop: 1,  // 5-8 seconds sponsor tag
+  radio_spot: 3, // 20 second full spot
+} as const;
+
+// Non-Profit discount code
+export const NONPROFIT_COUPON_CODE = 'NONPROFIT50';
+
 export const formatCHF = (amount: number) => {
   return new Intl.NumberFormat('de-CH', {
     style: 'currency',

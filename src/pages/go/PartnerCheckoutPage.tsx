@@ -274,6 +274,13 @@ export default function PartnerCheckoutPage() {
                     <span>{formatCHF(subscriptionBrutto)}/{interval === 'yearly' ? 'Jahr' : 'Monat'}</span>
                   </div>
                 </div>
+
+                {/* Non-Profit Hint */}
+                <div className="text-xs text-center p-2 rounded-lg bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-800">
+                  <span className="text-pink-600 dark:text-pink-400">
+                    🎗️ Non-Profit? Code <span className="font-mono font-bold">NONPROFIT50</span> für 50% Rabatt
+                  </span>
+                </div>
                 
                 <Button 
                   className="w-full" 
