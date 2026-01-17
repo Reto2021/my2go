@@ -118,10 +118,12 @@ export const SPONSORING_POTENTIAL = {
 export const UPLIFT_FACTORS = {
   // Enrollment rate within 90 days (% of repeat customers who join)
   // Industry benchmark: 20-50% for good loyalty programs
+  // Source: Bond Loyalty Report 2023, Antavo Loyalty Statistics
   enrollment90Days: { conservative: 0.20, realistic: 0.35, ambitious: 0.50 },
   
   // Active rate (% of enrolled members who actively participate)
   // Industry benchmark: 40-70% for engaging programs
+  // Source: Yotpo, LoyaltyLion Research
   activeRate: { conservative: 0.40, realistic: 0.55, ambitious: 0.70 },
   
   // Frequency lift (% increase in purchase frequency for active members)
@@ -129,7 +131,13 @@ export const UPLIFT_FACTORS = {
   
   // Extra visits per active member per year
   // Industry benchmark: Active loyalty members visit 2-5x more often
+  // Source: Bain & Company, Harvard Business Review
   extraVisitsPerActiveMemberPerYear: { conservative: 2.0, realistic: 3.5, ambitious: 5.0 },
+  
+  // Basket/Ticket uplift for loyal customers (% more spend per visit)
+  // Industry benchmark: Loyal customers spend 12-31% more per transaction
+  // Source: Adobe Digital Economy Index, McKinsey Retail Study, Accenture
+  basketUplift: { conservative: 0.12, realistic: 0.20, ambitious: 0.31 },
   
   networkLift: {
     'action': { conservative: 0.01, realistic: 0.03, ambitious: 0.06 },
@@ -142,6 +150,7 @@ export const UPLIFT_FACTORS = {
   },
   // Review uplift (as fraction of monthly transactions converted to new visits)
   // Better reviews → more new customers discovering the business
+  // Source: BrightLocal Consumer Survey, Spiegel Research Center
   reviewUplift: {
     conservative: 0.01,  // 1% of monthly transactions
     realistic: 0.025,    // 2.5% of monthly transactions  
