@@ -218,29 +218,55 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
           Ihre Firma
         </Label>
 
-        {/* Selected Company Display */}
+        {/* Selected Company Display - with editable address fields */}
         {answers.companyName && !manualMode ? (
-          <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
+          <div className="space-y-3">
+            <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
                   <span className="font-semibold">{answers.companyName}</span>
                 </div>
-                {answers.companyAddress && (
-                  <p className="text-sm text-muted-foreground mt-1 ml-6">
-                    {answers.companyAddress}, {answers.companyPostalCode} {answers.companyCity}
-                  </p>
-                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={clearCompany}
+                  className="shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={clearCompany}
-                className="shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+            </div>
+            
+            {/* Editable address fields after Zefix selection */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <Label className="text-xs text-muted-foreground mb-1 block">Strasse & Nr.</Label>
+                <Input
+                  value={answers.companyAddress || ''}
+                  onChange={(e) => updateAnswers({ companyAddress: e.target.value })}
+                  placeholder="Musterstrasse 1"
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">PLZ</Label>
+                <Input
+                  value={answers.companyPostalCode || ''}
+                  onChange={(e) => updateAnswers({ companyPostalCode: e.target.value })}
+                  placeholder="8000"
+                  className="h-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Ort</Label>
+              <Input
+                value={answers.companyCity || ''}
+                onChange={(e) => updateAnswers({ companyCity: e.target.value })}
+                placeholder="Zürich"
+                className="h-10"
+              />
             </div>
           </div>
         ) : manualMode ? (
