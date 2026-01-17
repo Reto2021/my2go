@@ -57,7 +57,8 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
           ...answers.fixcosts[key],
           selected,
           range: selected ? (answers.fixcosts[key]?.range || null) : null,
-          midpoint: 0
+          midpoint: 0,
+          unknown: false
         }
       }
     });
@@ -70,7 +71,22 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
         [key]: {
           selected: true,
           range,
-          midpoint
+          midpoint,
+          unknown: false
+        }
+      }
+    });
+  };
+
+  const setFixcostUnknown = (key: string) => {
+    updateAnswers({
+      fixcosts: {
+        ...answers.fixcosts,
+        [key]: {
+          selected: true,
+          range: null,
+          midpoint: 0,
+          unknown: true
         }
       }
     });
@@ -119,7 +135,7 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
                       type="button"
                       onClick={() => setFixcostRange(item.key, range, item.midpoints[idx])}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                        selectedRange === range
+                        selectedRange === range && !answers.fixcosts[item.key]?.unknown
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted hover:bg-muted/80 text-foreground'
                       }`}
@@ -127,6 +143,18 @@ export function QuizStep2Refinancing({ answers, updateAnswers, dbPercent, setDbP
                       CHF {range}
                     </button>
                   ))}
+                  {/* Weiss nicht Option */}
+                  <button
+                    type="button"
+                    onClick={() => setFixcostUnknown(item.key)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      answers.fixcosts[item.key]?.unknown
+                        ? 'bg-amber-200 text-amber-900'
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    Weiss nicht
+                  </button>
                 </div>
               )}
 
