@@ -174,7 +174,8 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             fetchDetails: true,
             uid: company.uid,
             registryOfCommerceId: company.registryOfCommerceId,
-            legalSeat: company.legalSeat
+            legalSeat: company.legalSeat,
+            companyName: company.name // For Google Places fallback
           }
         });
         

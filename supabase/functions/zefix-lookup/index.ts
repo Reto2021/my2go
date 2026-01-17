@@ -101,13 +101,39 @@ serve(async (req) => {
     const authHeader = `Basic ${credentials}`;
     const baseUrl = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
 
+    const googlePlacesApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
+
     // ==========================================
-    // MODE 1: Fetch details for a selected company (with scraping)
+    // MODE 1: Fetch details for a selected company (with scraping + Google Places fallback)
     // ==========================================
     if (fetchDetails && uid && registryOfCommerceId) {
-      console.log(`Fetching details for UID: ${uid}, Registry: ${registryOfCommerceId}, LegalSeat: ${legalSeat}`);
+      const companyName = body.companyName;
+      console.log(`Fetching details for UID: ${uid}, Registry: ${registryOfCommerceId}, LegalSeat: ${legalSeat}, Company: ${companyName}`);
       
-      const scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey, legalSeat);
+      // Try scraping first
+      let scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey, legalSeat);
+      
+      // If scraping didn't find complete address, try Google Places API
+      if (googlePlacesApiKey && companyName && (!scraped?.address?.street || !scraped?.address?.swissZipCode)) {
+        console.log('Scraping incomplete, trying Google Places API...');
+        const googleAddress = await lookupAddressViaGooglePlaces(companyName, legalSeat, googlePlacesApiKey);
+        
+        if (googleAddress) {
+          console.log('Google Places found address:', JSON.stringify(googleAddress));
+          scraped = {
+            address: {
+              ...scraped?.address,
+              ...googleAddress,
+              // Prefer scraped data if available
+              street: scraped?.address?.street || googleAddress.street,
+              houseNumber: scraped?.address?.houseNumber || googleAddress.houseNumber,
+              swissZipCode: scraped?.address?.swissZipCode || googleAddress.swissZipCode,
+              city: scraped?.address?.city || googleAddress.city,
+            },
+            persons: scraped?.persons || []
+          };
+        }
+      }
       
       return new Response(
         JSON.stringify({ 
@@ -264,6 +290,101 @@ serve(async (req) => {
       return null;
     } catch (e) {
       console.error('PLZ lookup error:', e);
+      return null;
+    }
+  }
+  
+  // ==========================================
+  // Helper: Lookup address via Google Places API
+  // ==========================================
+  async function lookupAddressViaGooglePlaces(
+    companyName: string, 
+    city: string | undefined,
+    apiKey: string
+  ): Promise<{ street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | null> {
+    try {
+      // Build search query: company name + city + Switzerland
+      const searchQuery = city 
+        ? `${companyName} ${city} Schweiz`
+        : `${companyName} Schweiz`;
+      
+      console.log(`Google Places search: "${searchQuery}"`);
+      
+      // Step 1: Find place using Text Search
+      const findPlaceUrl = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(searchQuery)}&inputtype=textquery&fields=place_id,name,formatted_address&key=${apiKey}`;
+      
+      const findResponse = await fetch(findPlaceUrl);
+      if (!findResponse.ok) {
+        console.error(`Google Places Find error: ${findResponse.status}`);
+        return null;
+      }
+      
+      const findData = await findResponse.json();
+      console.log('Google Places Find response:', JSON.stringify(findData).slice(0, 500));
+      
+      if (findData.status !== 'OK' || !findData.candidates || findData.candidates.length === 0) {
+        console.log('No place found via Google Places');
+        return null;
+      }
+      
+      const placeId = findData.candidates[0].place_id;
+      
+      // Step 2: Get detailed address using Place Details
+      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=address_components,formatted_address&key=${apiKey}`;
+      
+      const detailsResponse = await fetch(detailsUrl);
+      if (!detailsResponse.ok) {
+        console.error(`Google Places Details error: ${detailsResponse.status}`);
+        return null;
+      }
+      
+      const detailsData = await detailsResponse.json();
+      console.log('Google Places Details response:', JSON.stringify(detailsData).slice(0, 800));
+      
+      if (detailsData.status !== 'OK' || !detailsData.result?.address_components) {
+        console.log('No address details found');
+        return null;
+      }
+      
+      // Parse address components
+      const components = detailsData.result.address_components;
+      let street: string | undefined;
+      let houseNumber: string | undefined;
+      let postalCode: string | undefined;
+      let locality: string | undefined;
+      
+      for (const component of components) {
+        const types = component.types || [];
+        
+        if (types.includes('route')) {
+          street = component.long_name;
+        } else if (types.includes('street_number')) {
+          houseNumber = component.long_name;
+        } else if (types.includes('postal_code')) {
+          postalCode = component.long_name;
+        } else if (types.includes('locality')) {
+          locality = component.long_name;
+        } else if (types.includes('sublocality') && !locality) {
+          locality = component.long_name;
+        }
+      }
+      
+      // Validate it's a Swiss address (PLZ should be 4 digits)
+      if (postalCode && !/^\d{4}$/.test(postalCode)) {
+        console.log('Not a Swiss address, ignoring');
+        return null;
+      }
+      
+      console.log(`Google Places parsed: ${street} ${houseNumber}, ${postalCode} ${locality}`);
+      
+      return {
+        street,
+        houseNumber,
+        swissZipCode: postalCode,
+        city: locality
+      };
+    } catch (e) {
+      console.error('Google Places lookup error:', e);
       return null;
     }
   }
