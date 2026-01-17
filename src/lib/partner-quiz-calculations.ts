@@ -24,6 +24,7 @@ export type EmployeeRange = '1-3' | '4-10' | '11-30' | '31+' | null;
 export interface QuizAnswers {
   // Step 0: Role & Size (NEW)
   userRole: UserRole;
+  userRoleOther?: string; // Free text when role is "other"
   employees: EmployeeRange;
   
   // Step 1: Fit

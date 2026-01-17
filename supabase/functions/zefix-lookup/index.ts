@@ -421,105 +421,160 @@ serve(async (req) => {
   function parsePersonsFromMarkdown(markdown: string): { name: string; role: string; signature?: string }[] {
     const persons: { name: string; role: string; signature?: string }[] = [];
     
-    // Blacklist for invalid names (cookie consent, navigation, etc.)
-    const invalidNamePatterns = [
-      /cookie/i, /consent/i, /site/i, /uses/i, /privacy/i, /policy/i,
-      /close/i, /cancel/i, /accept/i, /login/i, /register/i,
-      /yesno/i, /this\s+site/i, /website/i, /page/i
-    ];
+    console.log('=== Starting person parsing ===');
+    console.log('Markdown length:', markdown.length);
     
-    function isValidName(name: string): boolean {
-      // Must be 2-4 words, each starting with capital
-      const words = name.trim().split(/\s+/);
-      if (words.length < 2 || words.length > 5) return false;
-      
-      // Check for blacklisted patterns
-      for (const pattern of invalidNamePatterns) {
-        if (pattern.test(name)) return false;
-      }
-      
-      // Each word should look like a name (start with capital, mostly letters)
-      for (const word of words) {
-        if (!/^[A-ZÄÖÜ][a-zäöü]{1,20}$/.test(word)) return false;
-      }
-      
-      // Name shouldn't contain newlines or special chars
-      if (/[\n\r\t|]/.test(name)) return false;
-      
-      return true;
-    }
+    // Step 1: Try to find the structured table format from Swiss HR
+    // Format: | Nr | Date | Name, Location, Role, Signature |
+    // Example: "| 1 | 07.01.2025 | Müller Hans, von Zürich, in Bern, Geschäftsführer, Einzelunterschrift |"
     
-    // Swiss HR person patterns - typically in format:
-    // "Nachname Vorname, von Ort, in Ort, Rolle, Unterschrift"
-    // or table rows with Name | Role | Signature
+    const tableRowPattern = /\|\s*\d+\s*\|[^|]+\|\s*([^|]+)\s*\|/g;
+    let tableMatch;
     
-    // Pattern 1: Look for German role keywords with names before them
-    // More strict pattern: Name must be exactly 2-4 capitalized words
-    const roleKeywords = [
-      'Präsident', 'Vizepräsident', 'Mitglied', 'Sekretär',
-      'Geschäftsführer', 'Direktor', 'Vorsitzender',
-      'Verwaltungsratspräsident'
-    ];
-    
-    // Don't use CEO/CFO/COO as they match too much junk
-    const rolePattern = new RegExp(
-      `([A-ZÄÖÜ][a-zäöü]+(?:\\s+[A-ZÄÖÜ][a-zäöü]+){1,3})\\s*,\\s*(${roleKeywords.join('|')})([^\\n]*)`,
-      'gi'
-    );
-    
-    let personMatch;
-    while ((personMatch = rolePattern.exec(markdown)) !== null) {
-      const name = personMatch[1].trim().replace(/\s+/g, ' ');
-      const role = personMatch[2].trim();
-      const rest = personMatch[3] || '';
+    while ((tableMatch = tableRowPattern.exec(markdown)) !== null) {
+      const cellContent = tableMatch[1].trim();
       
-      // Validate the name
-      if (!isValidName(name)) {
-        console.log(`Skipping invalid name: "${name}"`);
+      // Skip header rows and junk
+      if (cellContent.includes('Datum') || cellContent.includes('Nr.') || cellContent.length < 10) {
         continue;
       }
       
-      // Check for signature type
-      let signature: string | undefined;
-      if (rest.includes('Einzelunterschrift') || rest.includes('Einzelzeichnung')) {
-        signature = 'Einzelunterschrift';
-      } else if (rest.includes('Kollektivunterschrift') || rest.includes('Kollektivzeichnung')) {
-        const kollMatch = rest.match(/Kollektiv(?:unterschrift|zeichnung)\s*(?:zu\s*(\w+))?/i);
-        signature = kollMatch ? `Kollektivunterschrift${kollMatch[1] ? ' zu ' + kollMatch[1] : ''}` : 'Kollektivunterschrift';
-      }
+      // Parse the cell content: "Nachname Vorname, von Ort, in Ort, Rolle, Unterschrift"
+      const parts = cellContent.split(',').map(p => p.trim());
       
-      // Avoid duplicates
-      if (!persons.find(p => p.name === name)) {
-        persons.push({ name, role, signature });
+      if (parts.length >= 2) {
+        // First part should be the name (Nachname Vorname format)
+        const namePart = parts[0];
+        
+        // Validate name: should be 2-4 words, no special patterns
+        if (isValidPersonName(namePart)) {
+          // Look for role in remaining parts
+          const roleInfo = findRoleInParts(parts.slice(1));
+          
+          if (roleInfo.role) {
+            // Check for duplicates
+            if (!persons.find(p => p.name === namePart)) {
+              console.log(`Table: Found person "${namePart}" with role "${roleInfo.role}"`);
+              persons.push({
+                name: namePart,
+                role: roleInfo.role,
+                signature: roleInfo.signature
+              });
+            }
+          }
+        }
       }
     }
     
-    // Pattern 2: Look for "Eingetragene Personen" or organ section in tables
-    const personSection = markdown.match(/(?:Eingetragene Personen|Organe|Zeichnungsberechtigte)[:\s]*\n([\s\S]*?)(?:\n\n|\n#|$)/i);
-    if (personSection) {
-      const sectionText = personSection[1];
+    // Step 2: Look for structured "Organe" or "Eingetragene Personen" sections
+    const organSectionPattern = /(?:Verwaltungsrat|Geschäftsleitung|Organe|Eingetragene Personen)[:\s]*\n([\s\S]*?)(?:\n\n|\n##|\n#|$)/gi;
+    let sectionMatch;
+    
+    while ((sectionMatch = organSectionPattern.exec(markdown)) !== null) {
+      const sectionContent = sectionMatch[1];
       
-      // Try to find "Name, Role" patterns
-      const linePattern = /([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+){1,3})\s*[,;]\s*((?:Präsident|Mitglied|Geschäftsführer|Direktor)[^,;\n]*)/gi;
+      // Look for lines with Name + Role pattern
+      // Format: "Müller Hans, Präsident" or "Hans Müller - Geschäftsführer"
+      const linePattern = /^[\s*-]*([A-ZÄÖÜ][a-zäöüé]+(?:\s+[A-ZÄÖÜ][a-zäöüé]+){1,3})[\s,;:-]+(Präsident(?:in)?|Vizepräsident(?:in)?|Mitglied|Geschäftsführer(?:in)?|Direktor(?:in)?|Sekretär(?:in)?|Vorsitzende[r]?)/gmi;
       
-      while ((personMatch = linePattern.exec(sectionText)) !== null) {
-        const name = personMatch[1].trim().replace(/\s+/g, ' ');
-        const role = personMatch[2].trim();
+      let lineMatch;
+      while ((lineMatch = linePattern.exec(sectionContent)) !== null) {
+        const name = lineMatch[1].trim();
+        const role = lineMatch[2].trim();
         
-        // Validate the name
-        if (!isValidName(name)) {
-          console.log(`Skipping invalid name from section: "${name}"`);
-          continue;
-        }
-        
-        // Avoid duplicates
-        if (!persons.find(p => p.name === name)) {
+        if (isValidPersonName(name) && !persons.find(p => p.name === name)) {
+          console.log(`Section: Found person "${name}" with role "${role}"`);
           persons.push({ name, role });
         }
       }
     }
     
-    console.log(`Found ${persons.length} valid persons after filtering`);
+    // Step 3: Fallback - look for explicit role patterns in free text
+    // But only if we haven't found anyone yet
+    if (persons.length === 0) {
+      const freeTextPattern = /([A-ZÄÖÜ][a-zäöüé]+\s+[A-ZÄÖÜ][a-zäöüé]+(?:\s+[A-ZÄÖÜ][a-zäöüé]+)?)\s*[,]\s*(Präsident|Vizepräsident|Mitglied|Geschäftsführer|Direktor|Sekretär|Vorsitzender|Verwaltungsratspräsident)(?:in)?[,\s]*((?:Einzel|Kollektiv)(?:unterschrift|zeichnung)[^,\n]*)?/gi;
+      
+      let freeMatch;
+      while ((freeMatch = freeTextPattern.exec(markdown)) !== null) {
+        const name = freeMatch[1].trim();
+        const role = freeMatch[2].trim();
+        const signaturePart = freeMatch[3] || '';
+        
+        if (isValidPersonName(name) && !persons.find(p => p.name === name)) {
+          let signature: string | undefined;
+          if (signaturePart.toLowerCase().includes('einzelunterschrift') || signaturePart.toLowerCase().includes('einzelzeichnung')) {
+            signature = 'Einzelunterschrift';
+          } else if (signaturePart.toLowerCase().includes('kollektivunterschrift') || signaturePart.toLowerCase().includes('kollektivzeichnung')) {
+            signature = 'Kollektivunterschrift';
+          }
+          
+          console.log(`Fallback: Found person "${name}" with role "${role}"`);
+          persons.push({ name, role, signature });
+        }
+      }
+    }
+    
+    console.log(`=== Found ${persons.length} valid persons ===`);
     return persons;
+  }
+  
+  function isValidPersonName(name: string): boolean {
+    if (!name || name.length < 4) return false;
+    
+    const words = name.trim().split(/\s+/);
+    if (words.length < 2 || words.length > 4) return false;
+    
+    // Blacklist patterns
+    const blacklist = [
+      /cookie/i, /consent/i, /privacy/i, /policy/i, /website/i,
+      /close/i, /cancel/i, /accept/i, /login/i, /site/i,
+      /handelsregister/i, /auszug/i, /datum/i, /eintrag/i,
+      /änderung/i, /löschung/i, /neueintrag/i, /mutation/i
+    ];
+    
+    for (const pattern of blacklist) {
+      if (pattern.test(name)) return false;
+    }
+    
+    // Each word must look like a proper name part
+    for (const word of words) {
+      // Allow: Capital start, then lowercase, optionally hyphenated names
+      if (!/^[A-ZÄÖÜ][a-zäöüé-]{1,25}$/.test(word)) return false;
+    }
+    
+    return true;
+  }
+  
+  function findRoleInParts(parts: string[]): { role?: string; signature?: string } {
+    const roleKeywords = [
+      'Präsident', 'Vizepräsident', 'Mitglied', 'Sekretär',
+      'Geschäftsführer', 'Direktor', 'Vorsitzender',
+      'Verwaltungsratspräsident', 'Präsidentin', 'Geschäftsführerin',
+      'Direktorin', 'Sekretärin', 'Mitglied des Verwaltungsrat'
+    ];
+    
+    let role: string | undefined;
+    let signature: string | undefined;
+    
+    for (const part of parts) {
+      const lowerPart = part.toLowerCase();
+      
+      // Check for role
+      for (const keyword of roleKeywords) {
+        if (part.includes(keyword)) {
+          role = keyword;
+          break;
+        }
+      }
+      
+      // Check for signature type
+      if (lowerPart.includes('einzelunterschrift') || lowerPart.includes('einzelzeichnung')) {
+        signature = 'Einzelunterschrift';
+      } else if (lowerPart.includes('kollektivunterschrift') || lowerPart.includes('kollektivzeichnung')) {
+        signature = 'Kollektivunterschrift';
+      }
+    }
+    
+    return { role, signature };
   }
 });

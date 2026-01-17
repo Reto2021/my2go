@@ -449,7 +449,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             <button
               key={opt.value}
               type="button"
-              onClick={() => updateAnswers({ userRole: opt.value })}
+              onClick={() => updateAnswers({ userRole: opt.value, userRoleOther: opt.value === 'other' ? answers.userRoleOther : undefined })}
               className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
                 answers.userRole === opt.value
                   ? 'border-primary bg-primary/10 text-primary'
@@ -460,6 +460,22 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             </button>
           ))}
         </div>
+        
+        {/* Free text field for "Sonstiges" */}
+        {answers.userRole === 'other' && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-3"
+          >
+            <Input
+              value={answers.userRoleOther || ''}
+              onChange={(e) => updateAnswers({ userRoleOther: e.target.value })}
+              placeholder="Ihre Rolle beschreiben..."
+              className="h-12"
+            />
+          </motion.div>
+        )}
         
         {/* Role Hint */}
         {roleHint && (
