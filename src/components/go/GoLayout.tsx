@@ -17,14 +17,16 @@ export function GoLayout() {
       
       {/* Back Navigation for sub-pages */}
       {showBackButton && (
-        <div className="container max-w-6xl mx-auto px-4 py-3">
-          <Link 
-            to="/go" 
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Zurück zur Übersicht
-          </Link>
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b">
+          <div className="container max-w-6xl mx-auto px-4 py-3">
+            <Link 
+              to="/go" 
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Zurück zur Übersicht
+            </Link>
+          </div>
         </div>
       )}
       
