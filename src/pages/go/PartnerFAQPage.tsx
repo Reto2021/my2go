@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { HelpCircle, ArrowRight, MessageCircle } from "lucide-react";
+import { HelpCircle, ArrowRight, ArrowLeft, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -53,10 +53,23 @@ export default function PartnerFAQPage() {
           <div className="absolute -top-24 -right-24 w-80 h-80 bg-primary/20 rounded-full blur-3xl" />
         </div>
         
-        <div className="container relative z-10 max-w-3xl mx-auto px-4 text-center">
+        <div className="container relative z-10 max-w-3xl mx-auto px-4">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            asChild
+            className="mb-6"
+          >
+            <Link to="/go">
+              <ArrowLeft className="mr-2 w-4 h-4" />
+              Zurück zur Übersicht
+            </Link>
+          </Button>
+          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            className="text-center"
           >
             <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
               <HelpCircle className="w-7 h-7 text-primary" />
