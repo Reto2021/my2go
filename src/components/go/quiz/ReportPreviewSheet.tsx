@@ -85,7 +85,7 @@ export function ReportPreviewSheet({
         <ScrollArea className="flex-1 h-[calc(90vh-140px)]">
           <div className="p-6 space-y-6 bg-muted/30">
             {/* Letterhead Preview with 2Go Logo */}
-            <div className="bg-gradient-to-r from-primary to-primary/80 rounded-t-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-secondary to-secondary/80 rounded-t-xl p-6 text-white">
               <div className="flex justify-between items-start">
                 <div>
                   <img 
@@ -96,8 +96,10 @@ export function ReportPreviewSheet({
                   <p className="text-sm mt-2 opacity-90">Das Loyalitäts-Netzwerk</p>
                 </div>
                 <div className="text-right text-sm opacity-90">
-                  <p className="font-semibold">My2Go GmbH</p>
-                  <p>Bahnhofstrasse 10, 8001 Zürich</p>
+                  <p className="font-semibold">2Go Media GmbH</p>
+                  <p>c/o Impact Hub Zürich</p>
+                  <p>Sihlquai 131, 8005 Zürich</p>
+                  <p className="text-accent font-medium">www.2gomedia.ch</p>
                   <p>partner@my2go.app</p>
                 </div>
               </div>
@@ -132,7 +134,7 @@ export function ReportPreviewSheet({
               )}
 
               {/* Plan Recommendation */}
-              <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-white text-center">
+              <div className="bg-gradient-to-r from-secondary to-secondary/80 rounded-xl p-6 text-white text-center">
                 <div className={`inline-block px-4 py-1 rounded-full text-sm font-bold mb-3 ${
                   fitResult.score === 'A' ? 'bg-green-100 text-green-800' :
                   fitResult.score === 'B' ? 'bg-amber-100 text-amber-800' :
@@ -141,7 +143,7 @@ export function ReportPreviewSheet({
                   {fitLabel.title}
                 </div>
                 <p className="text-2xl font-bold">{planName}</p>
-                <p className="text-3xl font-bold mt-2">{formatCHF(planPrice)}</p>
+                <p className="text-3xl font-bold mt-2 text-accent">{formatCHF(planPrice)}</p>
                 <p className="text-sm opacity-80">pro Monat</p>
               </div>
 

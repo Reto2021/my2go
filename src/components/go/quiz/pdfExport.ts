@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { 
   QuizAnswers, 
   FitResult, 
@@ -23,599 +23,269 @@ interface ExportData {
   planPrice: number;
 }
 
+// Corporate Colors (2Go Media Design System)
+const COLORS = {
+  primary: '#7AB8D6',      // Sky Blue
+  secondary: '#023F5A',    // Deep Teal  
+  accent: '#FCB900',       // Bright Yellow
+  success: '#22c55e',      // Green
+  warning: '#f59e0b',      // Amber
+  text: '#1a1a1a',
+  textMuted: '#666666',
+  textLight: '#888888',
+  background: '#f9f9f9',
+  white: '#ffffff'
+};
+
 export async function generatePDFReport(data: ExportData): Promise<void> {
   const { answers, fitResult, refinancing, uplift, planName, planPrice } = data;
   const fitLabel = TEXTS.fitLabels[fitResult.score];
   const isCovered = refinancing.gap <= 0;
   const coveragePercent = Math.min(100, (refinancing.totalSavings / planPrice) * 100);
   
-  // Calculate chart data for visual representation
-  const maxSavings = Math.max(
-    refinancing.totalSavings,
-    planPrice,
-    uplift.total.ambitious
-  );
-  const savingsBarWidth = (refinancing.totalSavings / maxSavings) * 100;
-  const planBarWidth = (planPrice / maxSavings) * 100;
-  
-  // Uplift chart bars
-  const upliftMax = uplift.total.ambitious;
-  const conservativeWidth = (uplift.total.conservative / upliftMax) * 100;
-  const realisticWidth = (uplift.total.realistic / upliftMax) * 100;
-  const ambitiousWidth = 100;
+  // Create PDF document (A4)
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const margin = 20;
+  const contentWidth = pageWidth - 2 * margin;
+  let y = 0;
 
-  // Create HTML content for PDF
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>2Go Partner Fit-Check Report</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          padding: 0;
-          max-width: 800px;
-          margin: 0 auto;
-          color: #1a1a1a;
-          line-height: 1.5;
-          background: white;
-        }
-        
-        /* Letterhead Header */
-        .letterhead {
-          background: linear-gradient(135deg, #FF6B00 0%, #FF8533 100%);
-          color: white;
-          padding: 30px 40px;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-        }
-        .letterhead-logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .logo-icon {
-          width: 50px;
-          height: 50px;
-          background: white;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          font-size: 20px;
-          color: #FF6B00;
-        }
-        .logo-text {
-          font-size: 28px;
-          font-weight: bold;
-        }
-        .logo-tagline {
-          font-size: 12px;
-          opacity: 0.9;
-        }
-        .sender-info {
-          text-align: right;
-          font-size: 12px;
-          line-height: 1.6;
-        }
-        .sender-info strong {
-          font-size: 14px;
-        }
-        
-        .content {
-          padding: 40px;
-        }
-        
-        /* Document Title */
-        .doc-title {
-          text-align: center;
-          margin-bottom: 30px;
-          padding-bottom: 20px;
-          border-bottom: 2px solid #e5e5e5;
-        }
-        .doc-title h1 {
-          font-size: 24px;
-          color: #333;
-          margin-bottom: 8px;
-        }
-        .doc-title .date {
-          color: #666;
-          font-size: 14px;
-        }
-        .doc-title .privacy-note {
-          font-size: 11px;
-          color: #888;
-          margin-top: 8px;
-          font-style: italic;
-        }
-        
-        .section { 
-          margin-bottom: 30px; 
-          padding: 20px;
-          background: #f9f9f9;
-          border-radius: 12px;
-        }
-        .section-title { 
-          font-size: 18px; 
-          font-weight: bold; 
-          margin-bottom: 15px;
-          color: #333;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .fit-badge {
-          display: inline-block;
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-weight: bold;
-          font-size: 14px;
-        }
-        .fit-A { background: #dcfce7; color: #166534; }
-        .fit-B { background: #fef3c7; color: #92400e; }
-        .fit-C { background: #fee2e2; color: #991b1b; }
-        
-        .plan-box {
-          background: linear-gradient(135deg, #FF6B00 0%, #FF8533 100%);
-          color: white;
-          padding: 25px;
-          border-radius: 12px;
-          text-align: center;
-          margin-bottom: 25px;
-          position: relative;
-          overflow: hidden;
-        }
-        .plan-box::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          right: -50%;
-          width: 100%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
-        }
-        .plan-name { font-size: 26px; font-weight: bold; position: relative; }
-        .plan-price { font-size: 36px; font-weight: bold; margin-top: 8px; position: relative; }
-        .plan-period { font-size: 14px; opacity: 0.8; position: relative; }
-        
-        /* Visual Charts */
-        .chart-container {
-          background: white;
-          border-radius: 8px;
-          padding: 20px;
-          margin: 15px 0;
-        }
-        .chart-title {
-          font-size: 14px;
-          font-weight: 600;
-          color: #555;
-          margin-bottom: 15px;
-        }
-        .bar-chart {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .bar-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .bar-label {
-          width: 120px;
-          font-size: 12px;
-          color: #666;
-          text-align: right;
-        }
-        .bar-track {
-          flex: 1;
-          height: 28px;
-          background: #e5e5e5;
-          border-radius: 6px;
-          overflow: hidden;
-          position: relative;
-        }
-        .bar-fill {
-          height: 100%;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding-right: 10px;
-          font-size: 12px;
-          font-weight: bold;
-          color: white;
-          min-width: 80px;
-        }
-        .bar-fill.savings { background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); }
-        .bar-fill.cost { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
-        .bar-fill.conservative { background: linear-gradient(90deg, #94a3b8 0%, #64748b 100%); }
-        .bar-fill.realistic { background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%); }
-        .bar-fill.ambitious { background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); }
-        
-        /* Comparison Visual */
-        .comparison-visual {
-          display: flex;
-          justify-content: center;
-          align-items: flex-end;
-          gap: 40px;
-          padding: 20px;
-          background: white;
-          border-radius: 8px;
-          margin: 15px 0;
-        }
-        .comparison-column {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-        }
-        .comparison-bar {
-          width: 80px;
-          border-radius: 8px 8px 0 0;
-          display: flex;
-          align-items: flex-end;
-          justify-content: center;
-          padding-bottom: 10px;
-          font-weight: bold;
-          color: white;
-          font-size: 14px;
-          min-height: 40px;
-        }
-        .comparison-bar.savings-bar {
-          background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
-          height: ${Math.max(40, savingsBarWidth * 1.5)}px;
-        }
-        .comparison-bar.cost-bar {
-          background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
-          height: ${Math.max(40, planBarWidth * 1.5)}px;
-        }
-        .comparison-label {
-          font-size: 12px;
-          color: #666;
-          text-align: center;
-        }
-        .comparison-amount {
-          font-size: 16px;
-          font-weight: bold;
-          color: #333;
-        }
-        
-        .coverage-indicator {
-          text-align: center;
-          padding: 15px;
-          background: ${isCovered ? '#dcfce7' : '#fef3c7'};
-          border-radius: 8px;
-          margin-top: 15px;
-        }
-        .coverage-indicator strong {
-          color: ${isCovered ? '#166534' : '#92400e'};
-          font-size: 18px;
-        }
-        
-        .breakdown-item {
-          display: flex;
-          justify-content: space-between;
-          padding: 10px 0;
-          border-bottom: 1px solid #e5e5e5;
-        }
-        .breakdown-item:last-child { border-bottom: none; }
-        .breakdown-amount { font-weight: bold; color: #22c55e; }
-        
-        .module-item {
-          padding: 12px;
-          background: white;
-          border-radius: 8px;
-          margin-bottom: 8px;
-          border-left: 4px solid #FF6B00;
-        }
-        .module-title { font-weight: bold; }
-        .module-desc { font-size: 14px; color: #666; }
-        
-        /* Uplift Chart Section */
-        .uplift-chart {
-          background: white;
-          border-radius: 8px;
-          padding: 20px;
-        }
-        .uplift-bar-row {
-          display: flex;
-          align-items: center;
-          margin-bottom: 12px;
-        }
-        .uplift-bar-row:last-child { margin-bottom: 0; }
-        .uplift-label {
-          width: 100px;
-          font-size: 13px;
-          color: #666;
-        }
-        .uplift-track {
-          flex: 1;
-          height: 32px;
-          background: #f3f4f6;
-          border-radius: 6px;
-          overflow: hidden;
-          margin: 0 15px;
-        }
-        .uplift-fill {
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          padding-right: 12px;
-          font-weight: bold;
-          color: white;
-          font-size: 13px;
-        }
-        .uplift-fill.conservative { background: linear-gradient(90deg, #94a3b8, #64748b); width: ${conservativeWidth}%; }
-        .uplift-fill.realistic { background: linear-gradient(90deg, #22c55e, #16a34a); width: ${realisticWidth}%; }
-        .uplift-fill.ambitious { background: linear-gradient(90deg, #3b82f6, #2563eb); width: ${ambitiousWidth}%; }
-        .uplift-amount {
-          width: 120px;
-          font-weight: bold;
-          color: #333;
-          text-align: right;
-        }
-        
-        .company-info {
-          background: #f3f4f6;
-          padding: 15px;
-          border-radius: 8px;
-          margin-bottom: 20px;
-        }
-        
-        .disclaimer {
-          font-size: 11px;
-          color: #888;
-          text-align: center;
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 1px solid #e5e5e5;
-        }
-        
-        .footer {
-          background: #f8f9fa;
-          padding: 20px 40px;
-          text-align: center;
-          border-top: 1px solid #e5e5e5;
-        }
-        .footer-logo {
-          font-size: 18px;
-          font-weight: bold;
-          color: #FF6B00;
-          margin-bottom: 5px;
-        }
-        .footer-tagline {
-          font-size: 12px;
-          color: #666;
-        }
-        .footer-contact {
-          font-size: 11px;
-          color: #888;
-          margin-top: 10px;
-        }
-      </style>
-    </head>
-    <body>
-      <!-- Professional Letterhead -->
-      <div class="letterhead">
-        <div class="letterhead-logo">
-          <div class="logo-icon">2Go</div>
-          <div>
-            <div class="logo-text">My 2Go</div>
-            <div class="logo-tagline">Das Loyalitäts-Netzwerk</div>
-          </div>
-        </div>
-        <div class="sender-info">
-          <strong>2Go GmbH</strong><br>
-          Bahnhofstrasse 10<br>
-          8001 Zürich<br>
-          Schweiz<br><br>
-          <strong>Tel:</strong> +41 44 123 45 67<br>
-          <strong>E-Mail:</strong> partner@my2go.app<br>
-          <strong>Web:</strong> www.my2go.app
-        </div>
-      </div>
-      
-      <div class="content">
-        <!-- Document Title -->
-        <div class="doc-title">
-          <h1>🎯 Ihr persönlicher Partner Fit-Check Report</h1>
-          <div class="date">Erstellt am ${formatDate(new Date())}</div>
-          <div class="privacy-note">Ihre Angaben werden nur für die Analyse und das Zusenden des Reports verwendet.</div>
-        </div>
-
-        ${answers.companyName ? `
-        <div class="company-info">
-          <strong style="font-size: 16px;">${answers.companyName}</strong><br>
-          ${answers.contactPerson}<br>
-          ${answers.companyAddress ? `${answers.companyAddress}, ` : ''}${answers.companyPostalCode} ${answers.companyCity}<br>
-          📧 ${answers.contactEmail} &nbsp;•&nbsp; 📞 ${answers.contactPhone}
-        </div>
-        ` : ''}
-
-        <div class="plan-box">
-          <div class="fit-badge fit-${fitResult.score}">${fitLabel.title}</div>
-          <div class="plan-name">${planName}</div>
-          <div class="plan-price">${formatCHF(planPrice)}</div>
-          <div class="plan-period">pro Monat</div>
-        </div>
-
-        <!-- Visual Comparison Chart -->
-        <div class="section">
-          <div class="section-title">📊 Kosten vs. Einsparungen auf einen Blick</div>
-          <div class="comparison-visual">
-            <div class="comparison-column">
-              <div class="comparison-bar savings-bar">${formatPercent(coveragePercent / 100)}</div>
-              <div class="comparison-amount" style="color: #22c55e;">${formatCHF(refinancing.totalSavings)}</div>
-              <div class="comparison-label">Ihre Einsparungen</div>
-            </div>
-            <div class="comparison-column">
-              <div class="comparison-bar cost-bar">100%</div>
-              <div class="comparison-amount" style="color: #f59e0b;">${formatCHF(planPrice)}</div>
-              <div class="comparison-label">Plankosten/Mt.</div>
-            </div>
-          </div>
-          <div class="coverage-indicator">
-            <strong>${isCovered ? '✅ Vollständig refinanziert!' : `⚡ ${formatPercent(coveragePercent / 100)} bereits gedeckt`}</strong>
-            ${!isCovered ? `<br><span style="font-size: 13px; color: #666;">Nur noch ${formatCHF(refinancing.gap)} Mehrumsatz benötigt</span>` : ''}
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">💰 Detaillierte Einsparungen</div>
-          
-          ${refinancing.fixcostBreakdown.map(item => `
-            <div class="breakdown-item">
-              <span>${item.label}</span>
-              <span class="breakdown-amount">+${formatCHF(item.amount)}</span>
-            </div>
-          `).join('')}
-          
-          ${refinancing.timeSavings > 0 ? `
-            <div class="breakdown-item">
-              <span>Zeit-Einsparungen (${refinancing.timeHours}h × CHF 90)</span>
-              <span class="breakdown-amount">+${formatCHF(refinancing.timeSavings)}</span>
-            </div>
-          ` : ''}
-          
-          ${refinancing.sponsoringSavings > 0 ? `
-            <div class="breakdown-item">
-              <span>Sponsoring-Potenzial</span>
-              <span class="breakdown-amount">+${formatCHF(refinancing.sponsoringSavings)}</span>
-            </div>
-          ` : ''}
-          
-          <div class="breakdown-item" style="font-weight: bold; border-top: 2px solid #22c55e; margin-top: 10px; padding-top: 15px; background: #dcfce7; margin: 10px -20px -20px; padding: 15px 20px; border-radius: 0 0 12px 12px;">
-            <span>🎉 Total Einsparungen</span>
-            <span class="breakdown-amount" style="font-size: 18px;">${formatCHF(refinancing.totalSavings)}</span>
-          </div>
-        </div>
-        
-        ${!isCovered && refinancing.miniPriceLever ? `
-          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #f59e0b;">
-            <strong style="font-size: 16px;">💡 Mini-Preishebel Tipp:</strong><br>
-            <span style="font-size: 14px;">Nur <strong>${formatCHF(refinancing.miniPriceLever.requiredExtraRevenue)}</strong> Mehrumsatz/Mt. benötigt – 
-            das sind ca. <strong>${formatCHF(refinancing.miniPriceLever.priceIncreasePerSale)}</strong> pro Transaktion!</span>
-          </div>
-        ` : ''}
-
-        <!-- Uplift Potential Chart -->
-        <div class="section">
-          <div class="section-title">📈 Ihr Uplift-Potenzial (Zusätzlicher Gewinn)</div>
-          <div class="uplift-chart">
-            <div class="uplift-bar-row">
-              <div class="uplift-label">Konservativ</div>
-              <div class="uplift-track">
-                <div class="uplift-fill conservative">+${formatPercent(0.02)}</div>
-              </div>
-              <div class="uplift-amount">+${formatCHF(uplift.total.conservative)}/Mt.</div>
-            </div>
-            <div class="uplift-bar-row">
-              <div class="uplift-label" style="font-weight: bold;">Realistisch</div>
-              <div class="uplift-track" style="border: 2px solid #22c55e; border-radius: 8px;">
-                <div class="uplift-fill realistic">+${formatPercent(0.05)}</div>
-              </div>
-              <div class="uplift-amount" style="color: #22c55e;">+${formatCHF(uplift.total.realistic)}/Mt.</div>
-            </div>
-            <div class="uplift-bar-row">
-              <div class="uplift-label">Ambitioniert</div>
-              <div class="uplift-track">
-                <div class="uplift-fill ambitious">+${formatPercent(0.10)}</div>
-              </div>
-              <div class="uplift-amount">+${formatCHF(uplift.total.ambitious)}/Mt.</div>
-            </div>
-          </div>
-          <p style="text-align: center; font-size: 12px; color: #666; margin-top: 15px;">
-            Basierend auf geschätztem Monatsumsatz von ${formatCHF(uplift.baselineRevenue)}
-          </p>
-        </div>
-
-        <div class="section">
-          <div class="section-title">✨ Empfohlene Module für Sie</div>
-          ${fitResult.modules.map(moduleKey => {
-            const module = MODULES[moduleKey as ModuleKey];
-            if (!module) return '';
-            return `
-              <div class="module-item">
-                <div class="module-title">${module.title}</div>
-                <div class="module-desc">${module.desc}</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <div class="disclaimer">
-          ${TEXTS.disclaimer}
-        </div>
-      </div>
-      
-      <!-- Footer -->
-      <div class="footer">
-        <div class="footer-logo">My 2Go</div>
-        <div class="footer-tagline">Das Loyalitäts-Netzwerk für lokale Betriebe in der Schweiz</div>
-        <div class="footer-contact">
-          2Go GmbH • Bahnhofstrasse 10 • 8001 Zürich • partner@my2go.app • www.my2go.app
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-
-  // Create a hidden iframe to render the HTML
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'absolute';
-  iframe.style.left = '-9999px';
-  iframe.style.width = '800px';
-  iframe.style.height = '1200px';
-  document.body.appendChild(iframe);
-
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-  if (!iframeDoc) {
-    document.body.removeChild(iframe);
-    throw new Error('Could not create iframe document');
-  }
-
-  iframeDoc.open();
-  iframeDoc.write(htmlContent);
-  iframeDoc.close();
-
-  // Wait for content to render
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  try {
-    // Capture as canvas
-    const canvas = await html2canvas(iframeDoc.body, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      width: 800,
-      windowWidth: 800
-    });
-
-    // Convert to image and trigger download
-    const imgData = canvas.toDataURL('image/png');
+  // Helper functions
+  const addText = (text: string, x: number, yPos: number, options: {
+    fontSize?: number;
+    fontStyle?: 'normal' | 'bold';
+    color?: string;
+    align?: 'left' | 'center' | 'right';
+    maxWidth?: number;
+  } = {}) => {
+    const { fontSize = 12, fontStyle = 'normal', color = COLORS.text, align = 'left', maxWidth } = options;
+    pdf.setFontSize(fontSize);
+    pdf.setFont('helvetica', fontStyle);
+    pdf.setTextColor(color);
     
-    // Create download link
-    const link = document.createElement('a');
-    link.download = `My2Go-FitCheck-${answers.companyName || 'Ergebnis'}-${formatDate(new Date()).replace(/\./g, '-')}.png`;
-    link.href = imgData;
-    link.click();
+    if (maxWidth) {
+      const lines = pdf.splitTextToSize(text, maxWidth);
+      pdf.text(lines, x, yPos, { align });
+      return lines.length * (fontSize * 0.4);
+    }
+    pdf.text(text, x, yPos, { align });
+    return fontSize * 0.4;
+  };
 
-    // For actual PDF, you could use jsPDF:
-    // const pdf = new jsPDF('p', 'mm', 'a4');
-    // const imgWidth = 210;
-    // const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    // pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    // pdf.save('My2Go-FitCheck.pdf');
+  const drawRect = (x: number, yPos: number, width: number, height: number, color: string, radius = 0) => {
+    pdf.setFillColor(color);
+    if (radius > 0) {
+      pdf.roundedRect(x, yPos, width, height, radius, radius, 'F');
+    } else {
+      pdf.rect(x, yPos, width, height, 'F');
+    }
+  };
 
-  } finally {
-    document.body.removeChild(iframe);
+  // === HEADER with Corporate Branding ===
+  drawRect(0, 0, pageWidth, 45, COLORS.secondary);
+  
+  // Logo area (white box)
+  drawRect(margin, 10, 35, 25, COLORS.white, 3);
+  addText('2Go', margin + 17.5, 26, { fontSize: 14, fontStyle: 'bold', color: COLORS.secondary, align: 'center' });
+  
+  // Company name
+  addText('My 2Go', margin + 42, 18, { fontSize: 20, fontStyle: 'bold', color: COLORS.white });
+  addText('Das Loyalitäts-Netzwerk', margin + 42, 26, { fontSize: 10, color: COLORS.white });
+
+  // Sender info (right side)
+  addText('2Go Media GmbH', pageWidth - margin, 14, { fontSize: 10, fontStyle: 'bold', color: COLORS.white, align: 'right' });
+  addText('c/o Impact Hub Zürich', pageWidth - margin, 20, { fontSize: 9, color: COLORS.white, align: 'right' });
+  addText('Sihlquai 131, 8005 Zürich', pageWidth - margin, 26, { fontSize: 9, color: COLORS.white, align: 'right' });
+  addText('www.2gomedia.ch', pageWidth - margin, 32, { fontSize: 9, color: COLORS.accent, align: 'right' });
+  addText('partner@my2go.app', pageWidth - margin, 38, { fontSize: 9, color: COLORS.white, align: 'right' });
+
+  y = 55;
+
+  // === DOCUMENT TITLE ===
+  addText('Ihr persönlicher Partner Fit-Check Report', pageWidth / 2, y, { 
+    fontSize: 18, fontStyle: 'bold', color: COLORS.secondary, align: 'center' 
+  });
+  y += 8;
+  addText(`Erstellt am ${formatDate(new Date())}`, pageWidth / 2, y, { 
+    fontSize: 10, color: COLORS.textMuted, align: 'center' 
+  });
+  y += 12;
+
+  // === COMPANY INFO (if available) ===
+  if (answers.companyName) {
+    drawRect(margin, y, contentWidth, 22, COLORS.background, 3);
+    y += 6;
+    addText(answers.companyName, margin + 5, y, { fontSize: 12, fontStyle: 'bold' });
+    y += 5;
+    if (answers.contactPerson) {
+      addText(answers.contactPerson, margin + 5, y, { fontSize: 10, color: COLORS.textMuted });
+      y += 4;
+    }
+    const address = [answers.companyAddress, `${answers.companyPostalCode} ${answers.companyCity}`].filter(Boolean).join(', ');
+    if (address.trim()) {
+      addText(address, margin + 5, y, { fontSize: 10, color: COLORS.textMuted });
+    }
+    y += 10;
   }
+
+  // === PLAN RECOMMENDATION BOX ===
+  y += 5;
+  drawRect(margin, y, contentWidth, 40, COLORS.secondary, 5);
+  
+  // Fit badge
+  const fitBadgeColor = fitResult.score === 'A' ? '#dcfce7' : fitResult.score === 'B' ? '#fef3c7' : '#fee2e2';
+  const fitTextColor = fitResult.score === 'A' ? '#166534' : fitResult.score === 'B' ? '#92400e' : '#991b1b';
+  drawRect(pageWidth / 2 - 25, y + 5, 50, 8, fitBadgeColor, 4);
+  addText(fitLabel.title, pageWidth / 2, y + 11, { fontSize: 10, fontStyle: 'bold', color: fitTextColor, align: 'center' });
+  
+  addText(planName, pageWidth / 2, y + 22, { fontSize: 16, fontStyle: 'bold', color: COLORS.white, align: 'center' });
+  addText(formatCHF(planPrice), pageWidth / 2, y + 32, { fontSize: 20, fontStyle: 'bold', color: COLORS.accent, align: 'center' });
+  addText('pro Monat', pageWidth / 2, y + 38, { fontSize: 9, color: COLORS.white, align: 'center' });
+  
+  y += 50;
+
+  // === COVERAGE COMPARISON ===
+  drawRect(margin, y, contentWidth, 35, COLORS.background, 3);
+  y += 6;
+  addText('Kosten vs. Einsparungen auf einen Blick', margin + 5, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.secondary });
+  y += 8;
+
+  // Einsparungen bar
+  addText('Einsparungen', margin + 5, y, { fontSize: 9, color: COLORS.textMuted });
+  const savingsBarWidth = Math.max(20, (coveragePercent / 100) * (contentWidth - 70));
+  drawRect(margin + 35, y - 4, savingsBarWidth, 8, COLORS.success, 2);
+  addText(formatCHF(refinancing.totalSavings), margin + 38 + savingsBarWidth, y, { fontSize: 9, fontStyle: 'bold', color: COLORS.success });
+  y += 10;
+
+  // Plankosten bar
+  addText('Plankosten', margin + 5, y, { fontSize: 9, color: COLORS.textMuted });
+  const costBarWidth = (contentWidth - 70);
+  drawRect(margin + 35, y - 4, costBarWidth, 8, COLORS.warning, 2);
+  addText(formatCHF(planPrice), margin + 38 + costBarWidth, y, { fontSize: 9, fontStyle: 'bold', color: COLORS.warning });
+  y += 12;
+
+  // Coverage status
+  const statusColor = isCovered ? COLORS.success : COLORS.warning;
+  const statusText = isCovered 
+    ? '✓ Vollständig refinanziert!' 
+    : `${formatPercent(coveragePercent / 100)} bereits gedeckt`;
+  addText(statusText, pageWidth / 2, y, { fontSize: 11, fontStyle: 'bold', color: statusColor, align: 'center' });
+  
+  y += 15;
+
+  // === DETAILED BREAKDOWN ===
+  drawRect(margin, y, contentWidth, 8 + refinancing.fixcostBreakdown.length * 7 + 
+    (refinancing.timeSavings > 0 ? 7 : 0) + 
+    (refinancing.sponsoringSavings > 0 ? 7 : 0) + 12, COLORS.background, 3);
+  y += 6;
+  addText('Detaillierte Einsparungen pro Monat', margin + 5, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.secondary });
+  y += 8;
+
+  refinancing.fixcostBreakdown.forEach(item => {
+    addText(item.label, margin + 5, y, { fontSize: 10, color: COLORS.text });
+    addText(`+${formatCHF(item.amount)}`, pageWidth - margin - 5, y, { fontSize: 10, fontStyle: 'bold', color: COLORS.success, align: 'right' });
+    y += 6;
+  });
+
+  if (refinancing.timeSavings > 0) {
+    addText(`Zeit-Einsparungen (${refinancing.timeHours}h × CHF 90)`, margin + 5, y, { fontSize: 10, color: COLORS.text });
+    addText(`+${formatCHF(refinancing.timeSavings)}`, pageWidth - margin - 5, y, { fontSize: 10, fontStyle: 'bold', color: COLORS.success, align: 'right' });
+    y += 6;
+  }
+
+  if (refinancing.sponsoringSavings > 0) {
+    addText('Sponsoring-Potenzial', margin + 5, y, { fontSize: 10, color: COLORS.text });
+    addText(`+${formatCHF(refinancing.sponsoringSavings)}`, pageWidth - margin - 5, y, { fontSize: 10, fontStyle: 'bold', color: COLORS.success, align: 'right' });
+    y += 6;
+  }
+
+  // Total
+  y += 2;
+  pdf.setDrawColor(COLORS.success);
+  pdf.setLineWidth(0.3);
+  pdf.line(margin + 5, y, pageWidth - margin - 5, y);
+  y += 6;
+  addText('Total Einsparungen /Monat', margin + 5, y, { fontSize: 11, fontStyle: 'bold', color: COLORS.text });
+  addText(formatCHF(refinancing.totalSavings), pageWidth - margin - 5, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.success, align: 'right' });
+  
+  y += 15;
+
+  // === UPLIFT POTENTIAL ===
+  if (y + 45 > pageHeight - 40) {
+    pdf.addPage();
+    y = 20;
+  }
+
+  drawRect(margin, y, contentWidth, 42, COLORS.background, 3);
+  y += 6;
+  addText('Zusätzliches Umsatzpotenzial (Bonus)', margin + 5, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.secondary });
+  y += 10;
+
+  // Uplift bars
+  const scenarios = [
+    { label: 'Konservativ', value: uplift.total.conservative, color: '#94a3b8' },
+    { label: 'Realistisch', value: uplift.total.realistic, color: COLORS.success },
+    { label: 'Ambitioniert', value: uplift.total.ambitious, color: '#3b82f6' }
+  ];
+  const maxUplift = Math.max(...scenarios.map(s => s.value), 1);
+
+  scenarios.forEach((scenario, idx) => {
+    addText(scenario.label, margin + 5, y, { fontSize: 9, color: idx === 1 ? COLORS.text : COLORS.textMuted, fontStyle: idx === 1 ? 'bold' : 'normal' });
+    const barWidth = Math.max(10, (scenario.value / maxUplift) * 80);
+    drawRect(margin + 35, y - 3, barWidth, 6, scenario.color, 2);
+    addText(`+${formatCHF(scenario.value)}/Mt.`, pageWidth - margin - 5, y, { 
+      fontSize: 9, fontStyle: 'bold', color: scenario.color, align: 'right' 
+    });
+    y += 8;
+  });
+
+  addText(`Basis: ${formatCHF(uplift.baselineRevenue)} geschätzter Monatsumsatz`, pageWidth / 2, y + 2, { 
+    fontSize: 8, color: COLORS.textLight, align: 'center' 
+  });
+  
+  y += 12;
+
+  // === RECOMMENDED MODULES ===
+  if (y + 10 + fitResult.modules.length * 12 > pageHeight - 40) {
+    pdf.addPage();
+    y = 20;
+  }
+
+  addText('Empfohlene Module für Sie', margin, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.secondary });
+  y += 8;
+
+  fitResult.modules.forEach(moduleKey => {
+    const module = MODULES[moduleKey as ModuleKey];
+    if (!module) return;
+    
+    // Module box with accent border
+    drawRect(margin, y - 2, 3, 10, COLORS.primary);
+    drawRect(margin + 3, y - 2, contentWidth - 3, 10, COLORS.background);
+    addText(module.title, margin + 8, y + 3, { fontSize: 10, fontStyle: 'bold', color: COLORS.text });
+    addText(module.desc, margin + 8, y + 8, { fontSize: 8, color: COLORS.textMuted, maxWidth: contentWidth - 15 });
+    y += 14;
+  });
+
+  // === DISCLAIMER ===
+  y += 5;
+  pdf.setDrawColor('#e5e5e5');
+  pdf.setLineWidth(0.2);
+  pdf.line(margin, y, pageWidth - margin, y);
+  y += 5;
+  addText(TEXTS.disclaimer, pageWidth / 2, y, { fontSize: 8, color: COLORS.textLight, align: 'center', maxWidth: contentWidth });
+
+  // === FOOTER ===
+  const footerY = pageHeight - 15;
+  drawRect(0, footerY - 5, pageWidth, 20, COLORS.background);
+  addText('My 2Go', pageWidth / 2, footerY, { fontSize: 12, fontStyle: 'bold', color: COLORS.primary, align: 'center' });
+  addText('2Go Media GmbH • Sihlquai 131, 8005 Zürich • www.2gomedia.ch • partner@my2go.app', pageWidth / 2, footerY + 5, { 
+    fontSize: 8, color: COLORS.textLight, align: 'center' 
+  });
+
+  // Save PDF
+  const filename = `My2Go-FitCheck-${answers.companyName || 'Report'}-${formatDate(new Date()).replace(/\./g, '-')}.pdf`;
+  pdf.save(filename);
 }
 
 // Simple text export for clipboard
@@ -654,7 +324,7 @@ ${refinancing.fixcostBreakdown.map(item => `• ${item.label}: +${formatCHF(item
 ${refinancing.timeSavings > 0 ? `• Zeit-Einsparungen: +${formatCHF(refinancing.timeSavings)}` : ''}
 ${refinancing.sponsoringSavings > 0 ? `• Sponsoring: +${formatCHF(refinancing.sponsoringSavings)}` : ''}
 
-TOTAL: ${formatCHF(refinancing.totalSavings)}
+TOTAL: ${formatCHF(refinancing.totalSavings)} /Monat
 ${isCovered ? '✓ Vollständig gedeckt!' : `Lücke: ${formatCHF(refinancing.gap)}`}
 
 EMPFOHLENE MODULE
@@ -673,7 +343,7 @@ Ambitioniert: +${formatCHF(uplift.total.ambitious)}/Mt.
 ═══════════════════════════════════════
 ${TEXTS.disclaimer}
 
-www.my2go.app/go
+www.2gomedia.ch | www.my2go.app/go
 ═══════════════════════════════════════
   `.trim();
 }
