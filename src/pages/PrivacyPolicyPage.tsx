@@ -22,8 +22,9 @@ export default function PrivacyPolicyPage() {
           <div className="card-base p-6 not-prose">
             <p className="font-semibold">2Go Media AG</p>
             <p className="text-sm text-muted-foreground">
-              Industriestrasse 19<br />
-              CH-5200 Brugg AG<br />
+              c/o Impact Hub Zürich<br />
+              Sihlquai 131<br />
+              CH-8005 Zürich<br />
               Schweiz
             </p>
             <p className="text-sm text-muted-foreground mt-2">
@@ -42,8 +43,8 @@ export default function PrivacyPolicyPage() {
             <p className="text-sm text-muted-foreground">
               Verantwortlich für die Datenverarbeitung ist:<br />
               2Go Media AG<br />
-              Industriestrasse 19<br />
-              CH-5200 Brugg AG<br />
+              c/o Impact Hub Zürich<br />
+              Sihlquai 131, CH-8005 Zürich<br />
               E-Mail: contact@2gomedia.ch
             </p>
           </section>
@@ -165,8 +166,8 @@ export default function PrivacyPolicyPage() {
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               2Go Media AG<br />
-              Industriestrasse 19<br />
-              CH-5200 Brugg AG<br />
+              c/o Impact Hub Zürich<br />
+              Sihlquai 131, CH-8005 Zürich<br />
               E-Mail: contact@2gomedia.ch
             </p>
             <p className="text-sm text-muted-foreground mt-2">
