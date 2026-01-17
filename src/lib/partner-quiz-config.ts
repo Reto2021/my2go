@@ -1,0 +1,362 @@
+// =============================================================
+// MY2GO PARTNER FIT QUIZ - CONFIGURATION
+// =============================================================
+// All constants, texts, and calculations are configurable here
+
+// -------------------------------------------------------------
+// PLANS
+// -------------------------------------------------------------
+export const QUIZ_PLANS = [
+  { 
+    key: 'start' as const, 
+    name: 'Starter', 
+    priceCHF: 249, 
+    includesGHL: false, 
+    recommendedFor: ['1 Standort', 'Basis Loyalty + Deals'], 
+    modules: ['loyalty', 'deals'] 
+  },
+  { 
+    key: 'plus' as const, 
+    name: 'Growth', 
+    priceCHF: 499, 
+    includesGHL: true, 
+    recommendedFor: ['mehr Aktivierung', 'Automation'], 
+    modules: ['loyalty', 'automation'] 
+  },
+  { 
+    key: 'pro' as const, 
+    name: 'Radio Partner', 
+    priceCHF: 990, 
+    includesGHL: true, 
+    recommendedFor: ['Multi-Standort', 'hohe Frequenz'], 
+    modules: ['loyalty', 'automation', 'campaigns'] 
+  }
+] as const;
+
+export type PlanKey = typeof QUIZ_PLANS[number]['key'];
+
+// -------------------------------------------------------------
+// MODULES
+// -------------------------------------------------------------
+export const MODULES = {
+  loyalty: { title: 'Multipartner-Loyalty', desc: 'Sammeln & Einlösen (Taler) im Partnernetzwerk' },
+  deals: { title: 'Deals/Gutscheine', desc: 'Angebote, Rewards, Partneraktionen' },
+  reviews: { title: 'Review-Booster', desc: 'Bewertungen systematisch auslösen & steuern' },
+  automation: { title: 'Reminder & Follow-up', desc: 'Automatische Nachfass-/Reminder-Prozesse (inkl. GHL ab Plus)' },
+  crmLite: { title: 'Kundenerfassung/CRM Light', desc: 'Kundendaten strukturiert erfassen & segmentieren' },
+  sponsor: { title: 'Sponsoring-Slots', desc: 'Sponsor-Badges in Deals + Präsenzpakete' }
+} as const;
+
+export type ModuleKey = keyof typeof MODULES;
+
+// -------------------------------------------------------------
+// CLICKOUTS
+// -------------------------------------------------------------
+export const CLICKOUTS = [
+  { label: 'Internet/Telekom vergleichen', url: 'https://www.moneyland.ch/de/internet-abo-vergleich', lever: 'telco' },
+  { label: 'Telekom-Übersicht', url: 'https://www.moneyland.ch/de/telekom', lever: 'telco' },
+  { label: 'Firmenkonto vergleichen', url: 'https://www.moneyland.ch/de/firmenkonto-vergleich', lever: 'bank' },
+  { label: 'Versicherungen vergleichen', url: 'https://www.comparis.ch/versicherung', lever: 'insurance' },
+  { label: 'UVG Firmen-Überblick', url: 'https://www.moneyland.ch/de/unfallversicherung-firma-vergleich', lever: 'insurance' },
+  { label: 'ElCom Tarif-Benchmark (Grundversorgung)', url: 'https://www.strompreis.elcom.admin.ch/', lever: 'energy' },
+  { label: 'Gewerbemiete Marktcheck (Homegate)', url: 'https://www.homegate.ch/mieten/gewerbeobjekt/trefferliste', lever: 'rent' },
+  { label: 'Gewerbemiete Marktcheck (ImmoScout24)', url: 'https://www.immoscout24.ch/de/buero-gewerbe-industrie/mieten', lever: 'rent' },
+  { label: 'Bürobedarf Preisvergleich', url: 'https://www.toppreise.ch/produktsuche/Buerobedarf-Schreibwaren-c1816', lever: 'supplies' }
+] as const;
+
+// -------------------------------------------------------------
+// RANGES / MIDPOINTS
+// -------------------------------------------------------------
+export const RANGE_MIDPOINTS = {
+  transactions: { '<30': 20, '30-79': 55, '80-199': 130, '200+': 250 },
+  avgTicket: { '<30': 20, '30-79': 55, '80-199': 130, '200+': 250 },
+  loyalty: { '<20%': 10, '20-39%': 30, '40-59%': 50, '60%+': 70 },
+  leads: { '<10': 5, '10-49': 30, '50-199': 100, '200+': 250 },
+  conversion: { '<10%': 5, '10-24%': 17, '25-49%': 35, '50%+': 60 },
+  contacts: { '<500': 300, '500-1999': 1000, '2000-9999': 5000, '10000+': 15000 }
+} as const;
+
+// -------------------------------------------------------------
+// FIXKOSTEN SAVINGS PERCENTAGES
+// -------------------------------------------------------------
+export const FIXCOST_SAVINGS = {
+  telco: { threshold: 80, savingsPct: 0.15 },
+  software: { threshold: 150, savingsPct: 0.10 },
+  treuhand: { threshold: 300, savingsPct: 0.15 },
+  insurance: { threshold: 200, savingsPct: 0.10 },
+  mobility: { threshold: 200, savingsPct: 0.10 },
+  bank: { threshold: 50, savingsPct: 0.10 },
+  rent: { threshold: 2500, savingsPct: 0.05, requiresNegotiation: true },
+  web: { ranges: [
+    { min: 20, max: 59, savingsPct: 0.10 },
+    { min: 60, max: 149, savingsPct: 0.15 },
+    { min: 150, max: Infinity, savingsPct: 0.20 }
+  ]}
+} as const;
+
+// Time savings
+export const TIME_SAVINGS = {
+  hourlyRate: 90,
+  hoursFor2Gaps: 2,
+  hoursFor4Gaps: 4
+} as const;
+
+// -------------------------------------------------------------
+// SPONSORING POTENTIAL (CHF/month)
+// -------------------------------------------------------------
+export const SPONSORING_POTENTIAL = {
+  '<500': 150,
+  '500-1999': 250,
+  '2000-9999': 400,
+  '10000+': 700
+} as const;
+
+// -------------------------------------------------------------
+// UPLIFT FACTORS
+// -------------------------------------------------------------
+export const UPLIFT_FACTORS = {
+  enrollment90Days: { conservative: 0.08, realistic: 0.15, ambitious: 0.28 },
+  activeRate: { conservative: 0.25, realistic: 0.40, ambitious: 0.55 },
+  freqLift: { conservative: 0.02, realistic: 0.05, ambitious: 0.10 },
+  networkLift: {
+    'action': { conservative: 0.005, realistic: 0.02, ambitious: 0.05 },
+    'listing': { conservative: 0.000, realistic: 0.005, ambitious: 0.015 },
+    'unclear': { conservative: 0.000, realistic: 0.003, ambitious: 0.010 }
+  },
+  ghlConvLift: {
+    noFollowUp: { conservative: 0.05, realistic: 0.15, ambitious: 0.30 },
+    withFollowUp: { conservative: 0.02, realistic: 0.05, ambitious: 0.10 }
+  }
+} as const;
+
+// -------------------------------------------------------------
+// SPONSOR CATEGORIES
+// -------------------------------------------------------------
+export const SPONSOR_CATEGORIES = [
+  'Getränke & Food-Lieferanten',
+  'Bank / Versicherung / Vorsorge',
+  'Mobilität & Garage / Parkhaus',
+  'Immobilien / Vermieter / Verwaltung / Center-Management',
+  'Freizeit / Destinationen',
+  'Energie / Haustechnik',
+  'Telekom / IT',
+  'Treuhand / Beratung / Recht'
+] as const;
+
+export const SPONSOR_SLOTS = [
+  'Screen/Display',
+  'Tischsteller/Counter',
+  'Bon/Beleg',
+  'Schaufenster/Plakat',
+  'Social (IG/FB/WhatsApp)',
+  'Newsletter/E-Mail',
+  'Take-away/Packaging/Sticker'
+] as const;
+
+// -------------------------------------------------------------
+// PROCESS MATURITY CHECKBOXES
+// -------------------------------------------------------------
+export const PROCESS_MATURITY_ITEMS = [
+  { key: 'hasCRM', label: 'Kundenliste/CRM vorhanden' },
+  { key: 'requestsReviews', label: 'Reviews aktiv anfragen' },
+  { key: 'followsUpLeads', label: 'Offerten/Anfragen werden nachgefasst' },
+  { key: 'capturesCustomers', label: 'Kundenerfassung am Checkout möglich' },
+  { key: 'canRedeem', label: 'Einlösen operativ sauber machbar' }
+] as const;
+
+// -------------------------------------------------------------
+// FIXCOST ITEMS
+// -------------------------------------------------------------
+export const FIXCOST_ITEMS = [
+  { key: 'telco', label: 'Telco/Internet', ranges: ['0-79', '80-149', '150+'], midpoints: [40, 115, 200] },
+  { key: 'software', label: 'Software/Abos', ranges: ['0-149', '150-399', '400+'], midpoints: [75, 275, 500] },
+  { key: 'treuhand', label: 'Treuhand', ranges: ['0-299', '300-699', '700+'], midpoints: [150, 500, 900] },
+  { key: 'insurance', label: 'Versicherungen', ranges: ['0-199', '200-499', '500+'], midpoints: [100, 350, 650] },
+  { key: 'mobility', label: 'Fahrzeuge/Mobilität', ranges: ['0-199', '200-499', '500+'], midpoints: [100, 350, 650] },
+  { key: 'bank', label: 'Bank/Fees/Payment', ranges: ['0-49', '50-199', '200+'], midpoints: [25, 125, 300] },
+  { key: 'rent', label: 'Miete/NK', ranges: ['<1200', '1200-2499', '2500+'], midpoints: [800, 1850, 3500] },
+  { key: 'web', label: 'Web/Domain/Hosting', ranges: ['0-19', '20-59', '60-149', '150+'], midpoints: [10, 40, 105, 200] }
+] as const;
+
+// -------------------------------------------------------------
+// ENERGY QUICKWINS
+// -------------------------------------------------------------
+export const ENERGY_QUICKWINS = [
+  'Tarif/Grundpreis prüfen',
+  'Nebenkostenpositionen plausibilisieren',
+  'LED/Bewegungsmelder installieren',
+  'Standby-Verbrauch reduzieren',
+  'Heiz-/Kühlzeiten optimieren',
+  'Lastspitzen vermeiden',
+  'Filter/Anlagen regelmässig warten'
+] as const;
+
+// -------------------------------------------------------------
+// DB% Options for Mini Price Lever
+// -------------------------------------------------------------
+export const DB_OPTIONS = [
+  { label: 'Niedrig (30%)', value: 0.30 },
+  { label: 'Mittel (50%)', value: 0.50 },
+  { label: 'Hoch (75%)', value: 0.75 },
+  { label: 'Weiss nicht', value: 0.50 }
+] as const;
+
+// -------------------------------------------------------------
+// TEXTS / I18N
+// -------------------------------------------------------------
+export const TEXTS = {
+  stepTitles: {
+    1: 'Passt My2Go zu Ihnen?',
+    2: 'Risikolos finanzieren',
+    3: 'Uplift (Bonus, optional)',
+    final: 'Ihre Empfehlung'
+  },
+  fitLabels: {
+    A: { title: 'Ideal Fit', color: 'text-green-600', bgColor: 'bg-green-100' },
+    B: { title: 'Guter Fit', color: 'text-amber-600', bgColor: 'bg-amber-100' },
+    C: { title: 'Bedingt geeignet', color: 'text-red-600', bgColor: 'bg-red-100' }
+  },
+  disclaimer: 'Konservative Schätzung. Keine Garantie. Keine Rechts-/Steuerberatung. Kündigungsfristen und Vertragsdetails bitte prüfen.',
+  upliftNote: 'Uplift ist Bonus; Refinanzierung basiert auf konservativen Hebeln.'
+} as const;
+
+// -------------------------------------------------------------
+// EMAIL TEMPLATES
+// -------------------------------------------------------------
+export const EMAIL_TEMPLATES = {
+  konditionenAnfragen: {
+    subject: 'Anfrage Konditionen / Vertragsprüfung – {firma}',
+    body: `Sehr geehrte Damen und Herren
+
+Wir prüfen aktuell unsere Fixkosten und möchten die Konditionen für {produkt} überprüfen.
+
+Bitte senden Sie uns bis {datum} eine Übersicht der Leistungen inkl. Preise sowie eine optimierte Offerte (gleichwertig oder besser).
+
+Eckdaten:
+{eckdaten}
+
+Gerne auch 2 Terminvorschläge.
+
+Freundliche Grüsse
+
+{kontaktperson}
+{firma}
+{adresse}
+{telefon}
+{email}
+
+Kundennr/Vertragsnr: {vertragsnr}`
+  },
+  kuendigung: {
+    subject: 'Kündigung Vertrag {produkt} per {datum} – {firma}',
+    body: `Sehr geehrte Damen und Herren
+
+Hiermit kündigen wir den Vertrag {produkt} (Vertragsnr: {vertragsnr}) ordentlich und fristgerecht per {datum}.
+
+Bitte bestätigen Sie uns das Vertragsende schriftlich und teilen Sie den Ablauf für die Übergabe/Deaktivierung mit.
+
+Freundliche Grüsse
+
+{kontaktperson}
+{firma}
+{adresse}
+{telefon}
+{email}`
+  },
+  preisnachlass: {
+    subject: 'Gesprächsanfrage Konditionen – {firma} / {objekt}',
+    body: `Guten Tag
+
+Wir möchten die Konditionen {typ} für das Jahr {jahr} besprechen.
+
+Ziel: fairer Abgleich der Leistungen/Abrechnung und Anpassung an die aktuelle Nutzung.
+
+Können Sie uns bitte eine kurze Übersicht der Kostenpositionen und den Verteilschlüssel senden und 2 Terminvorschläge machen?
+
+Freundliche Grüsse
+
+{kontaktperson}
+{firma}
+{adresse}
+{telefon}
+{email}`
+  },
+  sponsoring: {
+    subject: 'Lokales Sponsoring: Präsenzpakete ab CHF {paketpreis}/Monat – {firma}',
+    body: `Guten Tag
+
+Wir bauen unser lokales My2Go Bonus-/Gutscheinprogramm aus und bieten Sponsoring-Präsenzpakete an.
+
+Leistungen: {sponsorflaechen} + optional "Deal präsentiert von [Sponsor]" im Partnernetzwerk.
+
+Pakete:
+- S (CHF 100–250): Basis-Präsenz
+- M (CHF 250–500): Erweiterte Sichtbarkeit
+- L (CHF 500–1000): Premium-Paket mit Reporting
+
+Transparent, ohne Lead-/Umsatzgarantie, inkl. Monatsübersicht (Reichweite/Einlösungen).
+
+Interessiert? Gerne sende ich Details und 2 Terminvorschläge.
+
+Freundliche Grüsse
+
+{kontaktperson}
+{firma}
+{adresse}
+{telefon}
+{email}`
+  },
+  standortpatenschaft: {
+    subject: 'Standort-Patenschaft / Mieter-Aktivierung im {objekt} – My2Go',
+    body: `Guten Tag
+
+Als Mieter im {objekt} möchten wir Frequenz & Aktivierung mit einer einfachen Massnahme stärken: My2Go Standort-Patenschaft.
+
+Leistungen: "presented by [Vermieter]" auf lokalen Deals + Vor-Ort-Flächen ({sponsorflaechen}) + Monatsübersicht.
+
+Budget ab CHF {budget}/Monat. 10 Minuten Vorstellung?
+
+Freundliche Grüsse
+
+{kontaktperson}
+{firma}
+{adresse}
+{telefon}
+{email}`
+  }
+} as const;
+
+// -------------------------------------------------------------
+// HELPER FUNCTIONS
+// -------------------------------------------------------------
+export function getMidpoint(range: string, type: keyof typeof RANGE_MIDPOINTS): number {
+  const midpoints = RANGE_MIDPOINTS[type];
+  return (midpoints as Record<string, number>)[range] ?? 0;
+}
+
+export function formatCHF(amount: number): string {
+  return new Intl.NumberFormat('de-CH', {
+    style: 'currency',
+    currency: 'CHF',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(Math.round(amount));
+}
+
+export function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
+export function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+export function formatDate(date: Date): string {
+  return date.toLocaleDateString('de-CH', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric' 
+  });
+}
