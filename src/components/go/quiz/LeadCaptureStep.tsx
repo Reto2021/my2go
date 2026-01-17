@@ -559,9 +559,9 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         icon={User}
         isOpen={activeSection === 'contact'}
         isCompleted={sectionValidation.contact && activeSection !== 'contact'}
-        isDisabled={!sectionValidation.company}
+        isDisabled={!sectionValidation.company && !sectionValidation.contact}
         stepNumber={2}
-        onHeaderClick={() => sectionValidation.company && setActiveSection('contact')}
+        onHeaderClick={() => (sectionValidation.company || sectionValidation.contact) && setActiveSection('contact')}
       >
         <div className="space-y-3">
           {foundPersons.length > 0 && (
@@ -640,9 +640,9 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         icon={Briefcase}
         isOpen={activeSection === 'role'}
         isCompleted={sectionValidation.role && activeSection !== 'role'}
-        isDisabled={!sectionValidation.contact}
+        isDisabled={!sectionValidation.contact && !sectionValidation.role}
         stepNumber={3}
-        onHeaderClick={() => sectionValidation.contact && setActiveSection('role')}
+        onHeaderClick={() => (sectionValidation.contact || sectionValidation.role) && setActiveSection('role')}
       >
         <div className="space-y-1.5">
           {ROLE_OPTIONS.map(opt => (
@@ -698,9 +698,9 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         icon={Users}
         isOpen={activeSection === 'employees'}
         isCompleted={sectionValidation.employees && activeSection !== 'employees'}
-        isDisabled={!sectionValidation.role}
+        isDisabled={!sectionValidation.role && !sectionValidation.employees}
         stepNumber={4}
-        onHeaderClick={() => sectionValidation.role && setActiveSection('employees')}
+        onHeaderClick={() => (sectionValidation.role || sectionValidation.employees) && setActiveSection('employees')}
       >
         <ChipSelect
           options={EMPLOYEE_OPTIONS}
@@ -717,9 +717,9 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         icon={Check}
         isOpen={activeSection === 'terms'}
         isCompleted={sectionValidation.terms && activeSection !== 'terms'}
-        isDisabled={!sectionValidation.employees}
+        isDisabled={!sectionValidation.employees && !sectionValidation.terms}
         stepNumber={5}
-        onHeaderClick={() => sectionValidation.employees && setActiveSection('terms')}
+        onHeaderClick={() => (sectionValidation.employees || sectionValidation.terms) && setActiveSection('terms')}
       >
         <div className="flex items-start gap-2">
           <Checkbox
