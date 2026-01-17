@@ -46,7 +46,8 @@ import {
   Star,
   Shield,
   Info,
-  ExternalLink
+  ExternalLink,
+  BarChart3
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ActionLauncher } from './ActionLauncher';
@@ -54,6 +55,8 @@ import { generatePDFReport } from './pdfExport';
 import { MissingInfoChecklist } from './MissingInfoChecklist';
 import { SendToCFOModal } from './SendToCFOModal';
 import { ReportPreviewSheet } from './ReportPreviewSheet';
+import { ROIOverview } from './ROIOverview';
+import { UpliftChart } from './UpliftChart';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -125,11 +128,22 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
         <p className="text-3xl font-bold text-primary">{formatCHF(plan.priceCHF)}<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
       </motion.div>
 
+      {/* ROI Overview - Combined View */}
+      <ROIOverview 
+        planPrice={plan.priceCHF} 
+        planName={plan.name} 
+        refinancing={refinancing} 
+        uplift={uplift} 
+      />
+
+      {/* Uplift Visualization */}
+      <UpliftChart mehrbesuche={uplift.mehrbesuche} />
+
       {/* Tabs: Mehrbesuche vs Absicherung */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
         <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="mehrbesuche" className="flex items-center gap-2"><TrendingUp className="w-4 h-4" />Mehrbesuche</TabsTrigger>
-          <TabsTrigger value="absicherung" className="flex items-center gap-2"><Shield className="w-4 h-4" />Absicherung</TabsTrigger>
+          <TabsTrigger value="mehrbesuche" className="flex items-center gap-2"><TrendingUp className="w-4 h-4" />Details: Uplift</TabsTrigger>
+          <TabsTrigger value="absicherung" className="flex items-center gap-2"><Shield className="w-4 h-4" />Details: Absicherung</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mehrbesuche" className="space-y-4">
