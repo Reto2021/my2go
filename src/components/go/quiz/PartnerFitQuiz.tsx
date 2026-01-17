@@ -153,8 +153,8 @@ export function PartnerFitQuiz() {
   const steps = [
     { id: 0, title: 'Kontakt', icon: User, color: 'text-secondary' },
     { id: 1, title: TEXTS.stepTitles[1], icon: Target, color: 'text-primary', optional: isStepOptional(1) },
-    { id: 2, title: TEXTS.stepTitles[2], icon: Calculator, color: 'text-accent', optional: isStepOptional(2) },
-    { id: 3, title: TEXTS.stepTitles[3], icon: TrendingUp, color: 'text-green-500', optional: isStepOptional(3) }
+    { id: 2, title: TEXTS.stepTitles[2], icon: TrendingUp, color: 'text-green-500', optional: isStepOptional(2) },
+    { id: 3, title: TEXTS.stepTitles[3], icon: Calculator, color: 'text-accent', optional: isStepOptional(3) }
   ];
 
   // Progress calculation: 0 = lead capture, 1-3 = quiz steps, 4 = result
@@ -162,10 +162,10 @@ export function PartnerFitQuiz() {
   const currentProgress = showLeadCapture ? 0 : currentStep;
   const progress = showResult ? 100 : (currentProgress / totalSteps) * 100;
 
-  const scrollToBuy = () => {
-    const pricingSection = document.getElementById('pricing-section');
-    if (pricingSection) {
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
+  const scrollToNonProfit = () => {
+    const nonprofitSection = document.getElementById('nonprofit');
+    if (nonprofitSection) {
+      nonprofitSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -317,17 +317,17 @@ export function PartnerFitQuiz() {
                     />
                   )}
                   {currentStep === 2 && (
+                    <QuizStep3Uplift 
+                      answers={answers} 
+                      updateAnswers={updateAnswers} 
+                    />
+                  )}
+                  {currentStep === 3 && (
                     <QuizStep2Refinancing 
                       answers={answers} 
                       updateAnswers={updateAnswers}
                       dbPercent={dbPercent}
                       setDbPercent={setDbPercent}
-                    />
-                  )}
-                  {currentStep === 3 && (
-                    <QuizStep3Uplift 
-                      answers={answers} 
-                      updateAnswers={updateAnswers} 
                     />
                   )}
                 </motion.div>
@@ -343,7 +343,7 @@ export function PartnerFitQuiz() {
                     answers={answers}
                     updateAnswers={updateAnswers}
                     dbPercent={dbPercent}
-                    onScrollToBuy={scrollToBuy}
+                    onScrollToBuy={scrollToNonProfit}
                     onReset={handleReset}
                   />
                 </motion.div>

@@ -293,8 +293,8 @@ export const MISSING_INFO_ITEMS = {
 export const TEXTS = {
   stepTitles: {
     1: 'Passt My2Go zu Ihnen?',
-    2: 'Risikolos finanzieren',
-    3: 'Uplift (Bonus, optional)',
+    2: 'Uplift berechnen',
+    3: 'Risikolos finanzieren',
     final: 'Ihre Empfehlung'
   },
   fitLabels: {
