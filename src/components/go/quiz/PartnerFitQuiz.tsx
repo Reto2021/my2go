@@ -162,13 +162,6 @@ export function PartnerFitQuiz() {
   const currentProgress = showLeadCapture ? 0 : currentStep;
   const progress = showResult ? 100 : (currentProgress / totalSteps) * 100;
 
-  const scrollToNonProfit = () => {
-    const nonprofitSection = document.getElementById('nonprofit');
-    if (nonprofitSection) {
-      nonprofitSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const handleLeadCaptureComplete = () => {
     setShowLeadCapture(false);
   };
@@ -343,7 +336,6 @@ export function PartnerFitQuiz() {
                     answers={answers}
                     updateAnswers={updateAnswers}
                     dbPercent={dbPercent}
-                    onScrollToBuy={scrollToNonProfit}
                     onReset={handleReset}
                   />
                 </motion.div>
