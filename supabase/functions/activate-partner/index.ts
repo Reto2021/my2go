@@ -116,6 +116,21 @@ serve(async (req) => {
 
       logStep("Activated existing partner", { partnerId: existingPartner.id });
 
+      // Trigger notification to nearby users (fire and forget in background)
+      try {
+        fetch(`${supabaseUrl}/functions/v1/notify-new-partner`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({ partnerId: existingPartner.id }),
+        }).then(res => logStep("Notification trigger response", { status: res.status }))
+          .catch(err => logStep("Error triggering notifications", { error: err.message }));
+      } catch (e) {
+        logStep("Failed to trigger notifications", { error: e });
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
         partnerId: existingPartner.id,
