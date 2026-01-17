@@ -523,3 +523,162 @@
     50% { transform: translateX(100%); }
   }
 }
+
+/* Print Styles for Quiz Result - A4 optimized */
+@media print {
+  /* Reset page margins for A4 */
+  @page {
+    size: A4;
+    margin: 15mm 12mm;
+  }
+
+  /* Hide non-essential elements */
+  .print-hide,
+  nav,
+  footer,
+  button:not(.print-show),
+  [data-radix-collection-item],
+  .bottom-nav,
+  .fixed,
+  .sticky:not(.print-show) {
+    display: none !important;
+  }
+
+  /* Reset backgrounds for printing */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Print-friendly container */
+  .print-container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure cards print nicely */
+  .card,
+  [class*="Card"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    margin-bottom: 8mm !important;
+  }
+
+  /* Print-friendly colors */
+  .print-friendly {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Force color printing for important elements */
+  .print-color {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page breaks */
+  .print-break-before {
+    page-break-before: always;
+  }
+
+  .print-break-after {
+    page-break-after: always;
+  }
+
+  /* Avoid orphan headers */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Print header */
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 4mm;
+    margin-bottom: 4mm;
+    border-bottom: 2px solid #023F5A;
+  }
+
+  .print-header-logo {
+    height: 24px;
+    width: auto;
+  }
+
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 3mm 0;
+    border-top: 1px solid #e5e7eb;
+    font-size: 8pt;
+    color: #666;
+    text-align: center;
+  }
+
+  /* Compact spacing for print */
+  .print-compact .space-y-6 > * + * {
+    margin-top: 3mm !important;
+  }
+
+  .print-compact .space-y-4 > * + * {
+    margin-top: 2mm !important;
+  }
+
+  .print-compact .p-5 {
+    padding: 3mm !important;
+  }
+
+  .print-compact .p-4 {
+    padding: 2.5mm !important;
+  }
+
+  /* Typography adjustments */
+  .print-compact .text-3xl {
+    font-size: 18pt !important;
+  }
+
+  .print-compact .text-2xl {
+    font-size: 14pt !important;
+  }
+
+  .print-compact .text-xl {
+    font-size: 12pt !important;
+  }
+
+  .print-compact .text-lg {
+    font-size: 11pt !important;
+  }
+
+  .print-compact .text-sm {
+    font-size: 9pt !important;
+  }
+
+  .print-compact .text-xs {
+    font-size: 8pt !important;
+  }
+
+  /* Grid layout for print */
+  .print-grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4mm !important;
+  }
+
+  /* Force visibility of print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Hide animations */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

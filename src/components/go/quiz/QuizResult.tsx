@@ -47,7 +47,8 @@ import {
   Shield,
   Info,
   ExternalLink,
-  BarChart3
+  BarChart3,
+  Printer
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ActionLauncher } from './ActionLauncher';
@@ -164,19 +165,37 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
     finally { setIsSendingEmail(false); }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print-container print-compact">
+      {/* Print Header - Only visible when printing */}
+      <div className="hidden print-only print-header">
+        <div className="flex items-center gap-3">
+          <img src="/logo-2go.png" alt="My2Go" className="print-header-logo h-6" />
+          <span className="text-lg font-bold">Fit-Check Report</span>
+        </div>
+        <div className="text-right text-sm text-muted-foreground">
+          <div>{answers.companyName || 'Partner'}</div>
+          <div>{new Date().toLocaleDateString('de-CH')}</div>
+        </div>
+      </div>
+
       {/* Header */}
-      <motion.div className="text-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${fitLabel.bgColor} ${fitLabel.color} font-bold mb-4`}>
+      <motion.div className="text-center print-color" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${fitLabel.bgColor} ${fitLabel.color} font-bold mb-4 print-color`}>
           <CheckCircle2 className="w-5 h-5" />{fitLabel.title}
         </div>
         <h3 className="text-2xl font-bold mb-2">{plan.name} empfohlen</h3>
         <p className="text-3xl font-bold text-primary">{formatCHF(plan.priceCHF)}<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
       </motion.div>
 
-      {/* Scenario Slider */}
-      <ScenarioSlider value={scenario} onChange={setScenario} className="mb-2" />
+      {/* Scenario Slider - Hide on print */}
+      <div className="print-hide">
+        <ScenarioSlider value={scenario} onChange={setScenario} className="mb-2" />
+      </div>
 
       {/* ROI Overview - Combined View */}
       <ROIOverview 
@@ -455,33 +474,70 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
         </div>
       </Card>
 
-      {/* Action Launcher */}
-      <Collapsible open={showActions} onOpenChange={setShowActions}>
-        <CollapsibleTrigger className="w-full"><Card className="p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer"><div className="flex items-center gap-2"><Zap className="w-5 h-5 text-amber-500" /><span className="font-medium">Action Launcher</span></div>{showActions ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}</Card></CollapsibleTrigger>
-        <CollapsibleContent><div className="mt-2"><ActionLauncher answers={answers} updateAnswers={updateAnswers} breakdown={refinancing.fixcostBreakdown} /></div></CollapsibleContent>
-      </Collapsible>
+      {/* Action Launcher - Hide on print */}
+      <div className="print-hide">
+        <Collapsible open={showActions} onOpenChange={setShowActions}>
+          <CollapsibleTrigger className="w-full"><Card className="p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer"><div className="flex items-center gap-2"><Zap className="w-5 h-5 text-amber-500" /><span className="font-medium">Action Launcher</span></div>{showActions ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}</Card></CollapsibleTrigger>
+          <CollapsibleContent><div className="mt-2"><ActionLauncher answers={answers} updateAnswers={updateAnswers} breakdown={refinancing.fixcostBreakdown} /></div></CollapsibleContent>
+        </Collapsible>
+      </div>
 
-      {/* Company Data */}
-      <Collapsible open={showCompanyData} onOpenChange={setShowCompanyData}>
-        <CollapsibleTrigger className="w-full"><Card className="p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer"><div className="flex items-center gap-2"><Building2 className="w-5 h-5" /><span className="font-medium">Firmendaten</span></div>{showCompanyData ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}</Card></CollapsibleTrigger>
-        <CollapsibleContent><Card className="p-5 mt-2"><div className="grid sm:grid-cols-2 gap-4"><div><Label>Firmenname</Label><Input value={answers.companyName} onChange={(e) => updateAnswers({ companyName: e.target.value })} /></div><div><Label>E-Mail</Label><Input value={answers.contactEmail} onChange={(e) => updateAnswers({ contactEmail: e.target.value })} /></div></div></Card></CollapsibleContent>
-      </Collapsible>
+      {/* Company Data - Hide on print */}
+      <div className="print-hide">
+        <Collapsible open={showCompanyData} onOpenChange={setShowCompanyData}>
+          <CollapsibleTrigger className="w-full"><Card className="p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer"><div className="flex items-center gap-2"><Building2 className="w-5 h-5" /><span className="font-medium">Firmendaten</span></div>{showCompanyData ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}</Card></CollapsibleTrigger>
+          <CollapsibleContent><Card className="p-5 mt-2"><div className="grid sm:grid-cols-2 gap-4"><div><Label>Firmenname</Label><Input value={answers.companyName} onChange={(e) => updateAnswers({ companyName: e.target.value })} /></div><div><Label>E-Mail</Label><Input value={answers.contactEmail} onChange={(e) => updateAnswers({ contactEmail: e.target.value })} /></div></div></Card></CollapsibleContent>
+        </Collapsible>
+      </div>
 
-      <MissingInfoChecklist answers={answers} userRole={answers.userRole} />
+      <div className="print-hide">
+        <MissingInfoChecklist answers={answers} userRole={answers.userRole} />
+      </div>
 
-      {/* Report Actions */}
-      <Card className="p-4 bg-muted/30">
+      {/* Report Actions - Hide on print */}
+      <Card className="p-4 bg-muted/30 print-hide">
         <div className="flex flex-col gap-2">
           <Button size="lg" className="w-full h-12 rounded-xl" onClick={() => setShowReportPreview(true)}><Eye className="w-4 h-4 mr-2" />Report Vorschau</Button>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleExportPDF} disabled={isExporting}>{isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}</Button>
             <Button variant="outline" className="flex-1" onClick={handleSendEmail} disabled={isSendingEmail}>{isSendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}</Button>
+            <Button variant="outline" className="flex-1" onClick={handlePrint}><Printer className="w-4 h-4" /></Button>
           </div>
         </div>
       </Card>
 
-      {/* CTAs */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-4">
+      {/* Print Summary - Only visible when printing */}
+      <div className="hidden print-only">
+        <Card className="p-4 border-2 border-primary print-color">
+          <h4 className="font-bold text-lg mb-3">Zusammenfassung</h4>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Plan:</span>
+              <span className="font-bold ml-2">{plan.name}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Kosten:</span>
+              <span className="font-bold ml-2">{formatCHF(plan.priceCHF)}/Mt.</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Absicherung:</span>
+              <span className="font-bold text-green-600 ml-2">+{formatCHF(refinancing.totalSavings)}/Mt.</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Uplift ({scenario === 'conservative' ? 'kons.' : scenario === 'realistic' ? 'real.' : 'amb.'}):</span>
+              <span className="font-bold text-green-600 ml-2">+{formatCHF(uplift.mehrbesuche.totalUpliftCHFPerMonth[scenario])}/Mt.</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Print Footer - Only visible when printing */}
+      <div className="hidden print-only print-footer">
+        <p>My2Go Fit-Check Report • {new Date().toLocaleDateString('de-CH')} • my2go.app • Keine Garantie auf Berechnungen</p>
+      </div>
+
+      {/* CTAs - Hide on print */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-4 print-hide">
         <Button size="lg" className="flex-1 h-14 font-bold rounded-xl" asChild>
           <a href="/go/checkout">Jetzt starten<ArrowRight className="w-5 h-5 ml-2" /></a>
         </Button>
