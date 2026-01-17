@@ -96,6 +96,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [manualMode, setManualMode] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<ZefixCompany | null>(null);
+  const [foundPersons, setFoundPersons] = useState<{ name: string; role: string; signature?: string }[]>([]);
 
   // Debounced autocomplete search
   const searchZefix = useCallback(async (query: string) => {
@@ -186,11 +187,12 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               companyCity: data.address.city || company.legalSeat || ''
             });
           }
-          // Store persons for later use if needed
+          // Store persons for contact selection
           if (data.persons && data.persons.length > 0) {
             console.log('Found persons:', data.persons);
-            // Could auto-fill contact person from first person
-            // For now just log it
+            setFoundPersons(data.persons);
+          } else {
+            setFoundPersons([]);
           }
         }
       } catch (err) {
@@ -203,11 +205,13 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
 
   const clearCompany = () => {
     setSelectedCompany(null);
+    setFoundPersons([]);
     updateAnswers({
       companyName: '', 
       companyAddress: '', 
       companyPostalCode: '', 
-      companyCity: '' 
+      companyCity: '',
+      contactPerson: ''
     });
     setSearchQuery('');
     setManualMode(false);
@@ -488,6 +492,46 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
 
       {/* Contact Details - SINGLE SECTION */}
       <div className="pt-4 border-t border-border space-y-4">
+        {/* Person Selection from HR */}
+        {foundPersons.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              Ansprechpartner aus HR auswählen
+            </Label>
+            <div className="grid gap-2">
+              {foundPersons.map((person, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => updateAnswers({ contactPerson: person.name })}
+                  className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                    answers.contactPerson === person.name
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{person.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {person.role}
+                        {person.signature && ` • ${person.signature}`}
+                      </p>
+                    </div>
+                    {answers.contactPerson === person.name && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Oder Namen manuell eingeben:
+            </p>
+          </div>
+        )}
+
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-medium flex items-center gap-2 mb-2">
