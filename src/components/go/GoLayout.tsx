@@ -1,17 +1,32 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { RadioHeader } from "@/components/ui/radio-header";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
-import logoRadio2go from "@/assets/logo-radio2go.png";
+import logo2GoWhite from "@/assets/logo-2go-white.png";
 
 export function GoLayout() {
   const location = useLocation();
   const isLegalPage = location.pathname.startsWith('/go/legal');
   const isLandingPage = location.pathname === '/go';
+  const showBackButton = !isLandingPage;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Radio Header - same as consumer app */}
       <RadioHeader />
+      
+      {/* Back Navigation for sub-pages */}
+      {showBackButton && (
+        <div className="container max-w-6xl mx-auto px-4 py-3">
+          <Link 
+            to="/go" 
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Zurück zur Übersicht
+          </Link>
+        </div>
+      )}
       
       {/* Main Content */}
       <main className="flex-1">
@@ -32,14 +47,10 @@ export function GoLayout() {
             <div className="md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <img 
-                  src={logoRadio2go} 
-                  alt="Radio 2Go" 
-                  className="h-10 w-auto"
+                  src={logo2GoWhite} 
+                  alt="My 2Go" 
+                  className="h-12 w-auto"
                 />
-                <div>
-                  <span className="font-bold text-lg block">My 2Go</span>
-                  <span className="text-xs text-secondary-foreground/70">für Partner</span>
-                </div>
               </div>
               <p className="text-sm text-secondary-foreground/80 leading-relaxed">
                 Das Loyalitäts-Netzwerk für lokale Betriebe in der Schweiz. Powered by Radio 2Go.
@@ -130,7 +141,7 @@ export function GoLayout() {
               <div className="mt-6">
                 <Link 
                   to="/go/partner/pricing"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground hover:bg-accent/90 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
                 >
                   Jetzt Partner werden
                 </Link>
