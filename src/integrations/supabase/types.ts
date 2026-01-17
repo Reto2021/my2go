@@ -772,6 +772,50 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_scans: {
+        Row: {
+          id: string
+          partner_id: string
+          referrer: string | null
+          scanned_at: string
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          id?: string
+          partner_id: string
+          referrer?: string | null
+          scanned_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          id?: string
+          partner_id?: string
+          referrer?: string | null
+          scanned_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_scans_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_listening_sessions: {
         Row: {
           created_at: string

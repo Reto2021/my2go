@@ -9,6 +9,7 @@ import { GoogleReviewCard } from '@/components/partner/GoogleReviewBadge';
 import { TestimonialCarousel } from '@/components/partner/TestimonialCarousel';
 import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
 import { OptimizedImage } from '@/components/ui/optimized-image';
+import { useQRScanTracking } from '@/hooks/useQRScanTracking';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -30,7 +31,9 @@ export default function PartnerDetailPage() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  
+
+  // Track QR scans when page is visited with UTM params
+  useQRScanTracking(partner?.id);
   const loadPartner = async () => {
     if (!id) return;
     setIsLoading(true);

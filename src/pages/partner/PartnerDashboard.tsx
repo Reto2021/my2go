@@ -42,6 +42,7 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { PartnerOnboardingTutorial } from '@/components/partner/PartnerOnboardingTutorial';
+import { QRScanAnalytics } from '@/components/partner/QRScanAnalytics';
 import { useGHLSync } from '@/hooks/useGHLSync';
 import { toast } from 'sonner';
 import type { Partner } from '@/lib/supabase-helpers';
@@ -439,7 +440,10 @@ export default function PartnerDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Recent Redemptions - Enhanced List */}
+        {/* QR Scan Analytics */}
+        {partnerInfo?.partnerId && (
+          <QRScanAnalytics partnerId={partnerInfo.partnerId} />
+        )}
         {partnerInfo?.canConfirmRedemptions && recentRedemptions.length > 0 && (
           <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
             <div className="flex items-center justify-between p-5 pb-3 border-b">
