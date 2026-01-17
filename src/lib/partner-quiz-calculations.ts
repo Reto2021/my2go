@@ -116,8 +116,13 @@ export interface MehrbesucheResult {
   reviewVisitsPerMonth: { conservative: number; realistic: number; ambitious: number };
   totalVisitsPerMonth: { conservative: number; realistic: number; ambitious: number };
   totalVisitsPerYear: { conservative: number; realistic: number; ambitious: number };
-  // Optional CHF estimates
+  // Basket uplift (loyal customers spend more per visit)
+  basketUpliftPercent: { conservative: number; realistic: number; ambitious: number };
+  basketUpliftCHFPerMonth: { conservative: number; realistic: number; ambitious: number };
+  // Optional CHF estimates (including basket uplift)
   upliftCHFPerMonth: { conservative: number; realistic: number; ambitious: number };
+  // Total combined uplift (visits + basket)
+  totalUpliftCHFPerMonth: { conservative: number; realistic: number; ambitious: number };
   // Assumptions for display
   assumptions: {
     transactionsPerMonth: number;
@@ -125,6 +130,7 @@ export interface MehrbesucheResult {
     repeatShare: number;
     enrollmentRate: string;
     activeRate: string;
+    basketUpliftRate: string;
     hasReviewGap: boolean;
   };
 }
@@ -350,12 +356,16 @@ export function calculateUplift(
   const totalVisitsPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
   const totalVisitsPerYear = { conservative: 0, realistic: 0, ambitious: 0 };
   const upliftCHFPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
+  const basketUpliftPercent = { conservative: 0, realistic: 0, ambitious: 0 };
+  const basketUpliftCHFPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
+  const totalUpliftCHFPerMonth = { conservative: 0, realistic: 0, ambitious: 0 };
   
   scenarios.forEach(scenario => {
     const enrollment = UPLIFT_FACTORS.enrollment90Days[scenario];
     const activeRate = UPLIFT_FACTORS.activeRate[scenario];
     const activeShare = enrollment * activeRate;
     const extraVisitsPerActiveMemberPerYear = UPLIFT_FACTORS.extraVisitsPerActiveMemberPerYear[scenario];
+    const basketUpliftRate = UPLIFT_FACTORS.basketUplift[scenario];
     
     // active_repeat_tx_per_month = repeat_tx_per_month * ActiveShare
     const activeRepeatTxPerMonth = repeatTxPerMonth * activeShare;
@@ -371,12 +381,22 @@ export function calculateUplift(
       reviewVisitsPerMonth[scenario] = reviewLift;
     }
     
-    // Totals
+    // Totals for visits
     totalVisitsPerMonth[scenario] = extraVisitsPerMonth[scenario] + reviewVisitsPerMonth[scenario];
     totalVisitsPerYear[scenario] = totalVisitsPerMonth[scenario] * 12;
     
-    // Optional CHF estimate
+    // CHF estimate from extra visits (using original basket)
     upliftCHFPerMonth[scenario] = totalVisitsPerMonth[scenario] * B;
+    
+    // Basket uplift: loyal customers spend more per visit
+    // Apply to repeat transactions from enrolled active members
+    basketUpliftPercent[scenario] = basketUpliftRate * 100;
+    // Monthly basket uplift = active repeat tx * basket * uplift rate
+    const activeMonthlyTx = repeatTxPerMonth * activeShare;
+    basketUpliftCHFPerMonth[scenario] = activeMonthlyTx * B * basketUpliftRate;
+    
+    // Total combined uplift (extra visits + higher basket)
+    totalUpliftCHFPerMonth[scenario] = upliftCHFPerMonth[scenario] + basketUpliftCHFPerMonth[scenario];
   });
   
   const mehrbesuche: MehrbesucheResult = {
@@ -385,13 +405,17 @@ export function calculateUplift(
     reviewVisitsPerMonth,
     totalVisitsPerMonth,
     totalVisitsPerYear,
+    basketUpliftPercent,
+    basketUpliftCHFPerMonth,
     upliftCHFPerMonth,
+    totalUpliftCHFPerMonth,
     assumptions: {
       transactionsPerMonth: T,
       avgBasket: B,
       repeatShare: S,
       enrollmentRate: `${Math.round(UPLIFT_FACTORS.enrollment90Days.realistic * 100)}%`,
       activeRate: `${Math.round(UPLIFT_FACTORS.activeRate.realistic * 100)}%`,
+      basketUpliftRate: `${Math.round(UPLIFT_FACTORS.basketUplift.realistic * 100)}%`,
       hasReviewGap
     }
   };

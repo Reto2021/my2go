@@ -168,9 +168,32 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
                   <p className="text-2xl font-bold text-green-700">+{Math.round(uplift.mehrbesuche.totalVisitsPerMonth[scenario] * 10) / 10}</p>
                   <p className="text-xs text-muted-foreground">Mehrbesuche/Mt.</p>
                   <p className="text-lg font-semibold text-green-600 mt-2">+{Math.round(uplift.mehrbesuche.totalVisitsPerYear[scenario])}/Jahr</p>
-                  {showCHF && <p className="text-sm font-medium text-green-800 mt-2 bg-green-100 rounded px-2 py-1">≈ +{formatCHF(uplift.mehrbesuche.upliftCHFPerMonth[scenario])}/Mt.</p>}
+                  {showCHF && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm font-medium text-green-800 bg-green-100 rounded px-2 py-1">
+                        ≈ +{formatCHF(uplift.mehrbesuche.totalUpliftCHFPerMonth[scenario])}/Mt.
+                      </p>
+                      <p className="text-[10px] text-green-700">
+                        (inkl. +{Math.round(uplift.mehrbesuche.basketUpliftPercent[scenario])}% Bonerhöhung)
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
+            </div>
+            
+            {/* Basket Uplift Highlight */}
+            <div className="p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg mb-4 flex items-start gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg shrink-0">
+                <TrendingUp className="w-4 h-4 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-purple-900">Loyale Kunden geben mehr aus</p>
+                <p className="text-xs text-purple-700 mt-0.5">
+                  Studien zeigen: Loyalty-Mitglieder geben <strong>12–31%</strong> mehr pro Besuch aus (Adobe, McKinsey).
+                  Bei Ihnen entspricht das zusätzlich <strong>+{formatCHF(uplift.mehrbesuche.basketUpliftCHFPerMonth.realistic)}/Mt.</strong>
+                </p>
+              </div>
             </div>
             
             {/* Benchmark sources */}
@@ -189,7 +212,7 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
                   <div>
                     <p className="font-semibold text-foreground mb-1">Berechnungsmodell</p>
                     <p className="text-muted-foreground">
-                      Mehrbesuche = Stammkunden × Enrollment × Aktiv-Rate × Extra-Besuche/Jahr
+                      Uplift = (Mehrbesuche × Ø Bon) + (Aktive Mitglieder × Ø Bon × Basket-Uplift)
                     </p>
                   </div>
                   <div>
@@ -198,6 +221,7 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
                       <li>• <strong>35%</strong> der Stammkunden registrieren sich (90 Tage)</li>
                       <li>• <strong>55%</strong> davon nutzen aktiv das Programm</li>
                       <li>• Aktive Mitglieder besuchen <strong>3.5×/Jahr</strong> zusätzlich</li>
+                      <li>• Loyalty-Mitglieder geben <strong>+20%</strong> mehr pro Besuch aus</li>
                     </ul>
                   </div>
                   <div>
@@ -220,12 +244,20 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
                         Antavo Statistics <ExternalLink className="w-3 h-3" />
                       </a>
                       <a 
-                        href="https://www.yotpo.com/loyalty-programs-statistics/" 
+                        href="https://business.adobe.com/resources/digital-economy-index.html" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-blue-600 hover:bg-blue-50 transition-colors"
                       >
-                        Yotpo Research <ExternalLink className="w-3 h-3" />
+                        Adobe Digital Index <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.mckinsey.com/capabilities/growth-marketing-and-sales/our-insights/the-value-of-getting-personalization-right-or-wrong-is-multiplying" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-blue-600 hover:bg-blue-50 transition-colors"
+                      >
+                        McKinsey Retail Study <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
                   </div>
