@@ -144,33 +144,102 @@ serve(async (req) => {
     // Handle different response structures
     const results = data.list || data.results || data;
     
+    // Helper function to fetch company details with address
+    async function fetchCompanyDetails(ehraid: number): Promise<any | null> {
+      try {
+        const detailUrl = `${baseUrl}/company/uid/CHE${ehraid}`;
+        const detailResponse = await fetch(detailUrl, {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': authHeader
+          }
+        });
+        
+        if (detailResponse.ok) {
+          return await detailResponse.json();
+        }
+        
+        // Try by ehraid
+        const ehraIdUrl = `${baseUrl}/company/ehraid/${ehraid}`;
+        const ehraIdResponse = await fetch(ehraIdUrl, {
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': authHeader
+          }
+        });
+        
+        if (ehraIdResponse.ok) {
+          return await ehraIdResponse.json();
+        }
+      } catch (e) {
+        console.error(`Failed to fetch details for ehraid ${ehraid}:`, e);
+      }
+      return null;
+    }
+    
     if (Array.isArray(results)) {
-      companies = results.map((c: any) => ({
-        uid: c.uid || c.chid || c.ehpiNumber || '',
-        name: c.name || c.shabName || '',
-        legalSeat: c.legalSeat || c.seat || '',
-        legalForm: c.legalForm?.name?.de || c.legalForm?.shortName?.de || c.legalFormId || '',
-        status: c.status,
-        address: c.address ? {
-          street: c.address.street,
-          houseNumber: c.address.houseNumber,
-          swissZipCode: c.address.swissZipCode,
-          city: c.address.city
-        } : undefined
-      }));
+      // Fetch address details for top 5 results (limit to avoid timeouts)
+      const detailPromises = results.slice(0, 5).map(async (c: any) => {
+        let address = c.address;
+        
+        // If no address in search results, try to fetch details
+        if (!address && c.ehraid) {
+          const details = await fetchCompanyDetails(c.ehraid);
+          if (details?.address) {
+            address = details.address;
+          }
+        }
+        
+        return {
+          uid: c.uid || c.chid || c.ehpiNumber || '',
+          name: c.name || c.shabName || '',
+          legalSeat: c.legalSeat || c.seat || '',
+          legalForm: c.legalForm?.name?.de || c.legalForm?.shortName?.de || c.legalFormId || '',
+          status: c.status,
+          address: address ? {
+            street: address.street || address.addressLine1 || '',
+            houseNumber: address.houseNumber || address.buildingNumber || '',
+            swissZipCode: address.swissZipCode || address.postCode || address.zip || '',
+            city: address.city || address.town || c.legalSeat || ''
+          } : undefined
+        };
+      });
+      
+      companies = await Promise.all(detailPromises);
+      
+      // Add remaining results without details (if any)
+      if (results.length > 5) {
+        const remaining = results.slice(5).map((c: any) => ({
+          uid: c.uid || c.chid || c.ehpiNumber || '',
+          name: c.name || c.shabName || '',
+          legalSeat: c.legalSeat || c.seat || '',
+          legalForm: c.legalForm?.name?.de || c.legalForm?.shortName?.de || c.legalFormId || '',
+          status: c.status,
+          address: undefined
+        }));
+        companies = [...companies, ...remaining];
+      }
     } else if (data && (data.uid || data.name)) {
-      // Single result
+      // Single result - fetch details
+      let address = data.address;
+      if (!address && data.ehraid) {
+        const details = await fetchCompanyDetails(data.ehraid);
+        if (details?.address) {
+          address = details.address;
+        }
+      }
+      
       companies = [{
         uid: data.uid || data.chid || data.ehpiNumber || '',
         name: data.name || data.shabName || '',
         legalSeat: data.legalSeat || '',
         legalForm: data.legalForm?.name?.de || data.legalForm?.shortName?.de || data.legalFormId || '',
         status: data.status,
-        address: data.address ? {
-          street: data.address.street,
-          houseNumber: data.address.houseNumber,
-          swissZipCode: data.address.swissZipCode,
-          city: data.address.city
+        address: address ? {
+          street: address.street || address.addressLine1 || '',
+          houseNumber: address.houseNumber || address.buildingNumber || '',
+          swissZipCode: address.swissZipCode || address.postCode || address.zip || '',
+          city: address.city || address.town || data.legalSeat || ''
         } : undefined
       }];
     }
