@@ -110,7 +110,52 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
     if (!answers.contactEmail) { toast.error('Bitte E-Mail eingeben'); return; }
     setIsSendingEmail(true);
     try {
-      await supabase.functions.invoke('send-partner-report', { body: { recipientEmail: answers.contactEmail, companyName: answers.companyName || 'Partner' } });
+      // Calculate ROI data for email
+      const absicherung = refinancing.totalSavings;
+      const monthlyUplift = uplift.mehrbesuche.totalUpliftCHFPerMonth?.realistic || uplift.mehrbesuche.upliftCHFPerMonth.realistic;
+      const totalMonthlyValue = absicherung + monthlyUplift;
+      const totalYearlyValue = (absicherung * 12) + (monthlyUplift * 12);
+      const yearlyCost = plan.priceCHF * 12;
+      const roiPercent = yearlyCost > 0 ? ((totalYearlyValue - yearlyCost) / yearlyCost) * 100 : 0;
+      const netGainMonthly = totalMonthlyValue - plan.priceCHF;
+      const netGainYearly = totalYearlyValue - yearlyCost;
+      const paybackMonths = totalMonthlyValue > 0 ? plan.priceCHF / totalMonthlyValue : 0;
+
+      await supabase.functions.invoke('send-partner-report', { 
+        body: { 
+          recipientEmail: answers.contactEmail, 
+          recipientName: answers.contactPerson || answers.companyName || 'Partner',
+          companyName: answers.companyName || 'Partner',
+          fitScore: fitResult.score,
+          fitLabel: TEXTS.fitLabels[fitResult.score].title,
+          planName: plan.name,
+          planPrice: plan.priceCHF,
+          totalSavings: refinancing.totalSavings,
+          coveragePercent: Math.min(100, (refinancing.totalSavings / plan.priceCHF) * 100),
+          isCovered: refinancing.gap <= 0,
+          gap: refinancing.gap,
+          savingsBreakdown: refinancing.fixcostBreakdown,
+          timeSavings: refinancing.timeSavings,
+          timeHours: refinancing.timeHours,
+          sponsoringSavings: refinancing.sponsoringSavings,
+          modules: fitResult.modules.map(m => {
+            const mod = MODULES[m as keyof typeof MODULES];
+            return mod ? { title: mod.title, desc: mod.desc } : null;
+          }).filter(Boolean),
+          mehrbesuche: uplift.mehrbesuche,
+          roi: {
+            totalMonthlyValue,
+            totalYearlyValue,
+            yearlyCost,
+            roiPercent,
+            netGainMonthly,
+            netGainYearly,
+            paybackMonths,
+            isPositive: netGainMonthly > 0
+          },
+          recommendReviewBooster: fitResult.recommendReviewBooster
+        } 
+      });
       setEmailSent(true);
       toast.success('Report gesendet!');
     } catch { toast.error('Fehler beim Senden'); }

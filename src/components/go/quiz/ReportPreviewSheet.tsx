@@ -147,6 +147,78 @@ export function ReportPreviewSheet({
                 <p className="text-sm opacity-80">pro Monat</p>
               </div>
 
+              {/* ROI Overview */}
+              {(() => {
+                const absicherung = refinancing.totalSavings;
+                const monthlyUplift = uplift.mehrbesuche?.totalUpliftCHFPerMonth?.realistic || 0;
+                const totalMonthlyValue = absicherung + monthlyUplift;
+                const totalYearlyValue = (absicherung * 12) + (monthlyUplift * 12);
+                const yearlyCost = planPrice * 12;
+                const roiPercent = yearlyCost > 0 ? ((totalYearlyValue - yearlyCost) / yearlyCost) * 100 : 0;
+                const netGainYearly = totalYearlyValue - yearlyCost;
+                const paybackMonths = totalMonthlyValue > 0 ? planPrice / totalMonthlyValue : 0;
+                const isPositiveROI = totalMonthlyValue > planPrice;
+
+                return (
+                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border-2 border-slate-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold flex items-center gap-2">
+                        📊 ROI Übersicht
+                      </h3>
+                      {isPositiveROI && (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                          ✓ Positiver ROI
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Bar visualization */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Monatlicher Wert</span>
+                        <span className="font-bold text-green-600">{formatCHF(totalMonthlyValue)}</span>
+                      </div>
+                      <div className="h-6 bg-slate-200 rounded flex overflow-hidden">
+                        <div 
+                          className="h-full bg-primary"
+                          style={{ width: `${Math.min(100, (absicherung / Math.max(totalMonthlyValue, planPrice)) * 100)}%` }}
+                        />
+                        <div 
+                          className="h-full bg-green-500"
+                          style={{ width: `${Math.min(100, (monthlyUplift / Math.max(totalMonthlyValue, planPrice)) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Monatliche Kosten</span>
+                        <span className="font-bold text-amber-600">{formatCHF(planPrice)}</span>
+                      </div>
+                      <div className="h-6 bg-slate-200 rounded overflow-hidden">
+                        <div 
+                          className="h-full bg-amber-500"
+                          style={{ width: `${Math.min(100, (planPrice / Math.max(totalMonthlyValue, planPrice)) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Key metrics */}
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-green-50 rounded-lg p-2">
+                        <p className="text-xs text-muted-foreground">ROI p.a.</p>
+                        <p className="font-bold text-green-600">+{Math.round(roiPercent)}%</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-2">
+                        <p className="text-xs text-muted-foreground">Netto/Jahr</p>
+                        <p className="font-bold text-blue-600">{formatCHF(netGainYearly)}</p>
+                      </div>
+                      <div className="bg-amber-50 rounded-lg p-2">
+                        <p className="text-xs text-muted-foreground">Payback</p>
+                        <p className="font-bold text-amber-700">{paybackMonths.toFixed(1)} Mt.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Coverage Status */}
               <div className={`rounded-xl p-5 text-center ${isCovered ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
                 <p className={`text-xl font-bold ${isCovered ? 'text-green-700' : 'text-amber-700'}`}>
