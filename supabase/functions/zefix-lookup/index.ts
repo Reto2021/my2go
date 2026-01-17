@@ -421,27 +421,63 @@ serve(async (req) => {
   function parsePersonsFromMarkdown(markdown: string): { name: string; role: string; signature?: string }[] {
     const persons: { name: string; role: string; signature?: string }[] = [];
     
+    // Blacklist for invalid names (cookie consent, navigation, etc.)
+    const invalidNamePatterns = [
+      /cookie/i, /consent/i, /site/i, /uses/i, /privacy/i, /policy/i,
+      /close/i, /cancel/i, /accept/i, /login/i, /register/i,
+      /yesno/i, /this\s+site/i, /website/i, /page/i
+    ];
+    
+    function isValidName(name: string): boolean {
+      // Must be 2-4 words, each starting with capital
+      const words = name.trim().split(/\s+/);
+      if (words.length < 2 || words.length > 5) return false;
+      
+      // Check for blacklisted patterns
+      for (const pattern of invalidNamePatterns) {
+        if (pattern.test(name)) return false;
+      }
+      
+      // Each word should look like a name (start with capital, mostly letters)
+      for (const word of words) {
+        if (!/^[A-ZÄÖÜ][a-zäöü]{1,20}$/.test(word)) return false;
+      }
+      
+      // Name shouldn't contain newlines or special chars
+      if (/[\n\r\t|]/.test(name)) return false;
+      
+      return true;
+    }
+    
     // Swiss HR person patterns - typically in format:
     // "Nachname Vorname, von Ort, in Ort, Rolle, Unterschrift"
     // or table rows with Name | Role | Signature
     
-    // Pattern 1: Look for common role keywords with names
+    // Pattern 1: Look for German role keywords with names before them
+    // More strict pattern: Name must be exactly 2-4 capitalized words
     const roleKeywords = [
       'Präsident', 'Vizepräsident', 'Mitglied', 'Sekretär',
       'Geschäftsführer', 'Direktor', 'Vorsitzender',
-      'Verwaltungsratspräsident', 'CEO', 'CFO', 'COO'
+      'Verwaltungsratspräsident'
     ];
     
+    // Don't use CEO/CFO/COO as they match too much junk
     const rolePattern = new RegExp(
-      `([A-ZÄÖÜ][a-zäöü]+(?:\\s+[A-ZÄÖÜ][a-zäöü]+)+)\\s*,?\\s*(${roleKeywords.join('|')})([^\\n]*)`,
+      `([A-ZÄÖÜ][a-zäöü]+(?:\\s+[A-ZÄÖÜ][a-zäöü]+){1,3})\\s*,\\s*(${roleKeywords.join('|')})([^\\n]*)`,
       'gi'
     );
     
     let personMatch;
     while ((personMatch = rolePattern.exec(markdown)) !== null) {
-      const name = personMatch[1].trim();
+      const name = personMatch[1].trim().replace(/\s+/g, ' ');
       const role = personMatch[2].trim();
       const rest = personMatch[3] || '';
+      
+      // Validate the name
+      if (!isValidName(name)) {
+        console.log(`Skipping invalid name: "${name}"`);
+        continue;
+      }
       
       // Check for signature type
       let signature: string | undefined;
@@ -452,10 +488,13 @@ serve(async (req) => {
         signature = kollMatch ? `Kollektivunterschrift${kollMatch[1] ? ' zu ' + kollMatch[1] : ''}` : 'Kollektivunterschrift';
       }
       
-      persons.push({ name, role, signature });
+      // Avoid duplicates
+      if (!persons.find(p => p.name === name)) {
+        persons.push({ name, role, signature });
+      }
     }
     
-    // Pattern 2: Look for "Eingetragene Personen" section
+    // Pattern 2: Look for "Eingetragene Personen" or organ section in tables
     const personSection = markdown.match(/(?:Eingetragene Personen|Organe|Zeichnungsberechtigte)[:\s]*\n([\s\S]*?)(?:\n\n|\n#|$)/i);
     if (personSection) {
       const sectionText = personSection[1];
@@ -464,8 +503,14 @@ serve(async (req) => {
       const linePattern = /([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+){1,3})\s*[,;]\s*((?:Präsident|Mitglied|Geschäftsführer|Direktor)[^,;\n]*)/gi;
       
       while ((personMatch = linePattern.exec(sectionText)) !== null) {
-        const name = personMatch[1].trim();
+        const name = personMatch[1].trim().replace(/\s+/g, ' ');
         const role = personMatch[2].trim();
+        
+        // Validate the name
+        if (!isValidName(name)) {
+          console.log(`Skipping invalid name from section: "${name}"`);
+          continue;
+        }
         
         // Avoid duplicates
         if (!persons.find(p => p.name === name)) {
@@ -474,6 +519,7 @@ serve(async (req) => {
       }
     }
     
+    console.log(`Found ${persons.length} valid persons after filtering`);
     return persons;
   }
 });
