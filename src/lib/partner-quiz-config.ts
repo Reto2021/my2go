@@ -220,11 +220,9 @@ export const EMPLOYEE_OPTIONS = [
 ] as const;
 
 export const ROLE_HINTS: Record<string, string> = {
-  owner: 'Wir zeigen beides: risikolos + Bonus.',
   finance: 'Wir fokussieren Refinanzierung & Verträge. Uplift ist optionaler Bonus.',
   marketing: 'Wir fokussieren Uplift, Aktivierung und Automationen (ab Plus).',
-  operations: 'Sie müssen nicht alles wissen – wir fokussieren Alltag & Nutzen. Fehlende Zahlen können Sie später an Finanzen weitergeben.',
-  other: 'Wir zeigen Ihnen die wichtigsten Hebel.'
+  operations: 'Sie müssen nicht alles wissen – wir fokussieren Alltag & Nutzen. Fehlende Zahlen können Sie später an Finanzen weitergeben.'
 };
 
 // Step gating per role: which steps are required/optional
