@@ -8,6 +8,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface MehrbesucheData {
+  totalVisitsPerMonth: { conservative: number; realistic: number; ambitious: number };
+  totalVisitsPerYear: { conservative: number; realistic: number; ambitious: number };
+  upliftCHFPerMonth: { conservative: number; realistic: number; ambitious: number };
+  assumptions: {
+    transactionsPerMonth: number;
+    avgBasket: number;
+    repeatShare: number;
+    enrollmentRate: string;
+    activeRate: string;
+    hasReviewGap: boolean;
+  };
+}
+
 interface ReportEmailRequest {
   recipientEmail: string;
   recipientName: string;
@@ -25,7 +39,10 @@ interface ReportEmailRequest {
   timeHours: number;
   sponsoringSavings: number;
   modules: Array<{ title: string; desc: string }>;
-  uplift: {
+  // NEW: Mehrbesuche data (primary)
+  mehrbesuche?: MehrbesucheData;
+  // LEGACY: CHF-based uplift (kept for backward compat)
+  uplift?: {
     conservative: number;
     realistic: number;
     ambitious: number;
@@ -34,6 +51,7 @@ interface ReportEmailRequest {
     requiredExtraRevenue: number;
     priceIncreasePerSale: number;
   };
+  recommendReviewBooster?: boolean;
 }
 
 function formatCHF(value: number): string {
@@ -53,6 +71,10 @@ function formatPercent(value: number): string {
   }).format(value);
 }
 
+function formatVisits(value: number): string {
+  return value.toFixed(1).replace('.0', '');
+}
+
 function generateEmailHTML(data: ReportEmailRequest): string {
   const fitColors = {
     A: { bg: '#dcfce7', color: '#166534' },
@@ -61,6 +83,24 @@ function generateEmailHTML(data: ReportEmailRequest): string {
   };
   
   const fitColor = fitColors[data.fitScore];
+  const mehrbesuche = data.mehrbesuche;
+  
+  // Generate 12-month chart bars
+  const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+  const monthlyIncrement = mehrbesuche?.totalVisitsPerMonth.realistic || 0;
+  const maxVisits = monthlyIncrement * 12;
+  
+  const chartBarsHtml = monthLabels.map((label, idx) => {
+    const cumulativeVisits = monthlyIncrement * (idx + 1);
+    const barHeight = maxVisits > 0 ? Math.round((cumulativeVisits / maxVisits) * 50) : 0;
+    const isLast = idx === 11;
+    return `
+      <td style="text-align: center; vertical-align: bottom; padding: 0 2px;">
+        <div style="background: ${isLast ? '#3b82f6' : '#93c5fd'}; height: ${Math.max(4, barHeight)}px; width: 100%; border-radius: 2px 2px 0 0;"></div>
+        <div style="font-size: 9px; color: #888; margin-top: 4px;">${label}</div>
+      </td>
+    `;
+  }).join('');
   
   return `
 <!DOCTYPE html>
@@ -122,28 +162,101 @@ function generateEmailHTML(data: ReportEmailRequest): string {
                 </tr>
               </table>
               
-              <!-- Coverage Status -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: ${data.isCovered ? '#dcfce7' : '#fef3c7'}; border-radius: 12px; margin-bottom: 30px;">
+              ${mehrbesuche ? `
+              <!-- Mehrbesuche Section (Primary) -->
+              <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 18px; color: #333; margin-bottom: 15px;">👥 Mehrbesuche nach 12 Monaten</h3>
+                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">So sieht My2Go bei Ihnen nach 12 Monaten aus</p>
+                
+                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 12px;">
+                  <tr>
+                    <td style="padding: 25px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="text-align: center; padding: 10px; width: 33%;">
+                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Konservativ</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #64748b;">+${formatVisits(mehrbesuche.totalVisitsPerMonth.conservative)}</div>
+                            <div style="font-size: 11px; color: #888;">Besuche/Mt.</div>
+                            <div style="font-size: 14px; font-weight: bold; color: #64748b; margin-top: 5px;">+${formatVisits(mehrbesuche.totalVisitsPerYear.conservative)}/Jahr</div>
+                          </td>
+                          <td style="text-align: center; padding: 15px; background: #3b82f6; border-radius: 8px; width: 34%;">
+                            <div style="font-size: 13px; color: white; margin-bottom: 5px;">Realistisch</div>
+                            <div style="font-size: 22px; font-weight: bold; color: white;">+${formatVisits(mehrbesuche.totalVisitsPerMonth.realistic)}</div>
+                            <div style="font-size: 11px; color: rgba(255,255,255,0.8);">Besuche/Mt.</div>
+                            <div style="font-size: 18px; font-weight: bold; color: white; margin-top: 5px;">+${formatVisits(mehrbesuche.totalVisitsPerYear.realistic)}/Jahr</div>
+                          </td>
+                          <td style="text-align: center; padding: 10px; width: 33%;">
+                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Ambitioniert</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #22c55e;">+${formatVisits(mehrbesuche.totalVisitsPerMonth.ambitious)}</div>
+                            <div style="font-size: 11px; color: #888;">Besuche/Mt.</div>
+                            <div style="font-size: 14px; font-weight: bold; color: #22c55e; margin-top: 5px;">+${formatVisits(mehrbesuche.totalVisitsPerYear.ambitious)}/Jahr</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
+              <!-- 12-Month Growth Chart -->
+              <div style="margin-bottom: 30px;">
+                <h4 style="font-size: 14px; color: #333; margin-bottom: 10px;">📈 12-Monats-Wachstumsprognose</h4>
+                <table width="100%" cellpadding="0" cellspacing="0" style="background: #f9f9f9; border-radius: 8px; padding: 15px;">
+                  <tr>
+                    <td style="padding: 15px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" style="height: 70px;">
+                        <tr style="height: 50px;">
+                          ${chartBarsHtml}
+                        </tr>
+                      </table>
+                      <div style="text-align: center; margin-top: 10px; font-size: 12px; color: #3b82f6; font-weight: bold;">
+                        Kumuliert: +${formatVisits(mehrbesuche.totalVisitsPerYear.realistic)} Besuche nach 12 Monaten
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              
+              <!-- Assumptions -->
+              <div style="margin-bottom: 30px; padding: 15px; background: #f9f9f9; border-radius: 8px; font-size: 12px; color: #666;">
+                <strong>Annahmen:</strong> ${mehrbesuche.assumptions.transactionsPerMonth} Transaktionen/Mt. • Ø Bon ${formatCHF(mehrbesuche.assumptions.avgBasket)} • Stammkundenanteil ${formatPercent(mehrbesuche.assumptions.repeatShare)}
+                ${mehrbesuche.assumptions.hasReviewGap ? ' • inkl. Review-Turbo' : ''}
+              </div>
+              
+              <!-- CHF Estimate (optional) -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: #eff6ff; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #3b82f6;">
                 <tr>
-                  <td style="padding: 25px; text-align: center;">
-                    <div style="font-size: 20px; font-weight: bold; color: ${data.isCovered ? '#166534' : '#92400e'}; margin-bottom: 8px;">
-                      ${data.isCovered ? '✅ Vollständig refinanziert!' : `⚡ ${formatPercent(data.coveragePercent / 100)} bereits gedeckt`}
+                  <td style="padding: 15px;">
+                    <div style="font-size: 13px; color: #1e40af;">
+                      💡 <strong>CHF-Schätzung (optional):</strong> ~${formatCHF(mehrbesuche.upliftCHFPerMonth.realistic)}/Monat (realistisch)
                     </div>
-                    <div style="color: ${data.isCovered ? '#166534' : '#92400e'};">
-                      Total Einsparungen: <strong>${formatCHF(data.totalSavings)}</strong>
-                    </div>
-                    ${!data.isCovered && data.gap ? `
-                    <div style="font-size: 14px; color: #92400e; margin-top: 8px;">
-                      Nur noch ${formatCHF(data.gap)} Mehrumsatz benötigt
-                    </div>
-                    ` : ''}
+                    <div style="font-size: 11px; color: #888; margin-top: 5px;">Schätzung basiert auf Ø Bon. Keine Garantie.</div>
                   </td>
                 </tr>
               </table>
+              ` : ''}
+              
+              <!-- Absicherung Section -->
+              <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 18px; color: #333; margin-bottom: 15px;">🛡️ Absicherung (ohne Wachstum)</h3>
+                
+                <table width="100%" cellpadding="0" cellspacing="0" style="background: ${data.isCovered ? '#dcfce7' : '#fef3c7'}; border-radius: 12px; margin-bottom: 20px;">
+                  <tr>
+                    <td style="padding: 25px; text-align: center;">
+                      <div style="font-size: 20px; font-weight: bold; color: ${data.isCovered ? '#166534' : '#92400e'}; margin-bottom: 8px;">
+                        ${data.isCovered ? '✅ Vollständig refinanziert!' : `⚡ ${formatPercent(data.coveragePercent / 100)} bereits gedeckt`}
+                      </div>
+                      <div style="color: ${data.isCovered ? '#166534' : '#92400e'};">
+                        Total Einsparungen: <strong>${formatCHF(data.totalSavings)}</strong> /Monat
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </div>
               
               <!-- Savings Breakdown -->
               <div style="margin-bottom: 30px;">
-                <h3 style="font-size: 18px; color: #333; margin-bottom: 15px;">💰 Ihre Einsparungen im Detail</h3>
+                <h4 style="font-size: 14px; color: #333; margin-bottom: 10px;">💰 Ihre Einsparungen im Detail</h4>
                 <table width="100%" cellpadding="0" cellspacing="0" style="background: #f9f9f9; border-radius: 12px;">
                   <tr>
                     <td style="padding: 20px;">
@@ -174,19 +287,18 @@ function generateEmailHTML(data: ReportEmailRequest): string {
                 </table>
               </div>
               
-              <!-- Mini Price Lever -->
-              ${data.miniPriceLever && !data.isCovered ? `
-                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #f59e0b;">
-                  <tr>
-                    <td style="padding: 20px;">
-                      <div style="font-weight: bold; color: #92400e; margin-bottom: 8px;">💡 Mini-Preishebel</div>
-                      <div style="color: #92400e; font-size: 14px;">
-                        Bei Ihrem Deckungsbeitrag benötigen Sie nur <strong>${formatCHF(data.miniPriceLever.requiredExtraRevenue)}</strong> Mehrumsatz pro Monat 
-                        (≈ ${formatCHF(data.miniPriceLever.priceIncreasePerSale)} pro Transaktion)
-                      </div>
-                    </td>
-                  </tr>
-                </table>
+              ${data.recommendReviewBooster ? `
+              <!-- Review Booster Recommendation -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: #fef3c7; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #f59e0b;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <div style="font-weight: bold; color: #92400e; margin-bottom: 8px;">⭐ Review-Booster empfohlen</div>
+                    <div style="color: #92400e; font-size: 14px;">
+                      Wir haben eine Review-Lücke erkannt. Mit dem Review-Booster Modul können Sie systematisch Bewertungen sammeln.
+                    </div>
+                  </td>
+                </tr>
+              </table>
               ` : ''}
               
               <!-- Recommended Modules -->
@@ -200,32 +312,17 @@ function generateEmailHTML(data: ReportEmailRequest): string {
                 `).join('')}
               </div>
               
-              <!-- Uplift Potential -->
-              <div style="margin-bottom: 30px;">
-                <h3 style="font-size: 18px; color: #333; margin-bottom: 15px;">📈 Uplift-Potenzial</h3>
-                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 12px;">
-                  <tr>
-                    <td style="padding: 25px;">
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="text-align: center; padding: 10px;">
-                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Konservativ</div>
-                            <div style="font-size: 18px; font-weight: bold; color: #166534;">+${formatCHF(data.uplift.conservative)}/Mt.</div>
-                          </td>
-                          <td style="text-align: center; padding: 10px; background: #22c55e; border-radius: 8px;">
-                            <div style="font-size: 13px; color: white; margin-bottom: 5px;">Realistisch</div>
-                            <div style="font-size: 22px; font-weight: bold; color: white;">+${formatCHF(data.uplift.realistic)}/Mt.</div>
-                          </td>
-                          <td style="text-align: center; padding: 10px;">
-                            <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Ambitioniert</div>
-                            <div style="font-size: 18px; font-weight: bold; color: #166534;">+${formatCHF(data.uplift.ambitious)}/Mt.</div>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </div>
+              <!-- Key Message -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: #eff6ff; border-radius: 12px; margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <div style="font-weight: bold; color: #1e40af; margin-bottom: 8px;">💡 Mehrbesuche sind der Kernhebel im Gastro/Retail</div>
+                    <div style="font-size: 13px; color: #3b82f6;">
+                      Stammkunden-Aktivierung • Netzwerk-Effekt • Review-Booster
+                    </div>
+                  </td>
+                </tr>
+              </table>
               
               <!-- CTA -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
@@ -285,6 +382,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log(`Sending partner report to: ${data.recipientEmail} for company: ${data.companyName}`);
+    console.log(`Mehrbesuche data included: ${!!data.mehrbesuche}`);
 
     const emailHtml = generateEmailHTML(data);
 
