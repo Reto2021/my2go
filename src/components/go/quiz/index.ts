@@ -10,3 +10,5 @@ export { NextStepCTA } from './NextStepCTA';
 export { MissingInfoChecklist, getMissingInfo } from './MissingInfoChecklist';
 export { SendToCFOModal } from './SendToCFOModal';
 export { ReportPreviewSheet } from './ReportPreviewSheet';
+export { ROIOverview } from './ROIOverview';
+export { UpliftChart } from './UpliftChart';
