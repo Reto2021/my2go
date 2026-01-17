@@ -118,6 +118,17 @@ function useServiceWorkerMessages() {
           });
           window.dispatchEvent(customEvent);
         }
+        
+        // Handle badge count updates from service worker
+        if (event.data?.type === 'BADGE_COUNT_UPDATED') {
+          console.log('[App] Badge count updated to:', event.data.count);
+          // Store in localStorage for persistence
+          try {
+            localStorage.setItem('my2go_badge_count', String(event.data.count));
+          } catch {
+            // Ignore storage errors
+          }
+        }
       };
 
       navigator.serviceWorker.addEventListener('message', handleMessage);
@@ -125,6 +136,39 @@ function useServiceWorkerMessages() {
         navigator.serviceWorker.removeEventListener('message', handleMessage);
       };
     }
+  }, []);
+}
+
+// Clear badge when app becomes visible
+function useClearBadgeOnFocus() {
+  useEffect(() => {
+    const clearBadge = async () => {
+      // Clear badge when user opens the app
+      if ('clearAppBadge' in navigator) {
+        try {
+          await (navigator as any).clearAppBadge();
+          localStorage.setItem('my2go_badge_count', '0');
+          console.log('[App] Badge cleared on focus');
+        } catch (error) {
+          console.error('[App] Error clearing badge:', error);
+        }
+      }
+    };
+
+    // Clear on initial load
+    clearBadge();
+
+    // Clear when app becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        clearBadge();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 }
 
@@ -139,6 +183,7 @@ function useRadioAutoResume() {
 
 function AppContent() {
   useServiceWorkerMessages();
+  useClearBadgeOnFocus();
   useRadioAutoResume();
   
   return (
