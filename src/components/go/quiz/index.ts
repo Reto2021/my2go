@@ -4,3 +4,8 @@ export { QuizStep2Refinancing } from './QuizStep2Refinancing';
 export { QuizStep3Uplift } from './QuizStep3Uplift';
 export { QuizResult } from './QuizResult';
 export { ActionLauncher } from './ActionLauncher';
+export { LeadCaptureStep } from './LeadCaptureStep';
+export { InvoiceUpload } from './InvoiceUpload';
+export { NextStepCTA } from './NextStepCTA';
+export { MissingInfoChecklist, getMissingInfo } from './MissingInfoChecklist';
+export { SendToCFOModal } from './SendToCFOModal';

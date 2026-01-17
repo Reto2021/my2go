@@ -17,7 +17,15 @@ import {
 // -------------------------------------------------------------
 // TYPES
 // -------------------------------------------------------------
+// Role types
+export type UserRole = 'owner' | 'finance' | 'marketing' | 'operations' | 'other' | null;
+export type EmployeeRange = '1-3' | '4-10' | '11-30' | '31+' | null;
+
 export interface QuizAnswers {
+  // Step 0: Role & Size (NEW)
+  userRole: UserRole;
+  employees: EmployeeRange;
+  
   // Step 1: Fit
   businessType: 'walk-in' | 'termin' | 'mischform' | 'b2b' | null;
   transactionsPerMonth: string | null;
@@ -27,7 +35,7 @@ export interface QuizAnswers {
   locations: '1' | '2-3' | '4+' | null;
 
   // Step 2: Fixkosten
-  fixcosts: Record<string, { selected: boolean; range: string | null; midpoint: number }>;
+  fixcosts: Record<string, { selected: boolean; range: string | null; midpoint: number; unknown?: boolean }>;
   processMaturity: Record<string, boolean>;
   
   // Energy sub-questions
@@ -53,6 +61,10 @@ export interface QuizAnswers {
   consistentFollowUp: boolean | null;
   conversionRate: string | null;
   partnerCommitment: 'action' | 'listing' | 'unclear' | null;
+  
+  // Unknown flags for uplift
+  unknownLeads?: boolean;
+  unknownConversion?: boolean;
   
   // Company data
   companyName: string;

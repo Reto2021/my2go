@@ -14,10 +14,14 @@ import {
   Loader2,
   MapPin,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Briefcase,
+  Users,
+  Info
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { QuizAnswers } from '@/lib/partner-quiz-calculations';
+import { QuizAnswers, UserRole, EmployeeRange } from '@/lib/partner-quiz-calculations';
+import { ROLE_OPTIONS, EMPLOYEE_OPTIONS, ROLE_HINTS } from '@/lib/partner-quiz-config';
 
 interface Props {
   answers: QuizAnswers;
@@ -36,6 +40,42 @@ interface ZefixCompany {
     swissZipCode?: string;
     city?: string;
   };
+}
+
+interface ChipOption<T> {
+  value: T;
+  label: string;
+}
+
+function ChipSelect<T extends string>({ 
+  options, 
+  value, 
+  onChange,
+  columns = 2
+}: { 
+  options: readonly ChipOption<T>[]; 
+  value: T | null; 
+  onChange: (v: T) => void;
+  columns?: number;
+}) {
+  return (
+    <div className={`grid gap-2 ${columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+            value === opt.value
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border hover:border-primary/50 text-foreground'
+          }`}
+        >
+          <span className="truncate">{opt.label}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
@@ -100,7 +140,10 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
     answers.contactPerson?.trim() &&
     answers.contactEmail?.trim() &&
     answers.contactPhone?.trim() &&
+    answers.userRole &&
     acceptedTerms;
+
+  const roleHint = answers.userRole ? ROLE_HINTS[answers.userRole] : null;
 
   return (
     <div className="space-y-6">
@@ -120,6 +163,101 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
           Damit wir Ihnen ein massgeschneidertes Ergebnis liefern können.
         </p>
       </motion.div>
+
+      {/* Role Selection (NEW) */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-muted-foreground" />
+          Ihre Rolle im Unternehmen *
+        </Label>
+        <div className="space-y-2">
+          {ROLE_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => updateAnswers({ userRole: opt.value })}
+              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                answers.userRole === opt.value
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border hover:border-primary/50 text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        
+        {/* Role Hint */}
+        {roleHint && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20"
+          >
+            <p className="text-sm text-primary flex items-start gap-2">
+              <Info className="w-4 h-4 shrink-0 mt-0.5" />
+              {roleHint}
+            </p>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Employee Count (NEW) */}
+      <div>
+        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
+          <Users className="w-4 h-4 text-muted-foreground" />
+          Anzahl Mitarbeitende
+        </Label>
+        <ChipSelect
+          options={EMPLOYEE_OPTIONS}
+          value={answers.employees}
+          onChange={(v) => updateAnswers({ employees: v as EmployeeRange })}
+          columns={4}
+        />
+      </div>
+
+      {/* Contact Person */}
+      <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border">
+        <div>
+          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+            <User className="w-4 h-4 text-muted-foreground" />
+            Ihr Name *
+          </Label>
+          <Input
+            value={answers.contactPerson}
+            onChange={(e) => updateAnswers({ contactPerson: e.target.value })}
+            placeholder="Max Muster"
+            className="h-12"
+          />
+        </div>
+        <div>
+          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+            <Phone className="w-4 h-4 text-muted-foreground" />
+            Telefon *
+          </Label>
+          <Input
+            type="tel"
+            value={answers.contactPhone}
+            onChange={(e) => updateAnswers({ contactPhone: e.target.value })}
+            placeholder="+41 79 123 45 67"
+            className="h-12"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+          <Mail className="w-4 h-4 text-muted-foreground" />
+          E-Mail *
+        </Label>
+        <Input
+          type="email"
+          value={answers.contactEmail}
+          onChange={(e) => updateAnswers({ contactEmail: e.target.value })}
+          placeholder="max@muster.ch"
+          className="h-12"
+        />
+      </div>
 
       {/* Contact Person */}
       <div className="grid sm:grid-cols-2 gap-4">
