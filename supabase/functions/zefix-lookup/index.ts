@@ -73,7 +73,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { query, uid, fetchDetails, registryOfCommerceId } = body;
+    const { query, uid, fetchDetails, registryOfCommerceId, legalSeat } = body;
     
     // Get credentials from environment
     const apiUser = Deno.env.get('ZEFIX_API_USER');
@@ -96,9 +96,9 @@ serve(async (req) => {
     // MODE 1: Fetch details for a selected company (with scraping)
     // ==========================================
     if (fetchDetails && uid && registryOfCommerceId) {
-      console.log(`Fetching details for UID: ${uid}, Registry: ${registryOfCommerceId}`);
+      console.log(`Fetching details for UID: ${uid}, Registry: ${registryOfCommerceId}, LegalSeat: ${legalSeat}`);
       
-      const scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey);
+      const scraped = await scrapeCantonalRegister(uid, registryOfCommerceId, firecrawlApiKey, legalSeat);
       
       return new Response(
         JSON.stringify({ 
@@ -227,83 +227,148 @@ serve(async (req) => {
   }
   
   // ==========================================
+  // Helper: Lookup PLZ from city via geo.admin.ch API
+  // ==========================================
+  async function lookupPlzFromCity(cityName: string): Promise<string | null> {
+    try {
+      const searchUrl = `https://api3.geo.admin.ch/rest/services/api/SearchServer?searchText=${encodeURIComponent(cityName)}&type=locations&origins=zipcode&limit=1`;
+      console.log(`Looking up PLZ for city: ${cityName}`);
+      
+      const response = await fetch(searchUrl);
+      if (!response.ok) {
+        console.error(`geo.admin.ch API error: ${response.status}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const result = data.results[0];
+        // Result label is typically "PLZ Ortschaft" format
+        const label = result.attrs?.label || result.label || '';
+        const plzMatch = label.match(/^(\d{4})/);
+        if (plzMatch) {
+          console.log(`Found PLZ ${plzMatch[1]} for ${cityName}`);
+          return plzMatch[1];
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      console.error('PLZ lookup error:', e);
+      return null;
+    }
+  }
+  
+  // ==========================================
   // Helper: Scrape cantonal register
   // ==========================================
   async function scrapeCantonalRegister(
     companyUid: string, 
     registryId: number,
-    firecrawlApiKey: string | undefined
+    firecrawlApiKey: string | undefined,
+    legalSeat: string | undefined
   ): Promise<{
     address?: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string };
     persons?: { name: string; role: string; signature?: string }[];
   } | null> {
-    if (!firecrawlApiKey) {
-      console.log('Firecrawl API key not configured');
-      return null;
-    }
+    let address: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined;
+    let persons: { name: string; role: string; signature?: string }[] = [];
     
-    const canton = REGISTRY_DOMAINS[registryId];
-    if (!canton) {
-      console.log(`Unknown registry ID: ${registryId}`);
-      return null;
-    }
-    
-    const formattedUid = formatUidForUrl(companyUid);
-    const registerUrl = `https://${canton}.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=${formattedUid}`;
-    console.log(`Scraping cantonal register: ${registerUrl}`);
-    
-    try {
-      const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${firecrawlApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: registerUrl,
-          formats: ['markdown'],
-          onlyMainContent: true,
-          waitFor: 5000,
-        }),
-      });
-      
-      if (!scrapeResponse.ok) {
-        const errText = await scrapeResponse.text();
-        console.error(`Firecrawl error ${scrapeResponse.status}: ${errText.slice(0, 200)}`);
-        return null;
+    // Try scraping first if Firecrawl key is available
+    if (firecrawlApiKey) {
+      const canton = REGISTRY_DOMAINS[registryId];
+      if (canton) {
+        const formattedUid = formatUidForUrl(companyUid);
+        const registerUrl = `https://${canton}.chregister.ch/cr-portal/auszug/auszug.xhtml?uid=${formattedUid}`;
+        console.log(`Scraping cantonal register: ${registerUrl}`);
+        
+        try {
+          const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${firecrawlApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url: registerUrl,
+              formats: ['markdown'],
+              onlyMainContent: true,
+              waitFor: 5000,
+            }),
+          });
+          
+          if (scrapeResponse.ok) {
+            const scrapeData = await scrapeResponse.json();
+            const markdown = scrapeData.data?.markdown || scrapeData.markdown || '';
+            
+            console.log(`Scraped content length: ${markdown.length}`);
+            console.log(`Scraped content preview: ${markdown.slice(0, 2000)}`);
+            
+            address = parseAddressFromMarkdown(markdown);
+            persons = parsePersonsFromMarkdown(markdown);
+            
+            console.log(`Parsed address:`, JSON.stringify(address));
+            console.log(`Parsed ${persons.length} persons:`, JSON.stringify(persons.slice(0, 3)));
+          } else {
+            const errText = await scrapeResponse.text();
+            console.error(`Firecrawl error ${scrapeResponse.status}: ${errText.slice(0, 200)}`);
+          }
+        } catch (e) {
+          console.error('Scraping error:', e);
+        }
+      } else {
+        console.log(`Unknown registry ID: ${registryId}`);
       }
-      
-      const scrapeData = await scrapeResponse.json();
-      const markdown = scrapeData.data?.markdown || scrapeData.markdown || '';
-      
-      console.log(`Scraped content length: ${markdown.length}`);
-      console.log(`Scraped content preview: ${markdown.slice(0, 2000)}`);
-      
-      const address = parseAddressFromMarkdown(markdown);
-      const persons = parsePersonsFromMarkdown(markdown);
-      
-      console.log(`Parsed address:`, JSON.stringify(address));
-      console.log(`Parsed ${persons.length} persons:`, JSON.stringify(persons.slice(0, 3)));
-      
-      return { address, persons };
-    } catch (e) {
-      console.error('Scraping error:', e);
-      return null;
     }
+    
+    // Fallback: If no PLZ found via scraping but we have legalSeat, lookup PLZ from city
+    if ((!address || !address.swissZipCode) && legalSeat) {
+      console.log(`No PLZ from scraping, falling back to geo.admin.ch lookup for: ${legalSeat}`);
+      const plz = await lookupPlzFromCity(legalSeat);
+      if (plz) {
+        address = {
+          ...address,
+          swissZipCode: plz,
+          city: address?.city || legalSeat
+        };
+      } else if (!address) {
+        address = { city: legalSeat };
+      }
+    }
+    
+    return { address, persons };
   }
   
   function parseAddressFromMarkdown(markdown: string): { street?: string; houseNumber?: string; swissZipCode?: string; city?: string } | undefined {
-    // Look for common HR address patterns
-    // Pattern: "Domizil: Strasse Nr, PLZ Ort" or address in table format
+    // Pattern 1: Table format from HR - look for "Registered address" section
+    // Format: "| 11 |  | Industriestrasse 19<br> 5200 Brugg AG |"
+    // We want the LAST (most recent) address entry
+    const tablePattern = /\|\s*\d+\s*\|[^|]*\|\s*([^|]+?)<br>\s*(?:CH-)?(\d{4})\s+([A-Za-zÄÖÜäöü\s]+?)\s*\|/g;
+    let lastMatch: RegExpExecArray | null = null;
+    let match: RegExpExecArray | null;
+    while ((match = tablePattern.exec(markdown)) !== null) {
+      lastMatch = match;
+    }
+    if (lastMatch) {
+      const streetPart = lastMatch[1].trim();
+      const streetMatch = streetPart.match(/^(.+?)\s+(\d+[a-zA-Z]?)$/);
+      console.log(`Found table address: ${streetPart}, ${lastMatch[2]} ${lastMatch[3]}`);
+      return {
+        street: streetMatch ? streetMatch[1].trim() : streetPart,
+        houseNumber: streetMatch ? streetMatch[2] : '',
+        swissZipCode: lastMatch[2],
+        city: lastMatch[3].trim()
+      };
+    }
     
-    // Pattern 1: Look for "Domizil" or "Sitz" line
+    // Pattern 2: Look for "Domizil" or "Sitz" line
     const domizilMatch = markdown.match(/(?:Domizil|Geschäftsadresse|Adresse)[:\s]*([^\n]+)/i);
     if (domizilMatch) {
       const parsed = parseSwissAddress(domizilMatch[1].trim());
       if (parsed && parsed.swissZipCode) return parsed;
     }
     
-    // Pattern 2: Look for address pattern with PLZ
+    // Pattern 3: Look for address pattern with PLZ
     // e.g., "Bahnhofstrasse 10, 5200 Brugg" or "Bahnhofstrasse 10\n5200 Brugg"
     const addressPattern = /([A-ZÄÖÜa-zäöü][A-ZÄÖÜa-zäöü\s-]+(?:strasse|weg|platz|gasse|allee|ring))\s*(\d+[a-zA-Z]?)?\s*[,\n]\s*(?:CH-)?(\d{4})\s+([A-ZÄÖÜa-zäöü][A-ZÄÖÜa-zäöü\s-]+)/i;
     const addressMatch = markdown.match(addressPattern);
@@ -316,7 +381,7 @@ serve(async (req) => {
       };
     }
     
-    // Pattern 3: Just find PLZ + City
+    // Pattern 4: Just find PLZ + City
     const plzMatch = markdown.match(/(?:CH-)?(\d{4})\s+([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-Za-zäöü]+)?)/);
     if (plzMatch) {
       return {
@@ -372,11 +437,11 @@ serve(async (req) => {
       'gi'
     );
     
-    let match;
-    while ((match = rolePattern.exec(markdown)) !== null) {
-      const name = match[1].trim();
-      const role = match[2].trim();
-      const rest = match[3] || '';
+    let personMatch;
+    while ((personMatch = rolePattern.exec(markdown)) !== null) {
+      const name = personMatch[1].trim();
+      const role = personMatch[2].trim();
+      const rest = personMatch[3] || '';
       
       // Check for signature type
       let signature: string | undefined;
@@ -398,9 +463,9 @@ serve(async (req) => {
       // Try to find "Name, Role" patterns
       const linePattern = /([A-ZÄÖÜ][a-zäöü]+(?:\s+[A-ZÄÖÜ][a-zäöü]+){1,3})\s*[,;]\s*((?:Präsident|Mitglied|Geschäftsführer|Direktor)[^,;\n]*)/gi;
       
-      while ((match = linePattern.exec(sectionText)) !== null) {
-        const name = match[1].trim();
-        const role = match[2].trim();
+      while ((personMatch = linePattern.exec(sectionText)) !== null) {
+        const name = personMatch[1].trim();
+        const role = personMatch[2].trim();
         
         // Avoid duplicates
         if (!persons.find(p => p.name === name)) {

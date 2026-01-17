@@ -172,7 +172,8 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
           body: { 
             fetchDetails: true,
             uid: company.uid,
-            registryOfCommerceId: company.registryOfCommerceId
+            registryOfCommerceId: company.registryOfCommerceId,
+            legalSeat: company.legalSeat
           }
         });
         
