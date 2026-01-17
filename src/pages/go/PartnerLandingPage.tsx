@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import logoRadio2go from "@/assets/logo-radio2go.png";
+import { PartnerFitQuiz } from "@/components/go/quiz";
 
 export default function PartnerLandingPage() {
   return (
@@ -338,8 +339,11 @@ export default function PartnerLandingPage() {
         </div>
       </section>
 
+      {/* Partner Fit Quiz */}
+      <PartnerFitQuiz />
+
       {/* CTA Section */}
-      <section className="relative py-16 md:py-24 overflow-hidden bg-secondary text-white">
+      <section id="pricing-section" className="relative py-16 md:py-24 overflow-hidden bg-secondary text-white">
         {/* Decorative */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
           <div className="absolute top-0 left-1/3 w-80 h-80 bg-primary rounded-full blur-3xl" />
