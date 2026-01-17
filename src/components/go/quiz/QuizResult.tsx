@@ -57,6 +57,7 @@ import { SendToCFOModal } from './SendToCFOModal';
 import { ReportPreviewSheet } from './ReportPreviewSheet';
 import { ROIOverview } from './ROIOverview';
 import { UpliftChart } from './UpliftChart';
+import { ScenarioSlider, Scenario } from './ScenarioSlider';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -78,6 +79,7 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
   const [emailSent, setEmailSent] = useState(false);
   const [showCFOModal, setShowCFOModal] = useState(false);
   const [showReportPreview, setShowReportPreview] = useState(false);
+  const [scenario, setScenario] = useState<Scenario>('realistic');
 
   const isLargeOrg = answers.employees === '11-30' || answers.employees === '31+' || answers.locations === '2-3' || answers.locations === '4+';
 
@@ -173,16 +175,20 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
         <p className="text-3xl font-bold text-primary">{formatCHF(plan.priceCHF)}<span className="text-base font-normal text-muted-foreground">/Monat</span></p>
       </motion.div>
 
+      {/* Scenario Slider */}
+      <ScenarioSlider value={scenario} onChange={setScenario} className="mb-2" />
+
       {/* ROI Overview - Combined View */}
       <ROIOverview 
         planPrice={plan.priceCHF} 
         planName={plan.name} 
         refinancing={refinancing} 
-        uplift={uplift} 
+        uplift={uplift}
+        scenario={scenario}
       />
 
       {/* Uplift Visualization */}
-      <UpliftChart mehrbesuche={uplift.mehrbesuche} />
+      <UpliftChart mehrbesuche={uplift.mehrbesuche} scenario={scenario} />
 
       {/* Tabs: Mehrbesuche vs Absicherung */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>

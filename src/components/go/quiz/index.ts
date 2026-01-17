@@ -12,3 +12,4 @@ export { SendToCFOModal } from './SendToCFOModal';
 export { ReportPreviewSheet } from './ReportPreviewSheet';
 export { ROIOverview } from './ROIOverview';
 export { UpliftChart } from './UpliftChart';
+export { ScenarioSlider, type Scenario } from './ScenarioSlider';
