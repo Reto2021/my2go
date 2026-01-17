@@ -34,111 +34,100 @@ import logoRadio2go from "@/assets/logo-radio2go.png";
 import logo2go from "@/assets/logo-2go.png";
 import { PartnerFitQuiz } from "@/components/go/quiz";
 
-// Testimonials with personas
+// Testimonials with realistic personas across industries
 const TESTIMONIALS = [
   {
     name: "Lena Kaufmann",
     role: "Inhaberin, Café Rosengarten",
     location: "Bern",
     avatar: "👩‍🍳",
-    quote: "Früher hatte ich 12 Google-Bewertungen. Jetzt sind es über 80 – und meine Gäste kommen wirklich öfter. Das System läuft einfach.",
-    metric: "+68 Reviews in 4 Monaten",
-    stars: 5
+    quote: "Früher hatte ich 12 Google-Bewertungen. Jetzt sind es über 80 – und meine Kunden kommen wirklich öfter.",
+    metric: "+68 Reviews",
   },
   {
-    name: "Marco Bianchi",
-    role: "Geschäftsführer, Pizzeria Napoli",
+    name: "Thomas Müller",
+    role: "Leiter, EnergyFit Studio",
     location: "Zürich",
-    avatar: "👨‍🍳",
-    quote: "Meine Stammkunden fragen jetzt aktiv nach den Talern. Das Loyalty-System funktioniert, weil es einfach ist – für mich und die Gäste.",
-    metric: "+32% Wiederkäufe",
-    stars: 5
+    avatar: "💪",
+    quote: "Das Loyalty-System funktioniert, weil es einfach ist – für mich und meine Mitglieder. Die Kündigungsrate ist messbar gesunken.",
+    metric: "-24% Kündigungen",
   },
   {
-    name: "Sarah Weber",
-    role: "Studioleitung, YogaFlow",
-    location: "Basel",
-    avatar: "🧘‍♀️",
-    quote: "Die Radio-Spots waren der Gamechanger. Wir werden jetzt regelmässig erwähnt – ohne dass ich irgendwas tun musste.",
-    metric: "1'200+ Radio-Kontakte",
-    stars: 5
+    name: "Sandra Brunner",
+    role: "Geschäftsführerin, Tankstelle Brunner",
+    location: "Luzern",
+    avatar: "⛽",
+    quote: "Die Radio-Spots waren der Gamechanger. Wir werden regelmässig erwähnt – ganz ohne Werbebudget.",
+    metric: "1'200+ Kontakte",
   }
 ];
 
 const SOCIAL_PROOF = [
-  { value: "12'400+", label: "Aktive Nutzer", icon: Users },
-  { value: "47", label: "Partner", icon: MapPin },
-  { value: "4.8", label: "Ø Bewertung", suffix: "★", icon: Star },
-  { value: "+32%", label: "Mehr Stammkunden", icon: TrendingUp },
+  { value: "12'400+", label: "Aktive Nutzer" },
+  { value: "47", label: "Partner schweizweit" },
+  { value: "4.8", label: "Ø Bewertung", suffix: "★" },
 ];
 
 const BENEFITS = [
   { 
     icon: Repeat, 
     title: "Mehr Stammkunden", 
-    desc: "Gäste sammeln Taler und kommen zurück, um sie einzulösen. Einfache Psychologie, grosse Wirkung.",
-    color: "from-primary to-primary/60"
+    desc: "Kunden sammeln Taler und kommen zurück. Einfache Psychologie, grosse Wirkung."
   },
   { 
     icon: Star, 
     title: "Bessere Bewertungen", 
-    desc: "Automatische Review-Anfragen nur an zufriedene Kunden. Echte 5-Sterne-Bewertungen.",
-    color: "from-amber-500 to-amber-400"
+    desc: "Automatische Review-Anfragen nach positiven Erlebnissen. Echte 5-Sterne-Bewertungen."
   },
   { 
     icon: Radio, 
     title: "Radio-Reichweite", 
-    desc: "Ihr Name im Radio – ohne eigenes Werbebudget. Audio-Credits sind inklusive.",
-    color: "from-secondary to-secondary/60"
+    desc: "Ihr Name im Radio – ohne eigenes Werbebudget. Audio-Credits sind inklusive."
   },
 ];
 
 const FEATURES = [
   { icon: QrCode, title: "Schlüsselfertiges Setup", desc: "QR-Steller, NFC-Tags, Aufkleber – alles geliefert." },
-  { icon: Zap, title: "Automatisierungen", desc: "Geburtstage, Win-back-Kampagnen, Reminder – läuft von allein." },
-  { icon: BarChart3, title: "Echtzeit-Dashboard", desc: "Scans, Einlösungen, Reviews – alles auf einen Blick." },
+  { icon: Zap, title: "Automatisierungen", desc: "Geburtstage, Win-back, Reminder – läuft von allein." },
+  { icon: BarChart3, title: "Live-Dashboard", desc: "Scans, Einlösungen, Reviews auf einen Blick." },
   { icon: Shield, title: "DSGVO-konform", desc: "Keine Fake-Reviews, vollständig datenschutzkonform." },
-  { icon: Gift, title: "Flexible Gutscheine", desc: "Rabatte, Gratis-Produkte, 2-für-1 – Sie entscheiden." },
+  { icon: Gift, title: "Flexible Prämien", desc: "Rabatte, Gratis-Produkte, 2-für-1 – Sie entscheiden." },
   { icon: Users, title: "Netzwerk-Effekt", desc: "Kunden sammeln überall – mehr Reichweite für alle." },
 ];
 
 const STEPS = [
   { 
     step: "1", 
-    title: "Anmelden & Material erhalten", 
-    desc: "Sie wählen Ihr Paket. Wir liefern die POS-Materialien innerhalb einer Woche.",
+    title: "Anmelden", 
+    desc: "Paket wählen, POS-Material erhalten.",
     time: "5 Min"
   },
   { 
     step: "2", 
-    title: "QR-Code aufstellen", 
-    desc: "Tischsteller platzieren – fertig. Kein technisches Setup nötig.",
+    title: "Aufstellen", 
+    desc: "QR-Code platzieren – fertig.",
     time: "2 Min"
   },
   { 
     step: "3", 
-    title: "Zurücklehnen & profitieren", 
-    desc: "Kunden scannen, sammeln Taler und werden zu Stammgästen. Automatisch.",
+    title: "Profitieren", 
+    desc: "Kunden scannen, sammeln, kommen wieder.",
     time: "∞"
   },
 ];
 
 const FAQ_ITEMS = [
   { 
-    q: "Was kostet mich My 2Go?", 
-    a: "Ab CHF 249/Monat (netto). Alle Pakete beinhalten 30 Tage kostenlosen Trial. Einmalige Aktivierungsgebühr ab CHF 690." 
+    q: "Was kostet My 2Go?", 
+    a: "Ab CHF 249/Monat. Alle Pakete beinhalten 30 Tage kostenlosen Trial." 
   },
   { 
     q: "Wie schnell bin ich startklar?", 
-    a: "In der Regel innerhalb von 5-7 Tagen. Sie erhalten POS-Material per Post und werden persönlich ongeboardet." 
+    a: "In 5-7 Tagen. POS-Material per Post, persönliches Onboarding inklusive." 
   },
   { 
     q: "Was, wenn es nicht funktioniert?", 
-    a: "30 Tage Geld-zurück-Garantie auf die Aktivierungsgebühr – wenn Sie die Bedingungen erfüllen." 
-  },
-  { 
-    q: "Muss ich selbst etwas tun?", 
-    a: "Minimal. QR aufstellen, fertig. Reviews, Reminder und Kampagnen laufen automatisch." 
+    a: "30 Tage Geld-zurück-Garantie auf die Aktivierungsgebühr." 
   },
 ];
 
@@ -185,7 +174,7 @@ export default function PartnerLandingPage() {
             
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-secondary leading-[1.1]">
-              Ihre Gäste kommen{" "}
+              Ihre Kunden kommen{" "}
               <span className="relative">
                 <span className="relative z-10 text-accent">öfter zurück.</span>
                 <span className="absolute inset-x-0 bottom-1 h-3 bg-accent/20 -z-0" />
@@ -195,7 +184,7 @@ export default function PartnerLandingPage() {
             {/* Subheadline */}
             <p className="text-lg sm:text-xl text-secondary/80 mb-8 max-w-2xl mx-auto leading-relaxed">
               Mehr Stammkunden. Bessere Google-Bewertungen. Radio-Präsenz. <br className="hidden sm:block" />
-              Ein System, das automatisch läuft – für Cafés, Restaurants & lokale Betriebe.
+              Für Gastronomie, Retail, Studios, Tankstellen & lokale Betriebe.
             </p>
             
             {/* CTAs */}
@@ -262,135 +251,26 @@ export default function PartnerLandingPage() {
         </div>
       </section>
 
-      {/* ===== TESTIMONIAL SPOTLIGHT (Lena) ===== */}
-      <section className="py-20 md:py-28 bg-gradient-to-b from-background to-muted/30">
-        <div className="container max-w-5xl mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="relative"
-          >
-            {/* Big Quote Card */}
-            <Card className="relative overflow-hidden p-8 sm:p-12 bg-white border-0 shadow-2xl rounded-3xl">
-              <Quote className="absolute top-6 left-6 w-16 h-16 text-primary/10" />
-              
-              <div className="relative z-10 grid md:grid-cols-[1fr,auto] gap-8 items-center">
-                <div>
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  
-                  <blockquote className="text-xl sm:text-2xl font-medium text-foreground mb-6 leading-relaxed">
-                    "{TESTIMONIALS[0].quote}"
-                  </blockquote>
-                  
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-3xl">
-                        {TESTIMONIALS[0].avatar}
-                      </div>
-                      <div>
-                        <div className="font-bold text-foreground">{TESTIMONIALS[0].name}</div>
-                        <div className="text-sm text-muted-foreground">{TESTIMONIALS[0].role}</div>
-                      </div>
-                    </div>
-                    <Badge className="bg-green-100 text-green-700 font-bold px-4 py-2">
-                      <TrendingUp className="w-4 h-4 mr-1.5" />
-                      {TESTIMONIALS[0].metric}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {/* Accent visual */}
-                <div className="hidden md:block">
-                  <div className="w-48 h-48 rounded-3xl bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20 flex items-center justify-center">
-                    <div className="w-32 h-32 rounded-2xl bg-white shadow-xl flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-primary">+68</div>
-                        <div className="text-xs text-muted-foreground">neue Reviews</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ===== PROBLEM → SOLUTION ===== */}
-      <section className="py-20 md:py-28">
+      {/* ===== BENEFITS SECTION ===== */}
+      <section className="py-24 md:py-32">
         <div className="container max-w-5xl mx-auto px-4">
           {/* Problem */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-16"
           >
-            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wide mb-4">
-              Das kennen Sie
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Stammkunden sind Gold wert – aber schwer zu gewinnen
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Stammkunden sind Gold wert
             </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Aber: 70% der Neukunden kommen nie wieder. Nur 5% hinterlassen aktiv eine Bewertung.
+            </p>
           </motion.div>
-          
-          <div className="grid md:grid-cols-3 gap-5 mb-16">
-            {[
-              { emoji: "😕", problem: "Gäste kommen einmal – und nie wieder", stat: "70% der Neukunden werden nicht zu Stammkunden" },
-              { emoji: "⭐", problem: "Zu wenige Google-Bewertungen", stat: "Nur 5% der zufriedenen Gäste schreiben aktiv" },
-              { emoji: "📣", problem: "Marketing ist teuer und zeitaufwändig", stat: "Ohne System verpuffen Werbebudgets" },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card className="p-6 h-full border-red-200/50 bg-gradient-to-br from-red-50/80 to-red-50/30 hover:shadow-lg transition-shadow">
-                  <span className="text-4xl mb-4 block">{item.emoji}</span>
-                  <h3 className="font-bold text-lg mb-2 text-foreground">{item.problem}</h3>
-                  <p className="text-sm text-muted-foreground">{item.stat}</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-          
-          {/* Arrow */}
-          <div className="flex justify-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl"
-            >
-              <ArrowRight className="w-8 h-8 text-white rotate-90" />
-            </motion.div>
-          </div>
           
           {/* Solution */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
-              Die Lösung
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              My 2Go macht Ihre Gäste zu treuen Fans
-            </h2>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {BENEFITS.map((benefit, i) => (
               <motion.div
                 key={i}
@@ -399,8 +279,8 @@ export default function PartnerLandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="p-8 h-full border-green-200/50 bg-gradient-to-br from-green-50/80 to-green-50/30 hover:shadow-xl hover:-translate-y-1 transition-all">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.color} flex items-center justify-center mb-5 shadow-lg`}>
+                <Card className="p-8 h-full border-0 bg-white shadow-lg hover:shadow-xl transition-all">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mb-6">
                     <benefit.icon className="w-7 h-7 text-white" />
                   </div>
                   <h3 className="font-bold text-xl mb-3 text-foreground">{benefit.title}</h3>
@@ -463,25 +343,21 @@ export default function PartnerLandingPage() {
         </div>
       </section>
 
-      {/* ===== MORE TESTIMONIALS ===== */}
-      <section className="py-20 md:py-28">
+      {/* ===== TESTIMONIALS ===== */}
+      <section className="py-24 md:py-32">
         <div className="container max-w-5xl mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-14"
+            className="text-center mb-16"
           >
-            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wide mb-4">
-              <Star className="w-3.5 h-3.5" />
-              Das sagen unsere Partner
-            </span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-              Echte Resultate, echte Betriebe
+              Das sagen unsere Partner
             </h2>
           </motion.div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {TESTIMONIALS.map((testimonial, i) => (
               <motion.div
                 key={i}
@@ -490,30 +366,32 @@ export default function PartnerLandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <Card className="p-6 h-full bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(testimonial.stars)].map((_, j) => (
+                <Card className="p-8 h-full bg-white border-0 shadow-lg">
+                  <div className="flex items-center gap-1 mb-6">
+                    {[...Array(5)].map((_, j) => (
                       <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
                   
-                  <blockquote className="text-foreground mb-6 leading-relaxed">
+                  <blockquote className="text-foreground mb-8 leading-relaxed">
                     "{testimonial.quote}"
                   </blockquote>
                   
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl">
                       {testimonial.avatar}
                     </div>
                     <div>
-                      <div className="font-bold text-sm text-foreground">{testimonial.name}</div>
-                      <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                      <div className="font-bold text-foreground">{testimonial.name}</div>
+                      <div className="text-sm text-muted-foreground">{testimonial.role}</div>
                     </div>
                   </div>
                   
-                  <Badge className="bg-green-100 text-green-700 text-xs font-semibold">
-                    {testimonial.metric}
-                  </Badge>
+                  <div className="mt-6 pt-6 border-t">
+                    <Badge className="bg-green-100 text-green-700 font-semibold">
+                      {testimonial.metric}
+                    </Badge>
+                  </div>
                 </Card>
               </motion.div>
             ))}
