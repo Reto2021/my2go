@@ -167,6 +167,7 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_live: boolean
+          partner_id: string | null
           peak_viewers: number | null
           scheduled_end: string | null
           scheduled_start: string | null
@@ -190,6 +191,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_live?: boolean
+          partner_id?: string | null
           peak_viewers?: number | null
           scheduled_end?: string | null
           scheduled_start?: string | null
@@ -213,6 +215,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_live?: boolean
+          partner_id?: string | null
           peak_viewers?: number | null
           scheduled_end?: string | null
           scheduled_start?: string | null
@@ -224,7 +227,15 @@ export type Database = {
           updated_at?: string
           viewer_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "live_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_admins: {
         Row: {
