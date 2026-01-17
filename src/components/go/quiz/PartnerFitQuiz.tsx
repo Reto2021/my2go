@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import {
   Calculator,
   TrendingUp,
   Sparkles,
-  User
+  User,
+  Info
 } from 'lucide-react';
 import { LeadCaptureStep } from './LeadCaptureStep';
 import { QuizStep1Fit } from './QuizStep1Fit';
@@ -20,7 +21,8 @@ import { QuizStep2Refinancing } from './QuizStep2Refinancing';
 import { QuizStep3Uplift } from './QuizStep3Uplift';
 import { QuizResult } from './QuizResult';
 import { QuizAnswers } from '@/lib/partner-quiz-calculations';
-import { TEXTS } from '@/lib/partner-quiz-config';
+import { TEXTS, ROLE_STEP_GATING } from '@/lib/partner-quiz-config';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const STORAGE_KEY = 'my2go_partner_quiz';
 
@@ -113,11 +115,41 @@ export function PartnerFitQuiz() {
     setAnswers(prev => ({ ...prev, ...updates }));
   };
 
+  // Get step gating based on user role
+  const roleGating = useMemo(() => {
+    const role = answers.userRole || 'other';
+    return ROLE_STEP_GATING[role] || ROLE_STEP_GATING.other;
+  }, [answers.userRole]);
+
+  // Determine if step is optional for the current role
+  const isStepOptional = (stepNum: number): boolean => {
+    if (stepNum === 1) return roleGating.step1 === 'optional';
+    if (stepNum === 2) return roleGating.step2 === 'optional';
+    if (stepNum === 3) return roleGating.step3 === 'optional';
+    return false;
+  };
+
+  // Get optional step hint based on role
+  const getOptionalStepHint = (stepNum: number): string | null => {
+    if (!isStepOptional(stepNum)) return null;
+    
+    const role = answers.userRole;
+    if (stepNum === 2) {
+      if (role === 'operations') return 'Diese Details sind für Finanzen. Sie können sie überspringen.';
+      if (role === 'marketing') return 'Optional: Fixkosten-Hebel für die Vollrechnung.';
+    }
+    if (stepNum === 3) {
+      if (role === 'finance') return 'Optional: Uplift-Bonus berechnen.';
+      if (role === 'operations') return 'Optional: Möchten Sie den Bonus-Uplift berechnen?';
+    }
+    return null;
+  };
+
   const steps = [
     { id: 0, title: 'Kontakt', icon: User, color: 'text-secondary' },
-    { id: 1, title: TEXTS.stepTitles[1], icon: Target, color: 'text-primary' },
-    { id: 2, title: TEXTS.stepTitles[2], icon: Calculator, color: 'text-accent' },
-    { id: 3, title: TEXTS.stepTitles[3], icon: TrendingUp, color: 'text-green-500' }
+    { id: 1, title: TEXTS.stepTitles[1], icon: Target, color: 'text-primary', optional: isStepOptional(1) },
+    { id: 2, title: TEXTS.stepTitles[2], icon: Calculator, color: 'text-accent', optional: isStepOptional(2) },
+    { id: 3, title: TEXTS.stepTitles[3], icon: TrendingUp, color: 'text-green-500', optional: isStepOptional(3) }
   ];
 
   // Progress calculation: 0 = lead capture, 1-3 = quiz steps, 4 = result
@@ -263,6 +295,16 @@ export function PartnerFitQuiz() {
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
                 >
+                  {/* Optional step hint */}
+                  {getOptionalStepHint(currentStep) && (
+                    <Alert className="mb-4 bg-muted/50 border-muted-foreground/20">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        {getOptionalStepHint(currentStep)}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   {currentStep === 1 && (
                     <QuizStep1Fit 
                       answers={answers} 
@@ -315,14 +357,24 @@ export function PartnerFitQuiz() {
                 Zurück
               </Button>
               
-              <div className="text-sm text-muted-foreground">
-                Schritt {currentStep} von 3
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                <span>Schritt {currentStep} von 3</span>
+                {isStepOptional(currentStep) && (
+                  <span className="text-xs px-1.5 py-0.5 bg-muted rounded text-muted-foreground">optional</span>
+                )}
               </div>
               
-              <Button onClick={handleNext}>
-                {currentStep === 3 ? 'Ergebnis anzeigen' : 'Weiter'}
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+              <div className="flex gap-2">
+                {isStepOptional(currentStep) && (
+                  <Button variant="ghost" onClick={handleNext} className="text-muted-foreground">
+                    Überspringen
+                  </Button>
+                )}
+                <Button onClick={handleNext}>
+                  {currentStep === 3 ? 'Ergebnis anzeigen' : 'Weiter'}
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
             </div>
           )}
         </Card>
