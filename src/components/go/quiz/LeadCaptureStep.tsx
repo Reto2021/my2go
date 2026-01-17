@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Building2, 
@@ -296,9 +297,25 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               )}
             </div>
             
+            {/* Skeleton Loader during search */}
+            {isSearching && searchQuery.length >= 2 && (
+              <Card className="absolute z-10 w-full mt-1 p-2 shadow-lg animate-fade-in">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-3 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-3 w-3 rounded-full" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                ))}
+              </Card>
+            )}
+
             {/* Autocomplete Dropdown */}
-            {showResults && searchResults.length > 0 && (
-              <Card className="absolute z-10 w-full mt-1 p-1 max-h-60 overflow-y-auto shadow-lg">
+            {!isSearching && showResults && searchResults.length > 0 && (
+              <Card className="absolute z-10 w-full mt-1 p-1 max-h-60 overflow-y-auto shadow-lg animate-fade-in">
                 {searchResults.map((company) => (
                   <button
                     key={company.uid}
@@ -325,7 +342,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               {error && (
                 <p className="text-sm text-amber-600">{error}</p>
               )}
-              <button 
+              <button
                 type="button"
                 onClick={enableManualMode}
                 className="text-sm text-primary hover:underline ml-auto"
