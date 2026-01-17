@@ -22,6 +22,17 @@ interface MehrbesucheData {
   };
 }
 
+interface ROIData {
+  totalMonthlyValue: number;
+  totalYearlyValue: number;
+  yearlyCost: number;
+  roiPercent: number;
+  netGainMonthly: number;
+  netGainYearly: number;
+  paybackMonths: number;
+  isPositive: boolean;
+}
+
 interface ReportEmailRequest {
   recipientEmail: string;
   recipientName: string;
@@ -41,6 +52,8 @@ interface ReportEmailRequest {
   modules: Array<{ title: string; desc: string }>;
   // NEW: Mehrbesuche data (primary)
   mehrbesuche?: MehrbesucheData;
+  // NEW: ROI data
+  roi?: ROIData;
   // LEGACY: CHF-based uplift (kept for backward compat)
   uplift?: {
     conservative: number;
@@ -161,6 +174,62 @@ function generateEmailHTML(data: ReportEmailRequest): string {
                   </td>
                 </tr>
               </table>
+              
+              ${data.roi ? `
+              <!-- ROI Overview Section -->
+              <div style="margin-bottom: 30px;">
+                <h3 style="font-size: 18px; color: #333; margin-bottom: 15px;">📊 ROI Übersicht ${data.roi.isPositive ? '<span style="display: inline-block; background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 10px;">✓ Positiver ROI</span>' : ''}</h3>
+                
+                <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 12px; border: 2px solid #cbd5e1;">
+                  <tr>
+                    <td style="padding: 20px;">
+                      <!-- Value Bar -->
+                      <div style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                          <span style="font-size: 12px; color: #666;">Monatlicher Wert</span>
+                          <span style="font-size: 14px; font-weight: bold; color: #22c55e;">${formatCHF(data.roi.totalMonthlyValue)}</span>
+                        </div>
+                        <div style="height: 20px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: flex;">
+                          <div style="height: 100%; background: linear-gradient(90deg, #FF6B00, #FF8533); width: ${Math.min(100, (data.totalSavings / Math.max(data.roi.totalMonthlyValue, data.planPrice)) * 100)}%;"></div>
+                          <div style="height: 100%; background: linear-gradient(90deg, #22c55e, #4ade80); width: ${Math.min(100, ((data.roi.totalMonthlyValue - data.totalSavings) / Math.max(data.roi.totalMonthlyValue, data.planPrice)) * 100)}%;"></div>
+                        </div>
+                      </div>
+                      
+                      <!-- Cost Bar -->
+                      <div style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                          <span style="font-size: 12px; color: #666;">Monatliche Kosten</span>
+                          <span style="font-size: 14px; font-weight: bold; color: #f59e0b;">${formatCHF(data.planPrice)}</span>
+                        </div>
+                        <div style="height: 20px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                          <div style="height: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); width: ${Math.min(100, (data.planPrice / Math.max(data.roi.totalMonthlyValue, data.planPrice)) * 100)}%;"></div>
+                        </div>
+                      </div>
+                      
+                      <!-- Key Metrics -->
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="width: 33%; text-align: center; padding: 10px; background: #dcfce7; border-radius: 8px;">
+                            <div style="font-size: 11px; color: #666; margin-bottom: 3px;">ROI p.a.</div>
+                            <div style="font-size: 18px; font-weight: bold; color: #22c55e;">+${Math.round(data.roi.roiPercent)}%</div>
+                          </td>
+                          <td style="width: 4%;"></td>
+                          <td style="width: 33%; text-align: center; padding: 10px; background: #dbeafe; border-radius: 8px;">
+                            <div style="font-size: 11px; color: #666; margin-bottom: 3px;">Netto/Jahr</div>
+                            <div style="font-size: 18px; font-weight: bold; color: #3b82f6;">${formatCHF(data.roi.netGainYearly)}</div>
+                          </td>
+                          <td style="width: 4%;"></td>
+                          <td style="width: 33%; text-align: center; padding: 10px; background: #fef3c7; border-radius: 8px;">
+                            <div style="font-size: 11px; color: #666; margin-bottom: 3px;">Payback</div>
+                            <div style="font-size: 18px; font-weight: bold; color: #92400e;">${data.roi.paybackMonths.toFixed(1)} Mt.</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              ` : ''}
               
               ${mehrbesuche ? `
               <!-- Mehrbesuche Section (Primary) -->

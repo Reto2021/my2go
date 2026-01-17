@@ -217,6 +217,67 @@ export async function generatePDFReport(data: ExportData): Promise<void> {
   
   y += 42;
 
+  // ====== ROI OVERVIEW SECTION ======
+  // Calculate ROI metrics
+  const absicherung = refinancing.totalSavings;
+  const monthlyUplift = mehrbesuche.totalUpliftCHFPerMonth?.realistic || mehrbesuche.upliftCHFPerMonth.realistic;
+  const yearlyUplift = monthlyUplift * 12;
+  const totalMonthlyValue = absicherung + monthlyUplift;
+  const totalYearlyValue = (absicherung * 12) + yearlyUplift;
+  const yearlyCost = planPrice * 12;
+  const roiPercent = yearlyCost > 0 ? ((totalYearlyValue - yearlyCost) / yearlyCost) * 100 : 0;
+  const netGainMonthly = totalMonthlyValue - planPrice;
+  const netGainYearly = totalYearlyValue - yearlyCost;
+  const paybackMonths = totalMonthlyValue > 0 ? planPrice / totalMonthlyValue : 0;
+  const isPositiveROI = netGainMonthly > 0;
+
+  // ROI Header
+  addText('📊 ROI Übersicht', margin, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.secondary });
+  if (isPositiveROI) {
+    drawRect(margin + 55, y - 4, 45, 8, COLORS.success + '20', 4);
+    addText('✓ Positiver ROI', margin + 77, y + 1, { fontSize: 7, fontStyle: 'bold', color: COLORS.success, align: 'center' });
+  }
+  y += 8;
+
+  // ROI Visual Bar Chart
+  const maxROIValue = Math.max(totalMonthlyValue, planPrice);
+  const absicherungWidth = (absicherung / maxROIValue) * (contentWidth - 40);
+  const upliftBarWidth = (monthlyUplift / maxROIValue) * (contentWidth - 40);
+  const costBarWidthROI = (planPrice / maxROIValue) * (contentWidth - 40);
+
+  // Monthly Value bar
+  addText('Wert/Mt.', margin + 5, y + 4, { fontSize: 8, color: COLORS.textMuted });
+  drawRect(margin + 30, y, absicherungWidth, 8, COLORS.primary, 2);
+  drawRect(margin + 30 + absicherungWidth, y, upliftBarWidth, 8, COLORS.success, 2);
+  addText(formatCHF(totalMonthlyValue), margin + 35 + absicherungWidth + upliftBarWidth, y + 5, { fontSize: 8, fontStyle: 'bold', color: COLORS.success });
+  y += 12;
+
+  // Monthly Cost bar
+  addText('Kosten', margin + 5, y + 4, { fontSize: 8, color: COLORS.textMuted });
+  drawRect(margin + 30, y, costBarWidthROI, 8, COLORS.warning, 2);
+  addText(formatCHF(planPrice), margin + 35 + costBarWidthROI, y + 5, { fontSize: 8, fontStyle: 'bold', color: COLORS.warning });
+  y += 14;
+
+  // ROI Key Metrics
+  const metricWidth = (contentWidth - 10) / 3;
+  
+  // ROI %
+  drawRect(margin, y, metricWidth, 22, COLORS.success + '15', 4);
+  addText('ROI p.a.', margin + metricWidth / 2, y + 7, { fontSize: 8, color: COLORS.textMuted, align: 'center' });
+  addText(`+${Math.round(roiPercent)}%`, margin + metricWidth / 2, y + 16, { fontSize: 12, fontStyle: 'bold', color: COLORS.success, align: 'center' });
+
+  // Net/Year
+  drawRect(margin + metricWidth + 5, y, metricWidth, 22, '#3b82f6' + '15', 4);
+  addText('Netto/Jahr', margin + metricWidth + 5 + metricWidth / 2, y + 7, { fontSize: 8, color: COLORS.textMuted, align: 'center' });
+  addText(formatCHF(netGainYearly), margin + metricWidth + 5 + metricWidth / 2, y + 16, { fontSize: 12, fontStyle: 'bold', color: '#3b82f6', align: 'center' });
+
+  // Payback
+  drawRect(margin + 2 * (metricWidth + 5), y, metricWidth, 22, COLORS.accent + '20', 4);
+  addText('Payback', margin + 2 * (metricWidth + 5) + metricWidth / 2, y + 7, { fontSize: 8, color: COLORS.textMuted, align: 'center' });
+  addText(`${paybackMonths.toFixed(1)} Mt.`, margin + 2 * (metricWidth + 5) + metricWidth / 2, y + 16, { fontSize: 12, fontStyle: 'bold', color: '#92400e', align: 'center' });
+
+  y += 28;
+
   // Recommended Modules Preview
   addText('🎯 Empfohlene Module für Sie', margin, y, { fontSize: 12, fontStyle: 'bold', color: COLORS.secondary });
   y += 8;
