@@ -1,11 +1,11 @@
 import { Card } from '@/components/ui/card';
-import { QuizAnswers, UserRole } from '@/lib/partner-quiz-calculations';
+import { QuizAnswers } from '@/lib/partner-quiz-calculations';
 import { MISSING_INFO_ITEMS, FIXCOST_ITEMS } from '@/lib/partner-quiz-config';
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 
 interface Props {
   answers: QuizAnswers;
-  userRole: UserRole;
+  userRole: string | null;
 }
 
 export interface MissingItem {
