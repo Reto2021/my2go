@@ -434,6 +434,38 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
         </Button>
       )}
 
+      {/* Report Actions */}
+      <Card className="p-4 bg-muted/30">
+        <p className="text-sm font-medium mb-3 flex items-center gap-2">
+          <FileDown className="w-4 h-4 text-primary" />
+          Report speichern oder teilen
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            variant="outline"
+            size="lg"
+            className="flex-1 h-12 rounded-xl"
+            onClick={handleExportPDF}
+            disabled={isExporting}
+          >
+            {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+            Report herunterladen
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="flex-1 h-12 rounded-xl"
+            onClick={() => setShowCFOModal(true)}
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Report per E-Mail senden
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          Ihre Angaben werden nur für die Analyse und das Zusenden des Reports verwendet.
+        </p>
+      </Card>
+
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button 
@@ -443,16 +475,6 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
         >
           Jetzt starten
           <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-        <Button
-          variant="outline"
-          size="lg"
-          className="h-14 rounded-xl"
-          onClick={handleExportPDF}
-          disabled={isExporting}
-        >
-          {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
-          PDF
         </Button>
         <Button
           variant="outline"
