@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,9 @@ import {
   Users,
   Info,
   Check,
-  X
+  X,
+  ChevronDown,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizAnswers, UserRole, EmployeeRange } from '@/lib/partner-quiz-calculations';
@@ -55,6 +57,8 @@ interface ChipOption<T> {
   label: string;
 }
 
+type AccordionSection = 'company' | 'contact' | 'role' | 'employees' | 'terms';
+
 function ChipSelect<T extends string>({ 
   options, 
   value, 
@@ -86,6 +90,74 @@ function ChipSelect<T extends string>({
   );
 }
 
+// Accordion Section Component
+function AccordionItem({ 
+  id,
+  title, 
+  icon: Icon,
+  isOpen, 
+  isCompleted,
+  isDisabled,
+  children,
+  stepNumber
+}: { 
+  id: AccordionSection;
+  title: string;
+  icon: React.ElementType;
+  isOpen: boolean;
+  isCompleted: boolean;
+  isDisabled: boolean;
+  children: React.ReactNode;
+  stepNumber: number;
+}) {
+  return (
+    <div className={`rounded-xl border-2 overflow-hidden transition-all ${
+      isOpen ? 'border-primary bg-card shadow-lg' : 
+      isCompleted ? 'border-green-500/50 bg-green-50/50 dark:bg-green-950/20' : 
+      isDisabled ? 'border-border/50 bg-muted/30 opacity-60' :
+      'border-border bg-card'
+    }`}>
+      {/* Header */}
+      <div className={`flex items-center gap-3 p-4 ${isDisabled ? 'cursor-not-allowed' : ''}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+          isCompleted ? 'bg-green-500 text-white' :
+          isOpen ? 'bg-primary text-primary-foreground' :
+          'bg-muted text-muted-foreground'
+        }`}>
+          {isCompleted ? <Check className="w-4 h-4" /> : stepNumber}
+        </div>
+        <div className="flex items-center gap-2 flex-1">
+          <Icon className={`w-4 h-4 ${isCompleted ? 'text-green-600' : isOpen ? 'text-primary' : 'text-muted-foreground'}`} />
+          <span className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : ''}`}>{title}</span>
+        </div>
+        {isCompleted && !isOpen && (
+          <CheckCircle2 className="w-5 h-5 text-green-500" />
+        )}
+        {isOpen && (
+          <ChevronDown className="w-5 h-5 text-primary" />
+        )}
+      </div>
+      
+      {/* Content */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-2 border-t border-border/50">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -97,6 +169,37 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
   const [manualMode, setManualMode] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<ZefixCompany | null>(null);
   const [foundPersons, setFoundPersons] = useState<{ name: string; role: string; signature?: string }[]>([]);
+  const [activeSection, setActiveSection] = useState<AccordionSection>('company');
+
+  // Section validation
+  const sectionValidation = useMemo(() => ({
+    company: Boolean(
+      answers.companyName?.trim() && 
+      answers.companyCity?.trim()
+    ),
+    contact: Boolean(
+      answers.contactPerson?.trim() &&
+      answers.contactEmail?.trim() &&
+      answers.contactPhone?.trim()
+    ),
+    role: Boolean(answers.userRole),
+    employees: Boolean(answers.employees),
+    terms: acceptedTerms
+  }), [answers, acceptedTerms]);
+
+  // Auto-advance to next section when current is completed
+  useEffect(() => {
+    const sections: AccordionSection[] = ['company', 'contact', 'role', 'employees', 'terms'];
+    const currentIndex = sections.indexOf(activeSection);
+    
+    if (sectionValidation[activeSection] && currentIndex < sections.length - 1) {
+      // Small delay for better UX
+      const timer = setTimeout(() => {
+        setActiveSection(sections[currentIndex + 1]);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [sectionValidation, activeSection]);
 
   // Debounced autocomplete search
   const searchZefix = useCallback(async (query: string) => {
@@ -175,7 +278,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             uid: company.uid,
             registryOfCommerceId: company.registryOfCommerceId,
             legalSeat: company.legalSeat,
-            companyName: company.name // For Google Places fallback
+            companyName: company.name
           }
         });
         
@@ -188,7 +291,6 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               companyCity: data.address.city || company.legalSeat || ''
             });
           }
-          // Store persons for contact selection
           if (data.persons && data.persons.length > 0) {
             console.log('Found persons:', data.persons);
             setFoundPersons(data.persons);
@@ -223,25 +325,24 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
     setManualMode(true);
     setShowResults(false);
     setError(null);
-    // Set the search query as company name for manual entry
     if (searchQuery.trim()) {
       updateAnswers({ companyName: searchQuery.trim() });
     }
   };
 
   const isValid = 
-    answers.contactPerson?.trim() &&
-    answers.contactEmail?.trim() &&
-    answers.contactPhone?.trim() &&
-    answers.userRole &&
-    acceptedTerms;
+    sectionValidation.company &&
+    sectionValidation.contact &&
+    sectionValidation.role &&
+    sectionValidation.employees &&
+    sectionValidation.terms;
 
   const roleHint = answers.userRole ? ROLE_HINTS[answers.userRole] : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <motion.div 
-        className="text-center"
+        className="text-center mb-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -252,84 +353,97 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         <h3 className="text-xl font-bold mb-2">
           Wer sind Sie?
         </h3>
-        <p className="text-muted-foreground">
-          Damit wir Ihnen ein massgeschneidertes Ergebnis liefern können.
+        <p className="text-muted-foreground text-sm">
+          Bitte alle Felder ausfüllen für ein massgeschneidertes Ergebnis.
         </p>
       </motion.div>
 
-      {/* Company Search / Selection - AT THE TOP */}
-      <div>
-        <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
-          <Building2 className="w-4 h-4 text-muted-foreground" />
-          Ihre Firma
-        </Label>
-
-        {/* Selected Company Display - with editable address fields */}
+      {/* SECTION 1: Company */}
+      <AccordionItem
+        id="company"
+        title="Ihre Firma"
+        icon={Building2}
+        isOpen={activeSection === 'company'}
+        isCompleted={sectionValidation.company && activeSection !== 'company'}
+        isDisabled={false}
+        stepNumber={1}
+      >
         {answers.companyName && !manualMode ? (
           <div className="space-y-3">
-            <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
+            <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2 flex-1">
                   <Check className="w-4 h-4 text-primary shrink-0" />
-                  <span className="font-semibold">{answers.companyName}</span>
+                  <span className="font-semibold text-sm">{answers.companyName}</span>
                 </div>
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={clearCompany}
-                  className="shrink-0"
+                  className="shrink-0 h-8 w-8 p-0"
                 >
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </div>
             
-            {/* Loading indicator for address fetch */}
-            {isFetchingDetails ? (
-              <p className="text-xs text-primary flex items-center gap-2">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Lade Adressdaten aus dem Handelsregister...
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Info className="w-3 h-3" />
-                {answers.companyAddress ? 'Adresse aus HR übernommen (editierbar)' : 'Adresse bitte ergänzen'}
-              </p>
+            {/* Enhanced Loading Animation */}
+            {isFetchingDetails && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-lg border border-primary/20"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                    <MapPin className="w-4 h-4 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-primary">Adresse wird geladen...</p>
+                    <p className="text-xs text-muted-foreground">Google Places & Handelsregister</p>
+                  </div>
+                </div>
+                <div className="mt-2 space-y-1">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+              </motion.div>
             )}
             
-            {/* Editable address fields after Zefix selection */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
-                <Label className="text-xs text-muted-foreground mb-1 block">Strasse & Nr.</Label>
+            {!isFetchingDetails && (
+              <>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  {answers.companyAddress ? 'Adresse übernommen (editierbar)' : 'Adresse bitte ergänzen'}
+                </p>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <Input
+                      value={answers.companyAddress || ''}
+                      onChange={(e) => updateAnswers({ companyAddress: e.target.value })}
+                      placeholder="Strasse & Nr."
+                      className="h-10 text-sm"
+                    />
+                  </div>
+                  <Input
+                    value={answers.companyPostalCode || ''}
+                    onChange={(e) => updateAnswers({ companyPostalCode: e.target.value })}
+                    placeholder="PLZ"
+                    className="h-10 text-sm"
+                  />
+                </div>
                 <Input
-                  value={answers.companyAddress || ''}
-                  onChange={(e) => updateAnswers({ companyAddress: e.target.value })}
-                  placeholder="z.B. Bahnhofstrasse 1"
-                  className="h-10"
+                  value={answers.companyCity || ''}
+                  onChange={(e) => updateAnswers({ companyCity: e.target.value })}
+                  placeholder="Ort"
+                  className="h-10 text-sm"
                 />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">PLZ</Label>
-                <Input
-                  value={answers.companyPostalCode || ''}
-                  onChange={(e) => updateAnswers({ companyPostalCode: e.target.value })}
-                  placeholder="z.B. 5200"
-                  className="h-10"
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">Ort</Label>
-              <Input
-                value={answers.companyCity || ''}
-                onChange={(e) => updateAnswers({ companyCity: e.target.value })}
-                placeholder="Zürich"
-                className="h-10"
-              />
-            </div>
+              </>
+            )}
           </div>
         ) : manualMode ? (
-          /* Manual Mode */
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Manuelle Eingabe</span>
@@ -341,92 +455,77 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               value={answers.companyName || ''}
               onChange={(e) => updateAnswers({ companyName: e.target.value })}
               placeholder="Firmenname"
-              className="h-12"
+              className="h-10"
             />
             <div className="grid grid-cols-3 gap-2">
               <Input
                 value={answers.companyAddress || ''}
                 onChange={(e) => updateAnswers({ companyAddress: e.target.value })}
                 placeholder="Strasse & Nr."
-                className="h-12 col-span-2"
+                className="h-10 col-span-2"
               />
               <Input
                 value={answers.companyPostalCode || ''}
                 onChange={(e) => updateAnswers({ companyPostalCode: e.target.value })}
                 placeholder="PLZ"
-                className="h-12"
+                className="h-10"
               />
             </div>
             <Input
               value={answers.companyCity || ''}
               onChange={(e) => updateAnswers({ companyCity: e.target.value })}
               placeholder="Ort"
-              className="h-12"
+              className="h-10"
             />
           </div>
         ) : (
-          /* Zefix Autocomplete Search */
           <div className="relative">
             <div className="relative">
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Firmenname oder UID suchen..."
-                className="h-12 pr-10"
+                className="h-10 pr-10"
                 autoComplete="off"
               />
               {isSearching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                 </div>
               )}
             </div>
             
-            {/* Skeleton Loader during search */}
             {isSearching && searchQuery.length >= 2 && (
               <Card className="absolute z-10 w-full mt-1 p-2 shadow-lg animate-fade-in">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="p-3 space-y-2">
-                    <Skeleton className="h-5 w-3/4" />
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-3 w-3 rounded-full" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
                 ))}
               </Card>
             )}
 
-            {/* Autocomplete Dropdown */}
             {!isSearching && showResults && searchResults.length > 0 && (
-              <Card className="absolute z-10 w-full mt-1 p-1 max-h-60 overflow-y-auto shadow-lg animate-fade-in">
+              <Card className="absolute z-10 w-full mt-1 p-1 max-h-48 overflow-y-auto shadow-lg animate-fade-in">
                 {searchResults.map((company) => (
                   <button
                     key={company.uid}
                     onClick={() => selectCompany(company)}
                     className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <p className="font-medium">{company.name}</p>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <p className="font-medium text-sm">{company.name}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       {company.legalSeat} • {company.legalForm}
                     </p>
-                    {company.address && (
-                      <p className="text-xs text-muted-foreground">
-                        {company.address.street} {company.address.houseNumber}, {company.address.swissZipCode} {company.address.city}
-                      </p>
-                    )}
                   </button>
                 ))}
               </Card>
             )}
 
-            {/* Manual Entry Link */}
             <div className="flex items-center justify-between mt-2">
-              {error && (
-                <p className="text-sm text-amber-600">{error}</p>
-              )}
+              {error && <p className="text-sm text-amber-600">{error}</p>}
               <button
                 type="button"
                 onClick={enableManualMode}
@@ -437,109 +536,108 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             </div>
           </div>
         )}
-      </div>
+      </AccordionItem>
 
-      {/* Contact Details - Name Block */}
-      <div className="pt-4 border-t border-border space-y-4">
-        {/* Person Selection from HR */}
-        {foundPersons.length > 0 && (
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              Ansprechpartner aus HR auswählen
-            </Label>
-            <div className="grid gap-2">
-              {foundPersons.map((person, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => updateAnswers({ contactPerson: person.name })}
-                  className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                    answers.contactPerson === person.name
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{person.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {person.role}
-                        {person.signature && ` • ${person.signature}`}
-                      </p>
-                    </div>
-                    {answers.contactPerson === person.name && (
-                      <Check className="w-5 h-5 text-primary" />
-                    )}
-                  </div>
-                </button>
-              ))}
+      {/* SECTION 2: Contact */}
+      <AccordionItem
+        id="contact"
+        title="Ihre Kontaktdaten"
+        icon={User}
+        isOpen={activeSection === 'contact'}
+        isCompleted={sectionValidation.contact && activeSection !== 'contact'}
+        isDisabled={!sectionValidation.company}
+        stepNumber={2}
+      >
+        <div className="space-y-3">
+          {foundPersons.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground">
+                Aus Handelsregister:
+              </Label>
+              <div className="grid gap-1">
+                {foundPersons.slice(0, 3).map((person, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => updateAnswers({ contactPerson: person.name })}
+                    className={`w-full text-left p-2 rounded-lg border text-sm transition-all ${
+                      answers.contactPerson === person.name
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <span className="font-medium">{person.name}</span>
+                    <span className="text-muted-foreground ml-2 text-xs">{person.role}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Oder Namen manuell eingeben:
-            </p>
-          </div>
-        )}
+          )}
 
-        <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-              <User className="w-4 h-4 text-muted-foreground" />
-              Ihr Name *
+            <Label className="text-xs font-medium flex items-center gap-1 mb-1">
+              <User className="w-3 h-3" /> Ihr Name *
             </Label>
             <Input
-              value={answers.contactPerson}
+              value={answers.contactPerson || ''}
               onChange={(e) => updateAnswers({ contactPerson: e.target.value })}
               placeholder="Max Muster"
-              className="h-12"
+              className="h-10"
               autoComplete="name"
             />
           </div>
-          <div>
-            <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-              <Phone className="w-4 h-4 text-muted-foreground" />
-              Telefon *
-            </Label>
-            <Input
-              type="tel"
-              value={answers.contactPhone}
-              onChange={(e) => updateAnswers({ contactPhone: e.target.value })}
-              placeholder="+41 79 123 45 67"
-              className="h-12"
-              autoComplete="tel"
-            />
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs font-medium flex items-center gap-1 mb-1">
+                <Mail className="w-3 h-3" /> E-Mail *
+              </Label>
+              <Input
+                type="email"
+                value={answers.contactEmail || ''}
+                onChange={(e) => updateAnswers({ contactEmail: e.target.value })}
+                placeholder="max@firma.ch"
+                className="h-10"
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-medium flex items-center gap-1 mb-1">
+                <Phone className="w-3 h-3" /> Telefon *
+              </Label>
+              <Input
+                type="tel"
+                value={answers.contactPhone || ''}
+                onChange={(e) => updateAnswers({ contactPhone: e.target.value })}
+                placeholder="+41 79 123 45 67"
+                className="h-10"
+                autoComplete="tel"
+              />
+            </div>
           </div>
         </div>
+      </AccordionItem>
 
-        <div>
-          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-            <Mail className="w-4 h-4 text-muted-foreground" />
-            E-Mail *
-          </Label>
-          <Input
-            type="email"
-            value={answers.contactEmail}
-            onChange={(e) => updateAnswers({ contactEmail: e.target.value })}
-            placeholder="max@muster.ch"
-            className="h-12"
-            autoComplete="email"
-          />
-        </div>
-      </div>
-
-      {/* Role Selection */}
-      <div className="pt-4 border-t border-border">
-        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
-          <Briefcase className="w-4 h-4 text-muted-foreground" />
-          Ihre Rolle im Unternehmen *
-        </Label>
+      {/* SECTION 3: Role */}
+      <AccordionItem
+        id="role"
+        title="Ihre Rolle"
+        icon={Briefcase}
+        isOpen={activeSection === 'role'}
+        isCompleted={sectionValidation.role && activeSection !== 'role'}
+        isDisabled={!sectionValidation.contact}
+        stepNumber={3}
+      >
         <div className="space-y-2">
           {ROLE_OPTIONS.map(opt => (
             <button
               key={opt.value}
               type="button"
-              onClick={() => updateAnswers({ userRole: opt.value, userRoleOther: opt.value === 'other' ? answers.userRoleOther : undefined })}
-              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+              onClick={() => updateAnswers({ 
+                userRole: opt.value, 
+                userRoleOther: opt.value === 'other' ? answers.userRoleOther : undefined 
+              })}
+              className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
                 answers.userRole === opt.value
                   ? 'border-primary bg-primary/10 text-primary'
                   : 'border-border hover:border-primary/50 text-foreground'
@@ -548,80 +646,98 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
               {opt.label}
             </button>
           ))}
+          
+          {answers.userRole === 'other' && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="pt-2"
+            >
+              <Input
+                value={answers.userRoleOther || ''}
+                onChange={(e) => updateAnswers({ userRoleOther: e.target.value })}
+                placeholder="Ihre Rolle beschreiben..."
+                className="h-10"
+              />
+            </motion.div>
+          )}
+          
+          {roleHint && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-2 bg-primary/5 rounded-lg border border-primary/20 mt-2"
+            >
+              <p className="text-xs text-primary flex items-start gap-2">
+                <Info className="w-3 h-3 shrink-0 mt-0.5" />
+                {roleHint}
+              </p>
+            </motion.div>
+          )}
         </div>
-        
-        {/* Free text field for "Sonstiges" */}
-        {answers.userRole === 'other' && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3"
-          >
-            <Input
-              value={answers.userRoleOther || ''}
-              onChange={(e) => updateAnswers({ userRoleOther: e.target.value })}
-              placeholder="Ihre Rolle beschreiben..."
-              className="h-12"
-            />
-          </motion.div>
-        )}
-        
-        {/* Role Hint */}
-        {roleHint && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20"
-          >
-            <p className="text-sm text-primary flex items-start gap-2">
-              <Info className="w-4 h-4 shrink-0 mt-0.5" />
-              {roleHint}
-            </p>
-          </motion.div>
-        )}
-      </div>
+      </AccordionItem>
 
-      {/* Employee Count */}
-      <div>
-        <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
-          <Users className="w-4 h-4 text-muted-foreground" />
-          Anzahl Mitarbeitende
-        </Label>
+      {/* SECTION 4: Employees */}
+      <AccordionItem
+        id="employees"
+        title="Anzahl Mitarbeitende"
+        icon={Users}
+        isOpen={activeSection === 'employees'}
+        isCompleted={sectionValidation.employees && activeSection !== 'employees'}
+        isDisabled={!sectionValidation.role}
+        stepNumber={4}
+      >
         <ChipSelect
           options={EMPLOYEE_OPTIONS}
           value={answers.employees}
           onChange={(v) => updateAnswers({ employees: v as EmployeeRange })}
           columns={4}
         />
-      </div>
+      </AccordionItem>
 
-      {/* Terms */}
-      <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl border border-primary/20">
-        <Checkbox
-          id="terms"
-          checked={acceptedTerms}
-          onCheckedChange={(c) => setAcceptedTerms(c === true)}
-          className="mt-0.5"
-        />
-        <label htmlFor="terms" className="text-sm cursor-pointer">
-          <span className="font-medium text-foreground">Ja, ich will mein Sparpotenzial erfahren!</span>
-          {' '}
-          <span className="text-muted-foreground">
-            Ihre Angaben werden nur für die Analyse verwendet. <a href="/go/legal/datenschutz" target="_blank" className="underline hover:text-primary">Datenschutz</a>
-          </span>
-        </label>
-      </div>
+      {/* SECTION 5: Terms */}
+      <AccordionItem
+        id="terms"
+        title="Einwilligung"
+        icon={Check}
+        isOpen={activeSection === 'terms'}
+        isCompleted={sectionValidation.terms && activeSection !== 'terms'}
+        isDisabled={!sectionValidation.employees}
+        stepNumber={5}
+      >
+        <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+          <Checkbox
+            id="terms"
+            checked={acceptedTerms}
+            onCheckedChange={(c) => setAcceptedTerms(c === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="terms" className="text-sm cursor-pointer">
+            <span className="font-medium text-foreground">Ja, ich will mein Sparpotenzial erfahren!</span>
+            {' '}
+            <span className="text-muted-foreground">
+              Ihre Angaben werden nur für die Analyse verwendet. <a href="/go/legal/datenschutz" target="_blank" className="underline hover:text-primary">Datenschutz</a>
+            </span>
+          </label>
+        </div>
+      </AccordionItem>
 
       {/* Continue Button */}
-      <Button
-        size="lg"
-        className="w-full h-14 text-base font-bold rounded-xl"
-        disabled={!isValid}
-        onClick={onContinue}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isValid ? 1 : 0.5 }}
+        className="pt-2"
       >
-        Quiz starten
-        <ArrowRight className="w-5 h-5 ml-2" />
-      </Button>
+        <Button
+          size="lg"
+          className="w-full h-12 text-base font-bold rounded-xl"
+          disabled={!isValid}
+          onClick={onContinue}
+        >
+          Quiz starten
+          <ArrowRight className="w-5 h-5 ml-2" />
+        </Button>
+      </motion.div>
     </div>
   );
 }
