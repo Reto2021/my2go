@@ -62,9 +62,20 @@ export default function PartnerPOSMaterials() {
     enabled: !!partnerInfo?.partnerId
   });
 
-  const partnerUrl = partner?.slug 
+  // Base partner URL
+  const basePartnerUrl = partner?.slug 
     ? `${window.location.origin}/partner/${partner.slug}`
     : '';
+
+  // URLs with UTM tracking for each material type
+  const getTrackedUrl = (campaign: string) => {
+    if (!basePartnerUrl) return '';
+    return `${basePartnerUrl}?utm_source=pos&utm_medium=qr&utm_campaign=${campaign}`;
+  };
+
+  const qrCardUrl = getTrackedUrl('qr-card');
+  const stickerUrl = getTrackedUrl('sticker');
+  const tableCardUrl = getTrackedUrl('table-card');
 
   const downloadPDF = async (
     elementRef: React.RefObject<HTMLDivElement>, 
@@ -274,7 +285,7 @@ export default function PartnerPOSMaterials() {
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0 p-3 bg-white rounded-xl border">
               <QRCodeSVG 
-                value={partnerUrl || 'https://my2go.lovable.app'} 
+                value={basePartnerUrl || 'https://my2go.lovable.app'} 
                 size={80}
                 level="M"
               />
@@ -282,12 +293,12 @@ export default function PartnerPOSMaterials() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{partner?.name}</p>
               <a 
-                href={partnerUrl}
+                href={basePartnerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
               >
-                {partnerUrl}
+                {basePartnerUrl}
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -402,7 +413,7 @@ export default function PartnerPOSMaterials() {
                   <div className="h-full flex flex-col items-center justify-center text-center p-6">
                     <div className="p-3 bg-white rounded-xl shadow-sm mb-5">
                       <QRCodeSVG 
-                        value={partnerUrl || 'https://my2go.lovable.app'} 
+                        value={qrCardUrl || 'https://my2go.lovable.app'} 
                         size={100}
                         level="H"
                       />
@@ -425,7 +436,7 @@ export default function PartnerPOSMaterials() {
                 >
                   <div className="mb-2">
                     <QRCodeSVG 
-                      value={partnerUrl || 'https://my2go.lovable.app'} 
+                      value={stickerUrl || 'https://my2go.lovable.app'} 
                       size={70}
                       level="H"
                     />
@@ -445,7 +456,7 @@ export default function PartnerPOSMaterials() {
                   <div className="h-full flex items-center p-5 gap-5">
                     <div className="p-3 bg-muted/50 rounded-xl flex-shrink-0">
                       <QRCodeSVG 
-                        value={partnerUrl || 'https://my2go.lovable.app'} 
+                        value={tableCardUrl || 'https://my2go.lovable.app'} 
                         size={80}
                         level="H"
                       />
@@ -530,7 +541,7 @@ export default function PartnerPOSMaterials() {
               marginBottom: '40px',
             }}>
               <QRCodeSVG 
-                value={partnerUrl || 'https://my2go.lovable.app'} 
+                value={qrCardUrl || 'https://my2go.lovable.app'} 
                 size={200}
                 level="H"
                 bgColor="#ffffff"
@@ -605,7 +616,7 @@ export default function PartnerPOSMaterials() {
               marginBottom: '12px',
             }}>
               <QRCodeSVG 
-                value={partnerUrl || 'https://my2go.lovable.app'} 
+                value={stickerUrl || 'https://my2go.lovable.app'} 
                 size={120}
                 level="H"
                 bgColor="#ffffff"
@@ -660,7 +671,7 @@ export default function PartnerPOSMaterials() {
               flexShrink: 0,
             }}>
               <QRCodeSVG 
-                value={partnerUrl || 'https://my2go.lovable.app'} 
+                value={tableCardUrl || 'https://my2go.lovable.app'} 
                 size={150}
                 level="H"
                 bgColor="#fafafa"
