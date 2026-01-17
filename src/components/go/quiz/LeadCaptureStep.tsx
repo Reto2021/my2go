@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,15 @@ import {
   User, 
   Mail, 
   Phone, 
-  Search, 
   Loader2,
   MapPin,
   ArrowRight,
   Sparkles,
   Briefcase,
   Users,
-  Info
+  Info,
+  Check,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { QuizAnswers, UserRole, EmployeeRange } from '@/lib/partner-quiz-calculations';
@@ -85,20 +86,26 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
   const [showResults, setShowResults] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [manualMode, setManualMode] = useState(false);
 
-  const searchZefix = async () => {
-    if (!searchQuery.trim()) return;
+  // Debounced autocomplete search
+  const searchZefix = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
     
     setIsSearching(true);
     setError(null);
     
     try {
-      const isUID = /^CHE-?\d{3}\.\d{3}\.\d{3}$/i.test(searchQuery.trim());
+      const isUID = /^CHE-?\d{3}\.\d{3}\.\d{3}$/i.test(query.trim());
       
       const { data, error: fnError } = await supabase.functions.invoke('zefix-lookup', {
         body: isUID 
-          ? { uid: searchQuery.trim() }
-          : { query: searchQuery.trim() }
+          ? { uid: query.trim() }
+          : { query: query.trim() }
       });
 
       if (fnError) throw fnError;
@@ -106,19 +113,35 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
       if (data?.companies && data.companies.length > 0) {
         setSearchResults(data.companies);
         setShowResults(true);
+        setError(null);
       } else {
         setSearchResults([]);
-        setShowResults(true);
-        setError('Keine Firma gefunden. Bitte manuell eingeben.');
+        setShowResults(false);
+        if (query.length >= 3) {
+          setError('Keine Firma gefunden.');
+        }
       }
     } catch (err) {
       console.error('Zefix search error:', err);
-      setError('Suche fehlgeschlagen. Bitte manuell eingeben.');
+      setSearchResults([]);
       setShowResults(false);
     } finally {
       setIsSearching(false);
     }
-  };
+  }, []);
+
+  // Autocomplete effect with debounce
+  useEffect(() => {
+    if (manualMode || answers.companyName) return;
+    
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        searchZefix(searchQuery);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, manualMode, answers.companyName, searchZefix]);
 
   const selectCompany = (company: ZefixCompany) => {
     const address = company.address 
@@ -133,7 +156,30 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
     });
     
     setShowResults(false);
-    setSearchQuery(company.name);
+    setSearchQuery('');
+    setManualMode(false);
+  };
+
+  const clearCompany = () => {
+    updateAnswers({ 
+      companyName: '', 
+      companyAddress: '', 
+      companyPostalCode: '', 
+      companyCity: '' 
+    });
+    setSearchQuery('');
+    setManualMode(false);
+    setError(null);
+  };
+
+  const enableManualMode = () => {
+    setManualMode(true);
+    setShowResults(false);
+    setError(null);
+    // Set the search query as company name for manual entry
+    if (searchQuery.trim()) {
+      updateAnswers({ companyName: searchQuery.trim() });
+    }
   };
 
   const isValid = 
@@ -164,8 +210,135 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         </p>
       </motion.div>
 
-      {/* Role Selection (NEW) */}
+      {/* Company Search / Selection - AT THE TOP */}
       <div>
+        <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
+          <Building2 className="w-4 h-4 text-muted-foreground" />
+          Ihre Firma
+        </Label>
+
+        {/* Selected Company Display */}
+        {answers.companyName && !manualMode ? (
+          <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary" />
+                  <span className="font-semibold">{answers.companyName}</span>
+                </div>
+                {answers.companyAddress && (
+                  <p className="text-sm text-muted-foreground mt-1 ml-6">
+                    {answers.companyAddress}, {answers.companyPostalCode} {answers.companyCity}
+                  </p>
+                )}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={clearCompany}
+                className="shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        ) : manualMode ? (
+          /* Manual Mode */
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Manuelle Eingabe</span>
+              <Button variant="ghost" size="sm" onClick={() => setManualMode(false)}>
+                Zefix-Suche
+              </Button>
+            </div>
+            <Input
+              value={answers.companyName || ''}
+              onChange={(e) => updateAnswers({ companyName: e.target.value })}
+              placeholder="Firmenname"
+              className="h-12"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <Input
+                value={answers.companyAddress || ''}
+                onChange={(e) => updateAnswers({ companyAddress: e.target.value })}
+                placeholder="Strasse & Nr."
+                className="h-12 col-span-2"
+              />
+              <Input
+                value={answers.companyPostalCode || ''}
+                onChange={(e) => updateAnswers({ companyPostalCode: e.target.value })}
+                placeholder="PLZ"
+                className="h-12"
+              />
+            </div>
+            <Input
+              value={answers.companyCity || ''}
+              onChange={(e) => updateAnswers({ companyCity: e.target.value })}
+              placeholder="Ort"
+              className="h-12"
+            />
+          </div>
+        ) : (
+          /* Zefix Autocomplete Search */
+          <div className="relative">
+            <div className="relative">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Firmenname oder UID suchen..."
+                className="h-12 pr-10"
+                autoComplete="off"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            
+            {/* Autocomplete Dropdown */}
+            {showResults && searchResults.length > 0 && (
+              <Card className="absolute z-10 w-full mt-1 p-1 max-h-60 overflow-y-auto shadow-lg">
+                {searchResults.map((company) => (
+                  <button
+                    key={company.uid}
+                    onClick={() => selectCompany(company)}
+                    className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <p className="font-medium">{company.name}</p>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {company.legalSeat} • {company.legalForm}
+                    </p>
+                    {company.address && (
+                      <p className="text-xs text-muted-foreground">
+                        {company.address.street} {company.address.houseNumber}, {company.address.swissZipCode} {company.address.city}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </Card>
+            )}
+
+            {/* Manual Entry Link */}
+            <div className="flex items-center justify-between mt-2">
+              {error && (
+                <p className="text-sm text-amber-600">{error}</p>
+              )}
+              <button 
+                type="button"
+                onClick={enableManualMode}
+                className="text-sm text-primary hover:underline ml-auto"
+              >
+                Manuell eingeben
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Role Selection */}
+      <div className="pt-4 border-t border-border">
         <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
           <Briefcase className="w-4 h-4 text-muted-foreground" />
           Ihre Rolle im Unternehmen *
@@ -202,7 +375,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         )}
       </div>
 
-      {/* Employee Count (NEW) */}
+      {/* Employee Count */}
       <div>
         <Label className="text-sm font-semibold mb-3 block flex items-center gap-2">
           <Users className="w-4 h-4 text-muted-foreground" />
@@ -216,177 +389,52 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         />
       </div>
 
-      {/* Contact Person */}
-      <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border">
-        <div>
-          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            Ihr Name *
-          </Label>
-          <Input
-            value={answers.contactPerson}
-            onChange={(e) => updateAnswers({ contactPerson: e.target.value })}
-            placeholder="Max Muster"
-            className="h-12"
-          />
-        </div>
-        <div>
-          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-            <Phone className="w-4 h-4 text-muted-foreground" />
-            Telefon *
-          </Label>
-          <Input
-            type="tel"
-            value={answers.contactPhone}
-            onChange={(e) => updateAnswers({ contactPhone: e.target.value })}
-            placeholder="+41 79 123 45 67"
-            className="h-12"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-          <Mail className="w-4 h-4 text-muted-foreground" />
-          E-Mail *
-        </Label>
-        <Input
-          type="email"
-          value={answers.contactEmail}
-          onChange={(e) => updateAnswers({ contactEmail: e.target.value })}
-          placeholder="max@muster.ch"
-          className="h-12"
-        />
-      </div>
-
-      {/* Contact Person */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            Ihr Name *
-          </Label>
-          <Input
-            value={answers.contactPerson}
-            onChange={(e) => updateAnswers({ contactPerson: e.target.value })}
-            placeholder="Max Muster"
-            className="h-12"
-          />
-        </div>
-        <div>
-          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-            <Phone className="w-4 h-4 text-muted-foreground" />
-            Telefon *
-          </Label>
-          <Input
-            type="tel"
-            value={answers.contactPhone}
-            onChange={(e) => updateAnswers({ contactPhone: e.target.value })}
-            placeholder="+41 79 123 45 67"
-            className="h-12"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-          <Mail className="w-4 h-4 text-muted-foreground" />
-          E-Mail *
-        </Label>
-        <Input
-          type="email"
-          value={answers.contactEmail}
-          onChange={(e) => updateAnswers({ contactEmail: e.target.value })}
-          placeholder="max@muster.ch"
-          className="h-12"
-        />
-      </div>
-
-      {/* Company Search */}
-      <div className="pt-4 border-t border-border">
-        <Label className="text-sm font-medium flex items-center gap-2 mb-2">
-          <Building2 className="w-4 h-4 text-muted-foreground" />
-          Firma (optional, via Zefix)
-        </Label>
-        <div className="flex gap-2">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Firmenname oder UID (CHE-123.456.789)"
-            className="h-12 flex-1"
-            onKeyDown={(e) => e.key === 'Enter' && searchZefix()}
-          />
-          <Button 
-            variant="outline" 
-            size="lg"
-            onClick={searchZefix}
-            disabled={isSearching || !searchQuery.trim()}
-            className="h-12 px-4"
-          >
-            {isSearching ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Search className="w-5 h-5" />
-            )}
-          </Button>
-        </div>
-        
-        {error && (
-          <p className="text-sm text-amber-600 mt-2">{error}</p>
-        )}
-
-        {/* Search Results */}
-        {showResults && searchResults.length > 0 && (
-          <Card className="mt-3 p-2 max-h-60 overflow-y-auto">
-            {searchResults.map((company) => (
-              <button
-                key={company.uid}
-                onClick={() => selectCompany(company)}
-                className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors"
-              >
-                <p className="font-medium">{company.name}</p>
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {company.legalSeat} • {company.legalForm}
-                </p>
-                {company.address && (
-                  <p className="text-xs text-muted-foreground">
-                    {company.address.street} {company.address.houseNumber}, {company.address.swissZipCode} {company.address.city}
-                  </p>
-                )}
-              </button>
-            ))}
-          </Card>
-        )}
-
-        {/* Manual Input */}
-        {answers.companyName && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{answers.companyName}</span>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  updateAnswers({ 
-                    companyName: '', 
-                    companyAddress: '', 
-                    companyPostalCode: '', 
-                    companyCity: '' 
-                  });
-                  setSearchQuery('');
-                }}
-              >
-                Ändern
-              </Button>
-            </div>
-            {answers.companyAddress && (
-              <p className="text-sm text-muted-foreground">
-                {answers.companyAddress}, {answers.companyPostalCode} {answers.companyCity}
-              </p>
-            )}
+      {/* Contact Details - SINGLE SECTION */}
+      <div className="pt-4 border-t border-border space-y-4">
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+              <User className="w-4 h-4 text-muted-foreground" />
+              Ihr Name *
+            </Label>
+            <Input
+              value={answers.contactPerson}
+              onChange={(e) => updateAnswers({ contactPerson: e.target.value })}
+              placeholder="Max Muster"
+              className="h-12"
+              autoComplete="name"
+            />
           </div>
-        )}
+          <div>
+            <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+              <Phone className="w-4 h-4 text-muted-foreground" />
+              Telefon *
+            </Label>
+            <Input
+              type="tel"
+              value={answers.contactPhone}
+              onChange={(e) => updateAnswers({ contactPhone: e.target.value })}
+              placeholder="+41 79 123 45 67"
+              className="h-12"
+              autoComplete="tel"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+            <Mail className="w-4 h-4 text-muted-foreground" />
+            E-Mail *
+          </Label>
+          <Input
+            type="email"
+            value={answers.contactEmail}
+            onChange={(e) => updateAnswers({ contactEmail: e.target.value })}
+            placeholder="max@muster.ch"
+            className="h-12"
+            autoComplete="email"
+          />
+        </div>
       </div>
 
       {/* Terms */}
