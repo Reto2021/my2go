@@ -336,8 +336,10 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     
     let currentAudio = audio;
     if (!currentAudio) {
-      currentAudio = new Audio(STREAM_URL);
+      currentAudio = new Audio();
       currentAudio.volume = get().volume;
+      // iOS requires preload attribute for better autoplay handling
+      currentAudio.preload = 'auto';
       set({ audio: currentAudio });
       
       // Setup media session handlers once
@@ -353,31 +355,40 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     } else {
       set({ isLoading: true });
       
-      // Ensure we're not playing before starting new stream
+      // iOS Safari Autoplay Fix:
+      // Set src and immediately call play() in the same synchronous user gesture stack.
+      // Do NOT call load() separately - it breaks the user gesture chain on iOS.
       currentAudio.pause();
       currentAudio.src = STREAM_URL;
-      currentAudio.load();
       
-      currentAudio.play()
-        .then(() => {
-          // Try to restore previous session first
-          const restored = get().restoreSession();
-          
-          if (!restored) {
-            // Start fresh session
-            const startTime = new Date();
-            saveSessionToStorage(startTime, []);
-            set({ sessionStartTime: startTime, currentSessionDuration: 0 });
-          }
-          
-          set({ isPlaying: true, isLoading: false });
-          get().fetchNowPlaying();
-          updateMediaSession(get().nowPlaying, true);
-        })
-        .catch((err) => {
-          console.error('Playback failed:', err);
-          set({ isLoading: false });
-        });
+      // Immediately attempt play - this preserves the user gesture context on iOS
+      const playPromise = currentAudio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Try to restore previous session first
+            const restored = get().restoreSession();
+            
+            if (!restored) {
+              // Start fresh session
+              const startTime = new Date();
+              saveSessionToStorage(startTime, []);
+              set({ sessionStartTime: startTime, currentSessionDuration: 0 });
+            }
+            
+            set({ isPlaying: true, isLoading: false });
+            get().fetchNowPlaying();
+            updateMediaSession(get().nowPlaying, true);
+          })
+          .catch((err) => {
+            console.error('Playback failed:', err);
+            set({ isLoading: false });
+            
+            // On iOS, if autoplay fails, the user needs to tap again
+            // We could show a toast here to prompt the user
+          });
+      }
     }
   },
 
