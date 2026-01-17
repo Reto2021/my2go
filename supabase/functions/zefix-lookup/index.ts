@@ -10,14 +10,13 @@ interface ZefixCompany {
   name: string;
   legalSeat: string;
   legalForm: string;
-  status: string;
+  status?: string;
   address?: {
     street?: string;
     houseNumber?: string;
     swissZipCode?: string;
     city?: string;
   };
-  cantonalExcerptWeb?: string;
 }
 
 serve(async (req) => {
@@ -38,68 +37,119 @@ serve(async (req) => {
 
     console.log(`Zefix lookup: query="${query}", uid="${uid}"`);
 
-    // Zefix API (Swiss Commercial Register)
-    // Note: The official Zefix API requires registration, but there's a public search endpoint
-    const searchUrl = uid 
-      ? `https://www.zefix.ch/ZefixREST/api/v1/company/uid/${encodeURIComponent(uid)}`
-      : `https://www.zefix.ch/ZefixREST/api/v1/company/search?name=${encodeURIComponent(query)}&activeOnly=true&maxEntries=10`;
+    // Use the public Zefix search page API (no authentication required)
+    // This endpoint is used by the Zefix website itself
+    const searchTerm = uid || query;
+    
+    const searchUrl = `https://www.zefix.ch/ZefixPublicREST/api/v1/company/search`;
+    
+    const searchBody = {
+      name: searchTerm,
+      searchType: "exact", // or "similar"
+      maxEntries: 10,
+      offset: 0
+    };
+
+    console.log('Searching Zefix with body:', JSON.stringify(searchBody));
 
     const response = await fetch(searchUrl, {
+      method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'My2Go Partner Quiz/1.0'
-      }
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; My2Go/1.0)'
+      },
+      body: JSON.stringify(searchBody)
     });
 
+    console.log(`Zefix response status: ${response.status}`);
+
     if (!response.ok) {
-      console.error(`Zefix API error: ${response.status}`);
+      // Try alternative: the suggest endpoint
+      console.log('Trying suggest endpoint...');
       
-      // Return mock data for demo purposes when API is unavailable
-      if (query) {
-        return new Response(
-          JSON.stringify({
-            companies: [],
-            message: 'Zefix-Suche nicht verfügbar. Bitte manuell eingeben.'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      const suggestUrl = `https://www.zefix.ch/ZefixPublicREST/api/v1/company/search/suggest?query=${encodeURIComponent(searchTerm)}`;
+      
+      const suggestResponse = await fetch(suggestUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; My2Go/1.0)'
+        }
+      });
+
+      console.log(`Suggest response status: ${suggestResponse.status}`);
+
+      if (suggestResponse.ok) {
+        const suggestData = await suggestResponse.json();
+        console.log('Suggest data:', JSON.stringify(suggestData).slice(0, 500));
+        
+        if (Array.isArray(suggestData) && suggestData.length > 0) {
+          const companies: ZefixCompany[] = suggestData.slice(0, 10).map((c: any) => ({
+            uid: c.uid || c.chid || '',
+            name: c.name || c.value || '',
+            legalSeat: c.legalSeat || c.seat || '',
+            legalForm: c.legalForm || '',
+            address: c.address ? {
+              street: c.address.street,
+              houseNumber: c.address.houseNumber,
+              swissZipCode: c.address.swissZipCode,
+              city: c.address.city
+            } : undefined
+          }));
+
+          return new Response(
+            JSON.stringify({ companies }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
+
+      // If all else fails, return empty with message
+      return new Response(
+        JSON.stringify({
+          companies: [],
+          message: 'Keine Firma gefunden. Bitte manuell eingeben.'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const data = await response.json();
+    console.log('Search response:', JSON.stringify(data).slice(0, 500));
     
     // Transform to our format
     let companies: ZefixCompany[] = [];
     
-    if (Array.isArray(data)) {
-      companies = data.map((c: any) => ({
-        uid: c.uid || c.chid,
-        name: c.name,
-        legalSeat: c.legalSeat,
-        legalForm: c.legalForm?.name?.de || c.legalFormId,
+    // Handle the response structure
+    const results = data.list || data.results || data;
+    
+    if (Array.isArray(results)) {
+      companies = results.map((c: any) => ({
+        uid: c.uid || c.chid || '',
+        name: c.name || '',
+        legalSeat: c.legalSeat || c.seat || '',
+        legalForm: c.legalForm?.name?.de || c.legalForm || c.legalFormId || '',
         status: c.status,
         address: c.address ? {
           street: c.address.street,
           houseNumber: c.address.houseNumber,
           swissZipCode: c.address.swissZipCode,
           city: c.address.city
-        } : undefined,
-        cantonalExcerptWeb: c.cantonalExcerptWeb
+        } : undefined
       }));
-    } else if (data && data.uid) {
+    } else if (data && (data.uid || data.name)) {
       companies = [{
-        uid: data.uid || data.chid,
-        name: data.name,
-        legalSeat: data.legalSeat,
-        legalForm: data.legalForm?.name?.de || data.legalFormId,
+        uid: data.uid || data.chid || '',
+        name: data.name || '',
+        legalSeat: data.legalSeat || '',
+        legalForm: data.legalForm?.name?.de || data.legalForm || '',
         status: data.status,
         address: data.address ? {
           street: data.address.street,
           houseNumber: data.address.houseNumber,
           swissZipCode: data.address.swissZipCode,
           city: data.address.city
-        } : undefined,
-        cantonalExcerptWeb: data.cantonalExcerptWeb
+        } : undefined
       }];
     }
 
