@@ -202,6 +202,57 @@ export const DB_OPTIONS = [
 ] as const;
 
 // -------------------------------------------------------------
+// ROLE CONFIGURATION (NEW)
+// -------------------------------------------------------------
+export const ROLE_OPTIONS = [
+  { value: 'owner' as const, label: 'Inhaber:in / Geschäftsführung' },
+  { value: 'finance' as const, label: 'Finanzen (CFO/Buchhaltung/Treuhand)' },
+  { value: 'marketing' as const, label: 'Marketing/Vertrieb' },
+  { value: 'operations' as const, label: 'Filialleitung / Operations' },
+  { value: 'other' as const, label: 'Sonstiges' }
+] as const;
+
+export const EMPLOYEE_OPTIONS = [
+  { value: '1-3' as const, label: '1–3' },
+  { value: '4-10' as const, label: '4–10' },
+  { value: '11-30' as const, label: '11–30' },
+  { value: '31+' as const, label: '31+' }
+] as const;
+
+export const ROLE_HINTS: Record<string, string> = {
+  owner: 'Wir zeigen beides: risikolos + Bonus.',
+  finance: 'Wir fokussieren Refinanzierung & Verträge. Uplift ist optionaler Bonus.',
+  marketing: 'Wir fokussieren Uplift, Aktivierung und Automationen (ab Plus).',
+  operations: 'Sie müssen nicht alles wissen – wir fokussieren Alltag & Nutzen. Fehlende Zahlen können Sie später an Finanzen weitergeben.',
+  other: 'Wir zeigen Ihnen die wichtigsten Hebel.'
+};
+
+// Step gating per role: which steps are required/optional
+export const ROLE_STEP_GATING: Record<string, { step1: 'required' | 'optional'; step2: 'required' | 'optional'; step3: 'required' | 'optional'; sponsoring: 'required' | 'optional' }> = {
+  owner: { step1: 'required', step2: 'required', step3: 'optional', sponsoring: 'optional' },
+  finance: { step1: 'required', step2: 'required', step3: 'optional', sponsoring: 'optional' },
+  marketing: { step1: 'required', step2: 'optional', step3: 'required', sponsoring: 'optional' },
+  operations: { step1: 'required', step2: 'optional', step3: 'optional', sponsoring: 'required' },
+  other: { step1: 'required', step2: 'optional', step3: 'optional', sponsoring: 'optional' }
+};
+
+// -------------------------------------------------------------
+// MISSING INFO ITEMS
+// -------------------------------------------------------------
+export const MISSING_INFO_ITEMS = {
+  treuhand: { label: 'Treuhandkosten (Range)', forRole: 'finance' },
+  bank: { label: 'Bank/Fees/Payment Kosten (Range)', forRole: 'finance' },
+  rent: { label: 'Miete/Nebenkosten (Range) + ob Verhandlung möglich', forRole: 'finance' },
+  web: { label: 'Web/Hosting Kosten (Range) + Domain', forRole: 'finance' },
+  energy: { label: 'Ob Strom über NK läuft und ob eigener Vertrag', forRole: 'finance' },
+  leads: { label: 'Leads/Monat (für Uplift-Berechnung)', forRole: 'marketing' },
+  conversion: { label: 'Aktuelle Lead→Sale Conversion (für Uplift)', forRole: 'marketing' },
+  transactions: { label: 'Transaktionen/Termine pro Monat', forRole: 'operations' },
+  avgTicket: { label: 'Durchschnittlicher Bon/Auftragswert', forRole: 'operations' },
+  contract: { label: 'Kündigungsfrist / Vertragsnr (optional)', forRole: 'finance' }
+} as const;
+
+// -------------------------------------------------------------
 // TEXTS / I18N
 // -------------------------------------------------------------
 export const TEXTS = {
@@ -217,7 +268,9 @@ export const TEXTS = {
     C: { title: 'Bedingt geeignet', color: 'text-red-600', bgColor: 'bg-red-100' }
   },
   disclaimer: 'Konservative Schätzung. Keine Garantie. Keine Rechts-/Steuerberatung. Kündigungsfristen und Vertragsdetails bitte prüfen.',
-  upliftNote: 'Uplift ist Bonus; Refinanzierung basiert auf konservativen Hebeln.'
+  upliftNote: 'Uplift ist Bonus; Refinanzierung basiert auf konservativen Hebeln.',
+  sizeBanner: 'Bei Ihrer Grösse ist CHF 300/Monat weniger entscheidend als Uplift in % + Rolloutfähigkeit. Wir zeigen beides.',
+  operationsBanner: 'Sie müssen nicht alle Zahlen kennen. Nutzen/Alltag zuerst – Finanzen kann fehlende Werte ergänzen.'
 } as const;
 
 // -------------------------------------------------------------

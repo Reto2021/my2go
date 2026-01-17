@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   QuizAnswers,
@@ -35,11 +36,16 @@ import {
   PiggyBank,
   Building2,
   FileDown,
-  Loader2
+  Loader2,
+  Mail,
+  AlertCircle,
+  Eye
 } from 'lucide-react';
 import { ActionLauncher } from './ActionLauncher';
 import { NextStepCTA } from './NextStepCTA';
 import { generatePDFReport } from './pdfExport';
+import { MissingInfoChecklist } from './MissingInfoChecklist';
+import { SendToCFOModal } from './SendToCFOModal';
 
 interface Props {
   answers: QuizAnswers;
@@ -55,6 +61,11 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onScrollToBuy, o
   const [showCompanyData, setShowCompanyData] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showCFOModal, setShowCFOModal] = useState(false);
+  const [cfoView, setCfoView] = useState(false);
+
+  // Size check for emphasis
+  const isLargeOrg = answers.employees === '11-30' || answers.employees === '31+' || answers.locations === '2-3' || answers.locations === '4+';
 
   // Calculations
   const fitResult = calculateFitScore(answers);
@@ -387,6 +398,42 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Size Banner */}
+      {isLargeOrg && (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <p className="text-sm text-blue-800 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            {TEXTS.sizeBanner}
+          </p>
+        </Card>
+      )}
+
+      {/* Operations Banner */}
+      {answers.userRole === 'operations' && (
+        <Card className="p-4 bg-amber-50 border-amber-200">
+          <p className="text-sm text-amber-800 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            {TEXTS.operationsBanner}
+          </p>
+        </Card>
+      )}
+
+      {/* Missing Info Checklist */}
+      <MissingInfoChecklist answers={answers} userRole={answers.userRole} />
+
+      {/* Send to CFO Button - show if not finance role */}
+      {answers.userRole !== 'finance' && (
+        <Button
+          variant="outline"
+          size="lg"
+          className="w-full h-14 rounded-xl border-2 border-primary/30"
+          onClick={() => setShowCFOModal(true)}
+        >
+          <Mail className="w-5 h-5 mr-2 text-primary" />
+          Ergebnis an Finanzen senden
+        </Button>
+      )}
+
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button 
@@ -401,10 +448,20 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
           variant="outline"
           size="lg"
           className="h-14 rounded-xl"
+          onClick={handleExportPDF}
+          disabled={isExporting}
+        >
+          {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+          PDF
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          className="h-14 rounded-xl"
           onClick={copyResult}
         >
           <Copy className="w-4 h-4 mr-2" />
-          {copied ? 'Kopiert!' : 'Ergebnis kopieren'}
+          {copied ? 'Kopiert!' : 'Kopieren'}
         </Button>
         <Button
           variant="ghost"
@@ -413,9 +470,21 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
           onClick={onReset}
         >
           <RotateCcw className="w-4 h-4 mr-2" />
-          Neu starten
+          Neu
         </Button>
       </div>
+
+      {/* Send to CFO Modal */}
+      <SendToCFOModal
+        open={showCFOModal}
+        onOpenChange={setShowCFOModal}
+        answers={answers}
+        fitResult={fitResult}
+        refinancing={refinancing}
+        planName={plan.name}
+        planPrice={plan.priceCHF}
+        includesGHL={plan.includesGHL}
+      />
     </div>
   );
 }

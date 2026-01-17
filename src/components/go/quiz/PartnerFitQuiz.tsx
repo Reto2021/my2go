@@ -25,12 +25,19 @@ import { TEXTS } from '@/lib/partner-quiz-config';
 const STORAGE_KEY = 'my2go_partner_quiz';
 
 const initialAnswers: QuizAnswers = {
+  // Step 0: Role & Size
+  userRole: null,
+  employees: null,
+  
+  // Step 1: Fit
   businessType: null,
   transactionsPerMonth: null,
   avgTicket: null,
   loyaltyShare: null,
   incentivePossible: null,
   locations: null,
+  
+  // Step 2: Fixcosts
   fixcosts: {},
   processMaturity: {
     hasCRM: false,
@@ -49,10 +56,16 @@ const initialAnswers: QuizAnswers = {
   sponsorSlots: [],
   contactsPerMonth: null,
   rentNegotiationPossible: false,
+  
+  // Step 3: Uplift
   leadsPerMonth: null,
   consistentFollowUp: null,
   conversionRate: null,
   partnerCommitment: null,
+  unknownLeads: false,
+  unknownConversion: false,
+  
+  // Company data
   companyName: '',
   companyAddress: '',
   companyPostalCode: '',
