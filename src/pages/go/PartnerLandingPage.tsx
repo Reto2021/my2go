@@ -715,7 +715,7 @@ export default function PartnerLandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <img src={logo2goWhite} alt="My 2Go" className="h-14 w-auto mx-auto mb-8" />
+            <img src={logo2goWhite} alt="My 2Go" className="h-14 w-auto mx-auto mb-8 rounded-2xl" />
             
             <h2 className="text-3xl md:text-5xl font-bold mb-6">
               Bereit für mehr Stammkunden?
@@ -743,7 +743,7 @@ export default function PartnerLandingPage() {
                 className="h-16 px-10 text-lg font-semibold rounded-2xl bg-white/90 border-white/50 text-secondary hover:bg-white transition-all"
               >
                 <a href="#quiz">
-                  Erst den Quiz machen
+                  Erst das Quiz machen
                 </a>
               </Button>
             </div>
