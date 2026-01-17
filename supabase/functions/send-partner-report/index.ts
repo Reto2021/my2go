@@ -86,8 +86,9 @@ function generateEmailHTML(data: ReportEmailRequest): string {
                     <div style="color: white; font-size: 14px; margin-top: 8px;">Das Loyalitäts-Netzwerk</div>
                   </td>
                   <td style="text-align: right; color: white; font-size: 12px;">
-                    <strong>2Go GmbH</strong><br>
-                    Bahnhofstrasse 10, 8001 Zürich<br>
+                    <strong>2Go Media AG</strong><br>
+                    c/o Impact Hub Zürich<br>
+                    Sihlquai 131, 8005 Zürich<br>
                     partner@my2go.app
                   </td>
                 </tr>
@@ -252,7 +253,7 @@ function generateEmailHTML(data: ReportEmailRequest): string {
               <div style="font-size: 18px; font-weight: bold; color: #FF6B00; margin-bottom: 5px;">My 2Go</div>
               <div style="font-size: 13px; color: #666;">Das Loyalitäts-Netzwerk für Schweizer KMU</div>
               <div style="font-size: 11px; color: #888; margin-top: 10px;">
-                2Go GmbH • Bahnhofstrasse 10 • 8001 Zürich • partner@my2go.app
+                2Go Media AG • c/o Impact Hub Zürich • Sihlquai 131 • 8005 Zürich • partner@my2go.app
               </div>
             </td>
           </tr>

@@ -26,8 +26,9 @@ export default function ImpressumPage() {
             <div>
               <h2 className="text-lg font-bold">2Go Media AG</h2>
               <p className="text-muted-foreground mt-1">
-                Industriestrasse 19<br />
-                CH-5200 Brugg AG<br />
+                c/o Impact Hub Zürich<br />
+                Sihlquai 131<br />
+                CH-8005 Zürich<br />
                 Schweiz
               </p>
             </div>

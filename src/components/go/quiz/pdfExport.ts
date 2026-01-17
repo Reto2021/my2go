@@ -126,7 +126,7 @@ export async function generatePDFReport(data: ExportData): Promise<void> {
     addText(`Seite ${pageNum}`, margin + 38, 26, { fontSize: 9, color: COLORS.primary });
     
     // Company info (right side)
-    addText('2Go Media GmbH', pageWidth - margin, 12, { fontSize: 9, fontStyle: 'bold', color: COLORS.white, align: 'right' });
+    addText('2Go Media AG', pageWidth - margin, 12, { fontSize: 9, fontStyle: 'bold', color: COLORS.white, align: 'right' });
     addText('c/o Impact Hub Zürich', pageWidth - margin, 18, { fontSize: 8, color: COLORS.white, align: 'right' });
     addText('Sihlquai 131, 8005 Zürich', pageWidth - margin, 24, { fontSize: 8, color: COLORS.white, align: 'right' });
     addText('www.2gomedia.ch', pageWidth - margin, 30, { fontSize: 8, color: COLORS.accent, align: 'right' });

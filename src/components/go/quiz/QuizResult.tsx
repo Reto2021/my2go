@@ -269,6 +269,10 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
               </p>
             </div>
           )}
+          {/* Refinancing Disclaimer */}
+          <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border">
+            * Einsparungen basieren auf Erfahrungswerten unserer Partner und können je nach Anbieter und individuellem Vertrag variieren. Unverbindliche Schätzung.
+          </p>
         </div>
       </Card>
 
