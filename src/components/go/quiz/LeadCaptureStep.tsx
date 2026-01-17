@@ -70,13 +70,13 @@ function ChipSelect<T extends string>({
   columns?: number;
 }) {
   return (
-    <div className={`grid gap-2 ${columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+    <div className={`grid gap-1.5 ${columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
       {options.map(opt => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+          className={`flex items-center justify-center px-2 py-1.5 rounded-md border text-xs font-medium transition-all ${
             value === opt.value
               ? 'border-primary bg-primary/10 text-primary'
               : 'border-border hover:border-primary/50 text-foreground'
@@ -89,7 +89,7 @@ function ChipSelect<T extends string>({
   );
 }
 
-// Accordion Section Component
+// Accordion Section Component - Compact Design
 function AccordionItem({ 
   id,
   title, 
@@ -111,55 +111,48 @@ function AccordionItem({
   stepNumber: number;
   onHeaderClick?: () => void;
 }) {
-  const canClick = !isDisabled && (isCompleted || isOpen);
+  // Allow clicking on completed sections OR current open section
+  const canClick = !isDisabled;
   
   return (
-    <div className={`rounded-xl border-2 overflow-hidden transition-all ${
-      isOpen ? 'border-primary bg-card shadow-lg' : 
-      isCompleted ? 'border-green-500/50 bg-green-50/50 dark:bg-green-950/20' : 
-      isDisabled ? 'border-border/50 bg-muted/30 opacity-60' :
+    <div className={`rounded-lg border overflow-hidden transition-all ${
+      isOpen ? 'border-primary/50 bg-card' : 
+      isCompleted ? 'border-border bg-card' : 
+      isDisabled ? 'border-border/50 bg-muted/20 opacity-50' :
       'border-border bg-card'
     }`}>
-      {/* Header - Clickable when completed */}
       <button
         type="button"
         onClick={canClick ? onHeaderClick : undefined}
         disabled={isDisabled}
-        className={`w-full flex items-center gap-3 p-4 text-left transition-colors ${
-          canClick ? 'cursor-pointer hover:bg-muted/50' : 
-          isDisabled ? 'cursor-not-allowed' : ''
+        className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+          canClick ? 'cursor-pointer hover:bg-muted/30' : 'cursor-not-allowed'
         }`}
       >
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all ${
-          isCompleted ? 'bg-green-500 text-white' :
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+          isCompleted ? 'bg-primary text-primary-foreground' :
           isOpen ? 'bg-primary text-primary-foreground' :
           'bg-muted text-muted-foreground'
         }`}>
-          {isCompleted ? <Check className="w-4 h-4" /> : stepNumber}
+          {isCompleted ? <Check className="w-3 h-3" /> : stepNumber}
         </div>
-        <div className="flex items-center gap-2 flex-1">
-          <Icon className={`w-4 h-4 ${isCompleted ? 'text-green-600' : isOpen ? 'text-primary' : 'text-muted-foreground'}`} />
-          <span className={`font-semibold ${isCompleted ? 'text-green-700 dark:text-green-400' : ''}`}>{title}</span>
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <Icon className={`w-3.5 h-3.5 shrink-0 ${isOpen ? 'text-primary' : 'text-muted-foreground'}`} />
+          <span className={`text-sm font-medium truncate ${isOpen ? 'text-foreground' : 'text-muted-foreground'}`}>{title}</span>
         </div>
-        {isCompleted && !isOpen && (
-          <ChevronDown className="w-5 h-5 text-green-500 transition-transform" />
-        )}
-        {isOpen && (
-          <ChevronDown className="w-5 h-5 text-primary rotate-180 transition-transform" />
-        )}
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
-      {/* Content */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-2 border-t border-border/50">
+            <div className="px-3 pb-3 pt-1">
               {children}
             </div>
           </motion.div>
@@ -356,39 +349,27 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
   const progressPercent = (completedCount / sections.length) * 100;
 
   return (
-    <div className="space-y-4">
-      {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Fortschritt</span>
-          <span className="font-medium text-primary">{completedCount} von {sections.length}</span>
-        </div>
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
+    <div className="space-y-2">
+      {/* Compact Progress Bar */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
           <motion.div 
-            className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
+            className="h-full bg-primary rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           />
         </div>
+        <span>{completedCount}/{sections.length}</span>
       </div>
 
-      <motion.div 
-        className="text-center mb-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary font-semibold mb-3">
-          <Sparkles className="w-4 h-4" />
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold">Ihre Angaben</h3>
+        <span className="text-xs text-primary font-medium flex items-center gap-1">
+          <Sparkles className="w-3 h-3" />
           Kostenloser Check
-        </div>
-        <h3 className="text-xl font-bold mb-1">
-          Wer sind Sie?
-        </h3>
-        <p className="text-muted-foreground text-sm">
-          Bitte alle Felder ausfüllen für ein massgeschneidertes Ergebnis.
-        </p>
-      </motion.div>
+        </span>
+      </div>
 
       {/* SECTION 1: Company */}
       <AccordionItem
@@ -663,7 +644,7 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         stepNumber={3}
         onHeaderClick={() => sectionValidation.contact && setActiveSection('role')}
       >
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {ROLE_OPTIONS.map(opt => (
             <button
               key={opt.value}
@@ -672,9 +653,9 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
                 userRole: opt.value, 
                 userRoleOther: opt.value === 'other' ? answers.userRoleOther : undefined 
               })}
-              className={`w-full text-left px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+              className={`w-full text-left px-3 py-2 rounded-md border text-sm transition-all ${
                 answers.userRole === opt.value
-                  ? 'border-primary bg-primary/10 text-primary'
+                  ? 'border-primary bg-primary/10 text-primary font-medium'
                   : 'border-border hover:border-primary/50 text-foreground'
               }`}
             >
@@ -686,13 +667,13 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             <motion.div 
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="pt-2"
+              className="pt-1"
             >
               <Input
                 value={answers.userRoleOther || ''}
                 onChange={(e) => updateAnswers({ userRoleOther: e.target.value })}
                 placeholder="Ihre Rolle beschreiben..."
-                className="h-10"
+                className="h-9"
               />
             </motion.div>
           )}
@@ -701,12 +682,10 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="p-2 bg-primary/5 rounded-lg border border-primary/20 mt-2"
+              className="p-2 bg-muted/50 rounded text-xs text-muted-foreground flex items-start gap-1.5"
             >
-              <p className="text-xs text-primary flex items-start gap-2">
-                <Info className="w-3 h-3 shrink-0 mt-0.5" />
-                {roleHint}
-              </p>
+              <Info className="w-3 h-3 shrink-0 mt-0.5" />
+              {roleHint}
             </motion.div>
           )}
         </div>
@@ -742,39 +721,32 @@ export function LeadCaptureStep({ answers, updateAnswers, onContinue }: Props) {
         stepNumber={5}
         onHeaderClick={() => sectionValidation.employees && setActiveSection('terms')}
       >
-        <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+        <div className="flex items-start gap-2">
           <Checkbox
             id="terms"
             checked={acceptedTerms}
             onCheckedChange={(c) => setAcceptedTerms(c === true)}
             className="mt-0.5"
           />
-          <label htmlFor="terms" className="text-sm cursor-pointer">
-            <span className="font-medium text-foreground">Ja, ich will mein Sparpotenzial erfahren!</span>
+          <label htmlFor="terms" className="text-xs cursor-pointer leading-relaxed">
+            <span className="font-medium">Ja, ich will mein Sparpotenzial erfahren!</span>
             {' '}
             <span className="text-muted-foreground">
-              Ihre Angaben werden nur für die Analyse verwendet. <a href="/go/legal/datenschutz" target="_blank" className="underline hover:text-primary">Datenschutz</a>
+              <a href="/go/legal/datenschutz" target="_blank" className="underline">Datenschutz</a>
             </span>
           </label>
         </div>
       </AccordionItem>
 
       {/* Continue Button */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isValid ? 1 : 0.5 }}
-        className="pt-2"
+      <Button
+        className="w-full h-10 text-sm font-semibold rounded-lg mt-2"
+        disabled={!isValid}
+        onClick={onContinue}
       >
-        <Button
-          size="lg"
-          className="w-full h-12 text-base font-bold rounded-xl"
-          disabled={!isValid}
-          onClick={onContinue}
-        >
-          Quiz starten
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-      </motion.div>
+        Quiz starten
+        <ArrowRight className="w-4 h-4 ml-1.5" />
+      </Button>
     </div>
   );
 }
