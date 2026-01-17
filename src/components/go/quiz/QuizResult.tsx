@@ -39,13 +39,16 @@ import {
   Loader2,
   Mail,
   AlertCircle,
-  Eye
+  Eye,
+  CheckCheck
 } from 'lucide-react';
 import { ActionLauncher } from './ActionLauncher';
 import { NextStepCTA } from './NextStepCTA';
 import { generatePDFReport } from './pdfExport';
 import { MissingInfoChecklist } from './MissingInfoChecklist';
 import { SendToCFOModal } from './SendToCFOModal';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Props {
   answers: QuizAnswers;
@@ -61,6 +64,8 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onScrollToBuy, o
   const [showCompanyData, setShowCompanyData] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [showCFOModal, setShowCFOModal] = useState(false);
   const [cfoView, setCfoView] = useState(false);
 
@@ -118,6 +123,54 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
       console.error('PDF export failed:', err);
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!answers.contactEmail) {
+      toast.error('Bitte E-Mail-Adresse eingeben');
+      setShowCompanyData(true);
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-partner-report', {
+        body: {
+          recipientEmail: answers.contactEmail,
+          recipientName: answers.contactPerson || 'Partner',
+          companyName: answers.companyName || 'Unbekannt',
+          fitScore: fitResult.score,
+          fitLabel: fitLabel.title,
+          planName: plan.name,
+          planPrice: plan.priceCHF,
+          totalSavings: refinancing.totalSavings,
+          coveragePercent: coveragePercent,
+          isCovered: isCovered,
+          gap: refinancing.gap,
+          savingsBreakdown: refinancing.fixcostBreakdown,
+          timeSavings: refinancing.timeSavings,
+          timeHours: refinancing.timeHours,
+          sponsoringSavings: refinancing.sponsoringSavings,
+          modules: fitResult.modules.map(moduleKey => {
+            const module = MODULES[moduleKey as ModuleKey];
+            return module ? { title: module.title, desc: module.desc } : null;
+          }).filter(Boolean),
+          uplift: uplift.total,
+          miniPriceLever: refinancing.miniPriceLever
+        }
+      });
+
+      if (error) throw error;
+
+      setEmailSent(true);
+      toast.success('Report erfolgreich gesendet!');
+      setTimeout(() => setEmailSent(false), 5000);
+    } catch (err) {
+      console.error('Email send failed:', err);
+      toast.error('Fehler beim Senden des Reports');
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -454,11 +507,18 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
           <Button
             variant="outline"
             size="lg"
-            className="flex-1 h-12 rounded-xl"
-            onClick={() => setShowCFOModal(true)}
+            className={`flex-1 h-12 rounded-xl ${emailSent ? 'border-green-500 text-green-600' : ''}`}
+            onClick={handleSendEmail}
+            disabled={isSendingEmail || emailSent}
           >
-            <Mail className="w-4 h-4 mr-2" />
-            Report per E-Mail senden
+            {isSendingEmail ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : emailSent ? (
+              <CheckCheck className="w-4 h-4 mr-2" />
+            ) : (
+              <Mail className="w-4 h-4 mr-2" />
+            )}
+            {emailSent ? 'Gesendet!' : 'Report per E-Mail senden'}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">

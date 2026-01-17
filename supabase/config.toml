@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.zefix-lookup]
 verify_jwt = false
+
+[functions.send-partner-report]
+verify_jwt = false
