@@ -53,6 +53,47 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          partner_id: string
+          reference_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          partner_id: string
+          reference_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          partner_id?: string
+          reference_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_credit_transactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           category: string
@@ -507,6 +548,8 @@ export type Database = {
         Row: {
           address_number: string | null
           address_street: string | null
+          audio_credits_balance: number | null
+          audio_credits_monthly_quota: number | null
           billing_email: string | null
           brand_color: string | null
           category: string | null
@@ -541,6 +584,7 @@ export type Database = {
           name: string
           opening_hours: Json | null
           phone: string | null
+          plan_tier: string | null
           postal_code: string | null
           review_request_delay_minutes: number | null
           review_request_enabled: boolean | null
@@ -555,6 +599,8 @@ export type Database = {
         Insert: {
           address_number?: string | null
           address_street?: string | null
+          audio_credits_balance?: number | null
+          audio_credits_monthly_quota?: number | null
           billing_email?: string | null
           brand_color?: string | null
           category?: string | null
@@ -589,6 +635,7 @@ export type Database = {
           name: string
           opening_hours?: Json | null
           phone?: string | null
+          plan_tier?: string | null
           postal_code?: string | null
           review_request_delay_minutes?: number | null
           review_request_enabled?: boolean | null
@@ -603,6 +650,8 @@ export type Database = {
         Update: {
           address_number?: string | null
           address_street?: string | null
+          audio_credits_balance?: number | null
+          audio_credits_monthly_quota?: number | null
           billing_email?: string | null
           brand_color?: string | null
           category?: string | null
@@ -637,6 +686,7 @@ export type Database = {
           name?: string
           opening_hours?: Json | null
           phone?: string | null
+          plan_tier?: string | null
           postal_code?: string | null
           review_request_delay_minutes?: number | null
           review_request_enabled?: boolean | null
@@ -1393,6 +1443,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_audio_credits: {
+        Args: {
+          _amount: number
+          _description?: string
+          _partner_id: string
+          _reference_id?: string
+          _transaction_type: string
+        }
+        Returns: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          partner_id: string
+          reference_id: string | null
+          transaction_type: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audio_credit_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       award_leaderboard_badges: { Args: never; Returns: undefined }
       award_review_bonus: {
         Args: { _review_request_id: string; _user_id: string }
@@ -1720,6 +1795,16 @@ export type Database = {
         Returns: Json
       }
       start_listening_session: { Args: { _user_id: string }; Returns: string }
+      use_audio_credits: {
+        Args: {
+          _amount: number
+          _description?: string
+          _partner_id: string
+          _reference_id?: string
+          _transaction_type: string
+        }
+        Returns: Json
+      }
       validate_air_drop_code: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
