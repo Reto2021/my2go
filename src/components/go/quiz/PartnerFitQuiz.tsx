@@ -11,8 +11,10 @@ import {
   Target,
   Calculator,
   TrendingUp,
-  Sparkles
+  Sparkles,
+  User
 } from 'lucide-react';
+import { LeadCaptureStep } from './LeadCaptureStep';
 import { QuizStep1Fit } from './QuizStep1Fit';
 import { QuizStep2Refinancing } from './QuizStep2Refinancing';
 import { QuizStep3Uplift } from './QuizStep3Uplift';
@@ -62,6 +64,7 @@ const initialAnswers: QuizAnswers = {
 };
 
 export function PartnerFitQuiz() {
+  const [showLeadCapture, setShowLeadCapture] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<QuizAnswers>(initialAnswers);
   const [showResult, setShowResult] = useState(false);
@@ -74,6 +77,10 @@ export function PartnerFitQuiz() {
       if (stored) {
         const parsed = JSON.parse(stored);
         setAnswers(prev => ({ ...prev, ...parsed }));
+        // If we have lead data, skip lead capture
+        if (parsed.contactPerson && parsed.contactEmail && parsed.contactPhone) {
+          setShowLeadCapture(false);
+        }
       }
     } catch {
       // Ignore parse errors
@@ -94,18 +101,26 @@ export function PartnerFitQuiz() {
   };
 
   const steps = [
+    { id: 0, title: 'Kontakt', icon: User, color: 'text-secondary' },
     { id: 1, title: TEXTS.stepTitles[1], icon: Target, color: 'text-primary' },
     { id: 2, title: TEXTS.stepTitles[2], icon: Calculator, color: 'text-accent' },
     { id: 3, title: TEXTS.stepTitles[3], icon: TrendingUp, color: 'text-green-500' }
   ];
 
-  const progress = showResult ? 100 : ((currentStep - 1) / 3) * 100;
+  // Progress calculation: 0 = lead capture, 1-3 = quiz steps, 4 = result
+  const totalSteps = 4; // lead + 3 quiz steps
+  const currentProgress = showLeadCapture ? 0 : currentStep;
+  const progress = showResult ? 100 : (currentProgress / totalSteps) * 100;
 
   const scrollToBuy = () => {
     const pricingSection = document.getElementById('pricing-section');
     if (pricingSection) {
       pricingSection.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleLeadCaptureComplete = () => {
+    setShowLeadCapture(false);
   };
 
   const handleNext = () => {
@@ -121,6 +136,8 @@ export function PartnerFitQuiz() {
       setShowResult(false);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+    } else if (currentStep === 1) {
+      setShowLeadCapture(true);
     }
   };
 
@@ -132,6 +149,7 @@ export function PartnerFitQuiz() {
     setAnswers(initialAnswers);
     setCurrentStep(1);
     setShowResult(false);
+    setShowLeadCapture(true);
     localStorage.removeItem(STORAGE_KEY);
   };
 
@@ -159,56 +177,72 @@ export function PartnerFitQuiz() {
 
         {/* Main Card */}
         <Card className="overflow-hidden border-2 border-border/50 shadow-xl">
-          {/* Stepper Header */}
-          <div className="bg-muted/50 p-4 border-b border-border">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {steps.map((step, idx) => (
-                  <button
-                    key={step.id}
-                    onClick={() => {
-                      if (!showResult) setCurrentStep(step.id);
-                      if (showResult) setShowResult(false);
-                    }}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      (showResult && step.id <= 3) || currentStep === step.id
-                        ? 'bg-card border border-border shadow-sm'
-                        : currentStep > step.id
-                          ? 'text-muted-foreground'
-                          : 'text-muted-foreground/50'
-                    }`}
+          {/* Stepper Header - only show after lead capture */}
+          {!showLeadCapture && (
+            <div className="bg-muted/50 p-4 border-b border-border">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {steps.slice(1).map((step) => (
+                    <button
+                      key={step.id}
+                      onClick={() => {
+                        if (!showResult) setCurrentStep(step.id);
+                        if (showResult) setShowResult(false);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        (showResult && step.id <= 3) || currentStep === step.id
+                          ? 'bg-card border border-border shadow-sm'
+                          : currentStep > step.id
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground/50'
+                      }`}
+                    >
+                      {currentStep > step.id || showResult ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <step.icon className={`w-4 h-4 ${currentStep === step.id ? step.color : ''}`} />
+                      )}
+                      <span className="hidden sm:inline">{step.title}</span>
+                      <span className="sm:hidden">{step.id}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                {!showResult && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSkip}
+                    className="text-muted-foreground"
                   >
-                    {currentStep > step.id || showResult ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <step.icon className={`w-4 h-4 ${currentStep === step.id ? step.color : ''}`} />
-                    )}
-                    <span className="hidden sm:inline">{step.title}</span>
-                    <span className="sm:hidden">{step.id}</span>
-                  </button>
-                ))}
+                    <SkipForward className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Zum Ergebnis</span>
+                  </Button>
+                )}
               </div>
               
-              {!showResult && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSkip}
-                  className="text-muted-foreground"
-                >
-                  <SkipForward className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">Zum Ergebnis</span>
-                </Button>
-              )}
+              <Progress value={progress} className="h-1.5" />
             </div>
-            
-            <Progress value={progress} className="h-1.5" />
-          </div>
+          )}
 
           {/* Content */}
           <div className="p-6">
             <AnimatePresence mode="wait">
-              {!showResult ? (
+              {showLeadCapture ? (
+                <motion.div
+                  key="lead-capture"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <LeadCaptureStep
+                    answers={answers}
+                    updateAnswers={updateAnswers}
+                    onContinue={handleLeadCaptureComplete}
+                  />
+                </motion.div>
+              ) : !showResult ? (
                 <motion.div
                   key={`step-${currentStep}`}
                   initial={{ opacity: 0, x: 20 }}
@@ -257,13 +291,12 @@ export function PartnerFitQuiz() {
             </AnimatePresence>
           </div>
 
-          {/* Footer Navigation */}
-          {!showResult && (
+          {/* Footer Navigation - only for quiz steps */}
+          {!showLeadCapture && !showResult && (
             <div className="bg-muted/30 p-4 border-t border-border flex items-center justify-between">
               <Button
                 variant="ghost"
                 onClick={handlePrev}
-                disabled={currentStep === 1}
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Zurück

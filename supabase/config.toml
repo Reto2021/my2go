@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.check-cron-failures]
 verify_jwt = false
+
+[functions.zefix-lookup]
+verify_jwt = false

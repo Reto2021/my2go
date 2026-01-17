@@ -33,9 +33,13 @@ import {
   Clock,
   Handshake,
   PiggyBank,
-  Building2
+  Building2,
+  FileDown,
+  Loader2
 } from 'lucide-react';
 import { ActionLauncher } from './ActionLauncher';
+import { NextStepCTA } from './NextStepCTA';
+import { generatePDFReport } from './pdfExport';
 
 interface Props {
   answers: QuizAnswers;
@@ -50,6 +54,7 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onScrollToBuy, o
   const [showActions, setShowActions] = useState(false);
   const [showCompanyData, setShowCompanyData] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Calculations
   const fitResult = calculateFitScore(answers);
@@ -85,6 +90,24 @@ ${fitResult.modules.map(m => `- ${MODULES[m as ModuleKey]?.title || m}`).join('\
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      await generatePDFReport({
+        answers,
+        fitResult,
+        refinancing,
+        uplift,
+        planName: plan.name,
+        planPrice: plan.priceCHF
+      });
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
