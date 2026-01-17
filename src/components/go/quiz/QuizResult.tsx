@@ -243,7 +243,30 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
 
         <TabsContent value="absicherung" className="space-y-4">
           <Card className="p-5 border-2 border-primary/20 bg-primary/5">
-            <div className="flex items-center gap-2 mb-4"><Shield className="w-5 h-5 text-primary" /><h4 className="font-bold">Absicherung (ohne Wachstum)</h4></div>
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="w-5 h-5 text-primary" />
+              <h4 className="font-bold">Absicherung (ohne Wachstum)</h4>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs p-3 text-xs">
+                    <p className="font-semibold mb-2">Einsparpotenzial</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• Telekom/Web: 10-20% Ersparnis</li>
+                      <li>• Versicherungen: 10-15% Ersparnis</li>
+                      <li>• Zeitersparnis: CHF 90/Std.</li>
+                    </ul>
+                    <p className="mt-2 text-muted-foreground italic">
+                      Basierend auf Schweizer Vergleichsportalen
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <div className="mb-4">
               <div className="flex justify-between text-sm mb-1"><span className="text-muted-foreground">Abdeckung</span><span className={`font-bold ${isCovered ? 'text-green-600' : 'text-amber-600'}`}>{formatPercent(coveragePercent / 100)}</span></div>
               <div className="h-3 bg-muted rounded-full overflow-hidden"><motion.div className={`h-full ${isCovered ? 'bg-green-500' : 'bg-primary'}`} initial={{ width: 0 }} animate={{ width: `${coveragePercent}%` }} /></div>
@@ -254,6 +277,71 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
               {refinancing.sponsoringSavings > 0 && <div className="flex justify-between"><span className="flex items-center gap-2"><Handshake className="w-4 h-4" />Sponsoring</span><span className="font-medium text-green-600">+{formatCHF(refinancing.sponsoringSavings)}</span></div>}
               <div className="border-t pt-2 mt-2 flex justify-between font-bold"><span>Total</span><span className="text-green-600">{formatCHF(refinancing.totalSavings)}</span></div>
             </div>
+            
+            {/* Methodology sources */}
+            <Collapsible>
+              <CollapsibleTrigger className="w-full mt-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <Info className="w-4 h-4" />
+                    <span className="font-medium">Methodik & Quellen</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-primary/60" />
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 p-4 rounded-lg bg-primary/5 border border-primary/10 text-xs space-y-3">
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Berechnungsmodell</p>
+                    <p className="text-muted-foreground">
+                      Einsparung = Aktuelle Kosten × branchenüblicher Sparprozentsatz
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Sparpotenziale nach Kategorie</p>
+                    <ul className="text-muted-foreground space-y-0.5">
+                      <li>• <strong>Telekom/Internet:</strong> 15% (bei &gt;CHF 80/Mt.)</li>
+                      <li>• <strong>Web-Hosting:</strong> 10-20% je nach Volumen</li>
+                      <li>• <strong>Versicherungen:</strong> 10% (bei &gt;CHF 200/Mt.)</li>
+                      <li>• <strong>Treuhand:</strong> 15% (bei &gt;CHF 300/Mt.)</li>
+                      <li>• <strong>Zeitersparnis:</strong> CHF 90/Std. Opportunitätskosten</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground mb-1">Schweizer Vergleichsquellen</p>
+                    <div className="flex flex-wrap gap-2">
+                      <a 
+                        href="https://www.moneyland.ch" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        Moneyland.ch <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.comparis.ch" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        Comparis.ch <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a 
+                        href="https://www.strompreis.elcom.admin.ch" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white border text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        ElCom Strompreis <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground italic pt-2 border-t">
+                    Hinweis: Tatsächliche Einsparungen hängen von individuellen Verträgen und Verhandlungen ab.
+                  </p>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
         </TabsContent>
       </Tabs>
