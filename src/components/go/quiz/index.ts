@@ -9,3 +9,4 @@ export { InvoiceUpload } from './InvoiceUpload';
 export { NextStepCTA } from './NextStepCTA';
 export { MissingInfoChecklist, getMissingInfo } from './MissingInfoChecklist';
 export { SendToCFOModal } from './SendToCFOModal';
+export { ReportPreviewSheet } from './ReportPreviewSheet';
