@@ -145,34 +145,52 @@ serve(async (req) => {
     const results = data.list || data.results || data;
     
     // Helper function to fetch company details with address
-    async function fetchCompanyDetails(ehraid: number): Promise<any | null> {
+    async function fetchCompanyDetails(companyUid: string, ehraid: number): Promise<any | null> {
       try {
-        const detailUrl = `${baseUrl}/company/uid/CHE${ehraid}`;
-        const detailResponse = await fetch(detailUrl, {
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': authHeader
+        // First try by UID (format: CHE-123.456.789 or CHE123456789)
+        if (companyUid) {
+          const cleanUid = companyUid.replace(/[^A-Z0-9]/gi, '');
+          const detailUrl = `${baseUrl}/company/uid/${cleanUid}`;
+          console.log(`Fetching company details by UID: ${detailUrl}`);
+          
+          const detailResponse = await fetch(detailUrl, {
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': authHeader
+            }
+          });
+          
+          console.log(`Detail response for UID ${cleanUid}: ${detailResponse.status}`);
+          
+          if (detailResponse.ok) {
+            const details = await detailResponse.json();
+            console.log(`Details for ${cleanUid}:`, JSON.stringify(details).slice(0, 500));
+            return details;
           }
-        });
-        
-        if (detailResponse.ok) {
-          return await detailResponse.json();
         }
         
-        // Try by ehraid
-        const ehraIdUrl = `${baseUrl}/company/ehraid/${ehraid}`;
-        const ehraIdResponse = await fetch(ehraIdUrl, {
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': authHeader
+        // Fallback: try by ehraid
+        if (ehraid) {
+          const ehraIdUrl = `${baseUrl}/company/ehraid/${ehraid}`;
+          console.log(`Fetching company details by ehraid: ${ehraIdUrl}`);
+          
+          const ehraIdResponse = await fetch(ehraIdUrl, {
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': authHeader
+            }
+          });
+          
+          console.log(`Detail response for ehraid ${ehraid}: ${ehraIdResponse.status}`);
+          
+          if (ehraIdResponse.ok) {
+            const details = await ehraIdResponse.json();
+            console.log(`Details for ehraid ${ehraid}:`, JSON.stringify(details).slice(0, 500));
+            return details;
           }
-        });
-        
-        if (ehraIdResponse.ok) {
-          return await ehraIdResponse.json();
         }
       } catch (e) {
-        console.error(`Failed to fetch details for ehraid ${ehraid}:`, e);
+        console.error(`Failed to fetch details for ${companyUid || ehraid}:`, e);
       }
       return null;
     }
@@ -183,8 +201,8 @@ serve(async (req) => {
         let address = c.address;
         
         // If no address in search results, try to fetch details
-        if (!address && c.ehraid) {
-          const details = await fetchCompanyDetails(c.ehraid);
+        if (!address && (c.uid || c.ehraid)) {
+          const details = await fetchCompanyDetails(c.uid || '', c.ehraid || 0);
           if (details?.address) {
             address = details.address;
           }
@@ -222,8 +240,8 @@ serve(async (req) => {
     } else if (data && (data.uid || data.name)) {
       // Single result - fetch details
       let address = data.address;
-      if (!address && data.ehraid) {
-        const details = await fetchCompanyDetails(data.ehraid);
+      if (!address && (data.uid || data.ehraid)) {
+        const details = await fetchCompanyDetails(data.uid || '', data.ehraid || 0);
         if (details?.address) {
           address = details.address;
         }
