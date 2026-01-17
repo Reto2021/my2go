@@ -9,7 +9,8 @@ import {
   ScanLine,
   ShieldCheck,
   Settings,
-  Radio
+  Radio,
+  Printer
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePartner } from './PartnerGuard';
@@ -29,6 +30,7 @@ export function PartnerLayout() {
     { path: '/partner-portal', icon: LayoutDashboard, label: 'Dashboard', exact: true, show: true },
     { path: '/partner-portal/rewards', icon: Gift, label: 'Rewards', show: partnerInfo?.canManageRewards },
     { path: '/partner-portal/redemptions', icon: QrCode, label: 'Einlösungen', show: partnerInfo?.canConfirmRedemptions },
+    { path: '/partner-portal/pos', icon: Printer, label: 'POS', show: true },
     { path: '/partner-portal/reviews', icon: Star, label: 'Bewertungen', show: true },
     { path: '/partner-portal/live', icon: Radio, label: 'Live', show: partnerInfo?.role === 'owner' || partnerInfo?.role === 'manager' },
     { path: '/partner-portal/settings', icon: Settings, label: 'Einstellungen', show: partnerInfo?.role === 'owner' || partnerInfo?.role === 'manager' },
