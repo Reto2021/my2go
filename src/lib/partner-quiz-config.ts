@@ -42,7 +42,7 @@ export const MODULES = {
   loyalty: { title: 'Multipartner-Loyalty', desc: 'Sammeln & Einlösen (Taler) im Partnernetzwerk' },
   deals: { title: 'Deals/Gutscheine', desc: 'Angebote, Rewards, Partneraktionen' },
   reviews: { title: 'Review-Booster', desc: 'Bewertungen systematisch auslösen & steuern' },
-  automation: { title: 'Reminder & Follow-up', desc: 'Automatische Nachfass-/Reminder-Prozesse (inkl. GHL ab Plus)' },
+  automation: { title: 'Automatische Reminder', desc: 'Follow-up E-Mails, SMS & WhatsApp automatisch versenden' },
   crmLite: { title: 'Kundenerfassung/CRM Light', desc: 'Kundendaten strukturiert erfassen & segmentieren' },
   sponsor: { title: 'Sponsoring-Slots', desc: 'Sponsor-Badges in Deals + Präsenzpakete' }
 } as const;
@@ -168,14 +168,14 @@ export const PROCESS_MATURITY_ITEMS = [
 // FIXCOST ITEMS
 // -------------------------------------------------------------
 export const FIXCOST_ITEMS = [
-  { key: 'telco', label: 'Telco/Internet', ranges: ['0-79', '80-149', '150+'], midpoints: [40, 115, 200] },
-  { key: 'software', label: 'Software/Abos', ranges: ['0-149', '150-399', '400+'], midpoints: [75, 275, 500] },
-  { key: 'treuhand', label: 'Treuhand', ranges: ['0-299', '300-699', '700+'], midpoints: [150, 500, 900] },
-  { key: 'insurance', label: 'Versicherungen', ranges: ['0-199', '200-499', '500+'], midpoints: [100, 350, 650] },
-  { key: 'mobility', label: 'Fahrzeuge/Mobilität', ranges: ['0-199', '200-499', '500+'], midpoints: [100, 350, 650] },
-  { key: 'bank', label: 'Bank/Fees/Payment', ranges: ['0-49', '50-199', '200+'], midpoints: [25, 125, 300] },
-  { key: 'rent', label: 'Miete/NK', ranges: ['<1200', '1200-2499', '2500+'], midpoints: [800, 1850, 3500] },
-  { key: 'web', label: 'Web/Domain/Hosting', ranges: ['0-19', '20-59', '60-149', '150+'], midpoints: [10, 40, 105, 200] }
+  { key: 'telco', label: 'Telco/Internet', unit: 'pro Monat', ranges: ['0-79', '80-149', '150+'], midpoints: [40, 115, 200] },
+  { key: 'software', label: 'Software/Abos', unit: 'pro Monat', ranges: ['0-149', '150-399', '400+'], midpoints: [75, 275, 500] },
+  { key: 'treuhand', label: 'Treuhand (Buchhaltung)', unit: 'pro Jahr', ranges: ['0-3\'600', '3\'600-8\'400', '8\'400+'], midpoints: [150, 500, 900], annualToMonthly: true },
+  { key: 'insurance', label: 'Versicherungen (alle)', unit: 'pro Jahr', ranges: ['0-2\'400', '2\'400-6\'000', '6\'000+'], midpoints: [100, 350, 650], annualToMonthly: true, multipleAllowed: true },
+  { key: 'mobility', label: 'Fahrzeuge/Mobilität', unit: 'pro Monat', ranges: ['0-199', '200-499', '500+'], midpoints: [100, 350, 650] },
+  { key: 'bank', label: 'Bank/Fees/Payment', unit: 'pro Monat', ranges: ['0-49', '50-199', '200+'], midpoints: [25, 125, 300] },
+  { key: 'rent', label: 'Miete/NK', unit: 'pro Monat', ranges: ['<1200', '1200-2499', '2500+'], midpoints: [800, 1850, 3500] },
+  { key: 'web', label: 'Web/Domain/Hosting', unit: 'pro Jahr', ranges: ['0-250', '250-700', '700-1\'800', '1\'800+'], midpoints: [10, 40, 105, 200], annualToMonthly: true }
 ] as const;
 
 // -------------------------------------------------------------

@@ -109,17 +109,11 @@ export function ActionLauncher({ answers, updateAnswers, breakdown }: Props) {
           {/* Provider Input */}
           <div className="mb-3">
             <Label className="text-xs text-muted-foreground">Aktueller Anbieter</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Anbieter eingeben oder aus Rechnung"
-                value={providerInput[item.lever] || ''}
-                onChange={(e) => setProviderInput(prev => ({ ...prev, [item.lever]: e.target.value }))}
-                className="flex-1"
-              />
-              <Button variant="outline" size="sm" disabled>
-                <Search className="w-4 h-4" />
-              </Button>
-            </div>
+            <Input
+              placeholder="Anbieter eingeben oder aus Rechnung"
+              value={providerInput[item.lever] || ''}
+              onChange={(e) => setProviderInput(prev => ({ ...prev, [item.lever]: e.target.value }))}
+            />
           </div>
 
           {/* Contract Number */}
@@ -304,7 +298,7 @@ function EmailPreview({
     <div className="space-y-4">
       <div>
         <Label className="text-sm text-muted-foreground">Betreff</Label>
-        <div className="p-3 bg-muted rounded-lg text-sm font-medium">
+        <div className="p-3 bg-muted rounded-lg text-sm font-medium break-words">
           {email.subject}
         </div>
       </div>
@@ -313,10 +307,10 @@ function EmailPreview({
         <Textarea
           value={email.body}
           readOnly
-          className="min-h-[300px] text-sm"
+          className="min-h-[250px] max-h-[350px] text-sm resize-none"
         />
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Button onClick={() => onCopy(fullText)} className="flex-1">
           {copied ? (
             <>
@@ -332,6 +326,7 @@ function EmailPreview({
         </Button>
         <Button 
           variant="outline"
+          className="flex-1"
           onClick={() => {
             window.location.href = `mailto:?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
           }}
