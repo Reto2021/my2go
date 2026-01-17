@@ -97,8 +97,8 @@ export function ReportPreviewSheet({
                 </div>
                 <div className="text-right text-sm opacity-90">
                   <p className="font-semibold">2Go Media AG</p>
-                  <p>c/o Impact Hub Zürich</p>
-                  <p>Sihlquai 131, 8005 Zürich</p>
+                  <p>Industriestrasse 19</p>
+                  <p>5200 Brugg</p>
                   <p className="text-accent font-medium">www.2gomedia.ch</p>
                   <p>partner@my2go.app</p>
                 </div>

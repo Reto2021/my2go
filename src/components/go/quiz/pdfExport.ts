@@ -127,8 +127,8 @@ export async function generatePDFReport(data: ExportData): Promise<void> {
     
     // Company info (right side)
     addText('2Go Media AG', pageWidth - margin, 12, { fontSize: 9, fontStyle: 'bold', color: COLORS.white, align: 'right' });
-    addText('c/o Impact Hub Zürich', pageWidth - margin, 18, { fontSize: 8, color: COLORS.white, align: 'right' });
-    addText('Sihlquai 131, 8005 Zürich', pageWidth - margin, 24, { fontSize: 8, color: COLORS.white, align: 'right' });
+    addText('Industriestrasse 19', pageWidth - margin, 18, { fontSize: 8, color: COLORS.white, align: 'right' });
+    addText('5200 Brugg', pageWidth - margin, 24, { fontSize: 8, color: COLORS.white, align: 'right' });
     addText('www.2gomedia.ch', pageWidth - margin, 30, { fontSize: 8, color: COLORS.accent, align: 'right' });
   };
 
@@ -512,9 +512,8 @@ Ambitioniert: +${formatCHF(uplift.total.ambitious)}/Mt.
 ═══════════════════════════════════════
 ${TEXTS.disclaimer}
 
-2Go Media GmbH
-c/o Impact Hub Zürich
-Sihlquai 131, 8005 Zürich
+2Go Media AG
+Industriestrasse 19, 5200 Brugg
 www.2gomedia.ch | partner@my2go.app
 ═══════════════════════════════════════
   `.trim();
