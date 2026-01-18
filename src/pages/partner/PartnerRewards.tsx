@@ -357,12 +357,21 @@ export default function PartnerRewards() {
                 </div>
               </div>
 
-              {/* Sponsor Management - only show when editing */}
-              {editingReward && (
+              {/* Sponsor Management */}
+              {editingReward ? (
                 <RewardSponsorManager 
                   rewardId={editingReward.id} 
                   onUpdate={loadRewards}
                 />
+              ) : (
+                <div className="rounded-lg border border-dashed border-muted-foreground/30 p-4 bg-muted/30">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="h-4 w-4" />
+                    <span className="text-sm">
+                      Sponsoren können nach dem Erstellen des Gutscheins hinzugefügt werden.
+                    </span>
+                  </div>
+                </div>
               )}
 
               <div className="flex gap-3 pt-4">
