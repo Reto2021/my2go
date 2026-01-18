@@ -195,9 +195,14 @@ export default function AdminCronJobs() {
 
   const getJobDisplayName = (jobname: string): { name: string; description: string; icon: React.ReactNode } => {
     const jobMappings: Record<string, { name: string; description: string; icon: React.ReactNode }> = {
+      'send-plus-expiry-emails-daily': {
+        name: 'Plus-Ablauf E-Mails',
+        description: 'Sendet E-Mail mit 10% Rabatt 3 Tage vor Ablauf',
+        icon: <Mail className="h-5 w-5 text-indigo-500" />
+      },
       'send-plus-expiry-notifications-daily': {
-        name: 'Plus-Ablauf Benachrichtigungen',
-        description: 'Erinnert User 3-5 Tage vor Ablauf ihres Plus-Abos',
+        name: 'Plus-Ablauf Push',
+        description: 'Push-Notification 3-5 Tage vor Ablauf',
         icon: <Bell className="h-5 w-5 text-amber-500" />
       },
       'send-review-notifications': {
