@@ -32,7 +32,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Loader2
+  Loader2,
+  Download
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -148,6 +149,50 @@ export default function AdminSponsoringInquiries() {
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
+  const exportToCSV = () => {
+    const headers = [
+      'Firma',
+      'Kontaktperson',
+      'E-Mail',
+      'Telefon',
+      'Gewünschtes Level',
+      'Engagement-Bereich',
+      'Nachricht',
+      'Status',
+      'Notizen',
+      'Eingegangen am',
+      'Bearbeitet am'
+    ];
+    
+    const rows = filteredInquiries.map(inquiry => [
+      inquiry.company,
+      inquiry.contact_name,
+      inquiry.email,
+      inquiry.phone || '',
+      inquiry.desired_level ? (levelLabels[inquiry.desired_level] || inquiry.desired_level) : '',
+      inquiry.engagement_area ? (engagementLabels[inquiry.engagement_area] || inquiry.engagement_area) : '',
+      inquiry.message?.replace(/\n/g, ' ') || '',
+      statusConfig[inquiry.status]?.label || inquiry.status,
+      inquiry.notes?.replace(/\n/g, ' ') || '',
+      format(new Date(inquiry.created_at), 'dd.MM.yyyy HH:mm', { locale: de }),
+      inquiry.processed_at ? format(new Date(inquiry.processed_at), 'dd.MM.yyyy HH:mm', { locale: de }) : ''
+    ]);
+    
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(';'))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `sponsoring-anfragen-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    
+    toast.success(`${filteredInquiries.length} Anfragen exportiert`);
+  };
+
   const openEmail = (email: string, name: string, company: string) => {
     const subject = encodeURIComponent(`2Go Sponsoring - ${company}`);
     const body = encodeURIComponent(`Hallo ${name},\n\nvielen Dank für Ihr Interesse am 2Go Sponsoring!\n\nIch würde gerne mehr über Ihre Vorstellungen erfahren und Ihnen unser Angebot näher vorstellen.\n\nMit freundlichen Grüssen\n2Go Team`);
@@ -172,8 +217,20 @@ export default function AdminSponsoringInquiries() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Sponsoring-Anfragen</h1>
-        <p className="text-muted-foreground">Verwalte eingehende Sponsoring-Anfragen</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Sponsoring-Anfragen</h1>
+            <p className="text-muted-foreground">Verwalte eingehende Sponsoring-Anfragen</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={exportToCSV}
+            disabled={filteredInquiries.length === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

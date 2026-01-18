@@ -710,6 +710,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           first_name: string | null
+          free_trial_started_at: string | null
           id: string
           last_activity_at: string | null
           last_name: string | null
@@ -724,6 +725,10 @@ export type Database = {
           referred_by: string | null
           show_on_leaderboard: boolean | null
           streak_freezes: number
+          stripe_customer_id: string | null
+          subscription_ends_at: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
           terms_accepted_at: string | null
           updated_at: string
         }
@@ -736,6 +741,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          free_trial_started_at?: string | null
           id: string
           last_activity_at?: string | null
           last_name?: string | null
@@ -750,6 +756,10 @@ export type Database = {
           referred_by?: string | null
           show_on_leaderboard?: boolean | null
           streak_freezes?: number
+          stripe_customer_id?: string | null
+          subscription_ends_at?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           terms_accepted_at?: string | null
           updated_at?: string
         }
@@ -762,6 +772,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          free_trial_started_at?: string | null
           id?: string
           last_activity_at?: string | null
           last_name?: string | null
@@ -776,6 +787,10 @@ export type Database = {
           referred_by?: string | null
           show_on_leaderboard?: boolean | null
           streak_freezes?: number
+          stripe_customer_id?: string | null
+          subscription_ends_at?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           terms_accepted_at?: string | null
           updated_at?: string
         }
