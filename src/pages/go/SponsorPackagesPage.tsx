@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const ENGAGEMENT_AREAS = [
   {
@@ -195,10 +196,20 @@ export default function SponsorPackagesPage() {
 
     setIsSubmitting(true);
     
-    // Simulate form submission
     try {
-      // In a real scenario, you would send this to an API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data, error } = await supabase.functions.invoke('submit-sponsoring-inquiry', {
+        body: {
+          company: formData.company,
+          contact_name: formData.name,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          desired_level: formData.level || undefined,
+          engagement_area: formData.area || undefined,
+          message: formData.message || undefined,
+        },
+      });
+
+      if (error) throw error;
       
       toast.success('Vielen Dank für Ihre Anfrage! Wir melden uns innerhalb von 48 Stunden bei Ihnen.');
       setFormData({
@@ -210,8 +221,9 @@ export default function SponsorPackagesPage() {
         area: '',
         message: '',
       });
-    } catch (error) {
-      toast.error('Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.');
+    } catch (error: any) {
+      console.error('Error submitting inquiry:', error);
+      toast.error(error.message || 'Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.');
     } finally {
       setIsSubmitting(false);
     }

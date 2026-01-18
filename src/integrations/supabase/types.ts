@@ -1254,6 +1254,57 @@ export type Database = {
           },
         ]
       }
+      sponsoring_inquiries: {
+        Row: {
+          company: string
+          contact_name: string
+          created_at: string
+          desired_level: string | null
+          email: string
+          engagement_area: string | null
+          id: string
+          message: string | null
+          notes: string | null
+          phone: string | null
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company: string
+          contact_name: string
+          created_at?: string
+          desired_level?: string | null
+          email: string
+          engagement_area?: string | null
+          id?: string
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string
+          contact_name?: string
+          created_at?: string
+          desired_level?: string | null
+          email?: string
+          engagement_area?: string | null
+          id?: string
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sponsors: {
         Row: {
           created_at: string
