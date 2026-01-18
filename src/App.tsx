@@ -67,6 +67,7 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminCronJobs = lazy(() => import("./pages/admin/AdminCronJobs"));
 const AdminPartnerApplications = lazy(() => import("./pages/admin/AdminPartnerApplications"));
 const AdminLiveEvents = lazy(() => import("./pages/admin/AdminLiveEvents"));
+const AdminSponsoringInquiries = lazy(() => import("./pages/admin/AdminSponsoringInquiries"));
 
 // Partner portal pages - lazy loaded
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
@@ -208,6 +209,7 @@ function AppContent() {
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="partners" element={<AdminPartners />} />
             <Route path="sponsors" element={<AdminSponsors />} />
+            <Route path="sponsoring" element={<AdminSponsoringInquiries />} />
             <Route path="ghl" element={<AdminGHLStatus />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="badges" element={<AdminBadges />} />

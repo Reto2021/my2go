@@ -24,6 +24,7 @@ const navItems = [
   { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { path: '/admin/partners', icon: Store, label: 'Partner' },
   { path: '/admin/sponsors', icon: Building2, label: 'Sponsoren' },
+  { path: '/admin/sponsoring', icon: FileText, label: 'Sponsoring' },
   { path: '/admin/ghl', icon: Zap, label: 'GHL Status' },
   { path: '/admin/applications', icon: FileText, label: 'Bewerbungen' },
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
