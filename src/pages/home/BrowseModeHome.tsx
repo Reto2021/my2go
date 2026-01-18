@@ -5,6 +5,7 @@ import { PartnerCard } from '@/components/ui/partner-card';
 import { SkeletonRewardCard, SkeletonPartnerCard } from '@/components/ui/skeleton';
 import { InstallBanner } from '@/components/home/InstallBanner';
 import { LiveHeaderButton } from '@/components/radio/LiveEventsPanel';
+import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { Gift, ChevronRight, Radio, ArrowRight, Wallet, Coins } from 'lucide-react';
 import { BrowseModeHomeProps, FeatureChipProps, colorClasses } from './types';
@@ -177,6 +178,9 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </div>
         </div>
       </section>
+      
+      {/* Featured Platinum Sponsors */}
+      <FeaturedSponsorsBar />
       
       {/* Info / Footer */}
       <section className="container pb-32">

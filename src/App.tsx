@@ -87,6 +87,7 @@ const PartnerOnboardingPage = lazy(() => import("./pages/go/PartnerOnboardingPag
 const PartnerFAQPage = lazy(() => import("./pages/go/PartnerFAQPage"));
 const PartnerPosPage = lazy(() => import("./pages/go/PartnerPosPage"));
 const PartnerRefundPage = lazy(() => import("./pages/go/PartnerRefundPage"));
+const SponsorPackagesPage = lazy(() => import("./pages/go/SponsorPackagesPage"));
 const GoAGBPage = lazy(() => import("./pages/go/legal/GoAGBPage"));
 const GoDatenschutzPage = lazy(() => import("./pages/go/legal/GoDatenschutzPage"));
 const GoImpressumPage = lazy(() => import("./pages/go/legal/GoImpressumPage"));
@@ -241,6 +242,7 @@ function AppContent() {
             <Route path="partner/faq" element={<PartnerFAQPage />} />
             <Route path="partner/pos" element={<PartnerPosPage />} />
             <Route path="partner/refund" element={<PartnerRefundPage />} />
+            <Route path="sponsoring" element={<SponsorPackagesPage />} />
             <Route path="legal/agb" element={<GoAGBPage />} />
             <Route path="legal/datenschutz" element={<GoDatenschutzPage />} />
             <Route path="legal/impressum" element={<GoImpressumPage />} />
