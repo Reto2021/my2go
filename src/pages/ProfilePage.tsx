@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { Button } from '@/components/ui/button';
+import { TalerPlusStats } from '@/components/profile/TalerPlusStats';
 import {
   Dialog,
   DialogContent,
@@ -395,6 +396,9 @@ export default function ProfilePage() {
             )}
           </Button>
         </form>
+        
+        {/* Taler-Plus Stats */}
+        <TalerPlusStats />
         
         {/* Info */}
         <section className="animate-in-delayed">
