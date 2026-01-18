@@ -10,6 +10,7 @@ import { InstallBanner } from '@/components/home/InstallBanner';
 import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
 import { LiveHeaderButton, LiveEventsPanel } from '@/components/radio/LiveEventsPanel';
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
+import { PlusBanner } from '@/components/subscription/PlusBanner';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { ChevronRight, Navigation, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -71,6 +72,11 @@ export function SessionModeHome({
       {/* Install Banner - for users who haven't installed the PWA */}
       <section className="container pb-3">
         <InstallBanner />
+      </section>
+      
+      {/* 2Go Plus Banner - for users without subscription */}
+      <section className="container pb-3">
+        <PlusBanner />
       </section>
       
       {/* New Partner Banner - Show when new partners are in user's area */}
