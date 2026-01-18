@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles, Share, Plus } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles, Share, Plus, Crown } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 import { BadgeProgressRing } from '@/components/badges/BadgeProgressRing';
 import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
+import { SubscriptionSettings } from '@/components/subscription/SubscriptionSettings';
 
 // Visit tracking keys (same as in install-prompt.tsx)
 const VISIT_COUNT_KEY = 'pwa-visit-count';
@@ -360,6 +361,17 @@ export default function SettingsPage() {
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </button>
             </div>
+          </section>
+        )}
+        
+        {/* 2Go Plus Subscription Section */}
+        {user && (
+          <section className="animate-in">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              Premium
+            </h2>
+            <SubscriptionSettings />
           </section>
         )}
         
