@@ -18,6 +18,9 @@ const PRICE_IDS = {
   yearly: "price_1Sr2ywDrdtIKNLRZ43RadmZj",
 };
 
+// Stripe coupon ID for 10% renewal discount
+const RENEWAL_COUPON_ID = "R5RGpBBl";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -31,11 +34,11 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { tier } = await req.json();
+    const { tier, applyDiscount } = await req.json();
     if (!tier || !["monthly", "yearly"].includes(tier)) {
       throw new Error("Invalid tier specified");
     }
-    logStep("Tier selected", { tier });
+    logStep("Tier selected", { tier, applyDiscount });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -45,6 +48,29 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
+
+    // Check if user has a valid discount code
+    let shouldApplyDiscount = false;
+    if (applyDiscount) {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+      
+      const { data: discountData } = await supabaseAdmin
+        .from('system_settings')
+        .select('value')
+        .eq('key', `plus_renewal_discount_${user.id}`)
+        .single();
+      
+      if (discountData?.value) {
+        const discount = discountData.value as { used: boolean; expires_at: string };
+        if (discount.used && new Date(discount.expires_at) > new Date()) {
+          shouldApplyDiscount = true;
+          logStep("Discount code verified", { userId: user.id });
+        }
+      }
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -61,7 +87,7 @@ serve(async (req) => {
     const priceId = PRICE_IDS[tier as keyof typeof PRICE_IDS];
     logStep("Using price", { priceId });
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -78,7 +104,15 @@ serve(async (req) => {
         tier: tier,
       },
       locale: "de",
-    });
+    };
+
+    // Apply discount coupon if user has a valid discount code
+    if (shouldApplyDiscount) {
+      sessionParams.discounts = [{ coupon: RENEWAL_COUPON_ID }];
+      logStep("Applying 10% renewal discount coupon");
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     logStep("Checkout session created", { sessionId: session.id });
 

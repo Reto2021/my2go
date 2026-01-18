@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { ArrowLeft, Ticket, CheckCircle2, Loader2, Crown, Sparkles, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,9 +19,11 @@ const codeSchema = z.string()
 export default function RedeemDiscountPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { createCheckout } = useSubscription();
   
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState<'monthly' | 'yearly' | null>(null);
   const [isRedeemed, setIsRedeemed] = useState(false);
   const [discountInfo, setDiscountInfo] = useState<{
     discount_percent: number;
@@ -113,6 +116,18 @@ export default function RedeemDiscountPage() {
     }
   };
 
+  const handleCheckoutWithDiscount = async (tier: 'monthly' | 'yearly') => {
+    setIsCheckingOut(tier);
+    try {
+      await createCheckout(tier, true);
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error('Fehler beim Starten des Checkouts');
+    } finally {
+      setIsCheckingOut(null);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -160,28 +175,52 @@ export default function RedeemDiscountPage() {
             <div className="space-y-2">
               <h3 className="text-2xl font-bold text-success">Rabatt aktiviert!</h3>
               <p className="text-muted-foreground">
-                Dein {discountInfo?.discount_percent}% Rabatt wurde aktiviert und wird bei deiner nächsten Verlängerung automatisch angewendet.
+                Dein {discountInfo?.discount_percent}% Rabatt wird beim Checkout automatisch angewendet.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Sparkles className="h-5 w-5 text-amber-500" />
-                <span className="font-semibold text-amber-600">{discountInfo?.discount_percent}% gespart</span>
+                <span className="font-semibold text-amber-600">{discountInfo?.discount_percent}% Rabatt</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                bei deiner nächsten Plus-Verlängerung
+                wird bei deiner nächsten Plus-Verlängerung automatisch abgezogen
               </p>
             </div>
 
-            <Button 
-              onClick={() => navigate('/settings')}
-              className="w-full"
-              size="lg"
-            >
-              <Crown className="h-5 w-5 mr-2" />
-              Jetzt Plus verlängern
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => handleCheckoutWithDiscount('yearly')}
+                disabled={!!isCheckingOut}
+                className="w-full"
+                size="lg"
+              >
+                {isCheckingOut === 'yearly' ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <Crown className="h-5 w-5 mr-2" />
+                    Jährlich verlängern – CHF 44.10 statt CHF 49
+                  </>
+                )}
+              </Button>
+              <Button 
+                onClick={() => handleCheckoutWithDiscount('monthly')}
+                disabled={!!isCheckingOut}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                {isCheckingOut === 'monthly' ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    Monatlich verlängern – CHF 4.41 statt CHF 4.90
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         ) : (
           /* Input Form */

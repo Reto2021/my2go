@@ -78,10 +78,10 @@ export function useSubscription() {
     return () => clearInterval(interval);
   }, [user, checkSubscription]);
 
-  const createCheckout = async (tier: 'monthly' | 'yearly') => {
+  const createCheckout = async (tier: 'monthly' | 'yearly', applyDiscount = false) => {
     try {
       const { data, error } = await supabase.functions.invoke('create-plus-checkout', {
-        body: { tier },
+        body: { tier, applyDiscount },
       });
 
       if (error) throw error;
