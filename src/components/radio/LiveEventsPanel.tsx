@@ -153,14 +153,19 @@ export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonPro
       onClick={onClick}
       className={cn(
         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-        "border-2 bg-secondary/90 backdrop-blur-sm",
         hasLiveEvents 
-          ? "border-accent text-accent shadow-[0_0_10px_1px_hsl(var(--accent)/0.6)]" 
-          : "border-secondary/40 text-secondary/70"
+          ? "bg-red-500/20 border-2 border-red-500 text-red-500 shadow-[0_0_12px_2px_rgba(239,68,68,0.5)] animate-pulse" 
+          : "bg-transparent text-white/70 hover:text-white"
       )}
     >
       <Tv className="h-3.5 w-3.5" />
       <span>Live</span>
+      {hasLiveEvents && (
+        <span className="relative flex h-2 w-2 ml-0.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+        </span>
+      )}
     </button>
   );
 };
