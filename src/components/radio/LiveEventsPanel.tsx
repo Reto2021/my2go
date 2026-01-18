@@ -154,7 +154,7 @@ export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonPro
       className={cn(
         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
         hasLiveEvents 
-          ? "bg-red-500/20 border-2 border-red-500 text-red-500 shadow-[0_0_12px_2px_rgba(239,68,68,0.5)] animate-pulse" 
+          ? "bg-amber-500/20 border-2 border-amber-400 text-amber-400 shadow-[0_0_12px_2px_rgba(251,191,36,0.5)] animate-pulse" 
           : "bg-transparent text-white/70 hover:text-white"
       )}
     >
@@ -162,8 +162,8 @@ export const LiveHeaderButton = ({ onClick, hasLiveEvents }: LiveHeaderButtonPro
       <span>Live</span>
       {hasLiveEvents && (
         <span className="relative flex h-2 w-2 ml-0.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
         </span>
       )}
     </button>
