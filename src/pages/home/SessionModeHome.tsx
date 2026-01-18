@@ -9,12 +9,13 @@ import { ReferralGameCard } from '@/components/home/ReferralGameCard';
 import { InstallBanner } from '@/components/home/InstallBanner';
 import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
 import { LiveHeaderButton, LiveEventsPanel } from '@/components/radio/LiveEventsPanel';
+import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { ChevronRight, Navigation, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SessionModeHomeProps } from './types';
 
-export function SessionModeHome({ 
+export function SessionModeHome({
   displayName, 
   balance, 
   rewards, 
@@ -140,6 +141,9 @@ export function SessionModeHome({
       <section className="container pb-4">
         <TopListenersWidget />
       </section>
+      
+      {/* Featured Platinum Sponsors */}
+      <FeaturedSponsorsBar />
     </div>
   );
 }
