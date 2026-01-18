@@ -1257,28 +1257,43 @@ export type Database = {
       sponsors: {
         Row: {
           created_at: string
+          description: string | null
+          engagement_area: string | null
+          featured_on_home: boolean | null
           id: string
           is_active: boolean | null
+          level: string | null
           logo_url: string | null
           name: string
+          sort_order: number | null
           updated_at: string
           website: string | null
         }
         Insert: {
           created_at?: string
+          description?: string | null
+          engagement_area?: string | null
+          featured_on_home?: boolean | null
           id?: string
           is_active?: boolean | null
+          level?: string | null
           logo_url?: string | null
           name: string
+          sort_order?: number | null
           updated_at?: string
           website?: string | null
         }
         Update: {
           created_at?: string
+          description?: string | null
+          engagement_area?: string | null
+          featured_on_home?: boolean | null
           id?: string
           is_active?: boolean | null
+          level?: string | null
           logo_url?: string | null
           name?: string
+          sort_order?: number | null
           updated_at?: string
           website?: string | null
         }
