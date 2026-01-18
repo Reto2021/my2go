@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Check, Sparkles, Loader2, Coins } from 'lucide-react';
+import { Crown, Check, Sparkles, Loader2, Coins, Ticket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/sheet';
 import { useSubscription, TALER_PLUS_COST, TALER_PLUS_DAYS } from '@/hooks/useSubscription';
 import { useAuth, useBalance } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -35,8 +36,48 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
   const { balance, refreshBalance } = useBalance();
   const { createCheckout, isSubscribed, isTrial, trialDaysRemaining, redeemWithTaler } = useSubscription();
   const [isLoading, setIsLoading] = useState<'monthly' | 'yearly' | 'taler' | null>(null);
+  const [activeDiscount, setActiveDiscount] = useState<{
+    discount_percent: number;
+    expires_at: string;
+  } | null>(null);
 
   const canAffordTaler = balance && balance.taler_balance >= TALER_PLUS_COST;
+
+  // Check if user has an active (used) discount code
+  useEffect(() => {
+    const checkDiscount = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', `plus_renewal_discount_${user.id}`)
+          .single();
+        
+        if (data?.value) {
+          const discount = data.value as { 
+            used: boolean; 
+            discount_percent: number;
+            expires_at: string;
+          };
+          // Only show if code has been redeemed and hasn't expired
+          if (discount.used && new Date(discount.expires_at) > new Date()) {
+            setActiveDiscount({
+              discount_percent: discount.discount_percent,
+              expires_at: discount.expires_at
+            });
+          }
+        }
+      } catch (err) {
+        // No discount available
+      }
+    };
+    
+    if (open) {
+      checkDiscount();
+    }
+  }, [user, open]);
 
   const handleCheckout = async (tier: 'monthly' | 'yearly') => {
     if (!user) {
@@ -47,7 +88,7 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
 
     setIsLoading(tier);
     try {
-      await createCheckout(tier);
+      await createCheckout(tier, !!activeDiscount);
       onOpenChange(false);
     } catch (error) {
       toast.error('Fehler beim Starten des Checkouts');
@@ -105,6 +146,25 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
         </SheetHeader>
 
         <div className="mt-6 space-y-6">
+          {/* Active Discount Banner */}
+          {activeDiscount && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30"
+            >
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <Ticket className="h-4 w-4" />
+                <span className="font-semibold">
+                  {activeDiscount.discount_percent}% Rabatt aktiviert!
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Wird automatisch beim Checkout abgezogen
+              </p>
+            </motion.div>
+          )}
+
           {/* Trial Banner */}
           {isTrial && trialDaysRemaining && (
             <motion.div
