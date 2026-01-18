@@ -182,6 +182,8 @@ export default function AdminCronJobs() {
     if (schedule === '0 * * * *') return 'Jede Stunde';
     if (schedule === '0 0 * * *') return 'Täglich um Mitternacht';
     if (schedule === '0 3 * * *') return 'Täglich um 03:00 Uhr';
+    if (schedule === '0 9 * * *') return 'Täglich um 09:00 Uhr';
+    if (schedule === '*/15 * * * *') return 'Alle 15 Minuten';
     if (minute === '0' && hour !== '*' && dayOfMonth === '*') {
       return `Täglich um ${hour.padStart(2, '0')}:00 Uhr`;
     }
@@ -189,6 +191,59 @@ export default function AdminCronJobs() {
     if (dayOfWeek === '1') return 'Jeden Montag';
     
     return schedule;
+  };
+
+  const getJobDisplayName = (jobname: string): { name: string; description: string; icon: React.ReactNode } => {
+    const jobMappings: Record<string, { name: string; description: string; icon: React.ReactNode }> = {
+      'send-plus-expiry-notifications-daily': {
+        name: 'Plus-Ablauf Benachrichtigungen',
+        description: 'Erinnert User 3-5 Tage vor Ablauf ihres Plus-Abos',
+        icon: <Bell className="h-5 w-5 text-amber-500" />
+      },
+      'send-review-notifications': {
+        name: 'Review-Anfragen',
+        description: 'Sendet Review-Anfragen nach Einlösungen',
+        icon: <Mail className="h-5 w-5 text-blue-500" />
+      },
+      'sync-google-reviews': {
+        name: 'Google Reviews Sync',
+        description: 'Synchronisiert Partner-Bewertungen',
+        icon: <RefreshCw className="h-5 w-5 text-green-500" />
+      },
+      'send-streak-reminders': {
+        name: 'Streak-Reminder',
+        description: 'Erinnert User an tägliche Aktivität',
+        icon: <Clock className="h-5 w-5 text-orange-500" />
+      },
+      'check-cron-failures': {
+        name: 'Fehlerprüfung',
+        description: 'Prüft auf fehlgeschlagene Cron-Jobs',
+        icon: <AlertTriangle className="h-5 w-5 text-red-500" />
+      },
+      'send-expiry-notifications': {
+        name: 'Gutschein-Ablauf',
+        description: 'Erinnert an ablaufende Gutscheine',
+        icon: <Timer className="h-5 w-5 text-purple-500" />
+      },
+    };
+
+    // Try exact match first
+    if (jobMappings[jobname]) {
+      return jobMappings[jobname];
+    }
+
+    // Try partial match
+    for (const [key, value] of Object.entries(jobMappings)) {
+      if (jobname.includes(key) || key.includes(jobname)) {
+        return value;
+      }
+    }
+
+    return {
+      name: jobname,
+      description: 'Automatisierte Aufgabe',
+      icon: <Zap className="h-5 w-5 text-primary" />
+    };
   };
 
   const getStatusIcon = (status: string) => {
@@ -269,32 +324,36 @@ export default function AdminCronJobs() {
             </div>
           ) : (
             <div className="space-y-3">
-              {jobs.map((job) => (
-                <div 
-                  key={job.jobid}
-                  className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${job.active ? 'bg-success/10' : 'bg-muted'}`}>
-                      <Zap className={`h-5 w-5 ${job.active ? 'text-success' : 'text-muted-foreground'}`} />
-                    </div>
-                    <div>
-                      <p className="font-medium">{job.jobname || `Job #${job.jobid}`}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>{getScheduleDescription(job.schedule)}</span>
-                        <span className="text-muted-foreground/50">|</span>
-                        <code className="text-xs bg-muted px-1 rounded">{job.schedule}</code>
+              {jobs.map((job) => {
+                const jobInfo = getJobDisplayName(job.jobname || `job-${job.jobid}`);
+                return (
+                  <div 
+                    key={job.jobid}
+                    className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-lg ${job.active ? 'bg-success/10' : 'bg-muted'}`}>
+                        {jobInfo.icon}
+                      </div>
+                      <div>
+                        <p className="font-medium">{jobInfo.name}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{jobInfo.description}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <span>{getScheduleDescription(job.schedule)}</span>
+                          <span className="text-muted-foreground/50">|</span>
+                          <code className="text-xs bg-muted px-1 rounded">{job.schedule}</code>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={job.active ? 'default' : 'secondary'}>
+                        {job.active ? 'Aktiv' : 'Inaktiv'}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={job.active ? 'default' : 'secondary'}>
-                      {job.active ? 'Aktiv' : 'Inaktiv'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -312,7 +371,7 @@ export default function AdminCronJobs() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Button 
               onClick={triggerManualSync}
               variant="outline"
@@ -322,6 +381,28 @@ export default function AdminCronJobs() {
               <div className="text-center">
                 <p className="font-medium">Google Reviews Sync</p>
                 <p className="text-xs text-muted-foreground">Alle Partner synchronisieren</p>
+              </div>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="h-auto py-4 flex-col gap-2"
+              onClick={async () => {
+                try {
+                  toast.info('Starte Plus-Ablauf Prüfung...');
+                  const { data, error } = await supabase.functions.invoke('send-plus-expiry-notifications');
+                  if (error) throw error;
+                  toast.success(`Prüfung abgeschlossen! ${data?.sent || 0} Benachrichtigungen gesendet.`);
+                } catch (error) {
+                  console.error('Plus expiry check failed:', error);
+                  toast.error('Prüfung fehlgeschlagen');
+                }
+              }}
+            >
+              <Bell className="h-6 w-6 text-amber-500" />
+              <div className="text-center">
+                <p className="font-medium">Plus-Ablauf Prüfung</p>
+                <p className="text-xs text-muted-foreground">Ablauf-Erinnerungen senden</p>
               </div>
             </Button>
             
