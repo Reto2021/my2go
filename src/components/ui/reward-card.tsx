@@ -5,11 +5,13 @@ import { cn } from '@/lib/utils';
 import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Sparkles, Check, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { SponsorBadgeCompact, type RewardSponsor } from '@/components/sponsors/SponsorBadge';
 
 interface RewardCardProps {
   reward: Reward;
   className?: string;
   distance?: number; // Distance in km
+  sponsors?: RewardSponsor[]; // Sponsors for this reward
 }
 
 // Map reward_type to icons and colors
@@ -22,7 +24,7 @@ const typeConfig = {
   two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
 };
 
-export const RewardCard = memo(function RewardCard({ reward, className, distance }: RewardCardProps) {
+export const RewardCard = memo(function RewardCard({ reward, className, distance, sponsors }: RewardCardProps) {
   const { balance } = useBalance();
   const config = typeConfig[reward.reward_type] || typeConfig.free_item;
   const Icon = config.icon;
@@ -40,6 +42,9 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
   
   // Get partner name from nested partner object
   const partnerName = reward.partner?.name || 'Partner';
+  
+  // Get first sponsor if available
+  const firstSponsor = sponsors?.[0]?.sponsor;
   
   return (
     <Link
@@ -78,7 +83,7 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <p className="text-sm text-foreground/70 line-clamp-1">
             {partnerName}
           </p>
@@ -86,6 +91,9 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/15 text-accent border-0">
               Einmalig
             </Badge>
+          )}
+          {firstSponsor && (
+            <SponsorBadgeCompact sponsor={firstSponsor} />
           )}
         </div>
         
