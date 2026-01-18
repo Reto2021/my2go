@@ -7,10 +7,14 @@ export interface SubscriptionState {
   isSubscribed: boolean;
   isTrial: boolean;
   status: 'free' | 'trial' | 'active' | 'cancelled' | 'expired';
-  tier: 'monthly' | 'yearly' | null;
+  tier: 'monthly' | 'yearly' | 'taler' | null;
   subscriptionEnd: Date | null;
   trialDaysRemaining: number | null;
 }
+
+// Taler redemption config
+export const TALER_PLUS_COST = 500;
+export const TALER_PLUS_DAYS = 30;
 
 export function useSubscription() {
   const { user } = useAuth();
@@ -104,11 +108,31 @@ export function useSubscription() {
     }
   };
 
+  const redeemWithTaler = async (): Promise<{ success: boolean; error?: string; message?: string }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('redeem-plus-taler');
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        // Refresh subscription status
+        await checkSubscription();
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, error: data?.error || 'Unbekannter Fehler' };
+      }
+    } catch (error) {
+      console.error('Error redeeming Plus with Taler:', error);
+      return { success: false, error: 'Ein Fehler ist aufgetreten' };
+    }
+  };
+
   return {
     ...subscription,
     checkSubscription,
     createCheckout,
     openCustomerPortal,
+    redeemWithTaler,
   };
 }
 
