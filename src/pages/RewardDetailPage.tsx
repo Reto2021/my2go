@@ -14,9 +14,12 @@ import { useAuth, useBalance } from '@/contexts/AuthContext';
 import { useSettings } from '@/lib/settings';
 import { useRadioStore } from '@/lib/radio-store';
 import { useRewardSponsors } from '@/hooks/useRewardSponsors';
+import { useSubscription, isPremiumReward } from '@/hooks/useSubscription';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { SponsorBadge } from '@/components/sponsors/SponsorBadge';
+import { PremiumBadge } from '@/components/subscription/PremiumRewardOverlay';
+import { PlusUpgradeSheet } from '@/components/subscription/PlusUpgradeSheet';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -32,7 +35,8 @@ import {
   AlertCircle,
   Percent,
   Sparkles,
-  Users
+  Users,
+  Crown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -67,6 +71,9 @@ export default function RewardDetailPage() {
   const { soundEnabled, vibrationEnabled } = useSettings();
   const { isPlaying: isRadioPlaying } = useRadioStore();
   const { sponsors } = useRewardSponsors(id);
+  const { isSubscribed, isTrial, isLoading: subscriptionLoading } = useSubscription();
+  
+  const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
   
   const [reward, setReward] = useState<Reward | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -574,13 +581,28 @@ export default function RewardDetailPage() {
           
           {/* Title & Cost */}
           <div className="text-center mb-6">
-            <span className="badge-muted mb-3 inline-block">
-              {rewardTypeLabels[reward.reward_type]}
-            </span>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="badge-muted">
+                {rewardTypeLabels[reward.reward_type]}
+              </span>
+              {isPremiumReward(reward.reward_type) && (
+                <PremiumBadge />
+              )}
+            </div>
             <h2 className="text-display-sm mb-3">{reward.title}</h2>
             <span className="badge-accent text-base px-4 py-2">
               {reward.taler_cost.toLocaleString('de-CH')} Taler
             </span>
+            
+            {/* Premium Info Banner */}
+            {isPremiumReward(reward.reward_type) && !(isSubscribed || isTrial) && (
+              <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+                <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400">
+                  <Crown className="h-4 w-4" />
+                  <span className="text-sm font-medium">2Go Plus erforderlich</span>
+                </div>
+              </div>
+            )}
             
             {/* Sponsor Badges */}
             {sponsors.length > 0 && (
@@ -714,22 +736,48 @@ export default function RewardDetailPage() {
                   </p>
                 </div>
               )}
-              <button 
-                className="btn-primary w-full"
-                disabled={!canAfford || isRedeeming || remainingRedemptions === 0}
-                onClick={handleRedeem}
-              >
-                {isRedeeming ? 'Wird eingelöst...' : 
-                  remainingRedemptions === 0 ? 'Bereits eingelöst' :
-                  `Für ${reward.taler_cost.toLocaleString('de-CH')} Taler einlösen`}
-              </button>
-              <p className="text-xs text-center text-muted-foreground">
-                Der Code ist {REDEMPTION_EXPIRY_MINUTES} Minuten gültig.
-              </p>
+
+              {/* Premium reward requires subscription */}
+              {isPremiumReward(reward.reward_type) && !(isSubscribed || isTrial) ? (
+                <>
+                  <button 
+                    className="btn-primary w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                    onClick={() => setShowUpgradeSheet(true)}
+                  >
+                    <Crown className="h-5 w-5" />
+                    2Go Plus freischalten
+                  </button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Dieser Premium-Reward ist nur für 2Go Plus Mitglieder verfügbar.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <button 
+                    className="btn-primary w-full"
+                    disabled={!canAfford || isRedeeming || remainingRedemptions === 0}
+                    onClick={handleRedeem}
+                  >
+                    {isRedeeming ? 'Wird eingelöst...' : 
+                      remainingRedemptions === 0 ? 'Bereits eingelöst' :
+                      `Für ${reward.taler_cost.toLocaleString('de-CH')} Taler einlösen`}
+                  </button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Der Code ist {REDEMPTION_EXPIRY_MINUTES} Minuten gültig.
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Plus Upgrade Sheet */}
+      <PlusUpgradeSheet 
+        open={showUpgradeSheet} 
+        onOpenChange={setShowUpgradeSheet}
+        trigger="reward"
+      />
     </div>
   );
 }

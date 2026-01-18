@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Check, Sparkles, Loader2 } from 'lucide-react';
+import { Crown, Check, Sparkles, Loader2, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +11,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { useSubscription } from '@/hooks/useSubscription';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription, TALER_PLUS_COST, TALER_PLUS_DAYS } from '@/hooks/useSubscription';
+import { useAuth, useBalance } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -32,8 +32,11 @@ const features = [
 
 export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeSheetProps) {
   const { user } = useAuth();
-  const { createCheckout, isSubscribed, isTrial, trialDaysRemaining } = useSubscription();
-  const [isLoading, setIsLoading] = useState<'monthly' | 'yearly' | null>(null);
+  const { balance, refreshBalance } = useBalance();
+  const { createCheckout, isSubscribed, isTrial, trialDaysRemaining, redeemWithTaler } = useSubscription();
+  const [isLoading, setIsLoading] = useState<'monthly' | 'yearly' | 'taler' | null>(null);
+
+  const canAffordTaler = balance && balance.taler_balance >= TALER_PLUS_COST;
 
   const handleCheckout = async (tier: 'monthly' | 'yearly') => {
     if (!user) {
@@ -48,6 +51,35 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
       onOpenChange(false);
     } catch (error) {
       toast.error('Fehler beim Starten des Checkouts');
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleTalerRedemption = async () => {
+    if (!user) {
+      toast.error('Bitte melde dich an');
+      onOpenChange(false);
+      return;
+    }
+
+    if (!canAffordTaler) {
+      toast.error(`Du brauchst mindestens ${TALER_PLUS_COST} Taler`);
+      return;
+    }
+
+    setIsLoading('taler');
+    try {
+      const result = await redeemWithTaler();
+      if (result.success) {
+        toast.success(result.message || '2Go Plus aktiviert!');
+        refreshBalance();
+        onOpenChange(false);
+      } else {
+        toast.error(result.error || 'Fehler beim Einlösen');
+      }
+    } catch (error) {
+      toast.error('Fehler beim Einlösen');
     } finally {
       setIsLoading(null);
     }
@@ -115,66 +147,120 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
             </ul>
           </div>
 
-          {/* Pricing Cards */}
-          <div className="grid gap-3">
-            {/* Monthly */}
+          {/* Taler Redemption Option */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-3">
+              Mit Taler freischalten
+            </h4>
             <Card 
               className={cn(
-                "cursor-pointer transition-all hover:border-accent",
-                isLoading === 'monthly' && "opacity-70 pointer-events-none"
+                "cursor-pointer transition-all border-2",
+                canAffordTaler 
+                  ? "border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-orange-500/10 hover:border-amber-500" 
+                  : "opacity-60 border-muted",
+                isLoading === 'taler' && "opacity-70 pointer-events-none"
               )}
-              onClick={() => handleCheckout('monthly')}
+              onClick={canAffordTaler ? handleTalerRedemption : undefined}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">Monatlich</p>
-                    <p className="text-sm text-muted-foreground">Flexibel kündbar</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">CHF 4.90</p>
-                    <p className="text-xs text-muted-foreground">pro Monat inkl. MwSt.</p>
-                  </div>
-                </div>
-                {isLoading === 'monthly' && (
-                  <div className="mt-3 flex justify-center">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Yearly */}
-            <Card 
-              className={cn(
-                "cursor-pointer transition-all border-accent bg-accent/5 hover:bg-accent/10",
-                isLoading === 'yearly' && "opacity-70 pointer-events-none"
-              )}
-              onClick={() => handleCheckout('yearly')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">Jährlich</p>
-                      <Badge className="bg-green-500 text-white text-xs">
-                        Spare CHF 9.80
-                      </Badge>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-amber-500/20">
+                      <Coins className="h-5 w-5 text-amber-600" />
                     </div>
-                    <p className="text-sm text-muted-foreground">2 Monate gratis</p>
+                    <div>
+                      <p className="font-semibold">{TALER_PLUS_DAYS} Tage 2Go Plus</p>
+                      <p className="text-sm text-muted-foreground">Mit deinen Talern bezahlen</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold">CHF 49</p>
-                    <p className="text-xs text-muted-foreground">pro Jahr inkl. MwSt.</p>
+                    <p className="text-xl font-bold text-amber-600">{TALER_PLUS_COST}</p>
+                    <p className="text-xs text-muted-foreground">Taler</p>
                   </div>
                 </div>
-                {isLoading === 'yearly' && (
+                {!canAffordTaler && balance && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Du hast {balance.taler_balance.toLocaleString('de-CH')} Taler (brauchst {TALER_PLUS_COST})
+                  </p>
+                )}
+                {isLoading === 'taler' && (
                   <div className="mt-3 flex justify-center">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
                   </div>
                 )}
               </CardContent>
             </Card>
+          </motion.div>
+
+          {/* Pricing Cards */}
+          <div>
+            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-3">
+              Oder als Abo
+            </h4>
+            <div className="grid gap-3">
+              {/* Monthly */}
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-accent",
+                  isLoading === 'monthly' && "opacity-70 pointer-events-none"
+                )}
+                onClick={() => handleCheckout('monthly')}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">Monatlich</p>
+                      <p className="text-sm text-muted-foreground">Flexibel kündbar</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">CHF 4.90</p>
+                      <p className="text-xs text-muted-foreground">pro Monat inkl. MwSt.</p>
+                    </div>
+                  </div>
+                  {isLoading === 'monthly' && (
+                    <div className="mt-3 flex justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Yearly */}
+              <Card 
+                className={cn(
+                  "cursor-pointer transition-all border-accent bg-accent/5 hover:bg-accent/10",
+                  isLoading === 'yearly' && "opacity-70 pointer-events-none"
+                )}
+                onClick={() => handleCheckout('yearly')}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold">Jährlich</p>
+                        <Badge className="bg-green-500 text-white text-xs">
+                          Spare CHF 9.80
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">2 Monate gratis</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">CHF 49</p>
+                      <p className="text-xs text-muted-foreground">pro Jahr inkl. MwSt.</p>
+                    </div>
+                  </div>
+                  {isLoading === 'yearly' && (
+                    <div className="mt-3 flex justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Terms */}
