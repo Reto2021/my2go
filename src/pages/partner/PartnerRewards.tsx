@@ -5,7 +5,8 @@ import {
   Edit2, 
   Trash2,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,9 @@ import {
 import { Reward } from '@/lib/supabase-helpers';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
+import { RewardSponsorManager } from '@/components/partner/RewardSponsorManager';
+import { useRewardSponsors } from '@/hooks/useRewardSponsors';
+import { SponsorBadgeCompact } from '@/components/sponsors/SponsorBadge';
 
 const rewardTypes = [
   { value: 'fixed_discount', label: 'Fixer Rabatt (CHF)' },
@@ -353,6 +357,14 @@ export default function PartnerRewards() {
                 </div>
               </div>
 
+              {/* Sponsor Management - only show when editing */}
+              {editingReward && (
+                <RewardSponsorManager 
+                  rewardId={editingReward.id} 
+                  onUpdate={loadRewards}
+                />
+              )}
+
               <div className="flex gap-3 pt-4">
                 <Button type="submit">
                   {editingReward ? 'Speichern' : 'Erstellen'}
@@ -384,68 +396,110 @@ export default function PartnerRewards() {
       ) : (
         <div className="space-y-4">
           {rewards.map((reward) => (
-            <Card key={reward.id}>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                      <Gift className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{reward.title}</h3>
-                        <Badge variant={reward.is_active ? 'default' : 'secondary'}>
-                          {reward.is_active ? 'Aktiv' : 'Inaktiv'}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {reward.taler_cost} Taler • 
-                        {reward.reward_type === 'fixed_discount' && ` CHF ${reward.value_amount} Rabatt`}
-                        {reward.reward_type === 'percent_discount' && ` ${reward.value_percent}% Rabatt`}
-                        {reward.reward_type === 'free_item' && ' Gratis-Artikel'}
-                        {reward.reward_type === 'two_for_one' && ' 2 für 1'}
-                        {reward.reward_type === 'experience' && ' Erlebnis'}
-                        {reward.stock_total && ` • ${reward.stock_remaining}/${reward.stock_total} verfügbar`}
-                        {(reward as any).max_per_user === 1 && ' • Einmalig'}
-                        {(reward as any).max_per_user && (reward as any).max_per_user > 1 && ` • Max. ${(reward as any).max_per_user}x pro Kunde`}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleToggleActive(reward)}
-                      title={reward.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                    >
-                      {reward.is_active ? (
-                        <ToggleRight className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <ToggleLeft className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditForm(reward)}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(reward.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <RewardListItem 
+              key={reward.id}
+              reward={reward}
+              onEdit={openEditForm}
+              onDelete={handleDelete}
+              onToggleActive={handleToggleActive}
+            />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+// Separate component to handle sponsor loading per reward
+function RewardListItem({ 
+  reward, 
+  onEdit, 
+  onDelete, 
+  onToggleActive 
+}: { 
+  reward: Reward;
+  onEdit: (reward: Reward) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (reward: Reward) => void;
+}) {
+  const { sponsors } = useRewardSponsors(reward.id);
+
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+              <Gift className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold">{reward.title}</h3>
+                <Badge variant={reward.is_active ? 'default' : 'secondary'}>
+                  {reward.is_active ? 'Aktiv' : 'Inaktiv'}
+                </Badge>
+                {sponsors.length > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    <Building2 className="h-3 w-3" />
+                    {sponsors.length} Sponsor{sponsors.length > 1 ? 'en' : ''}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {reward.taler_cost} Taler • 
+                {reward.reward_type === 'fixed_discount' && ` CHF ${reward.value_amount} Rabatt`}
+                {reward.reward_type === 'percent_discount' && ` ${reward.value_percent}% Rabatt`}
+                {reward.reward_type === 'free_item' && ' Gratis-Artikel'}
+                {reward.reward_type === 'two_for_one' && ' 2 für 1'}
+                {reward.reward_type === 'experience' && ' Erlebnis'}
+                {reward.stock_total && ` • ${reward.stock_remaining}/${reward.stock_total} verfügbar`}
+                {(reward as any).max_per_user === 1 && ' • Einmalig'}
+                {(reward as any).max_per_user && (reward as any).max_per_user > 1 && ` • Max. ${(reward as any).max_per_user}x pro Kunde`}
+              </p>
+              {sponsors.length > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                  {sponsors.map((rs) => rs.sponsor && (
+                    <SponsorBadgeCompact 
+                      key={rs.id} 
+                      sponsor={rs.sponsor} 
+                      className="text-xs"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onToggleActive(reward)}
+              title={reward.is_active ? 'Deaktivieren' : 'Aktivieren'}
+            >
+              {reward.is_active ? (
+                <ToggleRight className="h-5 w-5 text-green-600" />
+              ) : (
+                <ToggleLeft className="h-5 w-5 text-muted-foreground" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEdit(reward)}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(reward.id)}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
