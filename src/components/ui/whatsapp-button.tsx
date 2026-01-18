@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, X, Mic, Heart, ThumbsDown, Music, Store } from 'lucide-react';
+import { MessageCircle, X, Mic, Heart, ThumbsDown, Music, Store, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,6 +30,11 @@ const quickMessages = [
     icon: Store, 
     label: 'Gutscheinpartner vorschlagen', 
     message: 'Hey Radio 2Go! 🏪 Ich möchte euch einen Gutscheinpartner vorschlagen:' 
+  },
+  { 
+    icon: Megaphone, 
+    label: 'Sponsor werden', 
+    message: 'Hallo Radio 2Go! 📢 Ich interessiere mich für eine Sponsoring-Partnerschaft. Unser Unternehmen heisst:' 
   },
 ];
 

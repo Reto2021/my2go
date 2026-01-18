@@ -122,8 +122,12 @@ Deno.serve(async (req) => {
     </ul>
     
     <div style="text-align: center; margin-top: 30px;">
-      <a href="https://my2go.app/settings" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 16px;">Jetzt verlängern →</a>
+      <a href="https://my2go.app/plus/discount" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 16px;">Rabatt einlösen →</a>
     </div>
+    
+    <p style="margin-top: 20px; font-size: 14px; color: #6b7280; text-align: center;">
+      <a href="https://my2go.app/settings" style="color: #6366f1; text-decoration: none;">Oder direkt zu den Abo-Einstellungen →</a>
+    </p>
     
     <p style="margin-top: 30px; font-size: 14px; color: #6b7280; text-align: center;">
       Fragen? Schreib uns einfach eine Nachricht!<br>
