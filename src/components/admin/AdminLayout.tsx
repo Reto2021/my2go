@@ -13,7 +13,8 @@ import {
   Zap,
   Clock,
   BarChart3,
-  Tv
+  Tv,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
@@ -22,6 +23,7 @@ const navItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { path: '/admin/partners', icon: Store, label: 'Partner' },
+  { path: '/admin/sponsors', icon: Building2, label: 'Sponsoren' },
   { path: '/admin/ghl', icon: Zap, label: 'GHL Status' },
   { path: '/admin/applications', icon: FileText, label: 'Bewerbungen' },
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
