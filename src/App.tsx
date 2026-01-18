@@ -56,6 +56,7 @@ const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
+const AdminSponsors = lazy(() => import("./pages/admin/AdminSponsors"));
 const AdminGHLStatus = lazy(() => import("./pages/admin/AdminGHLStatus"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminAirDrops = lazy(() => import("./pages/admin/AdminAirDrops"));
@@ -204,6 +205,7 @@ function AppContent() {
             <Route index element={<AdminDashboard />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="partners" element={<AdminPartners />} />
+            <Route path="sponsors" element={<AdminSponsors />} />
             <Route path="ghl" element={<AdminGHLStatus />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="badges" element={<AdminBadges />} />
