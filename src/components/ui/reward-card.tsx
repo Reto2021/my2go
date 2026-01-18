@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Reward } from '@/lib/supabase-helpers';
 import { useBalance } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -6,6 +6,9 @@ import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Spark
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { SponsorBadgeCompact, type RewardSponsor } from '@/components/sponsors/SponsorBadge';
+import { useSubscription, isPremiumReward } from '@/hooks/useSubscription';
+import { PremiumRewardOverlay, PremiumBadge } from '@/components/subscription/PremiumRewardOverlay';
+import { PlusUpgradeSheet } from '@/components/subscription/PlusUpgradeSheet';
 
 interface RewardCardProps {
   reward: Reward;
@@ -26,12 +29,19 @@ const typeConfig = {
 
 export const RewardCard = memo(function RewardCard({ reward, className, distance, sponsors }: RewardCardProps) {
   const { balance } = useBalance();
+  const { isSubscribed, isLoading: subLoading } = useSubscription();
+  const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
+  
   const config = typeConfig[reward.reward_type] || typeConfig.free_item;
   const Icon = config.icon;
   const colorClass = config.colorClass;
   
   const userBalance = balance?.taler_balance ?? 0;
   const canAfford = reward.taler_cost <= userBalance;
+  
+  // Check if this is a premium reward and user doesn't have subscription
+  const isPremium = isPremiumReward(reward.reward_type);
+  const showPremiumOverlay = isPremium && !isSubscribed && !subLoading;
   
   const formatDistance = (km: number) => {
     if (km < 1) {
@@ -47,76 +57,110 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
   const firstSponsor = sponsors?.[0]?.sponsor;
   
   return (
-    <Link
-      to={`/rewards/${reward.id}`}
-      className={cn('card-base p-4 flex items-center gap-4 group relative overflow-hidden', className)}
-    >
-      {/* "Jetzt einlösbar" Badge - Top Right */}
-      {canAfford && userBalance > 0 && (
-        <div className="absolute -top-0 -right-0 z-10">
-          <div className="bg-success text-success-foreground text-xs font-bold px-2.5 py-1.5 rounded-bl-xl flex items-center gap-1">
-            <Check className="h-3.5 w-3.5" />
-            Jetzt einlösbar
+    <>
+      <Link
+        to={showPremiumOverlay ? '#' : `/rewards/${reward.id}`}
+        onClick={(e) => {
+          if (showPremiumOverlay) {
+            e.preventDefault();
+            setShowUpgradeSheet(true);
+          }
+        }}
+        className={cn(
+          'card-base p-4 flex items-center gap-4 group relative overflow-hidden',
+          showPremiumOverlay && 'cursor-pointer',
+          className
+        )}
+      >
+        {/* Premium Overlay for non-subscribers */}
+        {showPremiumOverlay && (
+          <PremiumRewardOverlay onUpgradeClick={() => setShowUpgradeSheet(true)} />
+        )}
+        
+        {/* Premium Badge - Top Left */}
+        {isPremium && !showPremiumOverlay && (
+          <div className="absolute top-2 left-2 z-10">
+            <PremiumBadge />
           </div>
-        </div>
-      )}
-      
-      {/* Icon */}
-      <div className={cn(
-        'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105',
-        colorClass,
-        canAfford && 'ring-2 ring-success/30'
-      )}>
-        <Icon className="h-7 w-7" />
-      </div>
-      
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
-            {reward.title}
-          </h3>
-          {distance !== undefined && (
-            <span className="flex items-center gap-0.5 text-sm text-foreground/70 whitespace-nowrap">
-              <MapPin className="h-3.5 w-3.5" />
-              {formatDistance(distance)}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <p className="text-sm text-foreground/70 line-clamp-1">
-            {partnerName}
-          </p>
-          {(reward as any).max_per_user === 1 && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/15 text-accent border-0">
-              Einmalig
-            </Badge>
-          )}
-          {firstSponsor && (
-            <SponsorBadgeCompact sponsor={firstSponsor} />
-          )}
+        )}
+        
+        {/* "Jetzt einlösbar" Badge - Top Right */}
+        {canAfford && userBalance > 0 && !showPremiumOverlay && (
+          <div className="absolute -top-0 -right-0 z-10">
+            <div className="bg-success text-success-foreground text-xs font-bold px-2.5 py-1.5 rounded-bl-xl flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" />
+              Jetzt einlösbar
+            </div>
+          </div>
+        )}
+        
+        {/* Icon */}
+        <div className={cn(
+          'flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105',
+          colorClass,
+          canAfford && !showPremiumOverlay && 'ring-2 ring-success/30',
+          showPremiumOverlay && 'blur-[2px]'
+        )}>
+          <Icon className="h-7 w-7" />
         </div>
         
-        {/* Points Badge */}
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className={cn(
-            'inline-flex items-center gap-1 text-sm font-bold',
-            canAfford ? 'text-success' : 'text-muted-foreground'
-          )}>
-            <Coins className="h-3.5 w-3.5" />
-            {reward.taler_cost.toLocaleString('de-CH')}
-          </span>
-          {!canAfford && userBalance > 0 && (
-            <span className="text-sm text-foreground/60">
-              noch {(reward.taler_cost - userBalance).toLocaleString('de-CH')} nötig
+        {/* Content */}
+        <div className={cn("flex-1 min-w-0", showPremiumOverlay && 'blur-[2px]')}>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+              {reward.title}
+            </h3>
+            {distance !== undefined && (
+              <span className="flex items-center gap-0.5 text-sm text-foreground/70 whitespace-nowrap">
+                <MapPin className="h-3.5 w-3.5" />
+                {formatDistance(distance)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-sm text-foreground/70 line-clamp-1">
+              {partnerName}
+            </p>
+            {(reward as any).max_per_user === 1 && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/15 text-accent border-0">
+                Einmalig
+              </Badge>
+            )}
+            {firstSponsor && (
+              <SponsorBadgeCompact sponsor={firstSponsor} />
+            )}
+          </div>
+          
+          {/* Points Badge */}
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={cn(
+              'inline-flex items-center gap-1 text-sm font-bold',
+              canAfford && !showPremiumOverlay ? 'text-success' : 'text-muted-foreground'
+            )}>
+              <Coins className="h-3.5 w-3.5" />
+              {reward.taler_cost.toLocaleString('de-CH')}
             </span>
-          )}
+            {!canAfford && userBalance > 0 && !showPremiumOverlay && (
+              <span className="text-sm text-foreground/60">
+                noch {(reward.taler_cost - userBalance).toLocaleString('de-CH')} nötig
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+        
+        {/* Arrow */}
+        <ChevronRight className={cn(
+          "h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0",
+          showPremiumOverlay && 'blur-[2px]'
+        )} />
+      </Link>
       
-      {/* Arrow */}
-      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-    </Link>
+      <PlusUpgradeSheet 
+        open={showUpgradeSheet} 
+        onOpenChange={setShowUpgradeSheet}
+        trigger="reward"
+      />
+    </>
   );
 });
 
