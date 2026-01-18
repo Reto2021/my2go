@@ -11,6 +11,7 @@ import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
 import { LiveHeaderButton, LiveEventsPanel } from '@/components/radio/LiveEventsPanel';
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { PlusBanner } from '@/components/subscription/PlusBanner';
+import { PlusExpiryBanner } from '@/components/subscription/PlusExpiryBanner';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { ChevronRight, Navigation, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -77,6 +78,11 @@ export function SessionModeHome({
       {/* 2Go Plus Banner - for users without subscription */}
       <section className="container pb-3">
         <PlusBanner />
+      </section>
+      
+      {/* Plus Expiry Warning - for users whose subscription is expiring soon */}
+      <section className="container pb-3">
+        <PlusExpiryBanner />
       </section>
       
       {/* New Partner Banner - Show when new partners are in user's area */}
