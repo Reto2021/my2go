@@ -51,6 +51,7 @@ const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 const LegalTermsPage = lazy(() => import("./pages/LegalTermsPage"));
 const ImpressumPage = lazy(() => import("./pages/ImpressumPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
+const SponsorsPage = lazy(() => import("./pages/SponsorsPage"));
 
 // Admin pages - lazy loaded (rarely accessed)
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -279,6 +280,7 @@ function AppContent() {
             <Route path="/agb" element={<LegalTermsPage />} />
             <Route path="/impressum" element={<ImpressumPage />} />
             <Route path="/datenschutz" element={<PrivacyPolicyPage />} />
+            <Route path="/sponsoren" element={<SponsorsPage />} />
           </Route>
           
           {/* Catch-all */}
