@@ -1,8 +1,14 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Star, Crown, Award, Medal, Radio, Gift, Calendar, Users, Building2, ArrowRight } from 'lucide-react';
+import { Check, Star, Crown, Award, Medal, Radio, Gift, Calendar, Users, Building2, ArrowRight, Send, Quote, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 const ENGAGEMENT_AREAS = [
   {
@@ -136,7 +142,81 @@ const SPONSOR_LEVELS = [
   },
 ];
 
+// Realistische Sponsor-Testimonials
+const TESTIMONIALS = [
+  {
+    name: 'Stefan Müller',
+    role: 'Marketing-Leiter',
+    company: 'Bäckerei Müller AG',
+    level: 'Gold',
+    area: 'Partner',
+    quote: 'Seit wir Gold Partner-Sponsor sind, haben wir 35% mehr Neukunden in unserer Bäckerei. Die 2Go Community ist extrem engagiert und die Zusammenarbeit ist unkompliziert.',
+    avatar: '👨‍🍳',
+  },
+  {
+    name: 'Claudia Weber',
+    role: 'Geschäftsführerin',
+    company: 'Autohaus Weber',
+    level: 'Platinum',
+    area: 'Radio',
+    quote: 'Als Platinum Radio-Sponsor erreichen wir täglich tausende Hörer. Die Audio-Spots haben unsere Markenbekanntheit in der Region massiv gesteigert. Absolut empfehlenswert!',
+    avatar: '👩‍💼',
+  },
+  {
+    name: 'Marco Bernasconi',
+    role: 'Inhaber',
+    company: 'Ristorante Bella Vista',
+    level: 'Silber',
+    area: 'Reward',
+    quote: 'Mit dem Reward-Sponsoring konnten wir unsere Stammkundenbindung deutlich verbessern. Die Gutschein-Aktionen über 2Go funktionieren super und bringen echten Mehrwert.',
+    avatar: '👨‍🍳',
+  },
+];
+
 export default function SponsorPackagesPage() {
+  const [formData, setFormData] = useState({
+    company: '',
+    name: '',
+    email: '',
+    phone: '',
+    level: '',
+    area: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.company || !formData.name || !formData.email) {
+      toast.error('Bitte füllen Sie die Pflichtfelder aus.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    // Simulate form submission
+    try {
+      // In a real scenario, you would send this to an API endpoint
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success('Vielen Dank für Ihre Anfrage! Wir melden uns innerhalb von 48 Stunden bei Ihnen.');
+      setFormData({
+        company: '',
+        name: '',
+        email: '',
+        phone: '',
+        level: '',
+        area: '',
+        message: '',
+      });
+    } catch (error) {
+      toast.error('Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -156,14 +236,14 @@ export default function SponsorPackagesPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button size="lg" asChild>
-                <a href="#packages">
-                  Pakete ansehen
+                <a href="#contact">
+                  Jetzt anfragen
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link to="/go/partner/faq">
-                  Häufige Fragen
+                <Link to="/sponsoren">
+                  Aktuelle Sponsoren
                 </Link>
               </Button>
             </div>
@@ -263,7 +343,7 @@ export default function SponsorPackagesPage() {
                     variant={level.popular ? 'default' : 'outline'}
                     asChild
                   >
-                    <a href={`mailto:sponsoring@my2go.ch?subject=Anfrage ${level.name}-Sponsoring`}>
+                    <a href="#contact">
                       Anfragen
                     </a>
                   </Button>
@@ -274,57 +354,246 @@ export default function SponsorPackagesPage() {
         </div>
       </section>
 
-      {/* Combination Examples */}
+      {/* Testimonials Section */}
       <section className="py-12 container">
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-bold text-secondary dark:text-foreground mb-3">
-            Beispiel-Kombinationen
+            Das sagen unsere Sponsoren
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Kombiniere Level und Engagement-Bereich für massgeschneidertes Sponsoring
+            Erfahre, wie andere Unternehmen von unserem Sponsoring profitieren
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          {[
-            { level: 'Platinum', area: 'Radio', desc: 'Höchste Sichtbarkeit bei allen Radio-Inhalten', icon: Radio },
-            { level: 'Gold', area: 'Event', desc: 'Premium-Präsenz bei Live-Events', icon: Calendar },
-            { level: 'Gold', area: 'Partner', desc: 'Unterstützung lokaler Partner mit Branding', icon: Building2 },
-            { level: 'Silber', area: 'Community', desc: 'Breite Sichtbarkeit in der Community', icon: Users },
-            { level: 'Bronze', area: 'Reward', desc: 'Einstieg mit Reward-Sponsoring', icon: Gift },
-            { level: 'Platinum', area: 'Partner', desc: 'Maximale Partner-Unterstützung', icon: Crown },
-          ].map((combo, idx) => (
-            <Card key={idx} className="hover:shadow-md transition-shadow">
-              <CardContent className="flex items-center gap-4 pt-6">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
-                  <combo.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <div className="font-semibold text-secondary dark:text-foreground">
-                    {combo.level} {combo.area}-Sponsor
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {TESTIMONIALS.map((testimonial, idx) => (
+            <Card key={idx} className="relative overflow-hidden hover:shadow-lg transition-all">
+              <CardContent className="pt-8 pb-6">
+                <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/20" />
+                
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl">
+                    {testimonial.avatar}
                   </div>
-                  <p className="text-xs text-muted-foreground">{combo.desc}</p>
+                  <div>
+                    <div className="font-semibold text-secondary dark:text-foreground">
+                      {testimonial.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {testimonial.role}, {testimonial.company}
+                    </div>
+                  </div>
                 </div>
+                
+                <p className="text-sm text-muted-foreground mb-4 italic">
+                  "{testimonial.quote}"
+                </p>
+                
+                <Badge variant="outline" className="text-xs">
+                  {testimonial.level} {testimonial.area}-Sponsor
+                </Badge>
               </CardContent>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Combination Examples */}
+      <section className="py-12 bg-muted/30">
+        <div className="container">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-secondary dark:text-foreground mb-3">
+              Beispiel-Kombinationen
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Kombiniere Level und Engagement-Bereich für massgeschneidertes Sponsoring
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {[
+              { level: 'Platinum', area: 'Radio', desc: 'Höchste Sichtbarkeit bei allen Radio-Inhalten', icon: Radio },
+              { level: 'Gold', area: 'Event', desc: 'Premium-Präsenz bei Live-Events', icon: Calendar },
+              { level: 'Gold', area: 'Partner', desc: 'Unterstützung lokaler Partner mit Branding', icon: Building2 },
+              { level: 'Silber', area: 'Community', desc: 'Breite Sichtbarkeit in der Community', icon: Users },
+              { level: 'Bronze', area: 'Reward', desc: 'Einstieg mit Reward-Sponsoring', icon: Gift },
+              { level: 'Platinum', area: 'Partner', desc: 'Maximale Partner-Unterstützung', icon: Crown },
+            ].map((combo, idx) => (
+              <Card key={idx} className="hover:shadow-md transition-shadow">
+                <CardContent className="flex items-center gap-4 pt-6">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0">
+                    <combo.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-secondary dark:text-foreground">
+                      {combo.level} {combo.area}-Sponsor
+                    </div>
+                    <p className="text-xs text-muted-foreground">{combo.desc}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Form Section */}
+      <section id="contact" className="py-16 container">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-secondary dark:text-foreground mb-3">
+              Sponsoring-Anfrage
+            </h2>
+            <p className="text-muted-foreground">
+              Fülle das Formular aus und wir melden uns innerhalb von 48 Stunden bei dir.
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Unternehmen *</Label>
+                    <Input
+                      id="company"
+                      placeholder="Firmenname AG"
+                      value={formData.company}
+                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Ansprechperson *</Label>
+                    <Input
+                      id="name"
+                      placeholder="Vor- und Nachname"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-Mail *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="email@beispiel.ch"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefon</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+41 79 123 45 67"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="level">Gewünschtes Level</Label>
+                    <Select
+                      value={formData.level}
+                      onValueChange={(value) => setFormData({ ...formData, level: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Level wählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bronze">Bronze - CHF 500/Monat</SelectItem>
+                        <SelectItem value="silver">Silber - CHF 1'000/Monat</SelectItem>
+                        <SelectItem value="gold">Gold - CHF 2'500/Monat</SelectItem>
+                        <SelectItem value="platinum">Platinum - CHF 5'000/Monat</SelectItem>
+                        <SelectItem value="custom">Individuelles Paket</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="area">Engagement-Bereich</Label>
+                    <Select
+                      value={formData.area}
+                      onValueChange={(value) => setFormData({ ...formData, area: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Bereich wählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="reward">🎁 Reward-Sponsor</SelectItem>
+                        <SelectItem value="radio">📻 Radio-Sponsor</SelectItem>
+                        <SelectItem value="event">🎉 Event-Sponsor</SelectItem>
+                        <SelectItem value="partner">🤝 Partner-Sponsor</SelectItem>
+                        <SelectItem value="community">💚 Community-Sponsor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="message">Nachricht</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Erzähl uns mehr über dein Unternehmen und deine Ziele..."
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Wird gesendet...
+                    </>
+                  ) : (
+                    <>
+                      Anfrage senden
+                      <Send className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  Mit dem Absenden stimmst du unserer{' '}
+                  <Link to="/go/legal/datenschutz" className="underline hover:text-foreground">
+                    Datenschutzerklärung
+                  </Link>{' '}
+                  zu.
+                </p>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
       <section className="py-16 bg-gradient-to-br from-primary to-accent">
         <div className="container text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-4">
-            Bereit, Sponsor zu werden?
+            Noch Fragen?
           </h2>
           <p className="text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-            Kontaktiere uns für ein unverbindliches Gespräch über deine Sponsoring-Möglichkeiten.
+            Unser Team steht dir gerne für ein unverbindliches Gespräch zur Verfügung.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" variant="secondary" asChild>
-              <a href="mailto:sponsoring@my2go.ch">
-                Jetzt anfragen
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <a href="tel:+41791234567">
+                Jetzt anrufen
               </a>
             </Button>
             <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10" asChild>

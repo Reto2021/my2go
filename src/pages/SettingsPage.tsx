@@ -649,6 +649,7 @@ export default function SettingsPage() {
               <a href="/agb" className="hover:text-foreground transition-colors">AGB</a>
               <a href="/datenschutz" className="hover:text-foreground transition-colors">Datenschutz</a>
               <a href="/impressum" className="hover:text-foreground transition-colors">Impressum</a>
+              <a href="/go/sponsoring" className="hover:text-foreground transition-colors">Sponsoring</a>
             </div>
             <p className="text-xs text-muted-foreground text-center mt-3">
               © {new Date().getFullYear()} 2Go Media AG

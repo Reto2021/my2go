@@ -775,6 +775,7 @@ export default function PartnerLandingPage() {
             <Link to="/go/legal/agb" className="hover:text-foreground transition-colors">AGB</Link>
             <Link to="/go/partner/faq" className="hover:text-foreground transition-colors">FAQ</Link>
             <Link to="/go/partner/refund" className="hover:text-foreground transition-colors">Geld-zurück-Garantie</Link>
+            <Link to="/go/sponsoring" className="hover:text-foreground transition-colors">Sponsoring</Link>
           </div>
         </div>
       </section>

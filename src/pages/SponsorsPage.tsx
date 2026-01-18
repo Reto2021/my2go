@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ExternalLink, Heart, Crown, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ExternalLink, Heart, Crown, Star, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -242,21 +243,22 @@ export default function SponsorsPage() {
       )}
 
       {/* Footer CTA */}
-      {sponsors.length > 0 && (
-        <div className="mt-16 text-center">
-          <Card className="inline-block">
-            <CardContent className="py-8 px-12">
-              <h3 className="text-xl font-semibold mb-2">Werde Sponsor!</h3>
-              <p className="text-muted-foreground mb-4 max-w-md">
-                Unterstütze unsere Community und profitiere von attraktiven Sponsoring-Paketen.
-              </p>
-              <Button asChild>
-                <a href="mailto:hello@my2go.ch">Jetzt anfragen</a>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <div className="mt-16 text-center">
+        <Card className="inline-block">
+          <CardContent className="py-8 px-12">
+            <h3 className="text-xl font-semibold mb-2">Werde Sponsor!</h3>
+            <p className="text-muted-foreground mb-4 max-w-md">
+              Unterstütze unsere Community und profitiere von attraktiven Sponsoring-Paketen.
+            </p>
+            <Button asChild>
+              <Link to="/go/sponsoring" className="inline-flex items-center gap-2">
+                Zu den Sponsoring-Paketen
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
