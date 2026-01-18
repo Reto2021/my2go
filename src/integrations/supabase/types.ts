@@ -1141,6 +1141,48 @@ export type Database = {
           },
         ]
       }
+      reward_sponsors: {
+        Row: {
+          created_at: string
+          display_text: string | null
+          id: string
+          reward_id: string
+          sponsor_id: string
+          sponsorship_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_text?: string | null
+          id?: string
+          reward_id: string
+          sponsor_id: string
+          sponsorship_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_text?: string | null
+          id?: string
+          reward_id?: string
+          sponsor_id?: string
+          sponsorship_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_sponsors_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_sponsors_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rewards: {
         Row: {
           created_at: string
@@ -1211,6 +1253,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sponsors: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {

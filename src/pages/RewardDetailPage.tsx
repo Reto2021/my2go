@@ -13,8 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth, useBalance } from '@/contexts/AuthContext';
 import { useSettings } from '@/lib/settings';
 import { useRadioStore } from '@/lib/radio-store';
+import { useRewardSponsors } from '@/hooks/useRewardSponsors';
 import { PageLoader } from '@/components/ui/loading-spinner';
 import { ErrorState } from '@/components/ui/error-state';
+import { SponsorBadge } from '@/components/sponsors/SponsorBadge';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -64,6 +66,7 @@ export default function RewardDetailPage() {
   const { balance, refreshBalance } = useBalance();
   const { soundEnabled, vibrationEnabled } = useSettings();
   const { isPlaying: isRadioPlaying } = useRadioStore();
+  const { sponsors } = useRewardSponsors(id);
   
   const [reward, setReward] = useState<Reward | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -578,6 +581,21 @@ export default function RewardDetailPage() {
             <span className="badge-accent text-base px-4 py-2">
               {reward.taler_cost.toLocaleString('de-CH')} Taler
             </span>
+            
+            {/* Sponsor Badges */}
+            {sponsors.length > 0 && (
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {sponsors.map((rs) => rs.sponsor && (
+                  <SponsorBadge 
+                    key={rs.id}
+                    sponsor={rs.sponsor}
+                    sponsorshipType={rs.sponsorship_type as 'financial' | 'provider'}
+                    displayText={rs.display_text}
+                    size="md"
+                  />
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Description */}
