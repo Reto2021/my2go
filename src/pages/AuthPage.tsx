@@ -3,10 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { signIn, signUp } from '@/lib/supabase-helpers';
 import { z } from 'zod';
-import { Mail, Lock, User, ArrowRight, Loader2, Gift, Users, Phone } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Gift, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { TalerIcon } from '@/components/icons/TalerIcon';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const emailSchema = z.string().email('Ungültige E-Mail-Adresse');
 const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
@@ -304,26 +305,16 @@ export default function AuthPage() {
             {mode === 'signup' && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">Telefon *</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <input
-                    type="tel"
-                    placeholder="+41791234567"
-                    value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      setErrors(prev => ({ ...prev, phone: undefined }));
-                    }}
-                    className={cn(
-                      'w-full h-12 pl-12 pr-4 rounded-2xl',
-                      'bg-muted border-2',
-                      errors.phone ? 'border-destructive' : 'border-transparent',
-                      'placeholder:text-muted-foreground/60',
-                      'focus:outline-none focus:border-accent focus:bg-background',
-                      'transition-all duration-200'
-                    )}
-                  />
-                </div>
+                <PhoneInput
+                  value={phone}
+                  onChange={(val) => {
+                    setPhone(val);
+                    setErrors(prev => ({ ...prev, phone: undefined }));
+                  }}
+                  error={!!errors.phone}
+                  variant="auth"
+                  placeholder="79 123 45 67"
+                />
                 {errors.phone && (
                   <p className="text-sm text-destructive">{errors.phone}</p>
                 )}
