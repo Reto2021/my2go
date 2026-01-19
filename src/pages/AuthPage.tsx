@@ -11,7 +11,7 @@ import { TalerIcon } from '@/components/icons/TalerIcon';
 const emailSchema = z.string().email('Ungültige E-Mail-Adresse');
 const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
 const firstNameSchema = z.string().min(1, 'Vorname ist erforderlich').max(50, 'Maximal 50 Zeichen');
-const phoneSchema = z.string().regex(/^(\+41|0)?[0-9]{9,10}$/, 'Ungültige Telefonnummer (z.B. +41791234567)');
+const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, 'Ungültige Telefonnummer (z.B. +41791234567 oder +4915123456789)');
 
 export default function AuthPage() {
   const navigate = useNavigate();

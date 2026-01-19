@@ -25,7 +25,7 @@ const profileSchema = z.object({
   display_name: z.string().trim().max(100, 'Max 100 Zeichen').optional(),
   first_name: z.string().trim().max(50, 'Max 50 Zeichen').optional(),
   last_name: z.string().trim().max(50, 'Max 50 Zeichen').optional(),
-  phone: z.string().trim().regex(/^(\+41|0)?[0-9]{9,10}$/, 'Ungültige Telefonnummer').optional().or(z.literal('')),
+  phone: z.string().trim().regex(/^\+?[1-9]\d{6,14}$/, 'Ungültige Telefonnummer (z.B. +41791234567 oder +4915123456789)').optional().or(z.literal('')),
   postal_code: z.string().trim().max(10, 'Max 10 Zeichen').optional(),
   city: z.string().trim().max(100, 'Max 100 Zeichen').optional(),
   leaderboard_nickname: z.string().trim().max(20, 'Max 20 Zeichen').optional(),
