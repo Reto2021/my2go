@@ -840,6 +840,7 @@ export type Database = {
       qr_scans: {
         Row: {
           id: string
+          ip_address: string | null
           partner_id: string
           referrer: string | null
           scanned_at: string
@@ -851,6 +852,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          ip_address?: string | null
           partner_id: string
           referrer?: string | null
           scanned_at?: string
@@ -862,6 +864,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          ip_address?: string | null
           partner_id?: string
           referrer?: string | null
           scanned_at?: string
@@ -1928,6 +1931,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      insert_qr_scan_rate_limited: {
+        Args: {
+          _ip_address?: string
+          _partner_id: string
+          _referrer?: string
+          _user_agent?: string
+          _user_id?: string
+          _utm_campaign?: string
+          _utm_medium?: string
+          _utm_source?: string
+        }
+        Returns: Json
       }
       is_partner_admin: {
         Args: { _partner_id: string; _user_id: string }
