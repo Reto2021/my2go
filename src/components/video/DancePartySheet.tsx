@@ -66,6 +66,7 @@ import { GiftPanel, GiftButton, FloatingGift } from './GiftPanel';
 import { VIRTUAL_GIFTS, useGiftStore, SentGift } from '@/lib/gifts-store';
 import { KaraokeButton, KaraokeOverlay } from './KaraokeDisplay';
 import { useLyricsStore } from '@/lib/lyrics-store';
+import { AudioBalanceSlider } from './AudioBalanceSlider';
 
 // Applause sound generator
 const playApplauseSound = () => {
@@ -169,13 +170,15 @@ const LiveKitVideoTile = ({
   isLocal,
   room,
   filter = 'none',
-  background = 'none'
+  background = 'none',
+  voiceVolume = 1.0
 }: { 
   participant: Participant;
   isLocal: boolean;
   room: Room | null;
   filter?: CameraFilterType;
   background?: VirtualBackgroundType;
+  voiceVolume?: number;
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -292,6 +295,13 @@ const LiveKitVideoTile = ({
     };
   }, [room, participant.identity, isLocal, participant.isVideoOff]);
 
+  // Update audio volume when voiceVolume changes
+  useEffect(() => {
+    if (audioRef.current && !isLocal) {
+      audioRef.current.volume = voiceVolume;
+    }
+  }, [voiceVolume, isLocal]);
+
   const initials = participant.name
     .split(' ')
     .map(n => n[0])
@@ -383,8 +393,18 @@ const LiveKitVideoTile = ({
         </>
       )}
 
-      {/* Audio element for remote participants */}
-      {!isLocal && <audio ref={audioRef} autoPlay />}
+      {/* Audio element for remote participants with volume control */}
+      {!isLocal && (
+        <audio 
+          ref={(el) => {
+            audioRef.current = el;
+            if (el) {
+              el.volume = voiceVolume;
+            }
+          }} 
+          autoPlay 
+        />
+      )}
 
       {/* Name badge */}
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
@@ -501,11 +521,41 @@ export const DancePartySheet = ({
   
   const isRadioPlaying = useRadioStore((state) => state.isPlaying);
   const nowPlaying = useRadioStore((state) => state.nowPlaying);
+  const setRadioVolume = useRadioStore((state) => state.setVolume);
+  const originalRadioVolume = useRef(useRadioStore.getState().volume);
   const currentBalance = authContext?.balance?.taler_balance ?? 0;
+  
+  // Audio balance state for dance party
+  const [voiceVolume, setVoiceVolume] = useState(1.0);
+  const [partyRadioVolume, setPartyRadioVolume] = useState(0.4); // Default lower for dance party
   
   // Karaoke state
   const [isKaraokeActive, setIsKaraokeActive] = useState(false);
   const { fetchLyrics, currentLyrics, clearLyrics } = useLyricsStore();
+  
+  // Automatically reduce radio volume when connected to dance party
+  useEffect(() => {
+    if (isConnected && isRadioPlaying) {
+      // Store original volume and reduce for dance party
+      originalRadioVolume.current = useRadioStore.getState().volume;
+      setRadioVolume(partyRadioVolume);
+    }
+    
+    return () => {
+      // Restore original volume when leaving dance party
+      if (originalRadioVolume.current > 0) {
+        setRadioVolume(originalRadioVolume.current);
+      }
+    };
+  }, [isConnected, isRadioPlaying, setRadioVolume]);
+  
+  // Update radio volume when party slider changes
+  useEffect(() => {
+    if (isConnected && isRadioPlaying) {
+      setRadioVolume(partyRadioVolume);
+    }
+  }, [partyRadioVolume, isConnected, isRadioPlaying, setRadioVolume]);
+  
   // Clear old gifts periodically
   useEffect(() => {
     const interval = setInterval(clearOldGifts, 1000);
@@ -955,6 +1005,7 @@ export const DancePartySheet = ({
                       room={room}
                       filter={currentFilter}
                       background={currentBackground}
+                      voiceVolume={voiceVolume}
                     />
                   ))}
                 </AnimatePresence>
@@ -1025,6 +1076,18 @@ export const DancePartySheet = ({
                 </motion.div>
               )}
             </AnimatePresence>
+          )}
+
+          {/* Audio Balance Slider - only when connected and radio is playing */}
+          {isConnected && isRadioPlaying && (
+            <div className="px-4 py-2">
+              <AudioBalanceSlider
+                radioVolume={partyRadioVolume}
+                voiceVolume={voiceVolume}
+                onRadioVolumeChange={setPartyRadioVolume}
+                onVoiceVolumeChange={setVoiceVolume}
+              />
+            </div>
           )}
 
           {/* Reactions Bar */}
