@@ -9,14 +9,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Country data with dial codes and flags
+// Country data with dial codes and flags - CH, DE, AT on top
 const countries = [
+  // DACH region first
   { code: "CH", name: "Schweiz", dialCode: "+41", flag: "🇨🇭" },
   { code: "DE", name: "Deutschland", dialCode: "+49", flag: "🇩🇪" },
   { code: "AT", name: "Österreich", dialCode: "+43", flag: "🇦🇹" },
+  // Rest of Europe
+  { code: "LI", name: "Liechtenstein", dialCode: "+423", flag: "🇱🇮" },
   { code: "FR", name: "Frankreich", dialCode: "+33", flag: "🇫🇷" },
   { code: "IT", name: "Italien", dialCode: "+39", flag: "🇮🇹" },
-  { code: "LI", name: "Liechtenstein", dialCode: "+423", flag: "🇱🇮" },
   { code: "NL", name: "Niederlande", dialCode: "+31", flag: "🇳🇱" },
   { code: "BE", name: "Belgien", dialCode: "+32", flag: "🇧🇪" },
   { code: "LU", name: "Luxemburg", dialCode: "+352", flag: "🇱🇺" },
@@ -28,6 +30,20 @@ const countries = [
   { code: "HU", name: "Ungarn", dialCode: "+36", flag: "🇭🇺" },
   { code: "US", name: "USA", dialCode: "+1", flag: "🇺🇸" },
 ];
+
+// Detect country from IP using free API
+async function detectCountryFromIP(): Promise<string | null> {
+  try {
+    const response = await fetch('https://ipapi.co/json/', { 
+      signal: AbortSignal.timeout(3000) 
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.country_code || null;
+  } catch {
+    return null;
+  }
+}
 
 interface PhoneInputProps {
   value: string;
@@ -47,8 +63,22 @@ export function PhoneInput({
   variant = "default",
 }: PhoneInputProps) {
   const [open, setOpen] = React.useState(false);
+  const [autoDetected, setAutoDetected] = React.useState(false);
   
-  // Parse current value to extract country and number
+  // Auto-detect country on mount if no value
+  React.useEffect(() => {
+    if (!value && !autoDetected) {
+      detectCountryFromIP().then((countryCode) => {
+        if (countryCode) {
+          const detected = countries.find(c => c.code === countryCode);
+          if (detected) {
+            onChange(detected.dialCode);
+          }
+        }
+        setAutoDetected(true);
+      });
+    }
+  }, [value, autoDetected, onChange]);
   const parsePhoneValue = (val: string) => {
     if (!val) return { country: countries[0], number: "" };
     
