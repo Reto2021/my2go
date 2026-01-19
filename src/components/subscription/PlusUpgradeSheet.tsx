@@ -266,6 +266,7 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
               <Card 
                 className={cn(
                   "cursor-pointer transition-all hover:border-accent",
+                  activeDiscount && "border-green-500/50 hover:border-green-500",
                   isLoading === 'monthly' && "opacity-70 pointer-events-none"
                 )}
                 onClick={() => handleCheckout('monthly')}
@@ -277,8 +278,24 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
                       <p className="text-sm text-muted-foreground">Flexibel kündbar</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold">CHF 4.90</p>
-                      <p className="text-xs text-muted-foreground">pro Monat inkl. MwSt.</p>
+                      {activeDiscount ? (
+                        <>
+                          <div className="flex items-center gap-2 justify-end">
+                            <p className="text-lg text-muted-foreground line-through">CHF 4.90</p>
+                            <p className="text-2xl font-bold text-green-600">
+                              CHF {(4.90 * (1 - activeDiscount.discount_percent / 100)).toFixed(2)}
+                            </p>
+                          </div>
+                          <p className="text-xs text-green-600 font-medium">
+                            {activeDiscount.discount_percent}% Rabatt
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold">CHF 4.90</p>
+                          <p className="text-xs text-muted-foreground">pro Monat inkl. MwSt.</p>
+                        </>
+                      )}
                     </div>
                   </div>
                   {isLoading === 'monthly' && (
@@ -293,6 +310,7 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
               <Card 
                 className={cn(
                   "cursor-pointer transition-all border-accent bg-accent/5 hover:bg-accent/10",
+                  activeDiscount && "border-green-500/50 bg-green-500/5 hover:bg-green-500/10",
                   isLoading === 'yearly' && "opacity-70 pointer-events-none"
                 )}
                 onClick={() => handleCheckout('yearly')}
@@ -302,15 +320,39 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold">Jährlich</p>
-                        <Badge className="bg-green-500 text-white text-xs">
-                          Spare CHF 9.80
-                        </Badge>
+                        {activeDiscount ? (
+                          <Badge className="bg-green-500 text-white text-xs">
+                            {activeDiscount.discount_percent}% Rabatt
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-green-500 text-white text-xs">
+                            Spare CHF 9.80
+                          </Badge>
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground">2 Monate gratis</p>
+                      <p className="text-sm text-muted-foreground">
+                        {activeDiscount ? 'Einmaliger Rabatt' : '2 Monate gratis'}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold">CHF 49</p>
-                      <p className="text-xs text-muted-foreground">pro Jahr inkl. MwSt.</p>
+                      {activeDiscount ? (
+                        <>
+                          <div className="flex items-center gap-2 justify-end">
+                            <p className="text-lg text-muted-foreground line-through">CHF 49</p>
+                            <p className="text-2xl font-bold text-green-600">
+                              CHF {(49 * (1 - activeDiscount.discount_percent / 100)).toFixed(2)}
+                            </p>
+                          </div>
+                          <p className="text-xs text-green-600 font-medium">
+                            Spare CHF {(49 * activeDiscount.discount_percent / 100).toFixed(2)}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-2xl font-bold">CHF 49</p>
+                          <p className="text-xs text-muted-foreground">pro Jahr inkl. MwSt.</p>
+                        </>
+                      )}
                     </div>
                   </div>
                   {isLoading === 'yearly' && (
