@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-import { ArrowLeft, User, Mail, Phone, MapPin, Loader2, Save, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, User, Mail, MapPin, Loader2, Save, Check, AlertCircle, CheckCircle } from 'lucide-react';
 import { Skeleton, SkeletonProfile } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateProfile } from '@/lib/supabase-helpers';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { Button } from '@/components/ui/button';
 import { TalerPlusStats } from '@/components/profile/TalerPlusStats';
+import { PhoneInput } from '@/components/ui/phone-input';
 import {
   Dialog,
   DialogContent,
@@ -292,16 +293,12 @@ export default function ProfilePage() {
               
               {/* Phone */}
               <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  Telefon
-                </label>
-                <Input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  placeholder="+41 79 123 45 67"
-                  className={cn(errors.phone && 'border-destructive')}
+                <label className="text-sm font-medium">Telefon</label>
+                <PhoneInput
+                  value={formData.phone || ''}
+                  onChange={(val) => handleChange('phone', val)}
+                  error={!!errors.phone}
+                  placeholder="79 123 45 67"
                 />
                 {errors.phone && (
                   <p className="text-sm text-destructive">{errors.phone}</p>
