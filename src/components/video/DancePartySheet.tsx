@@ -318,7 +318,7 @@ const LiveKitVideoTile = ({
       exit={{ opacity: 0, scale: 0.8 }}
       className={cn(
         "relative rounded-2xl overflow-hidden shadow-xl",
-        "aspect-[3/4] flex items-center justify-center",
+        "aspect-[3/4] md:aspect-video flex items-center justify-center",
         "bg-gradient-to-br from-secondary/50 to-black/50 backdrop-blur-sm",
         isLocal && "ring-2 ring-accent shadow-accent/20",
         participant.isSpeaking && "ring-2 ring-success ring-offset-2 ring-offset-secondary"
@@ -978,7 +978,7 @@ export const DancePartySheet = ({
               </motion.div>
             ) : (
               // Connected - show video grid
-              <div ref={videoGridRef} className="grid grid-cols-2 gap-3">
+              <div ref={videoGridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 auto-rows-min">
                 <AnimatePresence>
                   {/* Local participant */}
                   {localParticipant && (
@@ -1012,10 +1012,10 @@ export const DancePartySheet = ({
 
                 {/* Empty slots hint */}
                 {participants.length === 0 && (
-                  <motion.div 
+                    <motion.div 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="aspect-[3/4] rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-sm"
+                    className="aspect-[3/4] md:aspect-video rounded-2xl border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-sm"
                   >
                     <div className="text-center text-white/50 text-sm p-4">
                       <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
