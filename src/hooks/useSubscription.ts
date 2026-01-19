@@ -86,7 +86,12 @@ export function useSubscription() {
 
       if (error) throw error;
       if (data?.url) {
-        window.open(data.url, '_blank');
+        // Use location.href as fallback if popup is blocked
+        const newWindow = window.open(data.url, '_blank');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+          // Popup was blocked, navigate directly
+          window.location.href = data.url;
+        }
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
