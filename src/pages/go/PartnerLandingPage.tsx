@@ -35,6 +35,7 @@ import logoRadio2go from "@/assets/logo-radio2go.png";
 import logo2go from "@/assets/logo-2go.png";
 import logo2goWhite from "@/assets/logo-2go-white.png";
 import { PartnerFitQuiz } from "@/components/go/quiz";
+import { TierComparison } from "@/components/partner/TierComparison";
 
 // Testimonials with realistic personas across industries
 const TESTIMONIALS = [
@@ -698,6 +699,40 @@ export default function PartnerLandingPage() {
               </Link>
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* ===== TIER COMPARISON ===== */}
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container max-w-5xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <Badge className="mb-4 bg-primary/10 text-primary font-bold">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Einstieg leicht gemacht
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Starte kostenlos oder wähle den vollen Umfang
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Unser Starter-Paket ist komplett kostenlos. Upgrade jederzeit, wenn du bereit bist für mehr.
+            </p>
+          </motion.div>
+          
+          <TierComparison 
+            showCTA={true}
+            onSelectTier={(tier) => {
+              if (tier === 'starter') {
+                window.location.href = '/go/onboarding?tier=starter';
+              } else {
+                window.location.href = '/go/partner/pricing';
+              }
+            }}
+          />
         </div>
       </section>
 

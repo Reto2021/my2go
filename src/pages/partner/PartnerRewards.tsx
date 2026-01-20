@@ -6,7 +6,8 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
-  Building2
+  Building2,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePartner } from '@/components/partner/PartnerGuard';
+import { usePartnerTier } from '@/hooks/usePartnerTier';
+import { UpgradeBanner } from '@/components/partner/UpgradeBanner';
 import { 
   getPartnerRewards, 
   createReward, 
@@ -42,6 +45,7 @@ type RewardType = 'fixed_discount' | 'percent_discount' | 'free_item' | 'topup_b
 
 export default function PartnerRewards() {
   const { partnerInfo } = usePartner();
+  const { tier, canCreateRewards, isLoading: tierLoading } = usePartnerTier(partnerInfo?.partnerId || null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -58,6 +62,34 @@ export default function PartnerRewards() {
     max_per_user: null as number | null,
     is_active: true,
   });
+
+  // Show upgrade banner if starter tier
+  if (!tierLoading && !canCreateRewards && partnerInfo?.partnerId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Gutscheine & Rewards</h1>
+        </div>
+        
+        <UpgradeBanner 
+          partnerId={partnerInfo.partnerId} 
+          featureName="Gutscheine & Rewards"
+        />
+        
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Lock className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Feature gesperrt</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Mit dem Partner-Paket kannst du eigene Gutscheine erstellen und deine Kunden mit exklusiven Rabatten belohnen.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadRewards();
