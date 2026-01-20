@@ -89,6 +89,13 @@ export type Database = {
             foreignKeyName: "audio_credit_transactions_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "audio_credit_transactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -327,6 +334,13 @@ export type Database = {
             foreignKeyName: "live_events_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "live_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -394,6 +408,13 @@ export type Database = {
             foreignKeyName: "new_partner_alerts_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "new_partner_alerts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -437,6 +458,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "partner_admins_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "partner_admins_partner_id_fkey"
             columns: ["partner_id"]
@@ -593,6 +621,13 @@ export type Database = {
             foreignKeyName: "partner_reviews_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "partner_reviews_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -645,7 +680,11 @@ export type Database = {
           short_description: string | null
           slug: string
           special_hours: Json | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_ends_at: string | null
           tags: string[] | null
+          tier: Database["public"]["Enums"]["partner_tier"]
           updated_at: string
           verified_at: string | null
           website: string | null
@@ -696,7 +735,11 @@ export type Database = {
           short_description?: string | null
           slug: string
           special_hours?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_ends_at?: string | null
           tags?: string[] | null
+          tier?: Database["public"]["Enums"]["partner_tier"]
           updated_at?: string
           verified_at?: string | null
           website?: string | null
@@ -747,7 +790,11 @@ export type Database = {
           short_description?: string | null
           slug?: string
           special_hours?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_ends_at?: string | null
           tags?: string[] | null
+          tier?: Database["public"]["Enums"]["partner_tier"]
           updated_at?: string
           verified_at?: string | null
           website?: string | null
@@ -981,6 +1028,13 @@ export type Database = {
             foreignKeyName: "qr_scans_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "qr_scans_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -1096,6 +1150,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "redemptions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "redemptions_partner_id_fkey"
             columns: ["partner_id"]
@@ -1249,6 +1310,13 @@ export type Database = {
             foreignKeyName: "review_requests_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "review_requests_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -1365,6 +1433,13 @@ export type Database = {
           value_percent?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "rewards_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
           {
             foreignKeyName: "rewards_partner_id_fkey"
             columns: ["partner_id"]
@@ -1575,6 +1650,13 @@ export type Database = {
             foreignKeyName: "transactions_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "transactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -1734,6 +1816,42 @@ export type Database = {
       }
     }
     Views: {
+      partner_tier_features: {
+        Row: {
+          can_create_rewards: boolean | null
+          can_export_data: boolean | null
+          has_advanced_analytics: boolean | null
+          has_featured_placement: boolean | null
+          has_priority_support: boolean | null
+          name: string | null
+          partner_id: string | null
+          shows_powered_by_badge: boolean | null
+          tier: Database["public"]["Enums"]["partner_tier"] | null
+        }
+        Insert: {
+          can_create_rewards?: never
+          can_export_data?: never
+          has_advanced_analytics?: never
+          has_featured_placement?: never
+          has_priority_support?: never
+          name?: string | null
+          partner_id?: string | null
+          shows_powered_by_badge?: never
+          tier?: Database["public"]["Enums"]["partner_tier"] | null
+        }
+        Update: {
+          can_create_rewards?: never
+          can_export_data?: never
+          has_advanced_analytics?: never
+          has_featured_placement?: never
+          has_priority_support?: never
+          name?: string | null
+          partner_id?: string | null
+          shows_powered_by_badge?: never
+          tier?: Database["public"]["Enums"]["partner_tier"] | null
+        }
+        Relationships: []
+      }
       user_taler_batch_summary: {
         Row: {
           amount_earned: number | null
@@ -2162,6 +2280,10 @@ export type Database = {
         Args: { _partner_id: string; _user_id: string }
         Returns: boolean
       }
+      partner_has_feature: {
+        Args: { p_feature: string; p_partner_id: string }
+        Returns: boolean
+      }
       process_referral:
         | {
             Args: { _referral_code: string; _referred_user_id: string }
@@ -2201,6 +2323,7 @@ export type Database = {
     }
     Enums: {
       partner_admin_role: "owner" | "manager" | "staff"
+      partner_tier: "starter" | "partner"
       redemption_status: "pending" | "used" | "expired" | "cancelled"
       reward_type:
         | "fixed_discount"
@@ -2348,6 +2471,7 @@ export const Constants = {
   public: {
     Enums: {
       partner_admin_role: ["owner", "manager", "staff"],
+      partner_tier: ["starter", "partner"],
       redemption_status: ["pending", "used", "expired", "cancelled"],
       reward_type: [
         "fixed_discount",
