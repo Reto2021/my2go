@@ -191,24 +191,78 @@ export default function PartnerSettings() {
     setIsSearching(true);
     setSearchResults([]);
     try {
-      const { data, error } = await supabase.functions.invoke('sync-google-reviews', {
+      const { data, error } = await supabase.functions.invoke('search-place-id', {
         body: {
-          action: 'lookup-place',
-          query: query,
+          name: query,
         },
       });
 
       if (error) throw error;
 
-      if (data?.candidates && data.candidates.length > 0) {
-        setSearchResults(data.candidates);
-        toast.success(`${data.candidates.length} Ergebnis(se) gefunden`);
+      if (data?.success && data.results && data.results.length > 0) {
+        setSearchResults(data.results.map((r: any) => ({
+          place_id: r.place_id,
+          name: r.name,
+          formatted_address: r.formatted_address,
+          rating: r.rating,
+          user_ratings_total: r.user_ratings_total,
+        })));
+        toast.success(`${data.results.length} Ergebnis(se) gefunden`);
       } else {
         toast.info('Kein Geschäft gefunden. Versuche einen anderen Suchbegriff.');
       }
     } catch (error) {
       console.error('Error searching place:', error);
       toast.error('Suche fehlgeschlagen');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Auto-search using partner details (name, address, city)
+  const handleAutoSearchPlace = async () => {
+    if (!partnerInfo?.partnerId) return;
+
+    setIsSearching(true);
+    setSearchResults([]);
+    try {
+      // First fetch partner details
+      const { data: partner, error: partnerError } = await supabase
+        .from('partners')
+        .select('name, address_street, address_number, postal_code, city, country')
+        .eq('id', partnerInfo.partnerId)
+        .single();
+
+      if (partnerError) throw partnerError;
+
+      const { data, error } = await supabase.functions.invoke('search-place-id', {
+        body: {
+          name: partner.name,
+          address_street: partner.address_street || undefined,
+          address_number: partner.address_number || undefined,
+          postal_code: partner.postal_code || undefined,
+          city: partner.city || undefined,
+          country: partner.country || 'CH',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data.results && data.results.length > 0) {
+        setSearchResults(data.results.map((r: any) => ({
+          place_id: r.place_id,
+          name: r.name,
+          formatted_address: r.formatted_address,
+          rating: r.rating,
+          user_ratings_total: r.user_ratings_total,
+        })));
+        toast.success(`${data.results.length} Ergebnis(se) basierend auf deinen Firmendaten gefunden`);
+      } else {
+        toast.info('Kein Geschäft gefunden. Versuche die manuelle Suche.');
+      }
+    } catch (error) {
+      console.error('Error auto-searching place:', error);
+      toast.error('Auto-Suche fehlgeschlagen');
     } finally {
       setIsSearching(false);
     }
@@ -363,7 +417,7 @@ export default function PartnerSettings() {
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       Verzögerung nach Einlösung
                     </Label>
-                    <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                     <span className="text-sm font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
                       {delayLabels[settings.review_request_delay_minutes] || `${settings.review_request_delay_minutes} Min.`}
                     </span>
                   </div>
@@ -486,37 +540,53 @@ export default function PartnerSettings() {
                     href={`https://search.google.com/local/writereview?placeid=${settings.google_place_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-primary hover:underline"
+                    className="flex items-center gap-1 text-sm text-accent hover:underline"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/30">
-                <AlertCircle className="h-5 w-5 text-yellow-600 shrink-0" />
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-warning/10 border border-warning/30">
+                <AlertCircle className="h-5 w-5 text-warning shrink-0" />
                 <div className="flex-1">
-                  <p className="font-medium text-yellow-700 dark:text-yellow-400">Noch nicht verknüpft</p>
+                  <p className="font-medium text-warning">Noch nicht verknüpft</p>
                   <p className="text-sm text-muted-foreground">
-                    Füge deine Google Business URL hinzu oder suche automatisch.
+                    Nutze die Auto-Suche basierend auf deinen Firmendaten.
                   </p>
                 </div>
                 <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleAutoSearchPlace}
+                  disabled={isSearching}
+                  className="gap-1 bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  <Search className={`h-4 w-4 ${isSearching ? 'animate-pulse' : ''}`} />
+                  Auto-Suche
+                </Button>
+              </div>
+            )}
+
+            {/* Auto Search Button (when already connected but want to re-search) */}
+            {settings.google_place_id && (
+              <div className="flex items-center gap-2">
+                <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSearchPlace(partnerInfo?.partnerName)}
+                  onClick={handleAutoSearchPlace}
                   disabled={isSearching}
                   className="gap-1"
                 >
                   <Search className={`h-4 w-4 ${isSearching ? 'animate-pulse' : ''}`} />
-                  Suchen
+                  Neu suchen (basierend auf Firmendaten)
                 </Button>
               </div>
             )}
 
             {/* Custom Search */}
             <div className="space-y-2">
-              <Label>Geschäft suchen</Label>
+              <Label>Oder manuell suchen</Label>
               <div className="flex gap-2">
                 <Input
                   placeholder="z.B. 'Café Sonnenschein Aarau' oder 'Aargauer Kunsthaus'"
@@ -534,7 +604,7 @@ export default function PartnerSettings() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Gib den Namen und Ort deines Geschäfts ein für eine präzisere Suche.
+                Falls die Auto-Suche nicht passt, gib den Namen und Ort manuell ein.
               </p>
             </div>
 
