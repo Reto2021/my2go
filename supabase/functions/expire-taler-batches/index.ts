@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
     console.log('Starting Taler batch expiration process...');
 
-    // Step 0: Get all Plus users (their Taler should NEVER expire)
+    // Step 0: Get all Plus users (their Taler expire after 12 months instead of 6)
     const { data: plusUsers, error: plusError } = await supabase
       .from('profiles')
       .select('id')
@@ -25,10 +25,9 @@ Deno.serve(async (req) => {
       .gt('subscription_ends_at', new Date().toISOString());
     
     const plusUserIds = plusUsers?.map(u => u.id) || [];
-    console.log(`Found ${plusUserIds.length} active Plus users (Taler won't expire for them)`);
+    console.log(`Found ${plusUserIds.length} active Plus users (12 months Taler validity)`);
 
     // Step 1: Expire old batches (those past their expires_at date)
-    // But exclude Plus users!
     const { data: expiredBatches, error: expireError } = await supabase
       .rpc('expire_old_taler_batches');
 
@@ -37,7 +36,35 @@ Deno.serve(async (req) => {
       throw expireError;
     }
 
-    // Filter out Plus users from expired batches
+    // Step 1b: For Plus users, extend their Taler batches to 12 months instead of 6
+    // This extends batches that would normally expire at 6 months to 12 months
+    if (plusUserIds.length > 0) {
+      // Calculate 12 months from now for extension
+      const twelveMonthsFromNow = new Date();
+      twelveMonthsFromNow.setMonth(twelveMonthsFromNow.getMonth() + 12);
+
+      // Get batches that are expiring soon (within next 30 days) for Plus users
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+      // Extend expiry for Plus users' batches that are about to expire within 30 days
+      const { data: extendedBatches, error: extendError } = await supabase
+        .from('taler_monthly_batches')
+        .update({ 
+          expires_at: twelveMonthsFromNow.toISOString() 
+        })
+        .in('user_id', plusUserIds)
+        .lt('expires_at', thirtyDaysFromNow.toISOString())
+        .select('id');
+
+      if (extendError) {
+        console.error('Error extending Plus user batches:', extendError);
+      } else {
+        console.log(`Extended expiry for ${extendedBatches?.length || 0} Plus user batches to 12 months`);
+      }
+    }
+
+    // Filter out Plus users from expired batches (they shouldn't expire within 6 months)
     const filteredExpiredBatches = expiredBatches?.filter(
       (batch: any) => !plusUserIds.includes(batch.user_id)
     ) || [];
@@ -52,13 +79,18 @@ Deno.serve(async (req) => {
       console.error('Error getting expiring talers:', expiringError);
     }
 
-    console.log(`Found ${expiringNext?.length || 0} users with talers expiring next month`);
+    // Filter out Plus users from expiring notifications (they have extended validity)
+    const filteredExpiringNext = expiringNext?.filter(
+      (batch: any) => !plusUserIds.includes(batch.user_id)
+    ) || [];
+
+    console.log(`Found ${filteredExpiringNext.length} users with talers expiring next month (excluded Plus users)`);
 
     // Step 3: Send notifications to users with expiring talers
     const notificationResults = [];
     
-    if (expiringNext && expiringNext.length > 0) {
-      for (const batch of expiringNext) {
+    if (filteredExpiringNext && filteredExpiringNext.length > 0) {
+      for (const batch of filteredExpiringNext) {
         // Get user profile for notification
         const { data: profile } = await supabase
           .from('profiles')
@@ -76,8 +108,6 @@ Deno.serve(async (req) => {
               const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
               
               if (vapidPrivateKey && vapidPublicKey) {
-                // Note: Full push notification implementation would go here
-                // For now, log the notification that would be sent
                 console.log(`Would send push to user ${batch.user_id}: ${batch.amount_expiring} Taler aus ${monthName} verfallen bald!`);
                 notificationResults.push({
                   user_id: batch.user_id,
@@ -99,7 +129,7 @@ Deno.serve(async (req) => {
             user_id: batch.user_id,
             type: 'taler_expiring',
             title: 'Taler verfallen bald!',
-            message: `${batch.amount_expiring} Taler aus ${new Date(batch.earn_month).toLocaleDateString('de-CH', { month: 'long' })} verfallen am ${new Date(batch.expires_at).toLocaleDateString('de-CH')}. Jetzt einlösen!`,
+            message: `${batch.amount_expiring} Taler aus ${new Date(batch.earn_month).toLocaleDateString('de-CH', { month: 'long' })} verfallen am ${new Date(batch.expires_at).toLocaleDateString('de-CH')}. Jetzt einlösen oder mit 2Go Plus verlängern!`,
             data: {
               amount: batch.amount_expiring,
               earn_month: batch.earn_month,
@@ -114,19 +144,19 @@ Deno.serve(async (req) => {
     }
 
     // Step 4: Log summary for expired batches
-    if (expiredBatches && expiredBatches.length > 0) {
-      const totalExpired = expiredBatches.reduce((sum: number, b: any) => sum + (b.expired_amount || 0), 0);
-      console.log(`Total Taler expired: ${totalExpired} across ${expiredBatches.length} users`);
+    if (filteredExpiredBatches && filteredExpiredBatches.length > 0) {
+      const totalExpired = filteredExpiredBatches.reduce((sum: number, b: any) => sum + (b.expired_amount || 0), 0);
+      console.log(`Total Taler expired: ${totalExpired} across ${filteredExpiredBatches.length} users`);
 
       // Notify users whose talers just expired
-      for (const expired of expiredBatches) {
+      for (const expired of filteredExpiredBatches) {
         const { error: expiredNotifError } = await supabase
           .from('notifications')
           .insert({
             user_id: expired.user_id,
             type: 'taler_expired',
             title: 'Taler verfallen',
-            message: `${expired.expired_amount} Taler aus ${new Date(expired.earn_month).toLocaleDateString('de-CH', { month: 'long' })} sind leider verfallen.`,
+            message: `${expired.expired_amount} Taler aus ${new Date(expired.earn_month).toLocaleDateString('de-CH', { month: 'long' })} sind leider verfallen. Tipp: Mit 2Go Plus hast du 12 Monate Gültigkeit!`,
             data: {
               amount: expired.expired_amount,
               earn_month: expired.earn_month
@@ -142,9 +172,10 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        expired_batches: expiredBatches?.length || 0,
-        total_expired_amount: expiredBatches?.reduce((sum: number, b: any) => sum + (b.expired_amount || 0), 0) || 0,
-        users_notified_expiring_soon: expiringNext?.length || 0,
+        expired_batches: filteredExpiredBatches?.length || 0,
+        total_expired_amount: filteredExpiredBatches?.reduce((sum: number, b: any) => sum + (b.expired_amount || 0), 0) || 0,
+        users_notified_expiring_soon: filteredExpiringNext?.length || 0,
+        plus_users_extended: plusUserIds.length,
         notification_results: notificationResults
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

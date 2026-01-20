@@ -22,8 +22,8 @@ export const FAQ_ITEMS: FAQItem[] = [
   { question: 'Wo ist meine Karte?', answer: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine My 2Go Karte.', category: 'Grundlagen' },
   
   // 2Go Plus (5) - NEW CATEGORY
-  { question: 'Was ist 2Go Plus?', answer: '2Go Plus ist unser Premium-Abo. Du sparst 50% Taler bei Gutscheinen, verdienst 2x Bonus bei Besuchen & Einkäufen, hast Zugang zu exklusiven Rewards und deine Taler verfallen nie!', category: '2Go Plus' },
-  { question: 'Welche Vorteile habe ich mit 2Go Plus?', answer: '✓ 50% weniger Taler für alle Gutscheine\n✓ 2x Taler-Bonus bei Besuchen & Einkäufen\n✓ Exklusive Premium-Rewards\n✓ Keine Taler-Verfall mehr – deine Taler bleiben für immer!', category: '2Go Plus' },
+  { question: 'Was ist 2Go Plus?', answer: '2Go Plus ist unser Premium-Abo. Du sparst 50% Taler bei Gutscheinen, verdienst 2x Bonus bei Besuchen & Einkäufen, hast Zugang zu exklusiven Rewards und deine Taler sind 12 Monate gültig statt 6!', category: '2Go Plus' },
+  { question: 'Welche Vorteile habe ich mit 2Go Plus?', answer: '✓ 50% weniger Taler für alle Gutscheine\n✓ 2x Taler-Bonus bei Besuchen & Einkäufen\n✓ Exklusive Premium-Rewards\n✓ 12 Monate Taler-Gültigkeit statt 6 Monate', category: '2Go Plus' },
   { question: 'Wie aktiviere ich 2Go Plus?', answer: 'Gehe auf dein Profil oder die Guthaben-Seite und wähle "2Go Plus aktivieren". Du kannst monatlich oder jährlich zahlen – oder mit 500 Taler für 30 Tage einlösen.', category: '2Go Plus' },
   { question: 'Kann ich 2Go Plus mit Taler kaufen?', answer: 'Ja! Du kannst 500 Taler gegen 30 Tage 2Go Plus eintauschen. Perfekt, wenn du viele Taler gesammelt hast.', category: '2Go Plus' },
   { question: 'Verlängert sich 2Go Plus automatisch?', answer: 'Beim Abo ja – du kannst aber jederzeit kündigen. Bei Taler-Einlösung nicht automatisch, du musst manuell verlängern.', category: '2Go Plus' },
@@ -40,7 +40,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   { question: 'Wie viele Codes kann ich pro Tag einlösen?', answer: 'Max. 5 Codes pro Tag. Bei Missbrauch wird das Konto gesperrt.', category: 'Codes' },
   
   // Taler & Gültigkeit (4)
-  { question: 'Verfallen meine Taler?', answer: 'Standardmässig haben Taler eine Gültigkeit von 6 Monaten ab Erhalt. Mit 2Go Plus verfallen deine Taler nie! Bei Einlösung werden immer die ältesten Taler zuerst verwendet (FIFO).', category: 'Taler' },
+  { question: 'Verfallen meine Taler?', answer: 'Standardmässig haben Taler eine Gültigkeit von 6 Monaten ab Erhalt. Mit 2Go Plus verlängert sich die Gültigkeit auf 12 Monate! Bei Einlösung werden immer die ältesten Taler zuerst verwendet (FIFO).', category: 'Taler' },
   { question: 'Werde ich vor dem Verfall gewarnt?', answer: 'Ja! Du siehst auf deiner Guthaben-Karte, wenn Taler bald verfallen. Zusätzlich wirst du per Push-Benachrichtigung informiert.', category: 'Taler' },
   { question: 'Kann ich Taler auszahlen?', answer: 'Nein. 2Go Taler sind Bonuspunkte, keine Währung. Keine Barauszahlung.', category: 'Taler' },
   { question: 'Kann ich Taler übertragen?', answer: 'Nein. Taler sind an dein Konto gebunden und nicht übertragbar.', category: 'Taler' },
