@@ -152,12 +152,12 @@ export default function PartnerRedemptions() {
       ) : (
         <div className="space-y-4">
           {redemptions.map((redemption) => (
-            <Card key={redemption.id} className={redemption.status === 'pending' ? 'border-yellow-300 bg-yellow-50/50' : ''}>
+            <Card key={redemption.id} className={redemption.status === 'pending' ? 'border-warning/50 bg-warning/5' : ''}>
               <CardContent className="py-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
-                      <Gift className="h-6 w-6 text-primary" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 flex-shrink-0">
+                      <Gift className="h-6 w-6 text-accent" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">

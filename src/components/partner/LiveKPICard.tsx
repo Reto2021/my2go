@@ -45,10 +45,10 @@ const colorStyles = {
     hover: 'hover:border-accent/40',
   },
   info: {
-    bg: 'bg-gradient-to-br from-blue-500/20 to-blue-500/5',
-    border: 'border-blue-500/20',
-    icon: 'text-blue-500 bg-blue-500/10',
-    hover: 'hover:border-blue-500/40',
+    bg: 'bg-gradient-to-br from-muted to-muted/50',
+    border: 'border-muted',
+    icon: 'text-muted-foreground bg-muted',
+    hover: 'hover:border-muted-foreground/40',
   },
 };
 
