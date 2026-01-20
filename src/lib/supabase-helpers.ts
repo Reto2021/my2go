@@ -77,6 +77,8 @@ export interface Partner {
   ghl_location_id?: string | null;
   ghl_synced_at?: string | null;
   ghl_sync_status?: string | null;
+  // Subscription tier
+  plan_tier?: string | null;
 }
 
 export interface Reward {
