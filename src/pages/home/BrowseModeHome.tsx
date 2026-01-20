@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
@@ -7,23 +7,14 @@ import { InstallBanner } from '@/components/home/InstallBanner';
 import { LiveHeaderButton } from '@/components/radio/LiveEventsPanel';
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { useLiveEventsStore } from '@/lib/live-events-store';
-import { Gift, ChevronRight, Radio, ArrowRight, Wallet, Coins } from 'lucide-react';
+import { useRadioStore } from '@/lib/radio-store';
+import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, MapPin } from 'lucide-react';
 import { BrowseModeHomeProps, FeatureChipProps, colorClasses } from './types';
-
-function FeatureChip({ icon: Icon, label, fullLabel, color, to }: FeatureChipProps) {
-  return (
-    <Link to={to} className="card-glass p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3 hover:scale-105 transition-transform">
-      <div className={`icon-container-md rounded-2xl ${colorClasses[color]}`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <span className="text-xs sm:text-sm font-semibold text-center text-foreground sm:hidden">{label}</span>
-      <span className="text-sm font-semibold text-center text-foreground hidden sm:block">{fullLabel || label}</span>
-    </Link>
-  );
-}
+import { cn } from '@/lib/utils';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
+  const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying } = useRadioStore();
 
   useEffect(() => {
     fetchEvents();
@@ -37,7 +28,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   
   return (
     <div className="min-h-screen bg-background -mt-20">
-      {/* Hero Section with Skyline */}
+      {/* Hero Section - Simplified 3-Second Pitch */}
       <section className="hero-section text-secondary pt-20">
         {/* City Skyline */}
         <div className="skyline-container">
@@ -46,21 +37,16 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           <div className="skyline-front" />
         </div>
         
-        {/* Clouds at various heights */}
+        {/* Clouds */}
         <div className="clouds-container">
           <div className="cloud cloud-1" />
           <div className="cloud cloud-2" />
           <div className="cloud cloud-3" />
-          <div className="cloud cloud-4" />
-          <div className="cloud cloud-5" />
-          <div className="cloud cloud-6" />
-          <div className="cloud cloud-7" />
-          <div className="cloud cloud-8" />
         </div>
         
-        <div className="container relative z-10 pt-6 pb-32">
-          {/* Header row with Install Banner and Live Button */}
-          <div className="flex items-center justify-between mb-4">
+        <div className="container relative z-10 pt-6 pb-28">
+          {/* Header row */}
+          <div className="flex items-center justify-between mb-6">
             <InstallBanner />
             <LiveHeaderButton 
               onClick={handleLiveClick}
@@ -68,38 +54,81 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             />
           </div>
           
-          <div className="animate-in">
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight mb-4">
-              Hör 2Go.<br />
-              Sammle Taler.<br />
-              <span className="relative inline-block">
-                <span className="absolute -inset-x-2 -inset-y-0.5 bg-accent rounded-[2px_6px_4px_8px] -rotate-[0.5deg] animate-brush-stroke" />
-                <span className="relative text-secondary font-extrabold px-1">Lös Gutscheine ein.</span>
+          <div className="animate-in text-center">
+            {/* Clear 3-Second Pitch */}
+            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6">
+              <span className="block">Hör Radio.</span>
+              <span className="block">Sammle Punkte.</span>
+              <span className="relative inline-block mt-1">
+                <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
+                <span className="relative text-secondary font-black">Spare lokal.</span>
               </span>
             </h1>
             
-            <p className="text-secondary/70 text-lg mb-8 max-w-xs leading-relaxed">
-              Hör Radio 2Go, sammle 2Go Taler und löse exklusive Gutscheine bei lokalen Partnern ein.
-            </p>
+            {/* Prominent Play Button */}
+            <div className="flex flex-col items-center gap-4 mb-8">
+              <button 
+                onClick={togglePlay}
+                disabled={isRadioLoading}
+                className={cn(
+                  "relative w-24 h-24 rounded-full flex items-center justify-center",
+                  "bg-accent shadow-2xl shadow-accent/40",
+                  "hover:scale-105 active:scale-95 transition-all duration-200",
+                  "ring-4 ring-accent/30 ring-offset-4 ring-offset-primary/20",
+                  isPlaying && "animate-pulse"
+                )}
+              >
+                {isRadioLoading ? (
+                  <Loader2 className="h-10 w-10 text-secondary animate-spin" />
+                ) : isPlaying ? (
+                  <Pause className="h-10 w-10 text-secondary ml-0" />
+                ) : (
+                  <Play className="h-10 w-10 text-secondary ml-1" />
+                )}
+              </button>
+              
+              {/* Now Playing or Call to Action */}
+              <div className="text-center">
+                {isPlaying && nowPlaying ? (
+                  <p className="text-secondary/80 text-sm font-medium">
+                    <span className="inline-block w-2 h-2 bg-accent rounded-full mr-2 animate-pulse" />
+                    {nowPlaying.artist} – {nowPlaying.title}
+                  </p>
+                ) : (
+                  <p className="text-secondary/70 text-lg font-semibold">
+                    Jetzt Radio 2Go hören
+                  </p>
+                )}
+              </div>
+            </div>
             
+            {/* Secondary CTA */}
             <button 
               onClick={onLogin}
               className="btn-primary group"
             >
-              <Wallet className="h-5 w-5" />
-              Jetzt kostenlos starten
+              Kostenlos anmelden & Punkte sammeln
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
         </div>
       </section>
       
-      {/* Features - Compact for mobile */}
-      <section className="container -mt-16 relative z-20">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 animate-in-delayed">
-          <FeatureChip icon={Radio} label="Hören" fullLabel="Radio hören" color="accent" to="/auth" />
-          <FeatureChip icon={Coins} label="Sammeln" fullLabel="Taler sammeln" color="primary" to="/rewards" />
-          <FeatureChip icon={Gift} label="Einlösen" fullLabel="Gutscheine einlösen" color="secondary" to="/partner" />
+      {/* How it Works - Visual Steps */}
+      <section className="container -mt-12 relative z-20">
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="card-glass p-4 flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-lg">1</div>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Hören</span>
+          </div>
+          <div className="card-glass p-4 flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-secondary font-bold text-lg">2</div>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Sammeln</span>
+          </div>
+          <div className="card-glass p-4 flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center text-secondary font-bold text-lg">3</div>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Sparen</span>
+          </div>
         </div>
       </section>
       
