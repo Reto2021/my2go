@@ -35,6 +35,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { TalerBatchOverview } from "@/components/stats/TalerBatchOverview";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -581,6 +582,15 @@ export default function MyStatsPage() {
               </div>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* Taler Batch Overview - Expiry Tracking */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+        >
+          <TalerBatchOverview userId={user?.id || null} />
         </motion.div>
 
         {/* Lifetime Stats */}

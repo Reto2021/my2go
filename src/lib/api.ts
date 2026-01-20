@@ -32,8 +32,9 @@ export const FAQ_ITEMS: FAQItem[] = [
   { question: 'Mein Code funktioniert nicht?', answer: 'Schreibweise prüfen. Codes sind 24h gültig und nur 1x einlösbar.', category: 'Codes' },
   { question: 'Wie viele Codes kann ich pro Tag einlösen?', answer: 'Max. 5 Codes pro Tag. Bei Missbrauch wird das Konto gesperrt.', category: 'Codes' },
   
-  // Taler & Gültigkeit (3)
-  { question: 'Verfallen meine Taler?', answer: 'Nach 24 Monaten Inaktivität. Regelmässig nutzen hält sie aktiv.', category: 'Taler' },
+  // Taler & Gültigkeit (4)
+  { question: 'Verfallen meine Taler?', answer: 'Ja, Taler haben eine Gültigkeit von 6 Monaten ab Erhalt. Taler aus Januar verfallen z.B. am 1. Juli. Bei Einlösung werden immer die ältesten Taler zuerst verwendet (FIFO).', category: 'Taler' },
+  { question: 'Werde ich vor dem Verfall gewarnt?', answer: 'Ja! Du siehst auf deiner Guthaben-Karte, wenn Taler bald verfallen. Zusätzlich wirst du per Push-Benachrichtigung informiert.', category: 'Taler' },
   { question: 'Kann ich Taler auszahlen?', answer: 'Nein. 2Go Taler sind Bonuspunkte, keine Währung. Keine Barauszahlung.', category: 'Taler' },
   { question: 'Kann ich Taler übertragen?', answer: 'Nein. Taler sind an dein Konto gebunden und nicht übertragbar.', category: 'Taler' },
   
