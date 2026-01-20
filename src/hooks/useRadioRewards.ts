@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
+import { triggerTalerAnimation } from '@/components/taler/TalerEarnAnimation';
 
 interface ListeningReward {
   success: boolean;
@@ -92,7 +93,10 @@ export function useRadioRewards() {
       const result = data as unknown as ListeningReward;
       
       if (result?.success && result.reward > 0) {
-        // Show session summary modal instead of toast
+        // Trigger visual Taler animation
+        triggerTalerAnimation(result.reward, 'radio');
+        
+        // Show session summary modal
         setSessionSummary({
           duration: result.duration,
           reward: result.reward,
