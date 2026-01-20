@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RewardCard } from '@/components/ui/reward-card';
 import { SkeletonRewardCard } from '@/components/ui/skeleton';
+import { BalanceCard } from '@/components/ui/balance-card';
 import { RecentBadgesBar } from '@/components/badges/RecentBadgesBar';
 import { TopListenersWidget } from '@/components/social-proof/TopListenersWidget';
 import { ActivityTicker } from '@/components/social-proof/LiveActivityFeed';
@@ -69,6 +70,13 @@ export function SessionModeHome({
         isOpen={showLiveEvents} 
         onClose={() => setShowLiveEvents(false)} 
       />
+      
+      {/* Balance Card - Primary Dashboard Element */}
+      {balance && (
+        <section className="container pb-4">
+          <BalanceCard balance={balance} />
+        </section>
+      )}
       
       {/* Install Banner - for users who haven't installed the PWA */}
       <section className="container pb-3">
