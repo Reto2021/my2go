@@ -1,14 +1,21 @@
 import { Link } from 'react-router-dom';
 import { UserBalance } from '@/lib/supabase-helpers';
 import { cn } from '@/lib/utils';
-import { Coins, Clock, TrendingUp, BarChart3, ChevronRight } from 'lucide-react';
+import { Coins, Clock, TrendingUp, BarChart3, ChevronRight, AlertTriangle } from 'lucide-react';
+import { useTalerBatches, formatExpiryDate, daysUntilExpiry } from '@/hooks/useTalerBatches';
 
 interface BalanceCardProps {
   balance: UserBalance;
+  userId?: string | null;
   className?: string;
 }
 
-export function BalanceCard({ balance, className }: BalanceCardProps) {
+export function BalanceCard({ balance, userId, className }: BalanceCardProps) {
+  const { totalExpiringSoon, nextExpiryDate, nextExpiryAmount, isLoading } = useTalerBatches(userId || null);
+  
+  const daysLeft = nextExpiryDate ? daysUntilExpiry(nextExpiryDate) : null;
+  const showExpiryWarning = totalExpiringSoon > 0 && daysLeft !== null && daysLeft <= 30;
+
   return (
     <div 
       className={cn('balance-display shine', className)}
@@ -37,7 +44,7 @@ export function BalanceCard({ balance, className }: BalanceCardProps) {
           </Link>
         </div>
         
-        <div className="flex items-baseline gap-2 mb-6">
+        <div className="flex items-baseline gap-2 mb-4">
           <span className="text-5xl font-extrabold tabular-nums tracking-tight">
             {balance.taler_balance.toLocaleString('de-CH')}
           </span>
@@ -45,6 +52,22 @@ export function BalanceCard({ balance, className }: BalanceCardProps) {
             Taler
           </span>
         </div>
+
+        {/* Expiry Warning Banner */}
+        {showExpiryWarning && !isLoading && (
+          <div className="mb-4 p-2.5 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0" />
+            <p className="text-xs text-amber-100">
+              <span className="font-semibold">{totalExpiringSoon} Taler</span> verfallen am{' '}
+              <span className="font-semibold">{formatExpiryDate(nextExpiryDate!)}</span>
+              {daysLeft <= 7 && (
+                <span className="ml-1 text-amber-300">
+                  (noch {daysLeft} {daysLeft === 1 ? 'Tag' : 'Tage'})
+                </span>
+              )}
+            </p>
+          </div>
+        )}
         
         {/* Stats Row */}
         <div className="flex gap-6">

@@ -20,6 +20,7 @@ import { SessionModeHomeProps } from './types';
 
 export function SessionModeHome({
   displayName, 
+  userId,
   balance, 
   rewards, 
   isLoading, 
@@ -74,7 +75,7 @@ export function SessionModeHome({
       {/* Balance Card - Primary Dashboard Element */}
       {balance && (
         <section className="container pb-4">
-          <BalanceCard balance={balance} />
+          <BalanceCard balance={balance} userId={userId} />
         </section>
       )}
       
