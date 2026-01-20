@@ -1500,6 +1500,42 @@ export type Database = {
         }
         Relationships: []
       }
+      taler_monthly_batches: {
+        Row: {
+          amount_earned: number
+          amount_expired: number
+          amount_redeemed: number
+          created_at: string | null
+          earn_month: string
+          expires_at: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_earned?: number
+          amount_expired?: number
+          amount_redeemed?: number
+          created_at?: string | null
+          earn_month: string
+          expires_at: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_earned?: number
+          amount_expired?: number
+          amount_redeemed?: number
+          created_at?: string | null
+          earn_month?: string
+          expires_at?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -1698,7 +1734,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_taler_batch_summary: {
+        Row: {
+          amount_earned: number | null
+          amount_expired: number | null
+          amount_redeemed: number | null
+          amount_remaining: number | null
+          earn_month: string | null
+          expires_at: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_earned?: number | null
+          amount_expired?: number | null
+          amount_redeemed?: number | null
+          amount_remaining?: never
+          earn_month?: string | null
+          expires_at?: string | null
+          status?: never
+          user_id?: string | null
+        }
+        Update: {
+          amount_earned?: number | null
+          amount_expired?: number | null
+          amount_redeemed?: number | null
+          amount_remaining?: never
+          earn_month?: string | null
+          expires_at?: string | null
+          status?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_audio_credits: {
@@ -1722,6 +1790,26 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "audio_credit_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      add_taler_to_batch: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: {
+          amount_earned: number
+          amount_expired: number
+          amount_redeemed: number
+          created_at: string | null
+          earn_month: string
+          expires_at: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "taler_monthly_batches"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1757,6 +1845,14 @@ export type Database = {
       }
       claim_daily_streak: { Args: { _user_id: string }; Returns: Json }
       end_listening_session: { Args: { _session_id: string }; Returns: Json }
+      expire_old_taler_batches: {
+        Args: never
+        Returns: {
+          earn_month: string
+          expired_amount: number
+          user_id: string
+        }[]
+      }
       generate_redemption_code: { Args: never; Returns: string }
       generate_unique_code: { Args: { prefix?: string }; Returns: string }
       get_cron_job_runs: {
@@ -1786,6 +1882,15 @@ export type Database = {
           nodeport: number
           schedule: string
           username: string
+        }[]
+      }
+      get_expiring_talers_next_month: {
+        Args: never
+        Returns: {
+          amount_expiring: number
+          earn_month: string
+          expires_at: string
+          user_id: string
         }[]
       }
       get_leaderboard_profile_safe: {
@@ -1997,6 +2102,12 @@ export type Database = {
           value_percent: number
         }[]
       }
+      get_remaining_batch_balance: {
+        Args: {
+          batch_row: Database["public"]["Tables"]["taler_monthly_batches"]["Row"]
+        }
+        Returns: number
+      }
       get_streak_status: { Args: { _user_id: string }; Returns: Json }
       get_user_balance: {
         Args: { _user_id: string }
@@ -2064,6 +2175,14 @@ export type Database = {
       redeem_air_drop_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
+      }
+      redeem_taler_fifo: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: {
+          message: string
+          redeemed_from: Json
+          success: boolean
+        }[]
       }
       start_listening_session: { Args: { _user_id: string }; Returns: string }
       use_audio_credits: {
