@@ -85,10 +85,15 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             <div className="flex flex-col items-center gap-4 mb-8">
               <button 
                 onClick={() => {
-                  togglePlay();
-                  // Open expanded player after starting playback
+                  // First expand the player to prevent flickering, then toggle play
                   if (!isPlaying) {
-                    setTimeout(() => setPlayerExpanded(true), 300);
+                    setPlayerExpanded(true);
+                    // Small delay to let the expansion animation start before audio loads
+                    requestAnimationFrame(() => {
+                      togglePlay();
+                    });
+                  } else {
+                    togglePlay();
                   }
                 }}
                 disabled={isRadioLoading}
