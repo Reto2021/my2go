@@ -11,7 +11,7 @@ import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration'
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
 import { useGuestRadioRewards } from '@/hooks/useGuestRadioRewards';
-import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, MapPin, Coins } from 'lucide-react';
+import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, MapPin, Coins, Radio } from 'lucide-react';
 import { BrowseModeHomeProps, FeatureChipProps, colorClasses } from './types';
 import { cn } from '@/lib/utils';
 
@@ -154,15 +154,21 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       <section className="container -mt-12 relative z-20">
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent font-semibold text-lg">1</div>
+            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent">
+              <Radio className="h-5 w-5" />
+            </div>
             <span className="text-xs sm:text-sm font-semibold text-foreground">Hören</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold text-lg">2</div>
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+              <Coins className="h-5 w-5" />
+            </div>
             <span className="text-xs sm:text-sm font-semibold text-foreground">Sammeln</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-semibold text-lg">3</div>
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+              <Gift className="h-5 w-5" />
+            </div>
             <span className="text-xs sm:text-sm font-semibold text-foreground">Geniessen</span>
           </div>
         </div>
