@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { 
   Gift, 
   QrCode, 
@@ -13,7 +13,8 @@ import {
   HelpCircle,
   Zap,
   Users,
-  Info
+  Info,
+  Calendar
 } from 'lucide-react';
 import { TalerLoopVisual } from '@/components/taler/TalerLoopVisual';
 import { usePartner } from '@/components/partner/PartnerGuard';
@@ -28,7 +29,7 @@ import {
 } from '@/lib/partner-helpers';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Link, useLocation } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { 
@@ -45,6 +46,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { PartnerOnboardingTutorial } from '@/components/partner/PartnerOnboardingTutorial';
 import { QRScanAnalytics } from '@/components/partner/QRScanAnalytics';
+import { LiveKPICard } from '@/components/partner/LiveKPICard';
+import { DashboardPDFExport } from '@/components/partner/DashboardPDFExport';
 import { useGHLSync } from '@/hooks/useGHLSync';
 import { toast } from 'sonner';
 import type { Partner } from '@/lib/supabase-helpers';
@@ -57,11 +60,13 @@ export default function PartnerDashboard() {
   const queryString = location.search;
   
   const [stats, setStats] = useState<PartnerStats | null>(null);
+  const [previousStats, setPreviousStats] = useState<PartnerStats | null>(null);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [recentRedemptions, setRecentRedemptions] = useState<RedemptionWithDetails[]>([]);
   const [partner, setPartner] = useState<Partner | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<'7' | '14' | '30'>('14');
   
   const { createSubAccount, isLoading: ghlLoading } = useGHLSync();
 
@@ -69,11 +74,13 @@ export default function PartnerDashboard() {
     async function loadData() {
       if (!partnerInfo?.partnerId) return;
       
+      const days = parseInt(selectedPeriod);
+      
       try {
         const [statsData, redemptionsData, dailyData, partnerData] = await Promise.all([
           getPartnerStats(partnerInfo.partnerId),
           getPartnerRedemptions(partnerInfo.partnerId),
-          getPartnerDailyStats(partnerInfo.partnerId, 14),
+          getPartnerDailyStats(partnerInfo.partnerId, days),
           getPartnerDetails(partnerInfo.partnerId),
         ]);
         
@@ -81,6 +88,29 @@ export default function PartnerDashboard() {
         setRecentRedemptions(redemptionsData.slice(0, 5));
         setDailyStats(dailyData);
         setPartner(partnerData);
+
+        // Calculate previous period stats for trend comparison
+        // Use the daily stats to calculate the previous period totals
+        if (dailyData.length >= days) {
+          const currentPeriod = dailyData.slice(-days);
+          const prevStart = dailyData.length >= days * 2 ? dailyData.slice(-days * 2, -days) : [];
+          
+          const currentRedemptions = currentPeriod.reduce((sum, d) => sum + d.redemptions, 0);
+          const prevRedemptions = prevStart.reduce((sum, d) => sum + d.redemptions, 0);
+          const currentTaler = currentPeriod.reduce((sum, d) => sum + d.taler, 0);
+          const prevTaler = prevStart.reduce((sum, d) => sum + d.taler, 0);
+          const currentReviews = currentPeriod.reduce((sum, d) => sum + d.reviews, 0);
+          const prevReviews = prevStart.reduce((sum, d) => sum + d.reviews, 0);
+          
+          setPreviousStats({
+            ...statsData,
+            totalRedemptions: prevRedemptions,
+            totalTalerRedeemed: prevTaler,
+            totalReviews: prevReviews,
+            pendingRedemptions: 0,
+            completedRedemptions: prevRedemptions,
+          });
+        }
 
         // Check if onboarding should be shown
         const onboardingSeen = localStorage.getItem(`${ONBOARDING_KEY}_${partnerInfo.partnerId}`);
@@ -115,7 +145,27 @@ export default function PartnerDashboard() {
     }
     
     loadData();
-  }, [partnerInfo?.partnerId]);
+  }, [partnerInfo?.partnerId, selectedPeriod]);
+  
+  // Calculate trend data for KPIs
+  const trendData = useMemo(() => {
+    if (!dailyStats.length) return null;
+    
+    const days = parseInt(selectedPeriod);
+    const currentPeriod = dailyStats.slice(-days);
+    const currentRedemptions = currentPeriod.reduce((sum, d) => sum + d.redemptions, 0);
+    const currentTaler = currentPeriod.reduce((sum, d) => sum + d.taler, 0);
+    const currentReviews = currentPeriod.reduce((sum, d) => sum + d.reviews, 0);
+    
+    return {
+      redemptions: currentRedemptions,
+      taler: currentTaler,
+      reviews: currentReviews,
+      prevRedemptions: previousStats?.totalRedemptions || 0,
+      prevTaler: previousStats?.totalTalerRedeemed || 0,
+      prevReviews: previousStats?.totalReviews || 0,
+    };
+  }, [dailyStats, selectedPeriod, previousStats]);
 
   const handleOnboardingComplete = () => {
     if (partnerInfo?.partnerId) {
@@ -132,44 +182,9 @@ export default function PartnerDashboard() {
     );
   }
 
-  const statCards = [
-    {
-      title: 'Wartend',
-      subtitle: 'Noch nicht abgeholt',
-      value: stats?.pendingRedemptions || 0,
-      icon: Clock,
-      color: 'text-warning',
-      bgColor: 'bg-gradient-to-br from-warning/20 to-warning/5',
-      borderColor: 'border-warning/20',
-    },
-    {
-      title: 'Bestätigt',
-      subtitle: 'Erfolgreich eingelöst',
-      value: stats?.completedRedemptions || 0,
-      icon: CheckCircle,
-      color: 'text-success',
-      bgColor: 'bg-gradient-to-br from-success/20 to-success/5',
-      borderColor: 'border-success/20',
-    },
-    {
-      title: 'Feedback',
-      subtitle: 'In-App Bewertungen',
-      value: stats?.totalReviews || 0,
-      icon: MessageSquare,
-      color: 'text-primary',
-      bgColor: 'bg-gradient-to-br from-primary/20 to-primary/5',
-      borderColor: 'border-primary/20',
-    },
-    {
-      title: 'Taler',
-      subtitle: 'Gesamt ausgegeben',
-      value: stats?.totalTalerRedeemed || 0,
-      icon: Coins,
-      color: 'text-accent',
-      bgColor: 'bg-gradient-to-br from-accent/20 to-accent/5',
-      borderColor: 'border-accent/20',
-    },
-  ];
+  const periodLabel = selectedPeriod === '7' ? 'Letzte 7 Tage' 
+    : selectedPeriod === '14' ? 'Letzte 14 Tage' 
+    : 'Letzte 30 Tage';
 
   // Format chart data for display
   const chartData = dailyStats.map(d => ({
@@ -238,29 +253,80 @@ export default function PartnerDashboard() {
           </div>
         </div>
 
-        {/* Stats Grid - 2x2 on mobile */}
+        {/* Period Selector & Export */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/50">
+            {(['7', '14', '30'] as const).map((period) => (
+              <button
+                key={period}
+                onClick={() => setSelectedPeriod(period)}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium rounded-md transition-all',
+                  selectedPeriod === period 
+                    ? 'bg-background shadow-sm text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {period}d
+              </button>
+            ))}
+          </div>
+          
+          {stats && (
+            <DashboardPDFExport
+              partnerName={partnerInfo?.partnerName || 'Partner'}
+              stats={stats}
+              dailyStats={dailyStats}
+              periodLabel={periodLabel}
+            />
+          )}
+        </div>
+
+        {/* Live KPI Cards - 2x2 Grid */}
         <div className="grid grid-cols-2 gap-3">
-          {statCards.map((stat) => (
-            <div 
-              key={stat.title}
-              className={cn(
-                'relative overflow-hidden rounded-xl border p-4 transition-all hover:shadow-md',
-                stat.bgColor,
-                stat.borderColor
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div className={cn('p-2.5 rounded-xl bg-background/80 shadow-sm flex-shrink-0')}>
-                  <stat.icon className={cn('h-5 w-5', stat.color)} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{stat.title}</p>
-                </div>
-              </div>
-              <p className="text-[10px] text-muted-foreground/70 mt-2">{stat.subtitle}</p>
-            </div>
-          ))}
+          <LiveKPICard
+            title="Wartend"
+            value={stats?.pendingRedemptions || 0}
+            subtitle="Noch nicht abgeholt"
+            icon={Clock}
+            color="warning"
+          />
+          <LiveKPICard
+            title="Bestätigt"
+            value={stats?.completedRedemptions || 0}
+            subtitle="Erfolgreich eingelöst"
+            icon={CheckCircle}
+            color="success"
+            trend={trendData ? {
+              current: trendData.redemptions,
+              previous: trendData.prevRedemptions,
+              label: 'Vorperiode',
+            } : undefined}
+          />
+          <LiveKPICard
+            title="Feedback"
+            value={stats?.totalReviews || 0}
+            subtitle="In-App Bewertungen"
+            icon={MessageSquare}
+            color="primary"
+            trend={trendData ? {
+              current: trendData.reviews,
+              previous: trendData.prevReviews,
+              label: 'Vorperiode',
+            } : undefined}
+          />
+          <LiveKPICard
+            title="Taler"
+            value={stats?.totalTalerRedeemed || 0}
+            subtitle="Gesamt eingelöst"
+            icon={Coins}
+            color="accent"
+            trend={trendData ? {
+              current: trendData.taler,
+              previous: trendData.prevTaler,
+              label: 'Vorperiode',
+            } : undefined}
+          />
         </div>
 
         {/* Rating Overview - Premium Card */}
