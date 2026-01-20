@@ -87,6 +87,11 @@ export default function RewardDetailPage() {
   const [redemptionStatus, setRedemptionStatus] = useState<'pending' | 'used' | 'expired' | 'cancelled' | null>(null);
   const [remainingRedemptions, setRemainingRedemptions] = useState<number>(-1); // -1 = unlimited
   
+  // Plus members get 50% discount on Taler cost
+  const isPlusUser = isSubscribed || isTrial;
+  const discountedCost = reward ? (isPlusUser ? Math.floor(reward.taler_cost * 0.5) : reward.taler_cost) : 0;
+  const originalCost = reward?.taler_cost || 0;
+  
   const loadReward = async () => {
     if (!id) return;
     setIsLoading(true);
@@ -175,7 +180,7 @@ export default function RewardDetailPage() {
         user.id,
         reward.id,
         reward.partner_id,
-        reward.taler_cost
+        discountedCost // Use discounted cost for Plus users
       );
       
       if (result.error) {
@@ -290,7 +295,7 @@ export default function RewardDetailPage() {
   }
   
   const Icon = rewardTypeIcons[reward.reward_type] || Gift;
-  const canAfford = balance && balance.taler_balance >= reward.taler_cost;
+  const canAfford = balance && balance.taler_balance >= discountedCost;
   const isExpired = redemptionStatus === 'expired' || (timeRemaining !== null && timeRemaining === 0);
   const statusUsed = redemptionStatus === 'used';
   const isLoggedIn = !!user;
@@ -590,9 +595,26 @@ export default function RewardDetailPage() {
               )}
             </div>
             <h2 className="text-display-sm mb-3">{reward.title}</h2>
-            <span className="badge-accent text-base px-4 py-2">
-              {reward.taler_cost.toLocaleString('de-CH')} Taler
-            </span>
+            
+            {/* Taler Cost with Plus Discount */}
+            <div className="flex flex-col items-center gap-1">
+              {isPlusUser && originalCost !== discountedCost ? (
+                <>
+                  <span className="text-sm text-muted-foreground line-through">
+                    {originalCost.toLocaleString('de-CH')} Taler
+                  </span>
+                  <span className="badge-accent text-base px-4 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30">
+                    <Crown className="h-4 w-4 inline mr-1 text-amber-500" />
+                    {discountedCost.toLocaleString('de-CH')} Taler
+                    <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">-50%</span>
+                  </span>
+                </>
+              ) : (
+                <span className="badge-accent text-base px-4 py-2">
+                  {originalCost.toLocaleString('de-CH')} Taler
+                </span>
+              )}
+            </div>
             
             {/* Premium Info Banner */}
             {isPremiumReward(reward.reward_type) && !(isSubscribed || isTrial) && (
@@ -732,7 +754,7 @@ export default function RewardDetailPage() {
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-muted">
                   <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    Du brauchst noch <span className="font-semibold text-foreground">{(reward.taler_cost - (balance?.taler_balance || 0)).toLocaleString('de-CH')} Taler</span> für diesen Reward.
+                    Du brauchst noch <span className="font-semibold text-foreground">{(discountedCost - (balance?.taler_balance || 0)).toLocaleString('de-CH')} Taler</span> für diesen Reward.
                   </p>
                 </div>
               )}
@@ -760,10 +782,16 @@ export default function RewardDetailPage() {
                   >
                     {isRedeeming ? 'Wird eingelöst...' : 
                       remainingRedemptions === 0 ? 'Bereits eingelöst' :
-                      `Für ${reward.taler_cost.toLocaleString('de-CH')} Taler einlösen`}
+                      `Für ${discountedCost.toLocaleString('de-CH')} Taler einlösen`}
                   </button>
                   <p className="text-xs text-center text-muted-foreground">
                     Der Code ist {REDEMPTION_EXPIRY_MINUTES} Minuten gültig.
+                    {isPlusUser && originalCost !== discountedCost && (
+                      <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                        <Crown className="h-3 w-3 inline mr-1" />
+                        2Go Plus Rabatt: {(originalCost - discountedCost).toLocaleString('de-CH')} Taler gespart!
+                      </span>
+                    )}
                   </p>
                 </>
               )}
