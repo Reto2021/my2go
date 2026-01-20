@@ -1,6 +1,7 @@
+import { Link } from 'react-router-dom';
 import { UserBalance } from '@/lib/supabase-helpers';
 import { cn } from '@/lib/utils';
-import { Coins, Clock, TrendingUp } from 'lucide-react';
+import { Coins, Clock, TrendingUp, BarChart3, ChevronRight } from 'lucide-react';
 
 interface BalanceCardProps {
   balance: UserBalance;
@@ -15,13 +16,25 @@ export function BalanceCard({ balance, className }: BalanceCardProps) {
     >
       {/* Main Balance */}
       <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="h-8 w-8 rounded-xl bg-accent flex items-center justify-center">
-            <Coins className="h-4 w-4 text-accent-foreground" />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-accent flex items-center justify-center">
+              <Coins className="h-4 w-4 text-accent-foreground" />
+            </div>
+            <span className="text-sm font-medium text-secondary-foreground/70">
+              Dein Guthaben
+            </span>
           </div>
-          <span className="text-sm font-medium text-secondary-foreground/70">
-            Dein Guthaben
-          </span>
+          
+          {/* Stats Link */}
+          <Link 
+            to="/my-stats"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-xs font-medium"
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            Stats
+            <ChevronRight className="h-3 w-3 opacity-70" />
+          </Link>
         </div>
         
         <div className="flex items-baseline gap-2 mb-6">
