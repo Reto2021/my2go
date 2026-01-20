@@ -25,7 +25,7 @@ import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 import { TalerLoopVisual } from '@/components/taler/TalerLoopVisual';
 
 // Category order for grouping
-const CATEGORY_ORDER = ['Grundlagen', 'Gutscheine', 'Codes', 'Taler', 'Streaming', 'Konto'];
+const CATEGORY_ORDER = ['Grundlagen', '2Go Plus', 'Gutscheine', 'Codes', 'Taler', 'Streaming', 'Konto'];
 
 // Support topics
 const SUPPORT_TOPICS = [

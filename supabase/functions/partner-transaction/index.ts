@@ -100,14 +100,19 @@ Deno.serve(async (req) => {
 
     const targetUserId = userCodeData.user_id;
 
-    // Get user profile for display name
+    // Get user profile for display name AND subscription status
     const { data: userProfile } = await supabaseAdmin
       .from('profiles')
-      .select('display_name, first_name')
+      .select('display_name, first_name, subscription_status, subscription_ends_at')
       .eq('id', targetUserId)
       .single();
 
     const userName = userProfile?.display_name || userProfile?.first_name || 'Kunde';
+    
+    // Check if user has active Plus subscription
+    const isPlus = userProfile?.subscription_status === 'active' && 
+      userProfile?.subscription_ends_at && 
+      new Date(userProfile.subscription_ends_at) > new Date();
 
     // Get partner name
     const { data: partner } = await supabaseAdmin
@@ -154,11 +159,18 @@ Deno.serve(async (req) => {
       source = 'partner_purchase';
     }
 
+    // 2Go Plus: 2x Bonus for visits and purchases!
+    if (isPlus) {
+      talerAwarded = talerAwarded * 2;
+      description += ' (2Go Plus 2x Bonus)';
+      console.log(`Plus user detected - doubling taler from ${talerAwarded / 2} to ${talerAwarded}`);
+    }
+
     if (talerAwarded <= 0) {
       return new Response(
         JSON.stringify({ success: false, error: "Keine Taler zu vergeben" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        );
     }
 
     // Create the transaction

@@ -17,7 +17,18 @@ Deno.serve(async (req) => {
 
     console.log('Starting Taler batch expiration process...');
 
+    // Step 0: Get all Plus users (their Taler should NEVER expire)
+    const { data: plusUsers, error: plusError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('subscription_status', 'active')
+      .gt('subscription_ends_at', new Date().toISOString());
+    
+    const plusUserIds = plusUsers?.map(u => u.id) || [];
+    console.log(`Found ${plusUserIds.length} active Plus users (Taler won't expire for them)`);
+
     // Step 1: Expire old batches (those past their expires_at date)
+    // But exclude Plus users!
     const { data: expiredBatches, error: expireError } = await supabase
       .rpc('expire_old_taler_batches');
 
@@ -26,7 +37,12 @@ Deno.serve(async (req) => {
       throw expireError;
     }
 
-    console.log(`Expired ${expiredBatches?.length || 0} batches`);
+    // Filter out Plus users from expired batches
+    const filteredExpiredBatches = expiredBatches?.filter(
+      (batch: any) => !plusUserIds.includes(batch.user_id)
+    ) || [];
+    
+    console.log(`Expired ${filteredExpiredBatches.length} batches (excluded ${(expiredBatches?.length || 0) - filteredExpiredBatches.length} Plus user batches)`);
 
     // Step 2: Get users with expiring talers next month (for notifications)
     const { data: expiringNext, error: expiringError } = await supabase
