@@ -55,6 +55,7 @@ const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
 const SponsorsPage = lazy(() => import("./pages/SponsorsPage"));
 const PlusSuccessPage = lazy(() => import("./pages/PlusSuccessPage"));
 const RedeemDiscountPage = lazy(() => import("./pages/RedeemDiscountPage"));
+const MyStatsPage = lazy(() => import("./pages/MyStatsPage"));
 
 // Admin pages - lazy loaded (rarely accessed)
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -292,6 +293,7 @@ function AppContent() {
             <Route path="/sponsoren" element={<SponsorsPage />} />
             <Route path="/plus/success" element={<PlusSuccessPage />} />
             <Route path="/plus/discount" element={<RedeemDiscountPage />} />
+            <Route path="/my-stats" element={<MyStatsPage />} />
           </Route>
           
           {/* Catch-all */}

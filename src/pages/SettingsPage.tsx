@@ -536,21 +536,24 @@ export default function SettingsPage() {
               )}
             </div>
             
-            {/* Visit Statistics */}
-            <div className="flex items-center justify-between p-4">
+            {/* My Stats - Personal Analytics */}
+            <button 
+              onClick={() => navigate('/my-stats')}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <Eye className="h-5 w-5 text-accent" />
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Eye className="h-5 w-5 text-primary" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium">Besuchs-Statistik</p>
+                  <p className="font-medium">Meine Statistiken</p>
                   <p className="text-sm text-muted-foreground">
-                    {visitCount} Besuche {firstVisitDate && `seit ${firstVisitDate}`}
+                    Hörzeit, Streaks & Badge-Fortschritt
                   </p>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-accent">{visitCount}</span>
-            </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </button>
           </div>
         </section>
         
