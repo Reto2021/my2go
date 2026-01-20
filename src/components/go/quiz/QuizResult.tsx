@@ -59,6 +59,7 @@ import { ReportPreviewSheet } from './ReportPreviewSheet';
 import { ROIOverview } from './ROIOverview';
 import { UpliftChart } from './UpliftChart';
 import { ScenarioSlider, Scenario } from './ScenarioSlider';
+import { AIRewardSuggestions } from './AIRewardSuggestions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -535,6 +536,9 @@ export function QuizResult({ answers, updateAnswers, dbPercent, onReset }: Props
       <div className="hidden print-only print-footer">
         <p>My2Go Fit-Check Report • {new Date().toLocaleDateString('de-CH')} • my2go.app • Keine Garantie auf Berechnungen</p>
       </div>
+
+      {/* AI Reward Suggestions - Show before CTA */}
+      <AIRewardSuggestions answers={answers} />
 
       {/* CTAs - Hide on print */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4 print-hide">
