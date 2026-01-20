@@ -19,6 +19,47 @@ interface SponsoringInquiry {
   message?: string;
 }
 
+// =============================================
+// SECURITY: Input validation and sanitization
+// =============================================
+
+// Email regex for validation
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// HTML escape to prevent XSS in emails
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m] || m);
+}
+
+// Truncate and sanitize string input
+function sanitizeInput(input: string | undefined, maxLength: number): string {
+  if (!input) return '';
+  return escapeHtml(input.trim().slice(0, maxLength));
+}
+
+// Validate email format
+function isValidEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email) && email.length <= 255;
+}
+
+// Field length limits
+const LIMITS = {
+  company: 100,
+  contact_name: 100,
+  email: 255,
+  phone: 30,
+  message: 2000,
+  desired_level: 50,
+  engagement_area: 50
+} as const;
+
 const levelLabels: Record<string, string> = {
   bronze: "Bronze - CHF 500/Monat",
   silver: "Silber - CHF 1'000/Monat",
@@ -41,32 +82,55 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const inquiry: SponsoringInquiry = await req.json();
+    const rawInquiry: SponsoringInquiry = await req.json();
 
+    // =============================================
+    // SECURITY: Validate and sanitize all inputs
+    // =============================================
+    
     // Validate required fields
-    if (!inquiry.company || !inquiry.contact_name || !inquiry.email) {
+    if (!rawInquiry.company?.trim() || !rawInquiry.contact_name?.trim() || !rawInquiry.email?.trim()) {
       return new Response(
         JSON.stringify({ error: "Pflichtfelder fehlen" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
+    // Validate email format
+    if (!isValidEmail(rawInquiry.email.trim())) {
+      return new Response(
+        JSON.stringify({ error: "Ungültige E-Mail-Adresse" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Sanitize all inputs for HTML rendering (prevents XSS in emails)
+    const sanitized = {
+      company: sanitizeInput(rawInquiry.company, LIMITS.company),
+      contact_name: sanitizeInput(rawInquiry.contact_name, LIMITS.contact_name),
+      email: rawInquiry.email.trim().slice(0, LIMITS.email), // Don't escape email
+      phone: sanitizeInput(rawInquiry.phone, LIMITS.phone) || null,
+      desired_level: sanitizeInput(rawInquiry.desired_level, LIMITS.desired_level) || null,
+      engagement_area: sanitizeInput(rawInquiry.engagement_area, LIMITS.engagement_area) || null,
+      message: sanitizeInput(rawInquiry.message, LIMITS.message) || null,
+    };
+
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Insert inquiry into database
+    // Insert inquiry into database (using sanitized data)
     const { data: savedInquiry, error: dbError } = await supabase
       .from("sponsoring_inquiries")
       .insert({
-        company: inquiry.company,
-        contact_name: inquiry.contact_name,
-        email: inquiry.email,
-        phone: inquiry.phone || null,
-        desired_level: inquiry.desired_level || null,
-        engagement_area: inquiry.engagement_area || null,
-        message: inquiry.message || null,
+        company: sanitized.company,
+        contact_name: sanitized.contact_name,
+        email: sanitized.email,
+        phone: sanitized.phone,
+        desired_level: sanitized.desired_level,
+        engagement_area: sanitized.engagement_area,
+        message: sanitized.message,
       })
       .select()
       .single();
@@ -76,11 +140,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Fehler beim Speichern der Anfrage");
     }
 
-    // Prepare email content
-    const levelText = inquiry.desired_level ? levelLabels[inquiry.desired_level] || inquiry.desired_level : "Nicht angegeben";
-    const areaText = inquiry.engagement_area ? areaLabels[inquiry.engagement_area] || inquiry.engagement_area : "Nicht angegeben";
+    // Prepare email content (already sanitized for HTML)
+    const levelText = sanitized.desired_level ? levelLabels[sanitized.desired_level] || sanitized.desired_level : "Nicht angegeben";
+    const areaText = sanitized.engagement_area ? areaLabels[sanitized.engagement_area] || sanitized.engagement_area : "Nicht angegeben";
 
-    // Send notification email to team
+    // Send notification email to team (using sanitized data - already HTML-escaped)
     const teamEmailHtml = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 24px; border-radius: 12px 12px 0 0;">
@@ -92,20 +156,20 @@ const handler = async (req: Request): Promise<Response> => {
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 8px 0; color: #6b7280; width: 140px;">Unternehmen:</td>
-              <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${inquiry.company}</td>
+              <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${sanitized.company}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #6b7280;">Ansprechperson:</td>
-              <td style="padding: 8px 0; color: #1f2937;">${inquiry.contact_name}</td>
+              <td style="padding: 8px 0; color: #1f2937;">${sanitized.contact_name}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #6b7280;">E-Mail:</td>
-              <td style="padding: 8px 0;"><a href="mailto:${inquiry.email}" style="color: #2563eb;">${inquiry.email}</a></td>
+              <td style="padding: 8px 0;"><a href="mailto:${escapeHtml(sanitized.email)}" style="color: #2563eb;">${escapeHtml(sanitized.email)}</a></td>
             </tr>
-            ${inquiry.phone ? `
+            ${sanitized.phone ? `
             <tr>
               <td style="padding: 8px 0; color: #6b7280;">Telefon:</td>
-              <td style="padding: 8px 0;"><a href="tel:${inquiry.phone}" style="color: #2563eb;">${inquiry.phone}</a></td>
+              <td style="padding: 8px 0;"><a href="tel:${sanitized.phone}" style="color: #2563eb;">${sanitized.phone}</a></td>
             </tr>
             ` : ''}
           </table>
@@ -122,10 +186,10 @@ const handler = async (req: Request): Promise<Response> => {
             </tr>
           </table>
           
-          ${inquiry.message ? `
+          ${sanitized.message ? `
           <h2 style="color: #1f2937; margin-top: 24px;">Nachricht</h2>
           <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
-            <p style="margin: 0; color: #374151; white-space: pre-wrap;">${inquiry.message}</p>
+            <p style="margin: 0; color: #374151; white-space: pre-wrap;">${sanitized.message}</p>
           </div>
           ` : ''}
           
@@ -143,11 +207,12 @@ const handler = async (req: Request): Promise<Response> => {
     await resend.emails.send({
       from: "2Go Sponsoring <noreply@my2go.ch>",
       to: ["sponsoring@my2go.ch"],
-      subject: `🎉 Neue Sponsoring-Anfrage von ${inquiry.company}`,
+      subject: `🎉 Neue Sponsoring-Anfrage von ${sanitized.company}`,
       html: teamEmailHtml,
     });
 
     // Send confirmation email to inquirer
+    const firstName = sanitized.contact_name.split(' ')[0] || 'Interessent';
     const confirmationHtml = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #1e3a5f, #2d5a87); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -156,7 +221,7 @@ const handler = async (req: Request): Promise<Response> => {
         
         <div style="background: #f9fafb; padding: 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
           <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-            Liebe/r ${inquiry.contact_name.split(' ')[0]},
+            Liebe/r ${firstName},
           </p>
           
           <p style="color: #374151; font-size: 16px; line-height: 1.6;">
@@ -195,7 +260,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     await resend.emails.send({
       from: "2Go Sponsoring <noreply@my2go.ch>",
-      to: [inquiry.email],
+      to: [sanitized.email],
       subject: "Ihre Sponsoring-Anfrage bei 2Go",
       html: confirmationHtml,
     });
