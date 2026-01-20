@@ -61,7 +61,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
               <span className="block">Sammle Punkte.</span>
               <span className="relative inline-block mt-1">
                 <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
-                <span className="relative text-secondary font-black">Spare lokal.</span>
+                <span className="relative text-secondary font-black">Erlebe mehr.</span>
               </span>
             </h1>
             
@@ -127,7 +127,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center text-secondary font-bold text-lg">3</div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Sparen</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Erleben</span>
           </div>
         </div>
       </section>
