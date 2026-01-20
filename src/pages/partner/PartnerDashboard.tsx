@@ -12,8 +12,10 @@ import {
   Sparkles,
   HelpCircle,
   Zap,
-  Users
+  Users,
+  Info
 } from 'lucide-react';
+import { TalerLoopVisual } from '@/components/taler/TalerLoopVisual';
 import { usePartner } from '@/components/partner/PartnerGuard';
 import { 
   getPartnerStats, 
@@ -438,6 +440,23 @@ export default function PartnerDashboard() {
               />
             </AreaChart>
           </ResponsiveContainer>
+        </div>
+
+        {/* Taler System Explainer for Partners */}
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Info className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold">So funktioniert's für Ihre Kunden</h3>
+              <p className="text-xs text-muted-foreground">Erklären Sie den Taler-Kreislauf</p>
+            </div>
+          </div>
+          <TalerLoopVisual variant="expanded" showValues />
+          <p className="text-xs text-muted-foreground text-center mt-4">
+            Hör Radio. Sammle Taler. Geniess vor Ort.
+          </p>
         </div>
 
         {/* QR Scan Analytics */}
