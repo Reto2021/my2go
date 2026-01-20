@@ -11,9 +11,11 @@ import { ExpandedRadioPlayer } from '@/components/ui/radio-player-expanded';
 import { TierCelebration } from '@/components/radio/TierCelebration';
 import { OnboardingTutorial } from '@/components/onboarding/OnboardingTutorial';
 import { StreakDetailsSheet } from '@/components/streak/StreakDetailsSheet';
+import { MilestoneCelebration } from '@/components/achievements/MilestoneCelebration';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 import { useTierReachedNotification } from '@/hooks/useTierReachedNotification';
 import { useRadioStore } from '@/lib/radio-store';
+import { useMilestoneStore } from '@/lib/milestone-store';
 
 interface AppLayoutProps {
   children?: ReactNode;
@@ -27,6 +29,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   
   // Tier reached celebration
   const { showCelebration, currentTierReward, currentTierName, nextTierInfo, dismissCelebration } = useTierReachedNotification();
+  
+  // Milestone celebration
+  const { pendingMilestone, dismissMilestone } = useMilestoneStore();
   
   return (
     <BadgeNotificationProvider>
@@ -57,6 +62,12 @@ export function AppLayout({ children }: AppLayoutProps) {
           tierName={currentTierName}
           nextTierInfo={nextTierInfo}
           onDismiss={dismissCelebration}
+        />
+        
+        {/* Milestone Celebration (Taler milestones, Redemption milestones, etc.) */}
+        <MilestoneCelebration
+          milestone={pendingMilestone}
+          onClose={dismissMilestone}
         />
         
         {/* Streak Details Sheet */}

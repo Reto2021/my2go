@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -10,6 +10,7 @@ import {
   UserCode 
 } from '@/lib/supabase-helpers';
 import { checkIsPartnerAdmin, getPartnerAdminInfo, PartnerAdminInfo } from '@/lib/partner-helpers';
+import { useMilestoneStore, checkMilestoneCrossed, getMilestoneData } from '@/lib/milestone-store';
 
 interface AuthContextType {
   user: User | null;
@@ -59,9 +60,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Track previous balance for milestone detection
+  const prevBalanceRef = useRef<number | null>(null);
+  const { triggerMilestone } = useMilestoneStore();
+
   const refreshBalance = async () => {
     if (user) {
       const balanceData = await getUserBalance(user.id);
+      
+      // Check for Taler milestones
+      if (balanceData && prevBalanceRef.current !== null) {
+        const crossedMilestone = checkMilestoneCrossed(
+          'taler',
+          balanceData.lifetime_earned,
+          prevBalanceRef.current
+        );
+        if (crossedMilestone) {
+          triggerMilestone(getMilestoneData('taler', crossedMilestone));
+        }
+      }
+      
+      // Update previous balance ref
+      if (balanceData) {
+        prevBalanceRef.current = balanceData.lifetime_earned;
+      }
+      
       setBalance(balanceData);
     }
   };
