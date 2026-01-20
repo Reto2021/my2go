@@ -74,7 +74,7 @@ const BENEFITS = [
   { 
     icon: Repeat, 
     title: "Mehr Stammkunden", 
-    desc: "Kunden sammeln Taler und kommen zurück. Einfache Psychologie, grosse Wirkung."
+    desc: "Kunden sammeln Taler und geniessen bei Ihnen. Einfache Psychologie, grosse Wirkung."
   },
   { 
     icon: Star, 
@@ -334,9 +334,9 @@ export default function PartnerLandingPage() {
             
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-secondary leading-[1.1]">
-              Ihre Kunden kommen{" "}
+              Ihre Kunden{" "}
               <span className="relative">
-                <span className="relative z-10 text-accent">öfter zurück.</span>
+                <span className="relative z-10 text-accent">geniessen vor Ort.</span>
                 <span className="absolute inset-x-0 bottom-1 h-3 bg-accent/20 -z-0" />
               </span>
             </h1>
@@ -344,8 +344,7 @@ export default function PartnerLandingPage() {
             {/* Subheadline */}
             <p className="text-lg sm:text-xl text-secondary/80 mb-8 max-w-2xl mx-auto leading-relaxed">
               Mehr Stammkunden. Bessere Google-Bewertungen. Radio-Präsenz. <br className="hidden sm:block" />
-              Für Gastronomie, Retail, Studios, Tankstellen & lokale Betriebe.
-            </p>
+              Für Gastronomie, Retail, Studios, Tankstellen & lokale Betriebe.</p>
             
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">

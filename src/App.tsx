@@ -19,6 +19,7 @@ import { ReviewRequestTrigger } from "./components/reviews/ReviewRequestTrigger"
 import { InstallPrompt } from "./components/ui/install-prompt";
 import { FunnelLayout } from "./components/funnel/FunnelLayout";
 import { RouteLoader } from "./components/ui/route-loader";
+import { TalerEarnAnimation } from "./components/taler/TalerEarnAnimation";
 import { useRadioStore } from "./lib/radio-store";
 
 import { OfflinePrefetchProvider } from "./hooks/useOfflinePrefetch";
@@ -311,6 +312,7 @@ const App = () => {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <TalerEarnAnimation />
                 <OnboardingOverlay />
                 <AppContent />
               </TooltipProvider>
