@@ -23,7 +23,7 @@ export function OnboardingTrigger() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={startOnboarding}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-background/90 text-foreground shadow-sm border border-border/50 hover:bg-background transition-colors"
         >
           <HelpCircle className="h-4 w-4" />
           <span className="text-sm font-medium">Tutorial starten</span>
