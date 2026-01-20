@@ -39,7 +39,16 @@ import { cn } from '@/lib/utils';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+// Fixed HSL color values for pie charts (CSS variables don't work well in recharts)
+const COLORS = [
+  'hsl(200, 50%, 66%)',  // Primary blue
+  'hsl(160, 84%, 39%)',  // Success green
+  'hsl(44, 98%, 49%)',   // Accent yellow
+  'hsl(197, 96%, 18%)',  // Secondary teal
+  'hsl(270, 60%, 55%)',  // Purple
+  'hsl(0, 84%, 60%)',    // Red
+  'hsl(30, 90%, 50%)',   // Orange
+];
 
 const DATE_RANGE_OPTIONS = [
   { label: '7 Tage', value: 7 },
@@ -214,7 +223,7 @@ export default function AdminAnalytics() {
       }));
       
       const streakDistribution = [
-        { name: 'Kein Streak', value: profiles?.filter(p => !p.current_streak || p.current_streak === 0).length || 0 },
+        { name: 'Keine Serie', value: profiles?.filter(p => !p.current_streak || p.current_streak === 0).length || 0 },
         { name: '1-3 Tage', value: profiles?.filter(p => p.current_streak && p.current_streak >= 1 && p.current_streak <= 3).length || 0 },
         { name: '4-7 Tage', value: profiles?.filter(p => p.current_streak && p.current_streak >= 4 && p.current_streak <= 7).length || 0 },
         { name: '8-14 Tage', value: profiles?.filter(p => p.current_streak && p.current_streak >= 8 && p.current_streak <= 14).length || 0 },
@@ -253,31 +262,53 @@ export default function AdminAnalytics() {
     }
   });
 
-  // Initialize map
+  // Initialize map when tab is active and container is ready
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || map.current) return;
+    // Small delay to ensure DOM is ready after tab switch
+    const timer = setTimeout(() => {
+      if (!mapContainer.current || !mapboxToken) return;
+      
+      // If map already exists and container is the same, just resize
+      if (map.current) {
+        map.current.resize();
+        return;
+      }
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [8.2275, 46.8182], // Switzerland center
-      zoom: 7,
-    });
+      mapboxgl.accessToken = mapboxToken;
+      
+      try {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/light-v11', // Use light style for better visibility
+          center: [8.2275, 46.8182], // Switzerland center
+          zoom: 7.5,
+        });
 
-    map.current.addControl(
-      new mapboxgl.NavigationControl({
-        visualizePitch: true,
-      }),
-      'top-right'
-    );
+        map.current.addControl(
+          new mapboxgl.NavigationControl({
+            visualizePitch: true,
+          }),
+          'top-right'
+        );
+      } catch (error) {
+        console.error('Failed to initialize map:', error);
+      }
+    }, 100);
 
     return () => {
-      map.current?.remove();
-      map.current = null;
+      clearTimeout(timer);
     };
   }, [mapboxToken]);
+
+  // Cleanup map on unmount
+  useEffect(() => {
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
 
   // Add markers for partners and user clusters
   useEffect(() => {
@@ -331,6 +362,11 @@ export default function AdminAnalytics() {
         'Chur': [9.5316, 46.8508],
         'Zug': [8.5159, 47.1662],
         'Schaffhausen': [8.6333, 47.6958],
+        'Brugg': [8.2088, 47.4830],
+        'Baden': [8.3069, 47.4736],
+        'Olten': [7.9079, 47.3521],
+        'Solothurn': [7.5396, 47.2088],
+        'Frauenfeld': [8.8987, 47.5535],
       };
 
       userStats.topCities.forEach(cityData => {
@@ -443,7 +479,7 @@ export default function AdminAnalytics() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">User Behavior Analytics</h1>
+          <h1 className="text-2xl font-bold text-foreground">Nutzer-Analyse</h1>
           <p className="text-muted-foreground">Übersicht über Hörverhalten, Standorte und App-Nutzung</p>
         </div>
         
@@ -707,11 +743,12 @@ export default function AdminAnalytics() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative w-full h-[400px] rounded-lg overflow-hidden">
+              <div className="relative w-full h-[400px] rounded-lg overflow-hidden border bg-muted/20">
                 {mapboxToken ? (
-                  <div ref={mapContainer} className="absolute inset-0" />
+                  <div ref={mapContainer} className="absolute inset-0 z-10" />
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-muted/50 rounded-lg">
+                  <div className="flex flex-col items-center justify-center h-full bg-muted/50 rounded-lg gap-2">
+                    <MapPin className="h-8 w-8 text-muted-foreground animate-pulse" />
                     <p className="text-muted-foreground">Karte wird geladen...</p>
                   </div>
                 )}
@@ -764,7 +801,7 @@ export default function AdminAnalytics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
-                  Streak-Verteilung
+                  Bonus-Serien
                 </CardTitle>
               </CardHeader>
               <CardContent>
