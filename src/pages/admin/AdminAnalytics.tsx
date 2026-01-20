@@ -58,9 +58,11 @@ const DATE_RANGE_OPTIONS = [
 
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState(30);
+  const [activeTab, setActiveTab] = useState('listening');
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   // Fetch Mapbox token
   useEffect(() => {
@@ -262,15 +264,23 @@ export default function AdminAnalytics() {
     }
   });
 
-  // Initialize map when tab is active and container is ready
+  // Initialize map only when users tab is active and container is ready
   useEffect(() => {
-    // Small delay to ensure DOM is ready after tab switch
-    const timer = setTimeout(() => {
-      if (!mapContainer.current || !mapboxToken) return;
-      
-      // If map already exists and container is the same, just resize
+    // Only initialize when users tab is active
+    if (activeTab !== 'users') return;
+    if (!mapboxToken) return;
+    if (mapInitialized) {
+      // Just resize if already initialized
       if (map.current) {
         map.current.resize();
+      }
+      return;
+    }
+    
+    // Longer delay to ensure DOM is fully rendered after tab switch
+    const timer = setTimeout(() => {
+      if (!mapContainer.current) {
+        console.log('Map container not ready');
         return;
       }
 
@@ -279,9 +289,14 @@ export default function AdminAnalytics() {
       try {
         map.current = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/light-v11', // Use light style for better visibility
+          style: 'mapbox://styles/mapbox/light-v11',
           center: [8.2275, 46.8182], // Switzerland center
           zoom: 7.5,
+        });
+
+        map.current.on('load', () => {
+          setMapInitialized(true);
+          console.log('Map loaded successfully');
         });
 
         map.current.addControl(
@@ -293,12 +308,12 @@ export default function AdminAnalytics() {
       } catch (error) {
         console.error('Failed to initialize map:', error);
       }
-    }, 100);
+    }, 300);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [mapboxToken]);
+  }, [mapboxToken, activeTab, mapInitialized]);
 
   // Cleanup map on unmount
   useEffect(() => {
@@ -502,7 +517,7 @@ export default function AdminAnalytics() {
         </div>
       </div>
 
-      <Tabs defaultValue="listening" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="listening" className="gap-2">
             <Headphones className="h-4 w-4" />
