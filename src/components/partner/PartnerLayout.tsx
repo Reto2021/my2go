@@ -59,19 +59,19 @@ export function PartnerLayout() {
         </div>
       )}
 
-      {/* Partner Header - Neutral design matching standard theme */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border">
+      {/* Partner Header - Deep Teal matching main app */}
+      <header className="sticky top-0 z-50 bg-secondary text-secondary-foreground">
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15">
-                <Store className="h-5 w-5 text-accent" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                <Store className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-lg font-bold truncate max-w-[200px] sm:max-w-none text-foreground">
+                <h1 className="text-lg font-bold truncate max-w-[200px] sm:max-w-none">
                   {partnerInfo?.partnerName || 'Partner Portal'}
                 </h1>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-secondary-foreground/70">
                   {partnerInfo?.role === 'owner' ? 'Inhaber' : 
                    partnerInfo?.role === 'manager' ? 'Manager' : 'Mitarbeiter'}
                 </p>
@@ -81,7 +81,7 @@ export function PartnerLayout() {
             {!isAdminOverride && (
               <Link 
                 to="/" 
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-muted/80 transition-colors text-sm font-medium text-foreground"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span className="hidden sm:inline">Zurück zur App</span>
