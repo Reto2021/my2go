@@ -1,6 +1,8 @@
+import { useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMilestoneStore, checkMilestoneCrossed, getMilestoneData } from "@/lib/milestone-store";
 
 interface StreakStatus {
   current_streak: number;
@@ -37,6 +39,8 @@ interface PurchaseFreezeResult {
 export function useStreak() {
   const { user, refreshBalance } = useAuth();
   const queryClient = useQueryClient();
+  const { triggerMilestone } = useMilestoneStore();
+  const prevStreakRef = useRef<number | null>(null);
 
   // Get streak status
   const { data: streakStatus, isLoading } = useQuery({
@@ -61,6 +65,19 @@ export function useStreak() {
     },
     onSuccess: (data) => {
       if (data.success) {
+        // Check for streak milestones
+        if (prevStreakRef.current !== null && data.current_streak) {
+          const crossedMilestone = checkMilestoneCrossed(
+            'streak',
+            data.current_streak,
+            prevStreakRef.current
+          );
+          if (crossedMilestone) {
+            triggerMilestone(getMilestoneData('streak', crossedMilestone));
+          }
+        }
+        prevStreakRef.current = data.current_streak;
+        
         queryClient.invalidateQueries({ queryKey: ["streak-status"] });
         queryClient.invalidateQueries({ queryKey: ["user-badges"] });
         queryClient.invalidateQueries({ queryKey: ["unseen-badges"] });
