@@ -18,11 +18,18 @@ export interface FAQItem {
 export const FAQ_ITEMS: FAQItem[] = [
   // Grundlagen (3)
   { question: 'Was sind 2Go Taler?', answer: 'Deine lokale Belohnungswährung. Hör Radio, kauf ein vor Ort, sammle Taler – geniess bei Partnern. Nicht auszahlbar.', category: 'Grundlagen' },
-  { question: 'Wie sammle ich Taler?', answer: 'Radio hören (automatisch), bei Partnern einkaufen (10 Taler pro 10 CHF), Besuche (5 Taler) oder On-Air Codes eingeben.', category: 'Grundlagen' },
+  { question: 'Wie sammle ich Taler?', answer: 'Radio hören (automatisch), bei Partnern einkaufen (10 Taler pro 10 CHF), Besuche (5 Taler) oder On-Air Codes eingeben. Mit 2Go Plus erhältst du 2x Bonus bei Besuchen und Einkäufen!', category: 'Grundlagen' },
   { question: 'Wo ist meine Karte?', answer: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine My 2Go Karte.', category: 'Grundlagen' },
   
+  // 2Go Plus (5) - NEW CATEGORY
+  { question: 'Was ist 2Go Plus?', answer: '2Go Plus ist unser Premium-Abo. Du sparst 50% Taler bei Gutscheinen, verdienst 2x Bonus bei Besuchen & Einkäufen, hast Zugang zu exklusiven Rewards und deine Taler verfallen nie!', category: '2Go Plus' },
+  { question: 'Welche Vorteile habe ich mit 2Go Plus?', answer: '✓ 50% weniger Taler für alle Gutscheine\n✓ 2x Taler-Bonus bei Besuchen & Einkäufen\n✓ Exklusive Premium-Rewards\n✓ Keine Taler-Verfall mehr – deine Taler bleiben für immer!', category: '2Go Plus' },
+  { question: 'Wie aktiviere ich 2Go Plus?', answer: 'Gehe auf dein Profil oder die Guthaben-Seite und wähle "2Go Plus aktivieren". Du kannst monatlich oder jährlich zahlen – oder mit 500 Taler für 30 Tage einlösen.', category: '2Go Plus' },
+  { question: 'Kann ich 2Go Plus mit Taler kaufen?', answer: 'Ja! Du kannst 500 Taler gegen 30 Tage 2Go Plus eintauschen. Perfekt, wenn du viele Taler gesammelt hast.', category: '2Go Plus' },
+  { question: 'Verlängert sich 2Go Plus automatisch?', answer: 'Beim Abo ja – du kannst aber jederzeit kündigen. Bei Taler-Einlösung nicht automatisch, du musst manuell verlängern.', category: '2Go Plus' },
+  
   // Gutscheine (4)
-  { question: 'Wie löse ich einen Gutschein ein?', answer: 'Gutschein wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig.', category: 'Gutscheine' },
+  { question: 'Wie löse ich einen Gutschein ein?', answer: 'Gutschein wählen, einlösen, Code beim Partner vorzeigen. Nur vor Ort gültig. Mit 2Go Plus sparst du 50% Taler!', category: 'Gutscheine' },
   { question: 'Wie lange ist der Einlösecode gültig?', answer: '60 Minuten. Danach verfällt er, deine Taler bleiben erhalten.', category: 'Gutscheine' },
   { question: 'Kann ich Gutscheine zurückgeben?', answer: 'Nein. Einmal eingelöst, kein Rücktausch möglich.', category: 'Gutscheine' },
   { question: 'Gibt es ein Limit pro Tag?', answer: 'Ja, manche Gutscheine haben ein Tageslimit. Steht beim jeweiligen Gutschein.', category: 'Gutscheine' },
@@ -33,7 +40,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   { question: 'Wie viele Codes kann ich pro Tag einlösen?', answer: 'Max. 5 Codes pro Tag. Bei Missbrauch wird das Konto gesperrt.', category: 'Codes' },
   
   // Taler & Gültigkeit (4)
-  { question: 'Verfallen meine Taler?', answer: 'Ja, Taler haben eine Gültigkeit von 6 Monaten ab Erhalt. Taler aus Januar verfallen z.B. am 1. Juli. Bei Einlösung werden immer die ältesten Taler zuerst verwendet (FIFO).', category: 'Taler' },
+  { question: 'Verfallen meine Taler?', answer: 'Standardmässig haben Taler eine Gültigkeit von 6 Monaten ab Erhalt. Mit 2Go Plus verfallen deine Taler nie! Bei Einlösung werden immer die ältesten Taler zuerst verwendet (FIFO).', category: 'Taler' },
   { question: 'Werde ich vor dem Verfall gewarnt?', answer: 'Ja! Du siehst auf deiner Guthaben-Karte, wenn Taler bald verfallen. Zusätzlich wirst du per Push-Benachrichtigung informiert.', category: 'Taler' },
   { question: 'Kann ich Taler auszahlen?', answer: 'Nein. 2Go Taler sind Bonuspunkte, keine Währung. Keine Barauszahlung.', category: 'Taler' },
   { question: 'Kann ich Taler übertragen?', answer: 'Nein. Taler sind an dein Konto gebunden und nicht übertragbar.', category: 'Taler' },
