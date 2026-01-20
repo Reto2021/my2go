@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Check, Sparkles, Loader2, Coins, Ticket } from 'lucide-react';
+import { Crown, Check, Sparkles, Loader2, Coins, Ticket, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import { useAuth, useBalance } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { GiftPlusSheet } from './GiftPlusSheet';
 
 interface PlusUpgradeSheetProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
   const { balance, refreshBalance } = useBalance();
   const { createCheckout, isSubscribed, isTrial, trialDaysRemaining, redeemWithTaler } = useSubscription();
   const [isLoading, setIsLoading] = useState<'monthly' | 'yearly' | 'taler' | null>(null);
+  const [showGiftSheet, setShowGiftSheet] = useState(false);
   const [activeDiscount, setActiveDiscount] = useState<{
     discount_percent: number;
     expires_at: string;
@@ -365,6 +367,16 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
             </div>
           </div>
 
+          {/* Gift Option */}
+          <Button 
+            variant="outline" 
+            className="w-full gap-2"
+            onClick={() => setShowGiftSheet(true)}
+          >
+            <Gift className="h-4 w-4 text-pink-500" />
+            2Go Plus verschenken
+          </Button>
+
           {/* Terms */}
           <p className="text-xs text-center text-muted-foreground">
             Mit dem Abschluss stimmst du unseren{' '}
@@ -372,6 +384,8 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
             <a href="/datenschutz" className="underline">Datenschutzbestimmungen</a> zu.
           </p>
         </div>
+
+        <GiftPlusSheet open={showGiftSheet} onOpenChange={setShowGiftSheet} />
       </SheetContent>
     </Sheet>
   );

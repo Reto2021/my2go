@@ -56,6 +56,7 @@ const SponsorsPage = lazy(() => import("./pages/SponsorsPage"));
 const PlusSuccessPage = lazy(() => import("./pages/PlusSuccessPage"));
 const RedeemDiscountPage = lazy(() => import("./pages/RedeemDiscountPage"));
 const MyStatsPage = lazy(() => import("./pages/MyStatsPage"));
+const GiftSuccessPage = lazy(() => import("./pages/GiftSuccessPage"));
 
 // Admin pages - lazy loaded (rarely accessed)
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -73,6 +74,7 @@ const AdminPartnerApplications = lazy(() => import("./pages/admin/AdminPartnerAp
 const AdminLiveEvents = lazy(() => import("./pages/admin/AdminLiveEvents"));
 const AdminSponsoringInquiries = lazy(() => import("./pages/admin/AdminSponsoringInquiries"));
 const AdminPlusSubscriptions = lazy(() => import("./pages/admin/AdminPlusSubscriptions"));
+const AdminPromoCodes = lazy(() => import("./pages/admin/AdminPromoCodes"));
 
 // Partner portal pages - lazy loaded
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
@@ -224,6 +226,8 @@ function AppContent() {
             <Route path="live-events" element={<AdminLiveEvents />} />
             <Route path="cron" element={<AdminCronJobs />} />
             <Route path="plus" element={<AdminPlusSubscriptions />} />
+            <Route path="promo-codes" element={<AdminPromoCodes />} />
+            <Route path="settings" element={<AdminSettings />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
           
@@ -294,6 +298,7 @@ function AppContent() {
             <Route path="/plus/success" element={<PlusSuccessPage />} />
             <Route path="/plus/discount" element={<RedeemDiscountPage />} />
             <Route path="/my-stats" element={<MyStatsPage />} />
+            <Route path="/gift/success" element={<GiftSuccessPage />} />
           </Route>
           
           {/* Catch-all */}

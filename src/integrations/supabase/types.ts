@@ -171,6 +171,60 @@ export type Database = {
           },
         ]
       }
+      gift_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          gift_type: string
+          id: string
+          personal_message: string | null
+          purchaser_email: string
+          purchaser_id: string
+          recipient_email: string
+          recipient_name: string | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          gift_type: string
+          id?: string
+          personal_message?: string | null
+          purchaser_email: string
+          purchaser_id: string
+          recipient_email: string
+          recipient_name?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          gift_type?: string
+          id?: string
+          personal_message?: string | null
+          purchaser_email?: string
+          purchaser_id?: string
+          recipient_email?: string
+          recipient_name?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
       live_chat_messages: {
         Row: {
           created_at: string
@@ -803,6 +857,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      promo_codes: {
+        Row: {
+          applies_to: string
+          code: string
+          created_at: string
+          created_by: string | null
+          current_uses: number
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          applies_to?: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          applies_to?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       push_subscriptions: {
         Row: {
@@ -1974,7 +2076,9 @@ export type Database = {
         }
         Returns: Json
       }
+      use_promo_code: { Args: { _code: string }; Returns: boolean }
       validate_air_drop_code: { Args: { _code: string }; Returns: Json }
+      validate_promo_code: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       partner_admin_role: "owner" | "manager" | "staff"
