@@ -58,7 +58,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             {/* Clear 3-Second Pitch */}
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6">
               <span className="block">Hör Radio.</span>
-              <span className="block">Sammle Punkte.</span>
+              <span className="block">Sammle Taler.</span>
               <span className="relative inline-block mt-1">
                 <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
                 <span className="relative text-secondary font-black">Geniess vor Ort.</span>
@@ -107,7 +107,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
               onClick={onLogin}
               className="btn-primary group"
             >
-              Kostenlos anmelden & Punkte sammeln
+              Kostenlos anmelden & Taler sammeln
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
@@ -127,7 +127,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center text-secondary font-bold text-lg">3</div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Erleben</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Geniessen</span>
           </div>
         </div>
       </section>
