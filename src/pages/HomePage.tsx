@@ -156,7 +156,8 @@ export default function HomePage() {
       />
       
       <SessionModeHome 
-        displayName={profile?.display_name || profile?.first_name} 
+        displayName={profile?.display_name || profile?.first_name}
+        userId={user?.id}
         balance={balance || { taler_balance: 0, lifetime_earned: 0, lifetime_spent: 0 }}
         rewards={rewards}
         isLoading={isLoadingContent}

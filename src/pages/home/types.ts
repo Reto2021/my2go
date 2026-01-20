@@ -9,6 +9,7 @@ export interface BrowseModeHomeProps {
 
 export interface SessionModeHomeProps {
   displayName?: string | null;
+  userId?: string | null;
   balance: { taler_balance: number; lifetime_earned: number; lifetime_spent: number };
   rewards: Reward[];
   isLoading: boolean;
