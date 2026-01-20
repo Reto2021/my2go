@@ -36,8 +36,11 @@ export function useRadioRewards() {
   
   // Get user ID from Supabase auth
   useEffect(() => {
+    let isMounted = true;
+    
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!isMounted) return;
       const newUserId = user?.id || null;
       previousUserIdRef.current = newUserId;
       setUserId(newUserId);
@@ -46,6 +49,7 @@ export function useRadioRewards() {
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
       const newUserId = session?.user?.id || null;
       
       // Only update userId if it actually changed (not just token refresh)
@@ -55,7 +59,10 @@ export function useRadioRewards() {
       }
     });
     
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
   
   // Start a listening session when radio starts playing
