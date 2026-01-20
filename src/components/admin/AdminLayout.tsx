@@ -32,7 +32,7 @@ const navItems = [
   { path: '/admin/ghl', icon: Zap, label: 'GHL Status' },
   { path: '/admin/applications', icon: FileText, label: 'Bewerbungen' },
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
-  { path: '/admin/badges', icon: Award, label: 'Badges' },
+  { path: '/admin/badges', icon: Award, label: 'Abzeichen' },
   { path: '/admin/radio', icon: Radio, label: 'Radio-Belohnungen' },
   { path: '/admin/live-events', icon: Tv, label: 'Live Events' },
   { path: '/admin/airdrops', icon: QrCode, label: 'Air Drops' },

@@ -28,7 +28,7 @@ export function PartnerLayout() {
   // Build nav items based on permissions
   const navItems = [
     { path: '/partner-portal', icon: LayoutDashboard, label: 'Dashboard', exact: true, show: true },
-    { path: '/partner-portal/rewards', icon: Gift, label: 'Rewards', show: partnerInfo?.canManageRewards },
+    { path: '/partner-portal/rewards', icon: Gift, label: 'Gutscheine', show: partnerInfo?.canManageRewards },
     { path: '/partner-portal/redemptions', icon: QrCode, label: 'Einlösungen', show: partnerInfo?.canConfirmRedemptions },
     { path: '/partner-portal/pos', icon: Printer, label: 'POS', show: true },
     { path: '/partner-portal/reviews', icon: Star, label: 'Bewertungen', show: true },

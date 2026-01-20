@@ -68,7 +68,7 @@ export function StreakDetailsSheet({ open, onOpenChange }: StreakDetailsSheetPro
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
               <Flame className="h-5 w-5 text-white" />
             </div>
-            <span>Deine Streak-Details</span>
+            <span>Deine Bonus-Serie</span>
           </SheetTitle>
           <SheetDescription>
             Hole dir jeden Tag deinen Bonus für steigende Belohnungen!

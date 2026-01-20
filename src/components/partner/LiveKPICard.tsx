@@ -1,12 +1,18 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TrendIndicator } from './TrendIndicator';
 import { motion } from 'framer-motion';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface LiveKPICardProps {
   title: string;
   value: number | string;
   subtitle?: string;
+  tooltip?: string;
   icon: LucideIcon;
   color: 'primary' | 'success' | 'warning' | 'accent' | 'info';
   trend?: {
@@ -56,6 +62,7 @@ export function LiveKPICard({
   title,
   value,
   subtitle,
+  tooltip,
   icon: Icon,
   color,
   trend,
@@ -108,9 +115,23 @@ export function LiveKPICard({
               />
             )}
           </div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">
-            {title}
-          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">
+              {title}
+            </p>
+            {tooltip && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="p-0.5 text-muted-foreground/50 hover:text-muted-foreground">
+                    <HelpCircle className="h-3 w-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-xs">
+                  <p>{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </div>
       

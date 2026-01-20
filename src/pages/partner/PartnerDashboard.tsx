@@ -294,6 +294,7 @@ export default function PartnerDashboard() {
             title="Wartend"
             value={stats?.pendingRedemptions || 0}
             subtitle="Noch nicht abgeholt"
+            tooltip="Anzahl der Gutscheine, die von Nutzern eingelöst, aber noch nicht im Geschäft abgeholt wurden."
             icon={Clock}
             color="warning"
           />
@@ -301,6 +302,7 @@ export default function PartnerDashboard() {
             title="Bestätigt"
             value={stats?.completedRedemptions || 0}
             subtitle="Erfolgreich eingelöst"
+            tooltip="Anzahl der Gutscheine, die erfolgreich im Geschäft abgeholt und bestätigt wurden."
             icon={CheckCircle}
             color="success"
             trend={trendData ? {
@@ -310,9 +312,10 @@ export default function PartnerDashboard() {
             } : undefined}
           />
           <LiveKPICard
-            title="Feedback"
+            title="Bewertungen"
             value={stats?.totalReviews || 0}
-            subtitle="In-App Bewertungen"
+            subtitle="Nach Einlösung abgegeben"
+            tooltip="Anzahl der In-App Bewertungen (1-5 Sterne), die Nutzer nach einer Gutschein-Einlösung bei dir abgegeben haben. Diese erscheinen nicht auf Google."
             icon={MessageSquare}
             color="primary"
             trend={trendData ? {
@@ -325,6 +328,7 @@ export default function PartnerDashboard() {
             title="Taler"
             value={stats?.totalTalerRedeemed || 0}
             subtitle="Gesamt eingelöst"
+            tooltip="Summe aller Taler, die für Gutscheine bei dir ausgegeben wurden. Je höher der Taler-Wert, desto wertvoller waren die eingelösten Prämien."
             icon={Coins}
             color="accent"
             trend={trendData ? {

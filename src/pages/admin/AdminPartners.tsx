@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { GooglePlaceIdSearch } from '@/components/admin/GooglePlaceIdSearch';
 
 interface BulkSearchResult {
   google_place_id: string;
@@ -2320,31 +2321,11 @@ export default function AdminPartners() {
               />
             </div>
             
-            {/* Google Place ID */}
-            <div className="p-4 rounded-xl bg-accent/5 border border-accent/20">
-              <label className="block text-sm font-medium mb-1 flex items-center gap-2">
-                <Star className="h-4 w-4 text-accent" />
-                Google Place ID
-              </label>
-              <input
-                type="text"
-                value={formData.google_place_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, google_place_id: e.target.value }))}
-                className="w-full h-11 px-4 rounded-xl bg-muted border-2 border-transparent focus:outline-none focus:border-primary/30 focus:bg-background transition-all"
-                placeholder="z.B. ChIJ..."
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Die Google Place ID findest du auf{' '}
-                <a 
-                  href="https://developers.google.com/maps/documentation/places/web-service/place-id" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-accent hover:underline"
-                >
-                  Google Place ID Finder
-                </a>
-              </p>
-            </div>
+            {/* Google Place ID with Search */}
+            <GooglePlaceIdSearch 
+              formData={formData}
+              setFormData={setFormData}
+            />
             
             {/* Website */}
             <div>
