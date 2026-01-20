@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
-  const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying } = useRadioStore();
+  const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying, setPlayerExpanded } = useRadioStore();
 
   useEffect(() => {
     fetchEvents();
@@ -68,7 +68,13 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             {/* Prominent Play Button */}
             <div className="flex flex-col items-center gap-4 mb-8">
               <button 
-                onClick={togglePlay}
+                onClick={() => {
+                  togglePlay();
+                  // Open expanded player after starting playback
+                  if (!isPlaying) {
+                    setTimeout(() => setPlayerExpanded(true), 300);
+                  }
+                }}
                 disabled={isRadioLoading}
                 className={cn(
                   "relative w-24 h-24 rounded-full flex items-center justify-center",
