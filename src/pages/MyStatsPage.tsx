@@ -150,9 +150,9 @@ export default function MyStatsPage() {
   const categoryLabels: Record<string, { label: string; icon: React.ElementType }> = {
     general: { label: "Allgemein", icon: Award },
     streak: { label: "Bonus-Serie", icon: Flame },
-    leaderboard: { label: "Leaderboard", icon: Trophy },
+    leaderboard: { label: "Rangliste", icon: Trophy },
     collector: { label: "Sammler", icon: Target },
-    social: { label: "Social", icon: TrendingUp },
+    social: { label: "Sozial", icon: TrendingUp },
   };
 
   // Group badges by category with progress
@@ -268,7 +268,7 @@ export default function MyStatsPage() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Award className="h-4 w-4 text-accent" />
-                  <span className="text-xs text-muted-foreground">Badges</span>
+                  <span className="text-xs text-muted-foreground">Abzeichen</span>
                 </div>
                 <p className="text-2xl font-bold text-accent">
                   {overallBadgeStats.earned}/{overallBadgeStats.total}
@@ -440,7 +440,7 @@ export default function MyStatsPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Award className="h-5 w-5 text-accent" />
-                  Badge-Fortschritt
+                  Abzeichen-Fortschritt
                 </CardTitle>
                 <Link to="/badges">
                   <Button variant="ghost" size="sm" className="h-7 gap-1">
