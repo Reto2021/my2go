@@ -140,10 +140,10 @@ serve(async (req) => {
       case 'create-subaccount': {
         const data = payload as CreateSubAccountRequest;
         
-        // Check if partner already has a GHL location
+        // Check if partner exists and has GHL access based on plan tier
         const { data: partner, error: fetchError } = await supabase
           .from('partners')
-          .select('id, name, ghl_location_id, ghl_sync_status')
+          .select('id, name, ghl_location_id, ghl_sync_status, plan_tier')
           .eq('id', data.partnerId)
           .single();
 
@@ -152,6 +152,20 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ error: 'Partner not found' }),
             { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // GHL is only available for 'plus' (Growth) and 'radio' (Radio) plans
+        const ghlEnabledTiers = ['plus', 'radio'];
+        if (!partner.plan_tier || !ghlEnabledTiers.includes(partner.plan_tier)) {
+          console.log(`GHL not available for plan tier: ${partner.plan_tier} - requires Growth or Radio plan`);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'GHL integration requires Growth or Radio plan',
+              currentTier: partner.plan_tier
+            }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 

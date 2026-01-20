@@ -118,9 +118,13 @@ export default function PartnerDashboard() {
           setShowOnboarding(true);
         }
 
-        // Auto-create GHL sub-account if not exists
-        if (partnerData && !partnerData.ghl_location_id && partnerData.contact_email) {
-          console.log('Auto-creating GHL sub-account for partner');
+        // Auto-create GHL sub-account if not exists and plan tier supports it
+        // GHL is only available for 'plus' (Growth) and 'radio' (Radio) plans
+        const ghlEnabledTiers = ['plus', 'radio'];
+        const hasGhlAccess = partnerData?.plan_tier && ghlEnabledTiers.includes(partnerData.plan_tier);
+        
+        if (partnerData && !partnerData.ghl_location_id && partnerData.contact_email && hasGhlAccess) {
+          console.log('Auto-creating GHL sub-account for partner (plan:', partnerData.plan_tier, ')');
           createSubAccount({
             partnerId: partnerData.id,
             partnerName: partnerData.name,
@@ -136,6 +140,8 @@ export default function PartnerDashboard() {
               toast.success('GoHighLevel Sub-Account wurde erstellt!');
             }
           });
+        } else if (partnerData && !partnerData.ghl_location_id && !hasGhlAccess) {
+          console.log('GHL not available for plan tier:', partnerData.plan_tier, '- requires Growth or Radio plan');
         }
       } catch (error) {
         console.error('Error loading partner data:', error);
