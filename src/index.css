@@ -54,6 +54,13 @@
     /* Glass effect */
     --glass: 0 0% 100% / 0.85;
     --glass-blur: 20px;
+    
+    /* Chart colors for recharts */
+    --chart-1: 200 50% 66%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 44 98% 49%;
+    --chart-4: 197 96% 18%;
+    --chart-5: 0 84% 60%;
   }
 
   .dark {
@@ -87,6 +94,13 @@
     --border: 197 30% 15%;
     --input: 197 30% 15%;
     --ring: 200 50% 60%;
+    
+    /* Chart colors for recharts (dark mode) */
+    --chart-1: 200 50% 60%;
+    --chart-2: 160 84% 45%;
+    --chart-3: 44 98% 55%;
+    --chart-4: 197 70% 40%;
+    --chart-5: 0 84% 55%;
   }
 }
 
