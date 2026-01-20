@@ -4,6 +4,8 @@ import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { triggerTalerAnimation } from '@/components/taler/TalerEarnAnimation';
 
+const FIRST_TALER_KEY = 'first_taler_celebrated';
+
 interface ListeningReward {
   success: boolean;
   duration: number;
@@ -29,6 +31,8 @@ export function useRadioRewards() {
   const [userId, setUserId] = useState<string | null>(null);
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [showFirstTalerCelebration, setShowFirstTalerCelebration] = useState(false);
+  const [firstTalerAmount, setFirstTalerAmount] = useState(0);
   
   // Get user ID from Supabase auth
   useEffect(() => {
@@ -96,6 +100,14 @@ export function useRadioRewards() {
         // Trigger visual Taler animation
         triggerTalerAnimation(result.reward, 'radio');
         
+        // Check if this is the user's first Taler
+        const hasSeenFirstTaler = localStorage.getItem(`${FIRST_TALER_KEY}_${userId}`);
+        if (!hasSeenFirstTaler) {
+          localStorage.setItem(`${FIRST_TALER_KEY}_${userId}`, 'true');
+          setFirstTalerAmount(result.reward);
+          setShowFirstTalerCelebration(true);
+        }
+        
         // Show session summary modal
         setSessionSummary({
           duration: result.duration,
@@ -113,11 +125,15 @@ export function useRadioRewards() {
     } catch (error) {
       console.error('Error ending listening session:', error);
     }
-  }, [refreshBalance]);
+  }, [refreshBalance, userId]);
   
   const closeSummary = useCallback(() => {
     setShowSummary(false);
     setSessionSummary(null);
+  }, []);
+  
+  const closeFirstTalerCelebration = useCallback(() => {
+    setShowFirstTalerCelebration(false);
   }, []);
   
   // Track play/pause state changes
@@ -158,5 +174,8 @@ export function useRadioRewards() {
     sessionSummary,
     showSummary,
     closeSummary,
+    showFirstTalerCelebration,
+    firstTalerAmount,
+    closeFirstTalerCelebration,
   };
 }

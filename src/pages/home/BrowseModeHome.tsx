@@ -6,15 +6,29 @@ import { SkeletonRewardCard, SkeletonPartnerCard } from '@/components/ui/skeleto
 import { InstallBanner } from '@/components/home/InstallBanner';
 import { LiveHeaderButton } from '@/components/radio/LiveEventsPanel';
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
+import { GuestSignupSheet } from '@/components/funnel/GuestSignupSheet';
+import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
-import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, MapPin } from 'lucide-react';
+import { useGuestRadioRewards } from '@/hooks/useGuestRadioRewards';
+import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, MapPin, Coins } from 'lucide-react';
 import { BrowseModeHomeProps, FeatureChipProps, colorClasses } from './types';
 import { cn } from '@/lib/utils';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying, setPlayerExpanded } = useRadioStore();
+  
+  // Guest rewards tracking
+  const {
+    totalEarned,
+    currentSessionDuration,
+    shouldShowSignup,
+    showFirstTalerCelebration,
+    firstTalerAmount,
+    closeFirstTalerCelebration,
+    markSignupShown,
+  } = useGuestRadioRewards();
 
   useEffect(() => {
     fetchEvents();
@@ -25,6 +39,8 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   const handleLiveClick = () => {
     onLogin();
   };
+  
+  const listeningMinutes = Math.floor(currentSessionDuration / 60);
   
   return (
     <div className="min-h-screen bg-background -mt-20">
@@ -105,6 +121,15 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
                     Jetzt Radio 2Go hören
                   </p>
                 )}
+                
+                {/* Guest Taler Earned Badge */}
+                {totalEarned > 0 && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent">
+                    <Coins className="h-4 w-4" />
+                    <span className="font-bold">{totalEarned} Taler</span>
+                    <span className="text-secondary/70 text-sm">gesammelt!</span>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -113,7 +138,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
               onClick={onLogin}
               className="btn-primary group"
             >
-              Kostenlos anmelden & Taler sammeln
+              {totalEarned > 0 ? 'Taler sichern & anmelden' : 'Kostenlos anmelden & Taler sammeln'}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
@@ -230,6 +255,22 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </div>
         </div>
       </section>
+      
+      {/* Guest Signup Prompt Sheet - after 5 min listening */}
+      <GuestSignupSheet
+        isOpen={shouldShowSignup}
+        onClose={markSignupShown}
+        earnedTaler={totalEarned}
+        listeningMinutes={listeningMinutes}
+      />
+      
+      {/* First Taler Celebration */}
+      <FirstTalerCelebration
+        isOpen={showFirstTalerCelebration}
+        onClose={closeFirstTalerCelebration}
+        talerAmount={firstTalerAmount}
+        isGuest={true}
+      />
     </div>
   );
 }
