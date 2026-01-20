@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
+import { TalerLoopVisual } from '@/components/taler/TalerLoopVisual';
 
 // Category order for grouping
 const CATEGORY_ORDER = ['Grundlagen', 'Gutscheine', 'Codes', 'Taler', 'Streaming', 'Konto'];
@@ -30,7 +31,7 @@ const CATEGORY_ORDER = ['Grundlagen', 'Gutscheine', 'Codes', 'Taler', 'Streaming
 const SUPPORT_TOPICS = [
   { value: 'code', label: 'Code funktioniert nicht' },
   { value: 'reward', label: 'Problem beim Einlösen' },
-  { value: 'balance', label: 'Punkte stimmen nicht' },
+  { value: 'balance', label: 'Taler stimmen nicht' },
   { value: 'partner', label: 'Partner-Problem' },
   { value: 'account', label: 'Konto & Zugang' },
   { value: 'other', label: 'Sonstiges' },
@@ -150,6 +151,11 @@ export default function FAQPage() {
             </div>
           </div>
           <OnboardingTrigger />
+        </div>
+        
+        {/* Taler Loop Visualization */}
+        <div className="mb-6 animate-in">
+          <TalerLoopVisual variant="expanded" showValues />
         </div>
         
         {/* Quick Info Banner */}

@@ -390,9 +390,9 @@ export default function RedemptionDetailPage() {
     const rewardTitle = redemption.reward?.title || 'Gutschein';
     
     if (redemption.status === 'used') {
-      return `🎉 Ich habe gerade "${rewardTitle}" bei ${partnerName} eingelöst! Mit My 2Go spare ich richtig Geld. 💰`;
+      return `🎉 Ich habe gerade "${rewardTitle}" bei ${partnerName} eingelöst! Mit My 2Go geniesse ich lokal. 🎧`;
     }
-    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Sammle auch du 2Go Taler und hol dir tolle Gutscheine! 🎧`;
+    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Hör Radio, sammle Taler, geniess vor Ort! 🎧`;
   };
 
   const handleShareWhatsApp = () => {

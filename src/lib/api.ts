@@ -17,8 +17,8 @@ export interface FAQItem {
 
 export const FAQ_ITEMS: FAQItem[] = [
   // Grundlagen (3)
-  { question: 'Was sind 2Go Taler?', answer: 'Bonuspunkte von Radio 2Go. Sammeln bei Partnern, einlösen für Rewards. Nicht auszahlbar.', category: 'Grundlagen' },
-  { question: 'Wie sammle ich Taler?', answer: 'My 2Go Karte beim Partner vorzeigen oder On-Air Codes aus dem Radio eingeben.', category: 'Grundlagen' },
+  { question: 'Was sind 2Go Taler?', answer: 'Deine lokale Belohnungswährung. Hör Radio, kauf ein vor Ort, sammle Taler – geniess bei Partnern. Nicht auszahlbar.', category: 'Grundlagen' },
+  { question: 'Wie sammle ich Taler?', answer: 'Radio hören (automatisch), bei Partnern einkaufen (10 Taler pro 10 CHF), Besuche (5 Taler) oder On-Air Codes eingeben.', category: 'Grundlagen' },
   { question: 'Wo ist meine Karte?', answer: 'Du erhältst einen Link per E-Mail oder Wallet. Damit öffnest du deine My 2Go Karte.', category: 'Grundlagen' },
   
   // Gutscheine (4)

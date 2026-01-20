@@ -17,20 +17,20 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'listen',
     icon: Radio,
-    title: 'Radio hören',
-    description: 'Starte den Radio-Player und höre deine Lieblingsmusik',
+    title: 'Hör Radio',
+    description: 'Starte den Player – verdiene automatisch Taler beim Hören',
   },
   {
     id: 'earn',
     icon: TalerIcon,
-    title: 'Taler sammeln',
-    description: 'Verdiene automatisch Taler, je länger du hörst',
+    title: 'Sammle Taler',
+    description: 'Radio hören, einkaufen, besuchen – überall Taler sammeln',
   },
   {
     id: 'redeem',
     icon: Gift,
-    title: 'Gutscheine einlösen',
-    description: 'Tausche deine Taler gegen echte Gutscheine ein',
+    title: 'Geniess vor Ort',
+    description: 'Tausche Taler gegen Gutscheine bei lokalen Partnern ein',
   },
 ];
 
