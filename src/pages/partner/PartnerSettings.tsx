@@ -292,8 +292,8 @@ export default function PartnerSettings() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20">
-            <Settings className="h-6 w-6 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/20 to-warning/20">
+            <Settings className="h-6 w-6 text-accent" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Einstellungen</h1>

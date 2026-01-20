@@ -208,7 +208,7 @@ export default function PartnerDashboard() {
       
       <div className="space-y-6 animate-in">
         {/* Hero Welcome Section */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-accent p-6 text-primary-foreground">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-accent via-accent/90 to-warning p-6 text-accent-foreground">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
           <div className="relative z-10">
             <div className="flex items-start justify-between">
@@ -362,7 +362,7 @@ export default function PartnerDashboard() {
               </div>
               <Link 
                 to={`/partner-portal/reviews${queryString}`}
-                className="text-sm text-primary font-medium flex items-center gap-1 hover:underline"
+                className="text-sm text-accent font-medium flex items-center gap-1 hover:underline"
               >
                 Details <ChevronRight className="h-4 w-4" />
               </Link>
@@ -375,12 +375,12 @@ export default function PartnerDashboard() {
           {partnerInfo?.canConfirmRedemptions && (
             <Link 
               to={`/partner-portal/redemptions${queryString}`}
-              className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:shadow-lg hover:border-primary/30"
+              className="group relative overflow-hidden rounded-xl border bg-card p-5 transition-all hover:shadow-lg hover:border-accent/30"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <QrCode className="h-6 w-6 text-primary" />
+                <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <QrCode className="h-6 w-6 text-accent" />
                 </div>
                 <p className="font-semibold">Einlösungen</p>
                 <p className="text-sm text-muted-foreground">
@@ -416,8 +416,8 @@ export default function PartnerDashboard() {
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-primary" />
+              <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-accent" />
               </div>
               <div>
                 <h3 className="font-semibold">Aktivität</h3>
@@ -453,7 +453,7 @@ export default function PartnerDashboard() {
               <Bar 
                 dataKey="redemptions" 
                 name="Einlösungen" 
-                fill="hsl(var(--primary))" 
+                fill="hsl(var(--accent))" 
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
@@ -517,8 +517,8 @@ export default function PartnerDashboard() {
         {/* Taler System Explainer for Partners */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Info className="h-4 w-4 text-primary" />
+            <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Info className="h-4 w-4 text-accent" />
             </div>
             <div>
               <h3 className="font-semibold">So funktioniert's für Ihre Kunden</h3>
@@ -546,7 +546,7 @@ export default function PartnerDashboard() {
               </div>
               <Link 
                 to={`/partner-portal/redemptions${queryString}`}
-                className="text-sm text-primary font-medium hover:underline"
+                className="text-sm text-accent font-medium hover:underline"
               >
                 Alle anzeigen
               </Link>

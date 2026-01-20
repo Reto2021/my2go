@@ -311,7 +311,7 @@ export default function PartnerScanPage() {
             variant="outline"
             size="lg"
             onClick={startScanner}
-            className="w-full h-20 text-lg border-dashed border-2 hover:border-primary hover:bg-primary/5"
+            className="w-full h-20 text-lg border-dashed border-2 hover:border-accent hover:bg-accent/5"
           >
             <Camera className="h-8 w-8 mr-3" />
             <div className="text-left">
@@ -372,8 +372,8 @@ export default function PartnerScanPage() {
                   className={cn(
                     'flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all',
                     transactionType === 'visit'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-accent bg-accent/5'
+                      : 'border-border hover:border-accent/50'
                   )}
                 >
                   <RadioGroupItem value="visit" id="visit" className="sr-only" />
@@ -387,8 +387,8 @@ export default function PartnerScanPage() {
                   className={cn(
                     'flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all',
                     transactionType === 'purchase'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-accent bg-accent/5'
+                      : 'border-border hover:border-accent/50'
                   )}
                 >
                   <RadioGroupItem value="purchase" id="purchase" className="sr-only" />

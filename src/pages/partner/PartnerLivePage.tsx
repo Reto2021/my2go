@@ -429,10 +429,10 @@ export default function PartnerLivePage() {
 
       {/* Quick Start - Only show if not live */}
       {!liveEvent && events.length > 0 && (
-        <Card className="p-6 bg-gradient-to-br from-primary/5 to-background">
+        <Card className="p-6 bg-gradient-to-br from-accent/5 to-background">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Radio className="h-7 w-7 text-primary" />
+            <div className="h-14 w-14 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Radio className="h-7 w-7 text-accent" />
             </div>
             <div className="flex-1">
               <h3 className="font-semibold">Schnellstart</h3>
@@ -480,7 +480,7 @@ export default function PartnerLivePage() {
                       <div className={cn(
                         "h-12 w-12 rounded-xl flex items-center justify-center shrink-0",
                         event.is_active 
-                          ? "bg-primary/10 text-primary" 
+                          ? "bg-accent/10 text-accent" 
                           : "bg-muted text-muted-foreground"
                       )}>
                         <Video className="h-6 w-6" />
