@@ -452,7 +452,7 @@ export default function AdminSponsors() {
 
       {/* Create/Edit Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingSponsor ? 'Sponsor bearbeiten' : 'Neuer Sponsor'}
@@ -639,7 +639,7 @@ export default function AdminSponsors() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
-        <DialogContent className="sm:max-w-sm left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Sponsor löschen?</DialogTitle>
           </DialogHeader>
