@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { FunnelRadioPlayer } from '@/components/funnel/FunnelRadioPlayer';
 import { BonusPromptSheet } from '@/components/funnel/BonusPromptSheet';
 import { QuickSignupSheet } from '@/components/funnel/QuickSignupSheet';
+import { TalerLoopVisual } from '@/components/taler/TalerLoopVisual';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackFunnelEvent, SIGNUP_BONUS_TALER } from '@/lib/funnel-config';
@@ -156,14 +157,27 @@ export default function FunnelEntryPage() {
         </div>
       </section>
 
+      {/* Taler Loop Section */}
+      <section className="px-4 pb-4">
+        <div className="max-w-md mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <TalerLoopVisual variant="compact" className="mb-4" />
+          </motion.div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section className="px-4 pb-8">
         <div className="max-w-md mx-auto">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: Radio, label: 'Radio hören' },
-              { icon: Gift, label: 'Gutscheine' },
-              { icon: MapPin, label: 'Lokal' },
+              { icon: Radio, label: 'Hör Radio' },
+              { icon: Gift, label: 'Sammle Taler' },
+              { icon: MapPin, label: 'Geniess vor Ort' },
             ].map((item, index) => (
               <motion.div
                 key={index}

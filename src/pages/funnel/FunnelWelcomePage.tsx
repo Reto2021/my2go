@@ -5,6 +5,7 @@ import { Gift, Headphones, QrCode, ArrowRight, CheckCircle2, Sparkles } from 'lu
 import { Button } from '@/components/ui/button';
 import { WalletCTA } from '@/components/funnel/WalletCTA';
 import { FunnelRadioPlayer } from '@/components/funnel/FunnelRadioPlayer';
+import { TalerLoopVisual } from '@/components/taler/TalerLoopVisual';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackFunnelEvent, SIGNUP_BONUS_TALER } from '@/lib/funnel-config';
 import { Confetti } from '@/components/ui/confetti';
@@ -126,16 +127,29 @@ export default function FunnelWelcomePage() {
           </button>
         </motion.div>
 
-        {/* Tip */}
+        {/* How to earn more Taler */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
+          className="mb-6"
+        >
+          <h3 className="text-sm font-semibold text-center text-muted-foreground mb-3">
+            So sammelst du mehr Taler
+          </h3>
+          <TalerLoopVisual variant="compact" />
+        </motion.div>
+
+        {/* Tip */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
           className="flex items-start gap-3 p-4 rounded-2xl bg-muted/50 mb-6"
         >
           <QrCode className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Tipp:</span> Scanne bei Partnern, um weitere Taler zu sammeln.
+            <span className="font-medium text-foreground">Tipp:</span> Scanne bei Partnern für noch mehr Taler!
           </p>
         </motion.div>
 
