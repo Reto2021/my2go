@@ -56,11 +56,11 @@ export default function AdminDashboard() {
       href: '/admin/partners'
     },
     { 
-      label: 'Rewards', 
+      label: 'Gutscheine', 
       value: stats?.totalRewards || 0, 
       icon: Gift, 
       color: 'bg-purple-500/10 text-purple-500',
-      href: '/admin/partners'
+      href: null // No dedicated page, rewards are managed per partner
     },
     { 
       label: 'Einlösungen', 
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
   const categoryLabels: Record<string, string> = {
     general: 'Allgemein',
     streak: 'Bonus-Serie',
-    leaderboard: 'Leaderboard',
+    leaderboard: 'Rangliste',
     collector: 'Sammler',
     social: 'Social',
   };
@@ -116,27 +116,35 @@ export default function AdminDashboard() {
       
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {statCards.map(card => (
-          <Link
-            key={card.label}
-            to={card.href}
-            className={cn(
-              'card-base p-5 group hover:shadow-lg transition-all',
-              isLoading && 'animate-pulse'
-            )}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className={cn('p-2.5 rounded-xl', card.color)}>
-                <card.icon className="h-5 w-5" />
+        {statCards.map(card => {
+          const CardWrapper = card.href ? Link : 'div';
+          const cardProps = card.href ? { to: card.href } : {};
+          
+          return (
+            <CardWrapper
+              key={card.label}
+              {...cardProps as any}
+              className={cn(
+                'card-base p-5 transition-all',
+                card.href && 'group hover:shadow-lg cursor-pointer',
+                isLoading && 'animate-pulse'
+              )}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className={cn('p-2.5 rounded-xl', card.color)}>
+                  <card.icon className="h-5 w-5" />
+                </div>
+                {card.href && (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
               </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <p className="text-2xl font-bold tabular-nums">
-              {isLoading ? '—' : card.value.toLocaleString('de-CH')}
-            </p>
-            <p className="text-sm text-muted-foreground">{card.label}</p>
-          </Link>
-        ))}
+              <p className="text-2xl font-bold tabular-nums">
+                {isLoading ? '—' : card.value.toLocaleString('de-CH')}
+              </p>
+              <p className="text-sm text-muted-foreground">{card.label}</p>
+            </CardWrapper>
+          );
+        })}
       </div>
       
       {/* Marketing Opt-In Analytics */}

@@ -152,7 +152,7 @@ export default function MyStatsPage() {
     streak: { label: "Bonus-Serie", icon: Flame },
     leaderboard: { label: "Rangliste", icon: Trophy },
     collector: { label: "Sammler", icon: Target },
-    social: { label: "Sozial", icon: TrendingUp },
+    social: { label: "Social", icon: TrendingUp },
   };
 
   // Group badges by category with progress
