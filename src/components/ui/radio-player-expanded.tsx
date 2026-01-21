@@ -321,6 +321,22 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 {isPlaying && <LiveListenerCount size="sm" className="bg-white/10 flex-shrink-0" />}
               </div>
               
+              {/* Search Button - always visible */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  hapticToggle();
+                  onClose();
+                  navigate('/settings#radio');
+                }}
+                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                aria-label="Sender suchen"
+                title="Sender suchen"
+              >
+                <Search className="h-5 w-5 text-white" />
+              </button>
+              
               {/* Quick Switch Button - bidirectional between Radio 2Go and first favorite */}
               {(() => {
                 // Get first favorite that's not Radio 2Go
@@ -370,26 +386,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 // Show switch button if: on external station OR (on Radio 2Go AND has favorites)
                 const showSwitch = !isRadio2Go || (isRadio2Go && firstFav);
                 
-                if (!showSwitch) {
-                  // Only show search button when no favorites
-                  return (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        hapticToggle();
-                        onClose();
-                        navigate('/settings#radio');
-                      }}
-                      className="h-10 px-3 rounded-full bg-white/15 flex items-center gap-2 hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
-                      aria-label="Sender wechseln"
-                      title="Sender wechseln"
-                    >
-                      <Search className="h-4 w-4 text-white" />
-                      <span className="text-xs text-white/80 hidden sm:inline">Sender</span>
-                    </button>
-                  );
-                }
+                if (!showSwitch) return null;
                 
                 return (
                   <button
