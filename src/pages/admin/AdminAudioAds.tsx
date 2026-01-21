@@ -26,6 +26,7 @@ import {
   Clock,
   RefreshCw
 } from 'lucide-react';
+import AudioAdScheduleCalendar from '@/components/admin/AudioAdScheduleCalendar';
 
 interface Partner {
   id: string;
@@ -646,22 +647,10 @@ export default function AdminAudioAds() {
         </TabsContent>
 
         <TabsContent value="schedule" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Kalender-Zeitplan
-              </CardTitle>
-              <CardDescription>
-                Plane wann Audio-Ads abgespielt werden (Coming Soon)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Kalender-View mit Drag & Drop wird in Phase 2 implementiert.
-              </p>
-            </CardContent>
-          </Card>
+          <AudioAdScheduleCalendar 
+            audioAds={audioAds} 
+            onRefresh={loadData} 
+          />
         </TabsContent>
       </Tabs>
     </div>
