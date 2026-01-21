@@ -31,13 +31,14 @@ export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
   const clearPendingTaler = authContext?.clearPendingTaler;
-  const { isPlaying } = useRadioStore();
+  const { isPlaying, isRadio2Go } = useRadioStore();
   
   const sessionIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<Date | null>(null);
   const userIdRef = useRef<string | null>(null);
   const isStartingRef = useRef(false);
   const isEndingRef = useRef(false);
+  const lastStationTypeRef = useRef<boolean | null>(null); // Track station type for switch detection
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -168,14 +169,30 @@ export function useRadioRewards() {
     setShowFirstTalerCelebration(false);
   }, []);
   
-  // Track play/pause state changes - use refs to avoid dependency issues
+  // Track play/pause state changes AND station type changes
+  // Option A: End session and start new one when switching between Radio 2Go and external
   useEffect(() => {
+    const hasStationTypeChanged = lastStationTypeRef.current !== null && 
+                                   lastStationTypeRef.current !== isRadio2Go;
+    
     if (isPlaying && userIdRef.current) {
-      startSession();
+      // If station type changed while playing, end old session first, then start new
+      if (hasStationTypeChanged && sessionIdRef.current) {
+        console.log('Station type changed, ending old session and starting new');
+        endSession().then(() => {
+          // Small delay to ensure clean separation
+          setTimeout(() => startSession(), 100);
+        });
+      } else if (!sessionIdRef.current) {
+        startSession();
+      }
     } else if (!isPlaying && sessionIdRef.current) {
       endSession();
     }
-  }, [isPlaying, startSession, endSession]);
+    
+    // Track current station type for next comparison
+    lastStationTypeRef.current = isRadio2Go;
+  }, [isPlaying, isRadio2Go, startSession, endSession]);
   
   // Also end session on page unload
   useEffect(() => {
