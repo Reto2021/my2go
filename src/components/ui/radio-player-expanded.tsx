@@ -259,7 +259,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
         >
           {/* Header with integrated close button and swipe indicator */}
           <div 
-            className="flex-shrink-0 relative z-50" 
+            className="flex-shrink-0 relative z-50 pointer-events-auto" 
             style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
           >
             {/* Swipe indicator - purely visual, positioned above header content */}
@@ -268,7 +268,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             </div>
             
             {/* Header row with close button */}
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 relative z-50">
               {/* Close Button - clear and prominent */}
               <button
                 type="button"
@@ -277,7 +277,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   hapticToggle();
                   onClose();
                 }}
-                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation relative z-50"
                 aria-label="Schliessen"
               >
                 <ChevronDown className="h-6 w-6 text-white" />
@@ -330,7 +330,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   onClose();
                   navigate('/settings#radio');
                 }}
-                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation relative z-50"
                 aria-label="Sender suchen"
                 title="Sender suchen"
               >
@@ -429,7 +429,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 onClose();
                 navigate('/settings#radio');
               }}
-              className="mb-4 flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation"
+              className="mb-4 flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation relative z-30"
             >
               <span>Neu: Alle</span>
               <span className="text-base">🇨🇭</span>
