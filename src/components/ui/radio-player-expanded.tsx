@@ -73,6 +73,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     isRadio2Go,
     customStation,
     setCustomStation,
+    getLastExternalStation,
   } = useRadioStore();
   
   // Radio favorites hook
@@ -347,10 +348,21 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             
             {/* Quick Switch Button - separate row below header for better touch targets */}
             {(() => {
-              // Get first favorite that's not Radio 2Go
+              // Get last external station (either from last used or favorites)
+              const lastExternal = getLastExternalStation();
               const firstFav = favorites.find(f => 
                 f.station_uuid !== 'radio2go' && f.station_uuid !== 'radio-2go-default'
               );
+              
+              // Use last external station if available, otherwise fall back to first favorite
+              const targetStation = lastExternal || (firstFav ? {
+                uuid: firstFav.station_uuid,
+                name: firstFav.station_name,
+                url: firstFav.station_url,
+                favicon: firstFav.station_favicon,
+                country: firstFav.station_country || '',
+                tags: firstFav.station_tags || [],
+              } : null);
               
               const handleQuickSwitch = (e: React.MouseEvent) => {
                 e.stopPropagation();
@@ -366,19 +378,12 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   audioEl.src = '';
                 }
                 
-                if (isRadio2Go && firstFav) {
-                  // Switch to first favorite
-                  setCustomStation({
-                    uuid: firstFav.station_uuid,
-                    name: firstFav.station_name,
-                    url: firstFav.station_url,
-                    favicon: firstFav.station_favicon,
-                    country: firstFav.station_country || '',
-                    tags: firstFav.station_tags || [],
-                  });
+                if (isRadio2Go && targetStation) {
+                  // Switch to last external station
+                  setCustomStation(targetStation);
                   
                   if (wasPlaying && audioEl) {
-                    audioEl.src = firstFav.station_url;
+                    audioEl.src = targetStation.url;
                     audioEl.play().catch(err => console.error('Playback failed:', err));
                   }
                 } else {
@@ -392,8 +397,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 }
               };
               
-              // Show switch button if: on external station OR (on Radio 2Go AND has favorites)
-              const showSwitch = !isRadio2Go || (isRadio2Go && firstFav);
+              // Show switch button if: on external station OR (on Radio 2Go AND has target station)
+              const showSwitch = !isRadio2Go || (isRadio2Go && targetStation);
               
               if (!showSwitch) return null;
               
@@ -403,12 +408,12 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     type="button"
                     onClick={handleQuickSwitch}
                     className="h-9 px-4 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
-                    aria-label={isRadio2Go ? `Zu ${firstFav?.station_name}` : "Zurück zu Radio 2Go"}
-                    title={isRadio2Go ? `Zu ${firstFav?.station_name}` : "Zurück zu Radio 2Go"}
+                    aria-label={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu Radio 2Go"}
+                    title={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu Radio 2Go"}
                   >
-                    {isRadio2Go && firstFav?.station_favicon ? (
+                    {isRadio2Go && targetStation?.favicon ? (
                       <img 
-                        src={firstFav.station_favicon} 
+                        src={targetStation.favicon} 
                         alt="" 
                         className="h-5 w-5 rounded-full object-cover"
                         onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -417,7 +422,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                       <img src="/pwa-192x192.png" alt="" className="h-5 w-5 rounded-full" />
                     )}
                     <span className="text-xs text-white font-medium">
-                      {isRadio2Go ? (firstFav?.station_name?.substring(0, 12) || 'Favorit') : 'Radio 2Go'}
+                      {isRadio2Go ? (targetStation?.name?.substring(0, 12) || 'Zuletzt') : 'Radio 2Go'}
                     </span>
                   </button>
                 </div>

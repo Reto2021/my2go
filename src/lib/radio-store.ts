@@ -11,6 +11,7 @@ const ITUNES_SEARCH_API = 'https://itunes.apple.com/search';
 const LOCAL_STORAGE_KEY = 'radio2go_session';
 const RADIO_STATE_KEY = 'radio2go_state';
 const CUSTOM_STATION_KEY = 'radio2go_custom_station';
+const LAST_EXTERNAL_STATION_KEY = 'radio2go_last_external';
 
 // External station info
 export interface ExternalStation {
@@ -38,6 +39,8 @@ export function saveCustomStation(station: ExternalStation | null) {
   try {
     if (station) {
       localStorage.setItem(CUSTOM_STATION_KEY, JSON.stringify(station));
+      // Also save as last external station for quick-switch
+      localStorage.setItem(LAST_EXTERNAL_STATION_KEY, JSON.stringify(station));
     } else {
       localStorage.removeItem(CUSTOM_STATION_KEY);
     }
@@ -54,6 +57,19 @@ export function loadCustomStation(): ExternalStation | null {
     }
   } catch (e) {
     console.warn('Could not load custom station:', e);
+  }
+  return null;
+}
+
+// Get last used external station for quick-switch back
+export function loadLastExternalStation(): ExternalStation | null {
+  try {
+    const stored = localStorage.getItem(LAST_EXTERNAL_STATION_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Could not load last external station:', e);
   }
   return null;
 }
@@ -189,6 +205,7 @@ interface RadioStore {
   // Custom station support
   customStation: ExternalStation | null;
   isRadio2Go: boolean; // true = Radio 2Go (full rewards), false = external (50% rewards)
+  lastExternalStation: ExternalStation | null; // Last used external station for quick-switch
   
   togglePlay: () => void;
   toggleMute: () => void;
@@ -205,6 +222,7 @@ interface RadioStore {
   setCustomStation: (station: ExternalStation | null) => void;
   getStreamUrl: () => string;
   getStationName: () => string;
+  getLastExternalStation: () => ExternalStation | null;
 }
 
 interface iTunesMediaResult {
@@ -293,6 +311,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   // Custom station support - load from localStorage on init
   customStation: loadCustomStation(),
   isRadio2Go: loadCustomStation() === null,
+  lastExternalStation: loadLastExternalStation(),
 
   setPlayerExpanded: (expanded: boolean) => set({ isPlayerExpanded: expanded }),
   setPlayerMinimized: (minimized: boolean) => set({ isPlayerMinimized: minimized }),
@@ -300,6 +319,10 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   // Custom station methods
   setCustomStation: (station: ExternalStation | null) => {
     saveCustomStation(station);
+    // If switching to external station, update lastExternalStation
+    if (station) {
+      set({ lastExternalStation: station });
+    }
     set({ 
       customStation: station, 
       isRadio2Go: station === null,
@@ -321,6 +344,10 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   getStationName: () => {
     const { customStation } = get();
     return customStation?.name || 'Radio 2Go';
+  },
+  
+  getLastExternalStation: () => {
+    return get().lastExternalStation || loadLastExternalStation();
   },
 
   updateSessionDuration: () => {
