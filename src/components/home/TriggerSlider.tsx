@@ -52,25 +52,25 @@ export function TriggerSlider() {
   }, [nextTrigger]);
 
   return (
-    <span className="relative inline-block">
-      <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
-      <span className="relative text-secondary font-black inline-flex items-center justify-center min-w-[200px] sm:min-w-[280px]">
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={currentIndex}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ 
-              duration: 0.4, 
-              ease: [0.22, 1, 0.36, 1] 
-            }}
-            className="block whitespace-nowrap"
-          >
+    <span className="relative inline-block mt-1 overflow-hidden">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={currentIndex}
+          initial={{ x: '-100%', opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: '100%', opacity: 0 }}
+          transition={{ 
+            duration: 0.5, 
+            ease: [0.22, 1, 0.36, 1] 
+          }}
+          className="relative inline-block"
+        >
+          <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
+          <span className="relative text-secondary font-black whitespace-nowrap px-1">
             {shuffledTriggers[currentIndex]}
-          </motion.span>
-        </AnimatePresence>
-      </span>
+          </span>
+        </motion.span>
+      </AnimatePresence>
     </span>
   );
 }
