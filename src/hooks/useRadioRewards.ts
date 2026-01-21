@@ -12,6 +12,7 @@ if (import.meta.hot) {
 }
 
 const FIRST_TALER_KEY = 'first_taler_celebrated';
+const PENDING_SESSION_KEY = 'pending_radio_session';
 
 interface ListeningReward {
   success: boolean;
@@ -27,62 +28,94 @@ export interface SessionSummaryData {
   tier?: string;
 }
 
+interface PendingSession {
+  sessionId: string;
+  userId: string;
+  startTime: number;
+}
+
+// Save pending session to localStorage for recovery after refresh
+function savePendingSession(sessionId: string, userId: string) {
+  const data: PendingSession = {
+    sessionId,
+    userId,
+    startTime: Date.now(),
+  };
+  localStorage.setItem(PENDING_SESSION_KEY, JSON.stringify(data));
+  console.log('[RadioRewards] Saved pending session to localStorage:', sessionId);
+}
+
+function clearPendingSession() {
+  localStorage.removeItem(PENDING_SESSION_KEY);
+  console.log('[RadioRewards] Cleared pending session from localStorage');
+}
+
+function getPendingSession(): PendingSession | null {
+  try {
+    const data = localStorage.getItem(PENDING_SESSION_KEY);
+    if (!data) return null;
+    return JSON.parse(data) as PendingSession;
+  } catch {
+    return null;
+  }
+}
+
 export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
   const clearPendingTaler = authContext?.clearPendingTaler;
+  const user = authContext?.user;
   const { isPlaying, isRadio2Go, isSwitching, isLoading } = useRadioStore();
   
   const sessionIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<Date | null>(null);
-  const userIdRef = useRef<string | null>(null);
   const isStartingRef = useRef(false);
   const isEndingRef = useRef(false);
-  const lastStationTypeRef = useRef<boolean | null>(null); // Track station type for switch detection
-  const pendingStationSwitchRef = useRef(false); // Track if we're in the middle of a station switch
+  const lastStationTypeRef = useRef<boolean | null>(null);
+  const pendingStationSwitchRef = useRef(false);
+  const hasRecoveredRef = useRef(false);
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [showFirstTalerCelebration, setShowFirstTalerCelebration] = useState(false);
   const [firstTalerAmount, setFirstTalerAmount] = useState(0);
   
-  // Track if user is ready
-  const [userReady, setUserReady] = useState(false);
+  const userId = user?.id;
   
-  // Get user ID from Supabase auth - store in ref to avoid re-renders
+  // Recover and end any pending sessions from previous page load
   useEffect(() => {
-    let isMounted = true;
+    if (!userId || hasRecoveredRef.current) return;
+    hasRecoveredRef.current = true;
     
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!isMounted) return;
-      userIdRef.current = user?.id || null;
-      setUserReady(!!user?.id);
-      console.log('[RadioRewards] User initialized:', user?.id ?? 'not logged in');
-    };
-    
-    getUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!isMounted) return;
-      const userId = session?.user?.id || null;
-      userIdRef.current = userId;
-      setUserReady(!!userId);
-      console.log('[RadioRewards] Auth state changed:', event, userId ?? 'logged out');
-    });
-    
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    const pending = getPendingSession();
+    if (pending && pending.userId === userId) {
+      console.log('[RadioRewards] Found pending session to recover:', pending.sessionId);
+      
+      // End the pending session
+      supabase.rpc('end_listening_session', { _session_id: pending.sessionId })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('[RadioRewards] Error recovering session:', error);
+          } else {
+            console.log('[RadioRewards] Recovered session result:', data);
+            refreshBalance?.();
+          }
+          clearPendingSession();
+        });
+    } else {
+      clearPendingSession();
+    }
+  }, [userId, refreshBalance]);
   
   // Start a listening session when radio starts playing
   const startSession = useCallback(async () => {
-    const userId = userIdRef.current;
-    if (!userId || isStartingRef.current || sessionIdRef.current) return;
+    if (!userId || isStartingRef.current || sessionIdRef.current) {
+      console.log('[RadioRewards] startSession skipped:', { userId, isStarting: isStartingRef.current, hasSession: !!sessionIdRef.current });
+      return;
+    }
     
     isStartingRef.current = true;
+    console.log('[RadioRewards] Starting session for user:', userId);
     
     // Get current station info from radio store
     const radioStore = await import('@/lib/radio-store').then(m => m.useRadioStore.getState());
@@ -99,24 +132,28 @@ export function useRadioRewards() {
       });
       
       if (error) {
-        console.error('Error starting listening session:', error);
+        console.error('[RadioRewards] Error starting listening session:', error);
         return;
       }
       
-      sessionIdRef.current = data as string;
+      const newSessionId = data as string;
+      sessionIdRef.current = newSessionId;
       startTimeRef.current = new Date();
-      console.log('Radio listening session started:', data, 'stream:', streamType);
+      
+      // Save to localStorage for recovery after page refresh
+      savePendingSession(newSessionId, userId);
+      
+      console.log('[RadioRewards] Session started:', newSessionId, 'stream:', streamType);
     } catch (error) {
-      console.error('Error starting listening session:', error);
+      console.error('[RadioRewards] Error starting listening session:', error);
     } finally {
       isStartingRef.current = false;
     }
-  }, []);
+  }, [userId]);
   
   // End a listening session when radio stops
   const endSession = useCallback(async () => {
     const sessionId = sessionIdRef.current;
-    const userId = userIdRef.current;
     
     if (!sessionId || isEndingRef.current) {
       console.log('[RadioRewards] endSession skipped - no session or already ending');
@@ -135,9 +172,11 @@ export function useRadioRewards() {
         _session_id: sessionId
       });
       
+      // Clear from localStorage since we're properly ending it
+      clearPendingSession();
+      
       if (error) {
         console.error('[RadioRewards] Error ending listening session:', error);
-        // Still refresh balance even on error
         await refreshBalance?.();
         return;
       }
@@ -166,19 +205,18 @@ export function useRadioRewards() {
         setShowSummary(true);
       }
       
-      // ALWAYS refresh balance after session ends, regardless of reward
+      // ALWAYS refresh balance after session ends
       console.log('[RadioRewards] Refreshing balance after session end');
       await refreshBalance?.();
       clearPendingTaler?.();
       
     } catch (error) {
       console.error('[RadioRewards] Error ending listening session:', error);
-      // Still try to refresh balance on error
       await refreshBalance?.();
     } finally {
       isEndingRef.current = false;
     }
-  }, [refreshBalance, clearPendingTaler]);
+  }, [userId, refreshBalance, clearPendingTaler]);
   
   const closeSummary = useCallback(() => {
     setShowSummary(false);
@@ -190,16 +228,14 @@ export function useRadioRewards() {
   }, []);
   
   // Track play/pause state changes AND station type changes
-  // Option A: End session and start new one when switching between Radio 2Go and external
   useEffect(() => {
-    // CRITICAL: Wait for user to be ready before starting sessions
-    if (!userReady) {
-      console.log('[RadioRewards] Waiting for user to be ready');
+    // Wait for user to be authenticated
+    if (!userId) {
+      console.log('[RadioRewards] Waiting for user authentication');
       return;
     }
     
-    // CRITICAL: Ignore state changes during station switching or loading
-    // This prevents premature session ending during the brief pause between stations
+    // Ignore state changes during station switching or loading
     if (isSwitching || isLoading) {
       console.log('[RadioRewards] Ignoring state change during switch/load');
       return;
@@ -208,20 +244,19 @@ export function useRadioRewards() {
     const hasStationTypeChanged = lastStationTypeRef.current !== null && 
                                    lastStationTypeRef.current !== isRadio2Go;
     
-    if (isPlaying && userIdRef.current) {
+    if (isPlaying) {
       // If station type changed while playing, end old session first, then start new
       if (hasStationTypeChanged && sessionIdRef.current && !pendingStationSwitchRef.current) {
         pendingStationSwitchRef.current = true;
         console.log('[RadioRewards] Station type changed, ending old session and starting new');
         endSession().then(() => {
-          // Small delay to ensure clean separation
           setTimeout(() => {
             startSession();
             pendingStationSwitchRef.current = false;
           }, 150);
         });
       } else if (!sessionIdRef.current && !pendingStationSwitchRef.current) {
-        console.log('[RadioRewards] Starting new session, userId:', userIdRef.current);
+        console.log('[RadioRewards] Starting new session, userId:', userId);
         startSession();
       }
     } else if (!isPlaying && sessionIdRef.current && !pendingStationSwitchRef.current) {
@@ -231,50 +266,31 @@ export function useRadioRewards() {
     
     // Track current station type for next comparison
     lastStationTypeRef.current = isRadio2Go;
-  }, [isPlaying, isRadio2Go, isSwitching, isLoading, userReady, startSession, endSession]);
+  }, [isPlaying, isRadio2Go, isSwitching, isLoading, userId, startSession, endSession]);
   
-  // Also end session on page unload using async-safe approach
+  // Handle visibility change - end session when app goes to background
   useEffect(() => {
-    const handleUnload = async () => {
-      const sessionId = sessionIdRef.current;
-      if (!sessionId) return;
-      
-      // Clear ref immediately to prevent race conditions
-      sessionIdRef.current = null;
-      
-      try {
-        // Use sendBeacon with proper Supabase REST API format
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/end_listening_session`;
-        const body = JSON.stringify({ _session_id: sessionId });
-        
-        // sendBeacon doesn't support custom headers, so we use a keepalive fetch instead
-        // This is more reliable for authenticated endpoints
-        const success = navigator.sendBeacon?.(url, new Blob([body], { 
-          type: 'application/json' 
-        }));
-        
-        // Fallback: If sendBeacon failed or isn't available, try keepalive fetch
-        // Note: This may not complete if page closes too fast, but it's a best-effort
-        if (!success) {
-          fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            },
-            body,
-            keepalive: true,
-          }).catch(() => {
-            // Silently fail - page is closing
-          });
-        }
-      } catch (e) {
-        console.error('[RadioRewards] Error in unload handler:', e);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && sessionIdRef.current) {
+        console.log('[RadioRewards] App hidden, ending session');
+        endSession();
       }
     };
     
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [endSession]);
+  
+  // Handle page unload - save session for recovery
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Session is already saved to localStorage when started
+      // It will be recovered on next page load
+      console.log('[RadioRewards] Page unloading, session will be recovered on reload');
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
   
   return {
