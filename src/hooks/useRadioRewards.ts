@@ -4,6 +4,13 @@ import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { triggerTalerAnimation } from '@/components/taler/TalerEarnAnimation';
 
+// Force HMR boundary to prevent React queue corruption during hot reload
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    window.location.reload();
+  });
+}
+
 const FIRST_TALER_KEY = 'first_taler_celebrated';
 
 interface ListeningReward {
