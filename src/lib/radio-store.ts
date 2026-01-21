@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-const STREAM_URL = 'https://uksoutha.streaming.broadcast.radio/radio2go';
+// Default Radio 2Go stream
+const DEFAULT_STREAM_URL = 'https://uksoutha.streaming.broadcast.radio/radio2go';
 const API_URL = 'https://api.broadcast.radio/api/nowplaying/2400';
 const ARTWORK_BASE = 'https://api.broadcast.radio';
 const DEFAULT_ARTWORK = '/pwa-512x512.png';
@@ -9,6 +10,17 @@ const ITUNES_SEARCH_API = 'https://itunes.apple.com/search';
 // LocalStorage keys for persistence (survives page reloads and navigation)
 const LOCAL_STORAGE_KEY = 'radio2go_session';
 const RADIO_STATE_KEY = 'radio2go_state';
+const CUSTOM_STATION_KEY = 'radio2go_custom_station';
+
+// External station info
+export interface ExternalStation {
+  uuid: string;
+  name: string;
+  url: string;
+  favicon: string | null;
+  country: string;
+  tags: string[];
+}
 
 interface PersistedSession {
   startTime: string; // ISO string
@@ -19,6 +31,31 @@ interface PersistedRadioState {
   wasPlaying: boolean;
   volume: number;
   savedAt: number; // timestamp
+}
+
+// Helper functions for custom station persistence
+export function saveCustomStation(station: ExternalStation | null) {
+  try {
+    if (station) {
+      localStorage.setItem(CUSTOM_STATION_KEY, JSON.stringify(station));
+    } else {
+      localStorage.removeItem(CUSTOM_STATION_KEY);
+    }
+  } catch (e) {
+    console.warn('Could not save custom station:', e);
+  }
+}
+
+export function loadCustomStation(): ExternalStation | null {
+  try {
+    const stored = localStorage.getItem(CUSTOM_STATION_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Could not load custom station:', e);
+  }
+  return null;
 }
 
 // Helper functions for session persistence (using localStorage for persistence across page reloads)
@@ -149,6 +186,10 @@ interface RadioStore {
   isPlayerExpanded: boolean;
   isPlayerMinimized: boolean;
   
+  // Custom station support
+  customStation: ExternalStation | null;
+  isRadio2Go: boolean; // true = Radio 2Go (full rewards), false = external (50% rewards)
+  
   togglePlay: () => void;
   toggleMute: () => void;
   setVolume: (volume: number) => void;
@@ -159,6 +200,11 @@ interface RadioStore {
   restoreSession: () => boolean; // Returns true if session was restored
   saveStateForNavigation: () => void; // Save state before navigating away
   autoResumeIfNeeded: () => void; // Resume playback if navigated back
+  
+  // Custom station methods
+  setCustomStation: (station: ExternalStation | null) => void;
+  getStreamUrl: () => string;
+  getStationName: () => string;
 }
 
 interface iTunesMediaResult {
@@ -243,9 +289,39 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   currentSessionDuration: 0,
   isPlayerExpanded: false,
   isPlayerMinimized: false,
+  
+  // Custom station support - load from localStorage on init
+  customStation: loadCustomStation(),
+  isRadio2Go: loadCustomStation() === null,
 
   setPlayerExpanded: (expanded: boolean) => set({ isPlayerExpanded: expanded }),
   setPlayerMinimized: (minimized: boolean) => set({ isPlayerMinimized: minimized }),
+
+  // Custom station methods
+  setCustomStation: (station: ExternalStation | null) => {
+    saveCustomStation(station);
+    set({ 
+      customStation: station, 
+      isRadio2Go: station === null,
+      // Reset now playing when switching stations
+      nowPlaying: station ? { 
+        title: station.name, 
+        artist: 'Live Stream', 
+        artworkUrl: station.favicon,
+        videoUrl: null,
+      } : null,
+    });
+  },
+  
+  getStreamUrl: () => {
+    const { customStation } = get();
+    return customStation?.url || DEFAULT_STREAM_URL;
+  },
+  
+  getStationName: () => {
+    const { customStation } = get();
+    return customStation?.name || 'Radio 2Go';
+  },
 
   updateSessionDuration: () => {
     const { sessionStartTime, isPlaying } = get();
@@ -256,6 +332,21 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   },
 
   fetchNowPlaying: async () => {
+    const { isRadio2Go, customStation } = get();
+    
+    // For external stations, we don't have metadata API
+    if (!isRadio2Go && customStation) {
+      set({ 
+        nowPlaying: {
+          title: customStation.name,
+          artist: 'Live Stream',
+          artworkUrl: customStation.favicon,
+          videoUrl: null,
+        }
+      });
+      return;
+    }
+    
     try {
       const response = await fetch(API_URL);
       const data = await response.json();
@@ -323,7 +414,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   },
 
   togglePlay: () => {
-    const { isPlaying, isLoading, audio, nowPlaying } = get();
+    const { isPlaying, isLoading, audio, nowPlaying, getStreamUrl } = get();
     
     // Prevent multiple clicks while loading
     if (isLoading) return;
@@ -359,7 +450,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       // Set src and immediately call play() in the same synchronous user gesture stack.
       // Do NOT call load() separately - it breaks the user gesture chain on iOS.
       currentAudio.pause();
-      currentAudio.src = STREAM_URL;
+      currentAudio.src = getStreamUrl();
       
       // Immediately attempt play - this preserves the user gesture context on iOS
       const playPromise = currentAudio.play();
