@@ -132,7 +132,7 @@ export function SliderState({
               <span className="text-sm font-semibold tracking-wide">
                 {hasBonusAvailable
                   ? `Slide für +${nextBonus} Taler`
-                  : "Lieblingsradio 2Go starten"}
+                  : "Radio 2Go starten"}
               </span>
               <motion.div
                 animate={{ x: [0, 6, 0] }}
