@@ -8,13 +8,10 @@ const COLORS = {
   dark: { r: 30, g: 30, b: 30 },
   lightGray: { r: 245, g: 245, b: 245 },
   mediumGray: { r: 120, g: 120, b: 120 },
-  lightPetrol: { r: 122, g: 184, b: 214 }, // #7AB8D6 Sky Blue
+  lightPetrol: { r: 20, g: 85, b: 95 },
 };
 
-// Font: We use Helvetica as it's built into jsPDF
 const FONT_FAMILY = 'helvetica';
-
-// URLs
 const APP_URL = 'www.my2go.app';
 const PARTNER_URL = 'www.my2go.app/go';
 
@@ -26,14 +23,12 @@ function drawIcon(doc: jsPDF, type: 'radio' | 'coin' | 'gift' | 'check' | 'star'
   
   switch (type) {
     case 'radio':
-      // Headphones shape
       doc.circle(x, y, size * 0.4, 'S');
       doc.setLineWidth(1);
       doc.line(x - size * 0.3, y - size * 0.1, x - size * 0.3, y + size * 0.3);
       doc.line(x + size * 0.3, y - size * 0.1, x + size * 0.3, y + size * 0.3);
       break;
     case 'coin':
-      // Taler coin
       doc.circle(x, y, size * 0.4, 'F');
       doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
       doc.setFontSize(size * 0.5);
@@ -41,7 +36,6 @@ function drawIcon(doc: jsPDF, type: 'radio' | 'coin' | 'gift' | 'check' | 'star'
       doc.text('T', x, y + size * 0.15, { align: 'center' });
       break;
     case 'gift':
-      // Gift box
       doc.rect(x - size * 0.3, y - size * 0.1, size * 0.6, size * 0.5, 'F');
       doc.rect(x - size * 0.35, y - size * 0.25, size * 0.7, size * 0.2, 'F');
       doc.setDrawColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
@@ -49,13 +43,11 @@ function drawIcon(doc: jsPDF, type: 'radio' | 'coin' | 'gift' | 'check' | 'star'
       doc.line(x, y - size * 0.25, x, y + size * 0.4);
       break;
     case 'check':
-      // Checkmark
       doc.setLineWidth(0.8);
       doc.line(x - size * 0.25, y, x - size * 0.05, y + size * 0.2);
       doc.line(x - size * 0.05, y + size * 0.2, x + size * 0.3, y - size * 0.2);
       break;
     case 'star':
-      // Simple star (5 lines from center)
       const starPoints = 5;
       for (let i = 0; i < starPoints; i++) {
         const angle = (i * 2 * Math.PI / starPoints) - Math.PI / 2;
@@ -63,7 +55,6 @@ function drawIcon(doc: jsPDF, type: 'radio' | 'coin' | 'gift' | 'check' | 'star'
       }
       break;
     case 'chart':
-      // Bar chart
       doc.rect(x - size * 0.3, y + size * 0.1, size * 0.15, size * 0.3, 'F');
       doc.rect(x - size * 0.1, y - size * 0.1, size * 0.15, size * 0.5, 'F');
       doc.rect(x + size * 0.1, y - size * 0.3, size * 0.15, size * 0.7, 'F');
@@ -71,32 +62,23 @@ function drawIcon(doc: jsPDF, type: 'radio' | 'coin' | 'gift' | 'check' | 'star'
   }
 }
 
-// Helper to draw QR code placeholder with actual URL text
+// Helper to draw QR code placeholder
 function drawQRPlaceholder(doc: jsPDF, x: number, y: number, size: number, url: string, label: string) {
-  // QR Background
   doc.setFillColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
   doc.setDrawColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
   doc.setLineWidth(0.3);
   doc.roundedRect(x - size / 2, y, size, size, 2, 2, 'FD');
   
-  // Grid pattern to simulate QR
   const gridSize = size / 7;
   const startX = x - size / 2 + gridSize;
   const startY = y + gridSize;
   
   doc.setFillColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-  
-  // Corner patterns (characteristic of QR codes)
-  // Top-left
   doc.rect(startX, startY, gridSize * 2, gridSize * 2, 'F');
-  // Top-right
   doc.rect(startX + gridSize * 3, startY, gridSize * 2, gridSize * 2, 'F');
-  // Bottom-left
   doc.rect(startX, startY + gridSize * 3, gridSize * 2, gridSize * 2, 'F');
-  // Center dot
   doc.rect(startX + gridSize * 2, startY + gridSize * 2, gridSize, gridSize, 'F');
   
-  // URL under QR
   doc.setFontSize(7);
   doc.setFont(FONT_FAMILY, 'bold');
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
@@ -112,11 +94,9 @@ function drawQRPlaceholder(doc: jsPDF, x: number, y: number, size: number, url: 
 function drawLogo(doc: jsPDF, x: number, y: number, width: number) {
   const height = width * 0.4;
   
-  // Logo background pill
   doc.setFillColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
   doc.roundedRect(x, y, width, height, height / 2, height / 2, 'F');
   
-  // Radio 2Go text
   doc.setFont(FONT_FAMILY, 'bold');
   doc.setFontSize(height * 0.45);
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
@@ -130,117 +110,111 @@ export function generateMarketingFlyer(): void {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a5', // 148 x 210 mm
+    format: 'a5',
   });
 
   const pageWidth = 148;
   const pageHeight = 210;
-  const margin = 10;
+  const margin = 12;
   const contentWidth = pageWidth - (margin * 2);
 
   // ============================================
   // PAGE 1: ENDKUNDEN (Front) - Petrol Background
   // ============================================
   
-  // Full petrol background
   doc.setFillColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
   
   // Gold accent bar at top
   doc.setFillColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.rect(0, 0, pageWidth, 6, 'F');
+  doc.rect(0, 0, pageWidth, 5, 'F');
   
   // Logo
-  drawLogo(doc, margin, 14, 45);
+  drawLogo(doc, margin, 12, 44);
   
   // Main Headline
-  let y = 42;
+  let y = 40;
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(26);
+  doc.setFontSize(24);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
   doc.text('Hör Radio.', margin, y);
   
-  y += 11;
+  y += 10;
   doc.text('Sammle Taler.', margin, y);
   
-  y += 11;
+  y += 10;
   doc.setTextColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
   doc.text('Geniess vor Ort.', margin, y);
   
   // Subheadline
-  y += 12;
+  y += 10;
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
   const subtext = 'Dein lokales Bonusprogramm – beim Radiohören Punkte sammeln und bei deinen Lieblings-Cafés, Restaurants & Shops einlösen.';
   const subtextLines = doc.splitTextToSize(subtext, contentWidth);
   doc.text(subtextLines, margin, y);
   
-  // Feature boxes with icons
-  y += 24;
-  const boxHeight = 20;
-  const boxSpacing = 4;
+  // Feature boxes
+  y += 20;
+  const boxHeight = 18;
+  const boxSpacing = 3;
   
-  const features: Array<{ icon: 'radio' | 'coin' | 'gift'; title: string; desc: string }> = [
-    { icon: 'radio', title: 'Hören', desc: 'Starte den Livestream und sammle automatisch Taler' },
-    { icon: 'coin', title: 'Sammeln', desc: 'Je länger du hörst, desto mehr verdienst du' },
-    { icon: 'gift', title: 'Einlösen', desc: 'Rabatte & Gratis-Goodies bei lokalen Partnern' },
+  const features = [
+    { icon: 'radio' as const, title: 'Hören', desc: 'Starte den Livestream und sammle automatisch Taler' },
+    { icon: 'coin' as const, title: 'Sammeln', desc: 'Je länger du hörst, desto mehr verdienst du' },
+    { icon: 'gift' as const, title: 'Einlösen', desc: 'Rabatte & Gratis-Goodies bei lokalen Partnern' },
   ];
   
   features.forEach((feature, index) => {
     const boxY = y + (index * (boxHeight + boxSpacing));
     
-    // Box with gold border (white with low opacity simulated with light petrol)
-    doc.setFillColor(20, 85, 95); // Slightly lighter petrol for box bg
+    doc.setFillColor(COLORS.lightPetrol.r, COLORS.lightPetrol.g, COLORS.lightPetrol.b);
     doc.roundedRect(margin, boxY, contentWidth, boxHeight, 3, 3, 'F');
     
     doc.setDrawColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-    doc.setLineWidth(0.4);
+    doc.setLineWidth(0.3);
     doc.roundedRect(margin, boxY, contentWidth, boxHeight, 3, 3, 'S');
     
-    // Icon circle
-    const iconX = margin + 10;
+    const iconX = margin + 9;
     const iconY = boxY + boxHeight / 2;
     doc.setFillColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-    doc.circle(iconX, iconY, 5, 'F');
+    doc.circle(iconX, iconY, 4.5, 'F');
+    drawIcon(doc, feature.icon, iconX, iconY, 7, COLORS.petrol);
     
-    // Draw icon
-    drawIcon(doc, feature.icon, iconX, iconY, 8, COLORS.petrol);
-    
-    // Feature text
     doc.setFont(FONT_FAMILY, 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
-    doc.text(feature.title, margin + 20, boxY + 7);
+    doc.text(feature.title, margin + 18, boxY + 6);
     
     doc.setFont(FONT_FAMILY, 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(220, 220, 220);
-    doc.text(feature.desc, margin + 20, boxY + 14);
+    doc.text(feature.desc, margin + 18, boxY + 12);
   });
   
   // CTA Box
-  y += (features.length * (boxHeight + boxSpacing)) + 10;
+  y += (features.length * (boxHeight + boxSpacing)) + 8;
   
   doc.setFillColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.roundedRect(margin, y, contentWidth, 24, 4, 4, 'F');
+  doc.roundedRect(margin, y, contentWidth, 22, 4, 4, 'F');
   
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-  doc.text('JETZT KOSTENLOS STARTEN', pageWidth / 2, y + 10, { align: 'center' });
+  doc.text('JETZT KOSTENLOS STARTEN', pageWidth / 2, y + 9, { align: 'center' });
   
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(10);
-  doc.text(APP_URL, pageWidth / 2, y + 18, { align: 'center' });
+  doc.setFontSize(9);
+  doc.text(APP_URL, pageWidth / 2, y + 16, { align: 'center' });
   
   // QR Code
-  y += 30;
-  drawQRPlaceholder(doc, pageWidth / 2, y, 32, APP_URL, 'App herunterladen');
+  y += 28;
+  drawQRPlaceholder(doc, pageWidth / 2, y, 30, APP_URL, 'App herunterladen');
   
   // Footer
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(180, 180, 180);
   doc.text('Keine Karte. Keine Stempel. Kein Stress.', pageWidth / 2, pageHeight - 8, { align: 'center' });
   
@@ -249,46 +223,45 @@ export function generateMarketingFlyer(): void {
   // ============================================
   doc.addPage();
   
-  // White background
   doc.setFillColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
   
   // Petrol header
   doc.setFillColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-  doc.rect(0, 0, pageWidth, 38, 'F');
+  doc.rect(0, 0, pageWidth, 36, 'F');
   
   // Gold line
   doc.setFillColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.rect(0, 38, pageWidth, 3, 'F');
+  doc.rect(0, 36, pageWidth, 2, 'F');
   
   // Header content
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.text('FÜR PARTNER & GASTRONOMEN', pageWidth / 2, 12, { align: 'center' });
+  doc.text('FÜR PARTNER & GASTRONOMEN', pageWidth / 2, 11, { align: 'center' });
   
-  doc.setFontSize(15);
+  doc.setFontSize(14);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
-  doc.text('Mehr Stammkunden.', pageWidth / 2, 24, { align: 'center' });
-  doc.text('Bessere Bewertungen.', pageWidth / 2, 33, { align: 'center' });
+  doc.text('Mehr Stammkunden.', pageWidth / 2, 22, { align: 'center' });
+  doc.text('Bessere Bewertungen.', pageWidth / 2, 31, { align: 'center' });
   
   // Intro
-  y = 50;
+  y = 46;
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(COLORS.dark.r, COLORS.dark.g, COLORS.dark.b);
   const introText = 'Wussten Sie, dass 70% der Neukunden nie wiederkommen? Mit der My 2Go App ändern Sie das – ganz ohne Aufwand.';
   const introLines = doc.splitTextToSize(introText, contentWidth);
   doc.text(introLines, margin, y);
   
   // So funktioniert's
-  y += 16;
+  y += 14;
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
   doc.text('SO FUNKTIONIERT ES:', margin, y);
   
-  y += 6;
+  y += 5;
   const steps = [
     '1. Kunden hören Radio 2Go und sammeln automatisch Taler',
     '2. Sie bieten Prämien – z.B. 10% Rabatt oder Gratis-Getränk',
@@ -296,21 +269,21 @@ export function generateMarketingFlyer(): void {
   ];
   
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(COLORS.dark.r, COLORS.dark.g, COLORS.dark.b);
   
   steps.forEach((step, index) => {
-    doc.text(step, margin, y + (index * 5));
+    doc.text(step, margin, y + (index * 4.5));
   });
   
   // Benefits section
-  y += 22;
+  y += 19;
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
   doc.text('IHRE VORTEILE:', margin, y);
   
-  y += 6;
+  y += 5;
   const benefits = [
     { icon: 'check' as const, text: 'Mehr Stammkunden – Taler-System bringt Kunden zurück' },
     { icon: 'star' as const, text: 'Bessere Google-Bewertungen – automatische Review-Anfragen' },
@@ -320,25 +293,23 @@ export function generateMarketingFlyer(): void {
   ];
   
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(COLORS.dark.r, COLORS.dark.g, COLORS.dark.b);
   
   benefits.forEach((benefit, index) => {
-    const benefitY = y + (index * 6);
+    const benefitY = y + (index * 5.5);
     
-    // Draw small icon
     doc.setFillColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-    doc.circle(margin + 2, benefitY - 1, 2, 'F');
-    
-    drawIcon(doc, benefit.icon, margin + 2, benefitY - 1, 4, COLORS.petrol);
+    doc.circle(margin + 2, benefitY - 1, 1.8, 'F');
+    drawIcon(doc, benefit.icon, margin + 2, benefitY - 1, 3.5, COLORS.petrol);
     
     doc.text(benefit.text, margin + 7, benefitY);
   });
   
   // Stats box
-  y += 36;
+  y += 33;
   doc.setFillColor(COLORS.lightGray.r, COLORS.lightGray.g, COLORS.lightGray.b);
-  doc.roundedRect(margin, y, contentWidth, 20, 3, 3, 'F');
+  doc.roundedRect(margin, y, contentWidth, 18, 3, 3, 'F');
   
   const stats = [
     { value: '12.400+', label: 'Nutzer' },
@@ -350,56 +321,56 @@ export function generateMarketingFlyer(): void {
   stats.forEach((stat, index) => {
     const statX = margin + (index * statWidth) + (statWidth / 2);
     doc.setFont(FONT_FAMILY, 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-    doc.text(stat.value, statX, y + 8, { align: 'center' });
+    doc.text(stat.value, statX, y + 7, { align: 'center' });
     
     doc.setFont(FONT_FAMILY, 'normal');
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     doc.setTextColor(COLORS.mediumGray.r, COLORS.mediumGray.g, COLORS.mediumGray.b);
-    doc.text(stat.label, statX, y + 15, { align: 'center' });
+    doc.text(stat.label, statX, y + 13, { align: 'center' });
   });
   
   // Pricing
-  y += 26;
+  y += 24;
   doc.setFillColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-  doc.roundedRect(margin, y, contentWidth, 28, 4, 4, 'F');
+  doc.roundedRect(margin, y, contentWidth, 26, 4, 4, 'F');
   
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.text('KOSTENLOS STARTEN', pageWidth / 2, y + 6, { align: 'center' });
+  doc.text('KOSTENLOS STARTEN', pageWidth / 2, y + 5, { align: 'center' });
   
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
-  doc.text('Starter ab CHF 0/Mt.', pageWidth / 2, y + 14, { align: 'center' });
+  doc.text('Starter ab CHF 0/Mt.', pageWidth / 2, y + 13, { align: 'center' });
   
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setFontSize(9);
-  doc.text('Partner ab CHF 249/Mt. (exkl. MwSt.) • 30 Tage Geld-zurück', pageWidth / 2, y + 22, { align: 'center' });
+  doc.setFontSize(8);
+  doc.text('Partner ab CHF 249/Mt. (exkl. MwSt.)', pageWidth / 2, y + 20, { align: 'center' });
   
   // CTA Button
-  y += 34;
+  y += 32;
   doc.setFillColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.roundedRect(margin, y, contentWidth, 18, 4, 4, 'F');
+  doc.roundedRect(margin, y, contentWidth, 16, 4, 4, 'F');
   
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-  doc.text('JETZT PARTNER WERDEN →', pageWidth / 2, y + 11, { align: 'center' });
+  doc.text('JETZT PARTNER WERDEN →', pageWidth / 2, y + 10, { align: 'center' });
   
   // QR Code
-  y += 24;
-  drawQRPlaceholder(doc, pageWidth / 2, y, 28, PARTNER_URL, 'Partner werden');
+  y += 22;
+  drawQRPlaceholder(doc, pageWidth / 2, y, 26, PARTNER_URL, 'Partner werden');
   
-  // Footer with links
+  // Footer
   doc.setFont(FONT_FAMILY, 'normal');
   doc.setFontSize(7);
   doc.setTextColor(COLORS.mediumGray.r, COLORS.mediumGray.g, COLORS.mediumGray.b);
   doc.text('Fragen? partner@radio2go.ch • ' + APP_URL, pageWidth / 2, pageHeight - 6, { align: 'center' });
   
-  // Save the PDF
+  // Save
   const date = new Date().toISOString().split('T')[0];
   doc.save(`Radio2Go_Flyer_${date}.pdf`);
 }
