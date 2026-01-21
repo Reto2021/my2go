@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Copy, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { toast } from 'sonner';
 
 const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Google-Bewertungen – kostenlos testen';
@@ -117,8 +117,8 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <tr>
                   <td style="padding: 24px; text-align: center;">
                     <p style="margin: 0 0 4px; color: #F7B500; font-size: 14px; font-weight: 600;">KOSTENLOS STARTEN</p>
-                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 24px; font-weight: 700;">Starter Tier ab CHF 0/Monat</p>
-                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 16px; opacity: 0.9;">Partner Tier ab CHF 249/Monat</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 24px; font-weight: 700;">Starter ab CHF 0/Monat</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 16px; opacity: 0.9;">Partner ab CHF 249/Monat (exkl. MwSt.)</p>
                     <p style="margin: 0; color: #ffffff; font-size: 13px; opacity: 0.8;">30 Tage Geld-zurück-Garantie • DSGVO-konform</p>
                   </td>
                 </tr>
@@ -197,7 +197,7 @@ DAS BRINGT IHNEN DIE MY 2GO APP:
 ✓ Alles inklusive – QR-Steller, Aufkleber, persönliches Onboarding
 
 KOSTENLOS STARTEN
-Starter Tier ab CHF 0/Monat • Partner Tier ab CHF 249/Monat
+Starter ab CHF 0/Monat • Partner ab CHF 249/Monat (exkl. MwSt.)
 30 Tage Geld-zurück-Garantie • DSGVO-konform
 
 → Jetzt kostenlos starten: https://www.my2go.app/go
@@ -239,20 +239,21 @@ export function PartnerEmailTemplateButton() {
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Mail className="h-4 w-4" />
           E-Mail-Vorlage anzeigen
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Partner-Akquise E-Mail</DialogTitle>
-          <DialogDescription>
-            Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben
-          </DialogDescription>
-        </DialogHeader>
+      </DrawerTrigger>
+      <DrawerContent className="max-h-[90vh]">
+        <div className="mx-auto w-full max-w-2xl overflow-y-auto px-4 pb-8">
+          <DrawerHeader className="px-0">
+            <DrawerTitle>Partner-Akquise E-Mail</DrawerTitle>
+            <DrawerDescription>
+              Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben
+            </DrawerDescription>
+          </DrawerHeader>
         
         <div className="space-y-6 mt-6">
           {/* Subject */}
@@ -316,7 +317,8 @@ export function PartnerEmailTemplateButton() {
             </p>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }
