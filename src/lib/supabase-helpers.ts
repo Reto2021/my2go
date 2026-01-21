@@ -377,24 +377,43 @@ export async function getPartnerById(id: string): Promise<Partner | null> {
 // ============================================================================
 
 export async function getRewards(): Promise<Reward[]> {
-  const { data, error } = await supabase
-    .from('rewards')
-    .select(`
-      *,
-      partner:partners(id, name, slug, logo_url, city, lat, lng)
-    `)
-    .eq('is_active', true)
-    .order('taler_cost');
+  // Use the safe RPC function to avoid exposing sensitive data (stock levels, etc.)
+  // This works for both authenticated and anonymous users
+  const { data: rewardsData, error: rewardsError } = await supabase
+    .rpc('get_public_rewards_safe');
   
-  if (error) {
-    console.error('Error fetching rewards:', error);
+  if (rewardsError) {
+    console.error('Error fetching rewards:', rewardsError);
     return [];
   }
   
-  return (data || []).map(r => ({
-    ...r,
-    partner: Array.isArray(r.partner) ? r.partner[0] : r.partner,
-  })) as Reward[];
+  const rewards = rewardsData || [];
+  
+  // Fetch partner info for each unique partner_id
+  const partnerIds = [...new Set(rewards.map((r: { partner_id: string }) => r.partner_id))];
+  
+  const { data: partnersData, error: partnersError } = await supabase
+    .rpc('get_public_partners_safe');
+  
+  if (partnersError) {
+    console.error('Error fetching partners for rewards:', partnersError);
+  }
+  
+  // Create a map of partner_id -> partner info
+  const partnersMap = new Map<string, Partner>();
+  (partnersData || []).forEach((p: Partner) => {
+    if (partnerIds.includes(p.id)) {
+      partnersMap.set(p.id, p);
+    }
+  });
+  
+  // Join rewards with partner data and sort by taler_cost
+  return rewards
+    .map((r: { partner_id: string; taler_cost: number }) => ({
+      ...r,
+      partner: partnersMap.get(r.partner_id) || null,
+    }))
+    .sort((a: { taler_cost: number }, b: { taler_cost: number }) => a.taler_cost - b.taler_cost) as Reward[];
 }
 
 export async function getRewardById(id: string): Promise<Reward | null> {
