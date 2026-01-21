@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
-const EMAIL_SUBJECT = 'Mehr Laufkundschaft für Ihr Geschäft – ohne Risiko';
+const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Bewertungen – kostenlos testen';
 
 const EMAIL_HTML = `<!DOCTYPE html>
 <html>
@@ -21,7 +23,6 @@ const EMAIL_HTML = `<!DOCTYPE html>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   
-  <!-- Container -->
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
     <tr>
       <td align="center">
@@ -31,7 +32,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
           <tr>
             <td style="background: linear-gradient(135deg, #0C4A56 0%, #0a3d47 100%); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #F7B500; font-size: 28px; font-weight: 700;">Radio 2Go</h1>
-              <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">Das lokale Bonusprogramm</p>
+              <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">Hör Radio. Sammle Taler. Geniess vor Ort.</p>
             </td>
           </tr>
           
@@ -44,14 +45,16 @@ const EMAIL_HTML = `<!DOCTYPE html>
           <tr>
             <td style="padding: 40px;">
               
-              <!-- Greeting -->
               <p style="margin: 0 0 20px; font-size: 16px; color: #333333;">
                 Guten Tag,
               </p>
               
-              <!-- Intro -->
               <p style="margin: 0 0 24px; font-size: 16px; color: #333333; line-height: 1.6;">
-                wir von <strong>Radio 2Go</strong> bringen Laufkundschaft direkt zu Ihnen – und zwar ohne Aufwand und ohne Risiko.
+                wussten Sie, dass <strong>70% der Neukunden nie wiederkommen</strong>? Und nur 5% hinterlassen aktiv eine Google-Bewertung?
+              </p>
+              
+              <p style="margin: 0 0 24px; font-size: 16px; color: #333333; line-height: 1.6;">
+                Mit <strong>Radio 2Go</strong> ändern Sie das – ganz ohne Aufwand.
               </p>
               
               <!-- Value Proposition Box -->
@@ -59,29 +62,29 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <tr>
                   <td style="padding: 24px;">
                     <h2 style="margin: 0 0 16px; font-size: 18px; color: #0C4A56;">So funktioniert's:</h2>
-                    <table cellpadding="0" cellspacing="0">
+                    <table cellpadding="0" cellspacing="0" width="100%">
                       <tr>
-                        <td style="padding: 8px 0; vertical-align: top;">
-                          <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56; margin-right: 12px;">1</span>
+                        <td style="padding: 8px 0; vertical-align: top; width: 40px;">
+                          <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56;">1</span>
                         </td>
                         <td style="padding: 8px 0; color: #333333; font-size: 15px;">
-                          <strong>Hörer sammeln Taler</strong> – einfach beim Radiohören
+                          <strong>Kunden hören Radio 2Go</strong> und sammeln dabei automatisch Taler
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; vertical-align: top;">
-                          <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56; margin-right: 12px;">2</span>
+                        <td style="padding: 8px 0; vertical-align: top; width: 40px;">
+                          <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56;">2</span>
                         </td>
                         <td style="padding: 8px 0; color: #333333; font-size: 15px;">
-                          <strong>Sie bieten Rabatte</strong> – z.B. 10% oder ein Gratis-Getränk
+                          <strong>Sie bieten Prämien</strong> – z.B. 10% Rabatt oder ein Gratis-Getränk
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding: 8px 0; vertical-align: top;">
-                          <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56; margin-right: 12px;">3</span>
+                        <td style="padding: 8px 0; vertical-align: top; width: 40px;">
+                          <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56;">3</span>
                         </td>
                         <td style="padding: 8px 0; color: #333333; font-size: 15px;">
-                          <strong>Kunden kommen zu Ihnen</strong> – und lösen ihre Taler ein
+                          <strong>Kunden lösen bei Ihnen ein</strong> – und kommen wieder
                         </td>
                       </tr>
                     </table>
@@ -90,32 +93,32 @@ const EMAIL_HTML = `<!DOCTYPE html>
               </table>
               
               <!-- Benefits -->
-              <h3 style="margin: 0 0 16px; font-size: 16px; color: #0C4A56;">Ihre Vorteile:</h3>
-              <table cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+              <h3 style="margin: 0 0 16px; font-size: 16px; color: #0C4A56;">Das bringt Ihnen Radio 2Go:</h3>
+              <table cellpadding="0" cellspacing="0" style="margin-bottom: 24px;" width="100%">
                 <tr>
-                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>1.400+ aktive Hörer</strong> in Ihrer Region</td>
+                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Mehr Stammkunden</strong> – Kunden sammeln Taler und kommen wieder</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Mehr Google-Bewertungen</strong> durch integriertes Review-System</td>
+                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Bessere Google-Bewertungen</strong> – automatische Review-Anfragen nach positiven Erlebnissen</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Echtzeit-Dashboard</strong> mit Analysen & Statistiken</td>
+                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Radio-Präsenz</strong> – Ihr Name im Radio, ohne eigenes Werbebudget</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Kein Risiko</strong> – Sie zahlen nur für echte Einlösungen</td>
+                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Live-Dashboard</strong> – Scans, Einlösungen & Reviews auf einen Blick</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>POS-Material inklusive</strong> – Aufsteller, Sticker, alles dabei</td>
+                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Alles inklusive</strong> – QR-Steller, Aufkleber, persönliches Onboarding</td>
                 </tr>
               </table>
               
-              <!-- Pricing Teaser -->
+              <!-- Pricing -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0C4A56; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
-                  <td style="padding: 20px; text-align: center;">
-                    <p style="margin: 0 0 4px; color: #F7B500; font-size: 14px; font-weight: 600;">EINSTIEG AB</p>
-                    <p style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">CHF 49<span style="font-size: 16px; opacity: 0.8;">/Monat</span></p>
-                    <p style="margin: 8px 0 0; color: #ffffff; font-size: 13px; opacity: 0.8;">Jederzeit kündbar • Keine Einrichtungsgebühr</p>
+                  <td style="padding: 24px; text-align: center;">
+                    <p style="margin: 0 0 4px; color: #F7B500; font-size: 14px; font-weight: 600;">30 TAGE KOSTENLOS TESTEN</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 28px; font-weight: 700;">Ab CHF 249<span style="font-size: 14px; opacity: 0.8;">/Monat</span></p>
+                    <p style="margin: 0; color: #ffffff; font-size: 13px; opacity: 0.8;">30 Tage Geld-zurück-Garantie • DSGVO-konform</p>
                   </td>
                 </tr>
               </table>
@@ -125,15 +128,14 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <tr>
                   <td align="center">
                     <a href="https://my2go.lovable.app/go" style="display: inline-block; background-color: #F7B500; color: #0C4A56; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 8px;">
-                      Jetzt mehr erfahren →
+                      Jetzt kostenlos starten →
                     </a>
                   </td>
                 </tr>
               </table>
               
-              <!-- Closing -->
               <p style="margin: 32px 0 0; font-size: 15px; color: #333333; line-height: 1.6;">
-                Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail oder rufen Sie uns an.
+                Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail – wir melden uns persönlich.
               </p>
               
               <p style="margin: 24px 0 0; font-size: 15px; color: #333333;">
@@ -166,26 +168,29 @@ const EMAIL_HTML = `<!DOCTYPE html>
 
 const EMAIL_PLAIN = `Guten Tag,
 
-wir von Radio 2Go bringen Laufkundschaft direkt zu Ihnen – und zwar ohne Aufwand und ohne Risiko.
+Wussten Sie, dass 70% der Neukunden nie wiederkommen? Und nur 5% hinterlassen aktiv eine Google-Bewertung?
+
+Mit Radio 2Go ändern Sie das – ganz ohne Aufwand.
 
 SO FUNKTIONIERT'S:
-1. Hörer sammeln Taler – einfach beim Radiohören
-2. Sie bieten Rabatte – z.B. 10% oder ein Gratis-Getränk
-3. Kunden kommen zu Ihnen – und lösen ihre Taler ein
+1. Kunden hören Radio 2Go und sammeln dabei automatisch Taler
+2. Sie bieten Prämien – z.B. 10% Rabatt oder ein Gratis-Getränk
+3. Kunden lösen bei Ihnen ein – und kommen wieder
 
-IHRE VORTEILE:
-✓ 1.400+ aktive Hörer in Ihrer Region
-✓ Mehr Google-Bewertungen durch integriertes Review-System
-✓ Echtzeit-Dashboard mit Analysen & Statistiken
-✓ Kein Risiko – Sie zahlen nur für echte Einlösungen
-✓ POS-Material inklusive – Aufsteller, Sticker, alles dabei
+DAS BRINGT IHNEN RADIO 2GO:
+✓ Mehr Stammkunden – Kunden sammeln Taler und kommen wieder
+✓ Bessere Google-Bewertungen – automatische Review-Anfragen
+✓ Radio-Präsenz – Ihr Name im Radio, ohne eigenes Werbebudget
+✓ Live-Dashboard – Scans, Einlösungen & Reviews auf einen Blick
+✓ Alles inklusive – QR-Steller, Aufkleber, persönliches Onboarding
 
-EINSTIEG AB CHF 49/MONAT
-Jederzeit kündbar • Keine Einrichtungsgebühr
+30 TAGE KOSTENLOS TESTEN
+Ab CHF 249/Monat
+30 Tage Geld-zurück-Garantie • DSGVO-konform
 
-→ Jetzt mehr erfahren: https://my2go.lovable.app/go
+→ Jetzt kostenlos starten: https://my2go.lovable.app/go
 
-Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail oder rufen Sie uns an.
+Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail – wir melden uns persönlich.
 
 Herzliche Grüsse
 Ihr Radio 2Go Team
@@ -227,74 +232,76 @@ export function PartnerEmailTemplateButton() {
           E-Mail-Vorlage anzeigen
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl w-[95vw] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[calc(100vh-4rem)] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>Partner-Akquise E-Mail</DialogTitle>
+          <DialogDescription>
+            Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6">
-          {/* Subject */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold">Betreff</label>
+        <ScrollArea className="flex-1 px-6">
+          <div className="space-y-6 pb-6">
+            {/* Subject */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold">Betreff</label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(EMAIL_SUBJECT, 'subject')}
+                  className="gap-1"
+                >
+                  {copiedSubject ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  Kopieren
+                </Button>
+              </div>
+              <div className="p-3 bg-muted rounded-lg text-sm font-medium">
+                {EMAIL_SUBJECT}
+              </div>
+            </div>
+            
+            {/* Preview */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Vorschau</label>
+              <div className="border rounded-lg overflow-hidden bg-white">
+                <iframe
+                  srcDoc={EMAIL_HTML}
+                  title="Email Preview"
+                  className="w-full h-[350px] border-0"
+                />
+              </div>
+            </div>
+            
+            {/* Copy Buttons */}
+            <div className="flex flex-wrap gap-3">
               <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(EMAIL_SUBJECT, 'subject')}
-                className="gap-1"
+                onClick={() => copyToClipboard(EMAIL_HTML, 'html')}
+                className="gap-2"
               >
-                {copiedSubject ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                Kopieren
+                {copiedHtml ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                HTML kopieren
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => copyToClipboard(EMAIL_PLAIN, 'plain')}
+                className="gap-2"
+              >
+                {copiedPlain ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                Plain-Text kopieren
               </Button>
             </div>
-            <div className="p-3 bg-muted rounded-lg text-sm font-medium">
-              {EMAIL_SUBJECT}
-            </div>
-          </div>
-          
-          {/* Preview */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold">Vorschau</label>
-            <div 
-              className="border rounded-lg overflow-hidden"
-              style={{ maxHeight: '400px', overflow: 'auto' }}
-            >
-              <iframe
-                srcDoc={EMAIL_HTML}
-                title="Email Preview"
-                className="w-full h-[400px] border-0"
-              />
-            </div>
-          </div>
-          
-          {/* Copy Buttons */}
-          <div className="flex flex-wrap gap-3">
-            <Button
-              onClick={() => copyToClipboard(EMAIL_HTML, 'html')}
-              className="gap-2"
-            >
-              {copiedHtml ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              HTML kopieren
-            </Button>
             
-            <Button
-              variant="outline"
-              onClick={() => copyToClipboard(EMAIL_PLAIN, 'plain')}
-              className="gap-2"
-            >
-              {copiedPlain ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              Plain-Text kopieren
-            </Button>
+            {/* Usage Hint */}
+            <div className="p-4 bg-accent/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Tipp:</strong> Kopiere den HTML-Code und füge ihn in deinen E-Mail-Client ein 
+                (z.B. Gmail: "Als HTML einfügen" oder Mailchimp). Für einfache E-Mails nutze die Plain-Text-Version.
+              </p>
+            </div>
           </div>
-          
-          {/* Usage Hint */}
-          <div className="p-4 bg-accent/10 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              <strong>Tipp:</strong> Kopiere den HTML-Code und füge ihn in deinen E-Mail-Client ein 
-              (z.B. Gmail: "Als HTML einfügen" oder Mailchimp). Für einfache E-Mails nutze die Plain-Text-Version.
-            </p>
-          </div>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
