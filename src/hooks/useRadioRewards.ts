@@ -28,36 +28,30 @@ export function useRadioRewards() {
   
   const sessionIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<Date | null>(null);
-  const previousUserIdRef = useRef<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
+  const isStartingRef = useRef(false);
+  const isEndingRef = useRef(false);
+  
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [showFirstTalerCelebration, setShowFirstTalerCelebration] = useState(false);
   const [firstTalerAmount, setFirstTalerAmount] = useState(0);
   
-  // Get user ID from Supabase auth
+  // Get user ID from Supabase auth - store in ref to avoid re-renders
   useEffect(() => {
     let isMounted = true;
     
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!isMounted) return;
-      const newUserId = user?.id || null;
-      previousUserIdRef.current = newUserId;
-      setUserId(newUserId);
+      userIdRef.current = user?.id || null;
     };
     
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
-      const newUserId = session?.user?.id || null;
-      
-      // Only update userId if it actually changed (not just token refresh)
-      if (newUserId !== previousUserIdRef.current) {
-        previousUserIdRef.current = newUserId;
-        setUserId(newUserId);
-      }
+      userIdRef.current = session?.user?.id || null;
     });
     
     return () => {
@@ -68,7 +62,10 @@ export function useRadioRewards() {
   
   // Start a listening session when radio starts playing
   const startSession = useCallback(async () => {
-    if (!userId) return;
+    const userId = userIdRef.current;
+    if (!userId || isStartingRef.current || sessionIdRef.current) return;
+    
+    isStartingRef.current = true;
     
     try {
       const { data, error } = await supabase.rpc('start_listening_session', {
@@ -85,16 +82,27 @@ export function useRadioRewards() {
       console.log('Radio listening session started:', data);
     } catch (error) {
       console.error('Error starting listening session:', error);
+    } finally {
+      isStartingRef.current = false;
     }
-  }, [userId]);
+  }, []);
   
   // End a listening session when radio stops
   const endSession = useCallback(async () => {
-    if (!sessionIdRef.current) return;
+    const sessionId = sessionIdRef.current;
+    const userId = userIdRef.current;
+    
+    if (!sessionId || isEndingRef.current) return;
+    
+    isEndingRef.current = true;
+    
+    // Clear refs immediately to prevent double-calls
+    sessionIdRef.current = null;
+    startTimeRef.current = null;
     
     try {
       const { data, error } = await supabase.rpc('end_listening_session', {
-        _session_id: sessionIdRef.current
+        _session_id: sessionId
       });
       
       if (error) {
@@ -110,7 +118,7 @@ export function useRadioRewards() {
         
         // Check if this is the user's first Taler
         const hasSeenFirstTaler = localStorage.getItem(`${FIRST_TALER_KEY}_${userId}`);
-        if (!hasSeenFirstTaler) {
+        if (!hasSeenFirstTaler && userId) {
           localStorage.setItem(`${FIRST_TALER_KEY}_${userId}`, 'true');
           setFirstTalerAmount(result.reward);
           setShowFirstTalerCelebration(true);
@@ -128,13 +136,12 @@ export function useRadioRewards() {
         await refreshBalance?.();
         clearPendingTaler?.();
       }
-      
-      sessionIdRef.current = null;
-      startTimeRef.current = null;
     } catch (error) {
       console.error('Error ending listening session:', error);
+    } finally {
+      isEndingRef.current = false;
     }
-  }, [refreshBalance, clearPendingTaler, userId]);
+  }, [refreshBalance, clearPendingTaler]);
   
   const closeSummary = useCallback(() => {
     setShowSummary(false);
@@ -145,21 +152,14 @@ export function useRadioRewards() {
     setShowFirstTalerCelebration(false);
   }, []);
   
-  // Track play/pause state changes
+  // Track play/pause state changes - use refs to avoid dependency issues
   useEffect(() => {
-    if (!userId) return;
-    
-    if (isPlaying) {
+    if (isPlaying && userIdRef.current) {
       startSession();
-    } else if (sessionIdRef.current) {
+    } else if (!isPlaying && sessionIdRef.current) {
       endSession();
     }
-    
-    // NOTE: No cleanup on unmount!
-    // Mobile browsers may unmount/remount components when screen locks/unlocks
-    // while audio continues playing. We only end sessions on explicit stop (isPlaying=false)
-    // or page unload (handled separately with sendBeacon).
-  }, [isPlaying, userId, startSession, endSession]);
+  }, [isPlaying, startSession, endSession]);
   
   // Also end session on page unload
   useEffect(() => {
