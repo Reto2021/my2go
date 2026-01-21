@@ -1,14 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useMotionValue, animate, PanInfo, AnimatePresence } from "framer-motion";
 import { useRadioStore } from "@/lib/radio-store";
 import { useStreak } from "@/hooks/useStreak";
 import { useAuthSafe } from "@/contexts/AuthContext";
 import { Confetti } from "@/components/ui/confetti";
 import { toast } from "sonner";
-import { hapticToggle } from "@/lib/haptics";
+import { hapticToggle, hapticSuccess } from "@/lib/haptics";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveEventsPanel } from "./LiveEventsPanel";
 import { useLiveEventsStore } from "@/lib/live-events-store";
+import { TalerIcon } from "@/components/icons/TalerIcon";
 
 // Custom hooks
 import { useWiggleAnimation } from "@/hooks/useWiggleAnimation";
@@ -56,7 +57,7 @@ function useListeningTiers() {
   return tiers;
 }
 
-function useSessionProgress(tiers: ListeningTier[]) {
+function useSessionProgress(tiers: ListeningTier[], onTierReached?: (reward: number) => void) {
   const { isPlaying, currentSessionDuration, updateSessionDuration } = useRadioStore();
   const [lastTierIndex, setLastTierIndex] = useState(-1);
   const [justReachedTier, setJustReachedTier] = useState(false);
@@ -90,6 +91,12 @@ function useSessionProgress(tiers: ListeningTier[]) {
   useEffect(() => {
     if (currentTierIndex > lastTierIndex && lastTierIndex >= -1 && elapsed > 0) {
       setJustReachedTier(true);
+      
+      // Trigger callback when tier is reached (for balance refresh & confetti)
+      if (safeTiers[currentTierIndex] && onTierReached) {
+        onTierReached(safeTiers[currentTierIndex].reward);
+      }
+      
       const timer = setTimeout(() => setJustReachedTier(false), 2000);
       setLastTierIndex(currentTierIndex);
       return () => clearTimeout(timer);
@@ -97,7 +104,7 @@ function useSessionProgress(tiers: ListeningTier[]) {
     if (currentTierIndex !== lastTierIndex) {
       setLastTierIndex(currentTierIndex);
     }
-  }, [currentTierIndex, lastTierIndex, elapsed]);
+  }, [currentTierIndex, lastTierIndex, elapsed, safeTiers, onTierReached]);
 
   // Early return AFTER all hooks
   if (safeTiers.length === 0) {
@@ -165,6 +172,7 @@ export function RadioPlayerBar({ onExpand }: RadioPlayerBarProps) {
   const { streakStatus, isLoading: isStreakLoading, claimStreak, isClaiming } = useStreak();
   const authContext = useAuthSafe();
   const isAuthenticated = !!authContext?.user;
+  const refreshBalance = authContext?.refreshBalance;
 
   // Live events
   const { fetchEvents, subscribeToRealtime } = useLiveEventsStore();
@@ -192,10 +200,33 @@ export function RadioPlayerBar({ onExpand }: RadioPlayerBarProps) {
     isReady: () => sliderWidth.current > 0,
   });
 
+  // Callback when a tier is reached - show confetti & refresh balance
+  const handleTierReached = useCallback((reward: number) => {
+    // Show confetti celebration
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3000);
+    
+    // Haptic feedback
+    hapticSuccess();
+    
+    // Show toast with Taler earned
+    toast.success(`+${reward} Taler verdient!`, {
+      description: 'Weiter hören für mehr Belohnungen 🎧',
+      icon: <TalerIcon className="h-5 w-5 text-accent" />,
+    });
+    
+    // Refresh balance after a short delay (to ensure DB has updated)
+    if (refreshBalance) {
+      setTimeout(() => {
+        refreshBalance();
+      }, 1500);
+    }
+  }, [refreshBalance]);
+
   // Load tiers and calculate session progress
   const tiers = useListeningTiers();
   const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier, secondsToNextTier, justReachedTier } =
-    useSessionProgress(tiers);
+    useSessionProgress(tiers, isAuthenticated ? handleTierReached : undefined);
 
   // Streak data
   const canClaim = streakStatus?.can_claim ?? false;
