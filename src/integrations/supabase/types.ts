@@ -170,9 +170,12 @@ export type Database = {
           target_age_max: number | null
           target_age_min: number | null
           target_cities: string[] | null
+          target_lat: number | null
+          target_lng: number | null
           target_min_listen_hours: number | null
           target_min_streak: number | null
           target_postal_codes: string[] | null
+          target_radius_km: number | null
           target_stations: string[] | null
           target_subscription_tiers: string[] | null
           title: string
@@ -197,9 +200,12 @@ export type Database = {
           target_age_max?: number | null
           target_age_min?: number | null
           target_cities?: string[] | null
+          target_lat?: number | null
+          target_lng?: number | null
           target_min_listen_hours?: number | null
           target_min_streak?: number | null
           target_postal_codes?: string[] | null
+          target_radius_km?: number | null
           target_stations?: string[] | null
           target_subscription_tiers?: string[] | null
           title: string
@@ -224,9 +230,12 @@ export type Database = {
           target_age_max?: number | null
           target_age_min?: number | null
           target_cities?: string[] | null
+          target_lat?: number | null
+          target_lng?: number | null
           target_min_listen_hours?: number | null
           target_min_streak?: number | null
           target_postal_codes?: string[] | null
+          target_radius_km?: number | null
           target_stations?: string[] | null
           target_subscription_tiers?: string[] | null
           title?: string
