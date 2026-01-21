@@ -96,7 +96,7 @@ const partnerIcon = new DivIcon({
   iconAnchor: [12, 12],
 });
 
-export function LeafletUserMap({ partnerLocations, topCities }: LeafletUserMapProps) {
+export default function LeafletUserMap({ partnerLocations, topCities }: LeafletUserMapProps) {
   // Switzerland center
   const center: [number, number] = [46.8182, 8.2275];
 

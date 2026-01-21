@@ -38,7 +38,7 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 // Lazy load Leaflet map to avoid SSR issues
-const LeafletUserMap = lazy(() => import('@/components/admin/LeafletUserMap').then(m => ({ default: m.LeafletUserMap })));
+const LeafletUserMap = lazy(() => import('@/components/admin/LeafletUserMap'));
 
 // Fixed HSL color values for pie charts (CSS variables don't work well in recharts)
 const COLORS = [
