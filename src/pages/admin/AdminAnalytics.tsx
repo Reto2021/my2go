@@ -69,10 +69,10 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       const startDate = subDays(new Date(), dateRange);
       
-      // Fetch listening sessions
+      // Fetch listening sessions with stream_type and station info
       const { data: sessions, error } = await supabase
         .from('radio_listening_sessions')
-        .select('started_at, duration_seconds, taler_awarded')
+        .select('started_at, duration_seconds, taler_awarded, stream_type, external_station_name, external_station_uuid, user_id')
         .gte('started_at', startDate.toISOString())
         .order('started_at', { ascending: true });
       
@@ -90,6 +90,21 @@ export default function AdminAnalytics() {
       const dailyStats = new Map<string, { sessions: number; duration: number; taler: number }>();
       const hourlyStats = new Map<number, { sessions: number; duration: number }>();
       
+      // Station stats for external stations
+      const stationStats = new Map<string, { 
+        name: string; 
+        sessions: number; 
+        duration: number; 
+        uniqueListeners: Set<string>;
+        taler: number;
+      }>();
+      
+      // Stream type distribution
+      let radio2goSessions = 0;
+      let externalSessions = 0;
+      let radio2goDuration = 0;
+      let externalDuration = 0;
+      
       // Initialize all hours
       for (let i = 0; i < 24; i++) {
         hourlyStats.set(i, { sessions: 0, duration: 0 });
@@ -99,12 +114,37 @@ export default function AdminAnalytics() {
         const sessionDate = new Date(session.started_at);
         const day = format(sessionDate, 'yyyy-MM-dd');
         const hour = sessionDate.getHours();
+        const duration = session.duration_seconds || 0;
+        
+        // Track stream type distribution
+        if (session.stream_type === 'external' && session.external_station_name) {
+          externalSessions++;
+          externalDuration += duration;
+          
+          // Track individual external stations
+          const stationKey = session.external_station_uuid || session.external_station_name;
+          const existing = stationStats.get(stationKey) || { 
+            name: session.external_station_name, 
+            sessions: 0, 
+            duration: 0, 
+            uniqueListeners: new Set(),
+            taler: 0
+          };
+          existing.sessions++;
+          existing.duration += duration;
+          existing.uniqueListeners.add(session.user_id);
+          existing.taler += session.taler_awarded || 0;
+          stationStats.set(stationKey, existing);
+        } else {
+          radio2goSessions++;
+          radio2goDuration += duration;
+        }
         
         // Daily stats (sessions and duration only)
         const existing = dailyStats.get(day) || { sessions: 0, duration: 0, taler: 0 };
         dailyStats.set(day, {
           sessions: existing.sessions + 1,
-          duration: existing.duration + (session.duration_seconds || 0),
+          duration: existing.duration + duration,
           taler: existing.taler // Will be filled from transactions
         });
         
@@ -112,7 +152,7 @@ export default function AdminAnalytics() {
         const hourlyExisting = hourlyStats.get(hour) || { sessions: 0, duration: 0 };
         hourlyStats.set(hour, {
           sessions: hourlyExisting.sessions + 1,
-          duration: hourlyExisting.duration + (session.duration_seconds || 0)
+          duration: hourlyExisting.duration + duration
         });
       });
       
@@ -143,6 +183,19 @@ export default function AdminAnalytics() {
           durationMinutes: Math.round(stats.duration / 60)
         }));
       
+      // Top external stations
+      const topStations = Array.from(stationStats.entries())
+        .map(([key, data]) => ({
+          id: key,
+          name: data.name,
+          sessions: data.sessions,
+          durationHours: Math.round(data.duration / 3600 * 10) / 10,
+          uniqueListeners: data.uniqueListeners.size,
+          taler: data.taler
+        }))
+        .sort((a, b) => b.sessions - a.sessions)
+        .slice(0, 10);
+      
       const totalSessions = sessions?.length || 0;
       const totalDuration = sessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
       // Total Taler from ALL earn transactions (not just radio)
@@ -161,7 +214,14 @@ export default function AdminAnalytics() {
         totalTaler,
         avgDurationMinutes: avgDuration,
         peakHour: peakHour ? `${peakHour[0].toString().padStart(2, '0')}:00` : null,
-        peakHourSessions: peakHour?.[1].sessions || 0
+        peakHourSessions: peakHour?.[1].sessions || 0,
+        // New: stream type breakdown
+        streamTypeData: [
+          { name: 'Radio 2Go', sessions: radio2goSessions, durationHours: Math.round(radio2goDuration / 3600 * 10) / 10 },
+          { name: 'Externe Sender', sessions: externalSessions, durationHours: Math.round(externalDuration / 3600 * 10) / 10 }
+        ],
+        topStations,
+        externalStationCount: stationStats.size
       };
     }
   });
@@ -550,6 +610,97 @@ export default function AdminAnalytics() {
               )}
             </CardContent>
           </Card>
+
+          {/* Stream Type Distribution */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Radio className="h-5 w-5" />
+                  Sender-Verteilung
+                  {listeningStats?.externalStationCount ? (
+                    <span className="ml-auto text-sm font-normal text-muted-foreground">
+                      {listeningStats.externalStationCount} externe Sender
+                    </span>
+                  ) : null}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingListening ? (
+                  <Skeleton className="h-[200px] w-full" />
+                ) : (
+                  <div className="space-y-4">
+                    {listeningStats?.streamTypeData?.map((item, index) => {
+                      const total = listeningStats.streamTypeData.reduce((sum, d) => sum + d.sessions, 0);
+                      const percentage = total > 0 ? Math.round((item.sessions / total) * 100) : 0;
+                      return (
+                        <div key={item.name} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium">{item.name}</span>
+                            <span className="text-muted-foreground">
+                              {item.sessions.toLocaleString()} Sessions • {item.durationHours}h
+                            </span>
+                          </div>
+                          <div className="h-3 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all"
+                              style={{ 
+                                width: `${percentage}%`,
+                                backgroundColor: index === 0 ? 'hsl(var(--primary))' : 'hsl(var(--accent))'
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground text-right">{percentage}%</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Headphones className="h-5 w-5" />
+                  Top Externe Sender
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingListening ? (
+                  <Skeleton className="h-[200px] w-full" />
+                ) : listeningStats?.topStations?.length ? (
+                  <div className="space-y-3 max-h-[280px] overflow-y-auto">
+                    {listeningStats.topStations.map((station, index) => (
+                      <div 
+                        key={station.id} 
+                        className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                      >
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{station.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {station.uniqueListeners} Hörer • {station.durationHours}h
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{station.sessions}</p>
+                          <p className="text-xs text-muted-foreground">Sessions</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                    <Radio className="h-8 w-8 mb-2 opacity-50" />
+                    <p className="text-sm">Keine externen Sender</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Users & Locations Tab */}
