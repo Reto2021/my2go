@@ -125,16 +125,16 @@ export function RadioStationSearch({ onSelectStation, currentStation, className 
         
         {/* Station info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
             <span className="font-medium truncate">{station.name}</span>
             {isRadio2Go && (
               <Badge variant="default" className="text-xs bg-accent text-accent-foreground">
-                100% Taler
+                Volle Taler
               </Badge>
             )}
             {!isRadio2Go && (
               <Badge variant="outline" className="text-xs">
-                50% Taler
+                ½ Taler
               </Badge>
             )}
           </div>
@@ -216,8 +216,8 @@ export function RadioStationSearch({ onSelectStation, currentStation, className 
               
               {/* Info banner */}
               <div className="bg-accent/10 rounded-lg p-3 text-sm text-muted-foreground">
-                <strong className="text-foreground">💡 Tipp:</strong> Mit Radio 2Go sammelst du <strong className="text-accent">100% Taler</strong>. 
-                Bei anderen Sendern erhältst du 50%.
+                <strong className="text-foreground">💡 Tipp:</strong> Mit Radio 2Go sammelst du <strong className="text-accent">volle Taler</strong>. 
+                Bei anderen Sendern brauchst du die doppelte Hördauer für die gleichen Belohnungen.
               </div>
               
               {/* User favorites */}

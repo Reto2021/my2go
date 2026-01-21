@@ -55,7 +55,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   { question: 'Kann ich Radio 2Go auf Sonos hören?', answer: 'Ja! Sonos App → Durchsuchen → Radio by TuneIn → "Radio 2Go" suchen. Oder: radio2go.fm/stream als Favorit hinzufügen.', category: 'Streaming' },
   { question: 'Wie höre ich Radio 2Go auf Alexa?', answer: '"Alexa, spiele Radio 2Go" oder via TuneIn Skill. Einmal einrichten, dann per Sprachbefehl starten.', category: 'Streaming' },
   { question: 'Kann ich auf mehreren Geräten gleichzeitig hören?', answer: 'Ja, aber jedes Gerät braucht eine eigene Verbindung. Bluetooth-Kopfhörer: Nur eines gleichzeitig möglich (Geräte-Limit).', category: 'Streaming' },
-  { question: 'Kann ich andere Radiosender hören?', answer: 'Ja! In den Einstellungen findest du eine Sender-Suche. Du kannst jeden Sender als Favorit speichern. Wichtig: Nur bei Radio 2Go gibt es 100% Taler-Belohnungen – bei anderen Sendern erhältst du 50%. Der Taler-Alarm läuft nur bei Radio 2Go!', category: 'Streaming' },
+  { question: 'Kann ich andere Radiosender hören?', answer: 'Ja! In den Einstellungen findest du eine Sender-Suche. Du kannst jeden Sender als Favorit speichern. Wichtig: Bei Radio 2Go gibt es volle Taler-Belohnungen – bei anderen Sendern brauchst du die doppelte Hördauer. Der Taler-Alarm läuft nur bei Radio 2Go!', category: 'Streaming' },
 ];
 
 // ============================================================================
