@@ -123,11 +123,6 @@ export function FavoriteStationsSwitcher({ onSwitchComplete, className }: Favori
                 ) : (
                   <Radio className="h-4 w-4 text-white/60" />
                 )}
-                {isRadio2GoStation && (
-                  <div className="absolute -top-0.5 -right-0.5 bg-accent rounded-full p-0.5">
-                    <Star className="h-2 w-2 text-accent-foreground" />
-                  </div>
-                )}
               </div>
               
               {/* Station Name */}
