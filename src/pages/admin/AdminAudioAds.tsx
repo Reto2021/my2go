@@ -26,7 +26,11 @@ import {
   Clock,
   RefreshCw,
   Upload,
-  FileAudio
+  FileAudio,
+  Target,
+  MapPin,
+  Users,
+  Radio
 } from 'lucide-react';
 import AudioAdScheduleCalendar from '@/components/admin/AudioAdScheduleCalendar';
 import JingleManager from '@/components/admin/JingleManager';
@@ -56,6 +60,15 @@ interface AudioAd {
   trigger_on_tier: boolean;
   created_at: string;
   partners?: { name: string };
+  // Targeting
+  target_cities: string[] | null;
+  target_postal_codes: string[] | null;
+  target_stations: string[] | null;
+  target_age_min: number | null;
+  target_age_max: number | null;
+  target_subscription_tiers: string[] | null;
+  target_min_streak: number | null;
+  target_min_listen_hours: number | null;
 }
 
 interface Jingle {
@@ -89,9 +102,18 @@ export default function AdminAudioAds() {
     triggerOnTier: false,
     jingleId: '',
     useUploadedAudio: false,
+    // Targeting
+    targetCities: '',
+    targetPostalCodes: '',
+    targetAgeMin: '',
+    targetAgeMax: '',
+    targetSubscriptionTiers: [] as string[],
+    targetMinStreak: '',
+    targetMinListenHours: '',
   });
   const [uploadedClaimFile, setUploadedClaimFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showTargeting, setShowTargeting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -241,6 +263,17 @@ export default function AdminAudioAds() {
 
       const selectedVoice = voices.find(v => v.id === formData.voiceId);
       
+      // Prepare targeting arrays
+      const targetCities = formData.targetCities.trim() 
+        ? formData.targetCities.split(',').map(s => s.trim()).filter(Boolean)
+        : null;
+      const targetPostalCodes = formData.targetPostalCodes.trim()
+        ? formData.targetPostalCodes.split(',').map(s => s.trim()).filter(Boolean)
+        : null;
+      const targetSubscriptionTiers = formData.targetSubscriptionTiers.length > 0
+        ? formData.targetSubscriptionTiers
+        : null;
+
       const { data, error } = await supabase
         .from('audio_ads')
         .insert({
@@ -252,6 +285,14 @@ export default function AdminAudioAds() {
           trigger_on_tier: formData.triggerOnTier,
           jingle_id: formData.jingleId || null,
           uploaded_claim_url: uploadedClaimUrl,
+          // Targeting
+          target_cities: targetCities,
+          target_postal_codes: targetPostalCodes,
+          target_age_min: formData.targetAgeMin ? parseInt(formData.targetAgeMin) : null,
+          target_age_max: formData.targetAgeMax ? parseInt(formData.targetAgeMax) : null,
+          target_subscription_tiers: targetSubscriptionTiers,
+          target_min_streak: formData.targetMinStreak ? parseInt(formData.targetMinStreak) : null,
+          target_min_listen_hours: formData.targetMinListenHours ? parseInt(formData.targetMinListenHours) : null,
         })
         .select()
         .single();
@@ -268,8 +309,16 @@ export default function AdminAudioAds() {
         triggerOnTier: false,
         jingleId: '',
         useUploadedAudio: false,
+        targetCities: '',
+        targetPostalCodes: '',
+        targetAgeMin: '',
+        targetAgeMax: '',
+        targetSubscriptionTiers: [],
+        targetMinStreak: '',
+        targetMinListenHours: '',
       });
       setUploadedClaimFile(null);
+      setShowTargeting(false);
       
       // Reload and generate
       await loadData();
@@ -567,6 +616,126 @@ export default function AdminAudioAds() {
                   checked={formData.triggerOnTier}
                   onCheckedChange={(v) => setFormData({ ...formData, triggerOnTier: v })}
                 />
+              </div>
+
+              {/* Targeting Section */}
+              <div className="border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowTargeting(!showTargeting)}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    <div>
+                      <Label className="cursor-pointer">Zielgruppen-Targeting</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Optional: Nach Location, Alter, Verhalten filtern
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {showTargeting ? 'Ausblenden' : 'Einblenden'}
+                  </Badge>
+                </button>
+
+                {showTargeting && (
+                  <div className="mt-4 space-y-4 p-3 bg-muted/50 rounded-lg">
+                    {/* Location Targeting */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1 text-sm">
+                        <MapPin className="h-3 w-3" />
+                        Städte (kommagetrennt)
+                      </Label>
+                      <Input
+                        placeholder="z.B. Zürich, Bern, Basel"
+                        value={formData.targetCities}
+                        onChange={(e) => setFormData({ ...formData, targetCities: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm">PLZ-Präfixe (kommagetrennt)</Label>
+                      <Input
+                        placeholder="z.B. 80, 81, 90"
+                        value={formData.targetPostalCodes}
+                        onChange={(e) => setFormData({ ...formData, targetPostalCodes: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Age Targeting */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="flex items-center gap-1 text-sm">
+                          <Users className="h-3 w-3" />
+                          Alter min
+                        </Label>
+                        <Input
+                          type="number"
+                          placeholder="18"
+                          value={formData.targetAgeMin}
+                          onChange={(e) => setFormData({ ...formData, targetAgeMin: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-sm">Alter max</Label>
+                        <Input
+                          type="number"
+                          placeholder="65"
+                          value={formData.targetAgeMax}
+                          onChange={(e) => setFormData({ ...formData, targetAgeMax: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subscription Targeting */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Abo-Status</Label>
+                      <div className="flex gap-2 flex-wrap">
+                        {['free', 'plus', 'trial'].map((tier) => (
+                          <Badge
+                            key={tier}
+                            variant={formData.targetSubscriptionTiers.includes(tier) ? 'default' : 'outline'}
+                            className="cursor-pointer"
+                            onClick={() => {
+                              const tiers = formData.targetSubscriptionTiers.includes(tier)
+                                ? formData.targetSubscriptionTiers.filter(t => t !== tier)
+                                : [...formData.targetSubscriptionTiers, tier];
+                              setFormData({ ...formData, targetSubscriptionTiers: tiers });
+                            }}
+                          >
+                            {tier === 'free' ? 'Gratis' : tier === 'plus' ? 'Plus' : 'Trial'}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Behavior Targeting */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="flex items-center gap-1 text-sm">
+                          <Radio className="h-3 w-3" />
+                          Min. Streak (Tage)
+                        </Label>
+                        <Input
+                          type="number"
+                          placeholder="7"
+                          value={formData.targetMinStreak}
+                          onChange={(e) => setFormData({ ...formData, targetMinStreak: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-sm">Min. Hörzeit (Std)</Label>
+                        <Input
+                          type="number"
+                          placeholder="10"
+                          value={formData.targetMinListenHours}
+                          onChange={(e) => setFormData({ ...formData, targetMinListenHours: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Preview Button - only for TTS mode */}
