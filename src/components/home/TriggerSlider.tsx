@@ -47,7 +47,7 @@ export function TriggerSlider() {
   }, [shuffledTriggers.length]);
 
   useEffect(() => {
-    const interval = setInterval(nextTrigger, 2500);
+    const interval = setInterval(nextTrigger, 4000);
     return () => clearInterval(interval);
   }, [nextTrigger]);
 
