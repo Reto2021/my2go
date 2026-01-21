@@ -193,6 +193,7 @@ interface RadioStore {
   isPlaying: boolean;
   isMuted: boolean;
   isLoading: boolean;
+  isSwitching: boolean; // Flag to indicate intentional pause during station switch
   volume: number;
   nowPlaying: NowPlayingData | null;
   songHistory: SongHistoryItem[];
@@ -300,6 +301,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   isPlaying: false,
   isMuted: false,
   isLoading: false,
+  isSwitching: false,
   volume: 1,
   nowPlaying: null,
   songHistory: [],
@@ -348,11 +350,12 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       set({ lastExternalStation: station });
     }
     
-    // Update store state
+    // Update store state - set isSwitching to prevent pause handler from interfering
     set({ 
       customStation: station, 
       isRadio2Go: station === null,
       isLoading: wasPlaying && autoPlay,
+      isSwitching: wasPlaying && autoPlay,
       nowPlaying: station ? { 
         title: station.name, 
         artist: 'Live Stream', 
@@ -373,13 +376,13 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         audio.src = newStreamUrl;
         audio.play()
           .then(() => {
-            set({ isLoading: false, isPlaying: true });
+            set({ isLoading: false, isSwitching: false, isPlaying: true });
             get().fetchNowPlaying();
             console.log('Station switched successfully:', station?.name || 'Radio 2Go');
           })
           .catch((err) => {
             console.error('Station switch playback failed:', err);
-            set({ isPlaying: false, isLoading: false });
+            set({ isPlaying: false, isLoading: false, isSwitching: false });
           });
       }, 100);
     }
@@ -490,10 +493,16 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   },
 
   togglePlay: () => {
-    const { isPlaying, isLoading, audio, nowPlaying, getStreamUrl } = get();
+    const { isPlaying, isLoading, isSwitching, audio, nowPlaying, getStreamUrl } = get();
     
-    // Prevent multiple clicks while loading
-    if (isLoading) return;
+    // Prevent multiple clicks while loading or switching
+    if (isLoading || isSwitching) return;
+    
+    // When starting to play, we're about to call pause() first which would trigger
+    // the pause event handler. Set isLoading and isSwitching early to prevent false-positive handling.
+    if (!isPlaying) {
+      set({ isLoading: true, isSwitching: true });
+    }
     
     // Stop any existing audio first to prevent duplicates
     if (audio && !isPlaying) {
@@ -551,7 +560,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       let pauseHandlerTimeout: ReturnType<typeof setTimeout> | null = null;
       
       currentAudio.addEventListener('pause', () => {
-        const { isPlaying, isLoading } = get();
+        const { isPlaying, isLoading, isSwitching } = get();
         
         // Clear any pending timeout to avoid stale handlers
         if (pauseHandlerTimeout) {
@@ -559,9 +568,15 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
           pauseHandlerTimeout = null;
         }
         
+        // Skip if we're intentionally switching or loading
+        if (isLoading || isSwitching) {
+          console.log('Pause event ignored - switching/loading in progress');
+          return;
+        }
+        
         // Only sync state if we think we should still be playing but audio is paused
         // This handles cases like iOS background restrictions or external media controls
-        if (isPlaying && !isLoading) {
+        if (isPlaying) {
           console.log('Pause event detected - scheduling state sync check');
           // Longer delay to avoid race conditions with navigation, station switches, and manual togglePlay
           // This gives time for intentional pauses to update state first
@@ -569,10 +584,11 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
             const audio = get().audio;
             const currentIsPlaying = get().isPlaying;
             const currentIsLoading = get().isLoading;
+            const currentIsSwitching = get().isSwitching;
             
             // Only update if audio is actually paused AND we still think we're playing
-            // AND we're not in a loading state (which could indicate a restart/switch)
-            if (audio && audio.paused && currentIsPlaying && !currentIsLoading) {
+            // AND we're not in a loading/switching state
+            if (audio && audio.paused && currentIsPlaying && !currentIsLoading && !currentIsSwitching) {
               // Check that the audio source is still set AND matches a valid stream
               // (not cleared intentionally during a station switch)
               if (audio.src && audio.src !== '' && !audio.src.includes('blob:')) {
@@ -595,11 +611,10 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       currentAudio.pause();
       currentAudio.src = '';
       clearSessionFromStorage();
-      set({ isPlaying: false, sessionStartTime: null, currentSessionDuration: 0 });
+      set({ isPlaying: false, isLoading: false, isSwitching: false, sessionStartTime: null, currentSessionDuration: 0 });
       updateMediaSession(nowPlaying, false);
     } else {
-      set({ isLoading: true });
-      
+      // isLoading and isSwitching were already set to true at the beginning of togglePlay
       // iOS Safari Autoplay Fix:
       // Set src and immediately call play() in the same synchronous user gesture stack.
       // Do NOT call load() separately - it breaks the user gesture chain on iOS.
@@ -622,13 +637,13 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
               set({ sessionStartTime: startTime, currentSessionDuration: 0 });
             }
             
-            set({ isPlaying: true, isLoading: false });
+            set({ isPlaying: true, isLoading: false, isSwitching: false });
             get().fetchNowPlaying();
             updateMediaSession(get().nowPlaying, true);
           })
           .catch((err) => {
             console.error('Playback failed:', err);
-            set({ isLoading: false });
+            set({ isLoading: false, isSwitching: false, isPlaying: false });
             
             // On iOS, if autoplay fails, the user needs to tap again
             // We could show a toast here to prompt the user
