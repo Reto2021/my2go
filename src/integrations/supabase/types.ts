@@ -167,6 +167,14 @@ export type Database = {
           is_active: boolean | null
           jingle_id: string | null
           partner_id: string
+          target_age_max: number | null
+          target_age_min: number | null
+          target_cities: string[] | null
+          target_min_listen_hours: number | null
+          target_min_streak: number | null
+          target_postal_codes: string[] | null
+          target_stations: string[] | null
+          target_subscription_tiers: string[] | null
           title: string
           trigger_on_tier: boolean | null
           updated_at: string
@@ -186,6 +194,14 @@ export type Database = {
           is_active?: boolean | null
           jingle_id?: string | null
           partner_id: string
+          target_age_max?: number | null
+          target_age_min?: number | null
+          target_cities?: string[] | null
+          target_min_listen_hours?: number | null
+          target_min_streak?: number | null
+          target_postal_codes?: string[] | null
+          target_stations?: string[] | null
+          target_subscription_tiers?: string[] | null
           title: string
           trigger_on_tier?: boolean | null
           updated_at?: string
@@ -205,6 +221,14 @@ export type Database = {
           is_active?: boolean | null
           jingle_id?: string | null
           partner_id?: string
+          target_age_max?: number | null
+          target_age_min?: number | null
+          target_cities?: string[] | null
+          target_min_listen_hours?: number | null
+          target_min_streak?: number | null
+          target_postal_codes?: string[] | null
+          target_stations?: string[] | null
+          target_subscription_tiers?: string[] | null
           title?: string
           trigger_on_tier?: boolean | null
           updated_at?: string

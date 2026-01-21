@@ -3,6 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
 
+interface AudioAdTargeting {
+  target_cities: string[] | null;
+  target_postal_codes: string[] | null;
+  target_stations: string[] | null;
+  target_age_min: number | null;
+  target_age_max: number | null;
+  target_subscription_tiers: string[] | null;
+  target_min_streak: number | null;
+  target_min_listen_hours: number | null;
+}
+
 interface ScheduledAd {
   id: string;
   audio_ad_id: string;
@@ -14,14 +25,26 @@ interface ScheduledAd {
   day_end_time: string | null;
   weekdays: number[] | null;
   last_played_at: string | null;
-  audio_ads: {
+  audio_ads: ({
     id: string;
     title: string;
     generated_audio_url: string | null;
     duration_seconds: number | null;
     partner_id: string;
     trigger_on_tier: boolean;
-  } | null;
+  } & AudioAdTargeting) | null;
+}
+
+interface UserProfile {
+  city: string | null;
+  postal_code: string | null;
+  birth_date: string | null;
+  subscription_status: string | null;
+  current_streak: number | null;
+}
+
+interface UserListeningStats {
+  total_duration_seconds: number;
 }
 
 interface UseAudioAdPlayerOptions {
@@ -33,21 +56,128 @@ interface UseAudioAdPlayerOptions {
 const DUCK_VOLUME = 0.15; // Volume during ad playback (15%)
 const FADE_DURATION = 500; // Fade in/out duration in ms
 
+// Calculate age from birth date
+function calculateAge(birthDate: string): number {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+// Check if ad matches user targeting criteria
+function matchesTargeting(
+  ad: ScheduledAd,
+  userProfile: UserProfile | null,
+  userStats: UserListeningStats | null,
+  currentStationUuid: string | null
+): boolean {
+  const targeting = ad.audio_ads;
+  if (!targeting) return true;
+
+  // Location targeting - city
+  if (targeting.target_cities && targeting.target_cities.length > 0) {
+    if (!userProfile?.city) return false;
+    const userCity = userProfile.city.toLowerCase().trim();
+    const matchesCity = targeting.target_cities.some(
+      c => c.toLowerCase().trim() === userCity
+    );
+    if (!matchesCity) return false;
+  }
+
+  // Location targeting - postal codes
+  if (targeting.target_postal_codes && targeting.target_postal_codes.length > 0) {
+    if (!userProfile?.postal_code) return false;
+    const matchesPostal = targeting.target_postal_codes.some(
+      p => userProfile.postal_code?.startsWith(p.trim())
+    );
+    if (!matchesPostal) return false;
+  }
+
+  // Station targeting
+  if (targeting.target_stations && targeting.target_stations.length > 0) {
+    if (!currentStationUuid) return false;
+    if (!targeting.target_stations.includes(currentStationUuid)) return false;
+  }
+
+  // Age targeting
+  if (targeting.target_age_min !== null || targeting.target_age_max !== null) {
+    if (!userProfile?.birth_date) return false;
+    const age = calculateAge(userProfile.birth_date);
+    if (targeting.target_age_min !== null && age < targeting.target_age_min) return false;
+    if (targeting.target_age_max !== null && age > targeting.target_age_max) return false;
+  }
+
+  // Subscription tier targeting
+  if (targeting.target_subscription_tiers && targeting.target_subscription_tiers.length > 0) {
+    const userTier = userProfile?.subscription_status || 'free';
+    if (!targeting.target_subscription_tiers.includes(userTier)) return false;
+  }
+
+  // Streak targeting
+  if (targeting.target_min_streak !== null) {
+    const streak = userProfile?.current_streak || 0;
+    if (streak < targeting.target_min_streak) return false;
+  }
+
+  // Listen hours targeting
+  if (targeting.target_min_listen_hours !== null) {
+    const totalHours = (userStats?.total_duration_seconds || 0) / 3600;
+    if (totalHours < targeting.target_min_listen_hours) return false;
+  }
+
+  return true;
+}
+
 export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
   const { enabled = true, onAdStart, onAdEnd } = options;
-  const { isPlaying, volume, setVolume } = useRadioStore();
+  const { isPlaying, volume, setVolume, customStation } = useRadioStore();
   const authContext = useAuthSafe();
   
   const [isPlayingAd, setIsPlayingAd] = useState(false);
   const [currentAd, setCurrentAd] = useState<ScheduledAd | null>(null);
   const [scheduledAds, setScheduledAds] = useState<ScheduledAd[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userStats, setUserStats] = useState<UserListeningStats | null>(null);
   
   const adAudioRef = useRef<HTMLAudioElement | null>(null);
   const originalVolumeRef = useRef<number>(1);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastPlayedRef = useRef<Map<string, number>>(new Map());
 
-  // Load scheduled ads for today
+  // Load user profile and stats for targeting
+  const loadUserData = useCallback(async () => {
+    if (!authContext?.user?.id) {
+      setUserProfile(null);
+      setUserStats(null);
+      return;
+    }
+
+    const [profileResult, statsResult] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('city, postal_code, birth_date, subscription_status, current_streak')
+        .eq('id', authContext.user.id)
+        .single(),
+      supabase
+        .from('user_listening_stats')
+        .select('total_duration_seconds')
+        .eq('user_id', authContext.user.id)
+        .single(),
+    ]);
+
+    if (profileResult.data) {
+      setUserProfile(profileResult.data);
+    }
+    if (statsResult.data) {
+      setUserStats(statsResult.data);
+    }
+  }, [authContext?.user?.id]);
+
+  // Load scheduled ads for today with targeting columns
   const loadScheduledAds = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0];
     
@@ -61,7 +191,15 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
           generated_audio_url,
           duration_seconds,
           partner_id,
-          trigger_on_tier
+          trigger_on_tier,
+          target_cities,
+          target_postal_codes,
+          target_stations,
+          target_age_min,
+          target_age_max,
+          target_subscription_tiers,
+          target_min_streak,
+          target_min_listen_hours
         )
       `)
       .eq('scheduled_date', today)
@@ -163,8 +301,14 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
 
   // Play ad triggered by tier (for tier celebration)
   const playTierAd = useCallback(async (partnerId?: string) => {
-    // Find an ad configured for tier triggers
-    const tierAds = scheduledAds.filter(s => s.audio_ads?.trigger_on_tier);
+    // Get current station UUID for targeting
+    const stationUuid = customStation?.uuid || null;
+
+    // Find ads configured for tier triggers that match targeting
+    const tierAds = scheduledAds.filter(s => 
+      s.audio_ads?.trigger_on_tier && 
+      matchesTargeting(s, userProfile, userStats, stationUuid)
+    );
     
     // Prefer ads from specific partner if provided
     let adToPlay = partnerId 
@@ -178,7 +322,7 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
     if (adToPlay) {
       await playAd(adToPlay);
     }
-  }, [scheduledAds, playAd]);
+  }, [scheduledAds, playAd, customStation, userProfile, userStats]);
 
   // Check if any ad should play now
   const checkSchedule = useCallback(() => {
@@ -187,8 +331,14 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     const currentDay = now.getDay();
+    const stationUuid = customStation?.uuid || null;
 
     for (const schedule of scheduledAds) {
+      // Check targeting first
+      if (!matchesTargeting(schedule, userProfile, userStats, stationUuid)) {
+        continue;
+      }
+
       // Check if already played recently (within repeat interval or 5 min default)
       const lastPlayed = lastPlayedRef.current.get(schedule.id);
       const repeatInterval = (schedule.repeat_interval_minutes || 60) * 60 * 1000;
@@ -221,14 +371,15 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
         }
       }
     }
-  }, [isPlaying, isPlayingAd, enabled, scheduledAds, playAd]);
+  }, [isPlaying, isPlayingAd, enabled, scheduledAds, playAd, customStation, userProfile, userStats]);
 
-  // Load ads on mount and when radio starts playing
+  // Load ads and user data on mount and when radio starts playing
   useEffect(() => {
     if (enabled) {
       loadScheduledAds();
+      loadUserData();
     }
-  }, [enabled, loadScheduledAds]);
+  }, [enabled, loadScheduledAds, loadUserData]);
 
   // Check schedule every 30 seconds when radio is playing
   useEffect(() => {
