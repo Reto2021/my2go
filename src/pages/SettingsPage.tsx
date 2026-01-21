@@ -55,6 +55,15 @@ export default function SettingsPage() {
   
   const { customStation, setCustomStation, isRadio2Go } = useRadioStore();
   
+  // Handle #radio hash to auto-open search
+  useEffect(() => {
+    if (window.location.hash === '#radio') {
+      setShowRadioSearch(true);
+      // Clear hash after opening
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+  
   useEffect(() => {
     // Check admin status
     const checkAdminStatus = async () => {

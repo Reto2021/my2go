@@ -470,12 +470,19 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         }
       });
       
-      // Handle pause event (might be triggered by iOS when switching apps)
+      // Handle pause event (might be triggered by iOS when switching apps or external controls)
       currentAudio.addEventListener('pause', () => {
-        const { isPlaying } = get();
-        // Only update state if we didn't trigger the pause ourselves
-        if (isPlaying && !get().isLoading) {
-          console.log('Unexpected pause detected');
+        const { isPlaying, isLoading } = get();
+        // Update state to reflect actual audio state - this ensures button shows "play"
+        if (isPlaying && !isLoading) {
+          console.log('Pause event detected - syncing state');
+          // Small delay to avoid race condition with manual togglePlay
+          setTimeout(() => {
+            const audio = get().audio;
+            if (audio && audio.paused && get().isPlaying) {
+              set({ isPlaying: false });
+            }
+          }, 50);
         }
       });
       
