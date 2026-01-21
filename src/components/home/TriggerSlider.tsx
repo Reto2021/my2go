@@ -65,8 +65,19 @@ export function TriggerSlider() {
           }}
           className="relative inline-flex items-center"
         >
-          <span className="absolute inset-0 bg-accent rounded-lg -rotate-1 -mx-4 -my-1 scale-x-110" style={{ left: '-1rem', right: '-1rem', top: '-0.25rem', bottom: '-0.25rem' }} />
-          <span className="relative text-secondary font-black whitespace-nowrap px-2">
+          {/* Brush stroke background with rough edges */}
+          <span 
+            className="absolute bg-accent -rotate-1"
+            style={{ 
+              left: '-0.5rem', 
+              right: '-0.5rem', 
+              top: '-0.15rem', 
+              bottom: '-0.15rem',
+              borderRadius: '4px 8px 6px 10px',
+              clipPath: 'polygon(2% 15%, 0% 50%, 1% 85%, 4% 100%, 15% 98%, 30% 100%, 50% 97%, 70% 100%, 85% 99%, 96% 100%, 100% 80%, 99% 50%, 100% 20%, 97% 0%, 80% 2%, 60% 0%, 40% 3%, 20% 0%, 5% 1%)'
+            }} 
+          />
+          <span className="relative text-secondary font-black whitespace-nowrap">
             {shuffledTriggers[currentIndex]}
           </span>
         </motion.span>
