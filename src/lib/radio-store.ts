@@ -220,6 +220,7 @@ interface RadioStore {
   
   // Custom station methods
   setCustomStation: (station: ExternalStation | null) => void;
+  switchStation: (station: ExternalStation | null, autoPlay?: boolean) => void; // Switch and optionally auto-play
   getStreamUrl: () => string;
   getStationName: () => string;
   getLastExternalStation: () => ExternalStation | null;
@@ -334,6 +335,54 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         videoUrl: null,
       } : null,
     });
+  },
+  
+  // Switch station with proper audio handling (avoids race conditions)
+  switchStation: (station: ExternalStation | null, autoPlay = true) => {
+    const { audio, isPlaying } = get();
+    const wasPlaying = isPlaying;
+    
+    // Save the station
+    saveCustomStation(station);
+    if (station) {
+      set({ lastExternalStation: station });
+    }
+    
+    // Update store state
+    set({ 
+      customStation: station, 
+      isRadio2Go: station === null,
+      isLoading: wasPlaying && autoPlay,
+      nowPlaying: station ? { 
+        title: station.name, 
+        artist: 'Live Stream', 
+        artworkUrl: station.favicon,
+        videoUrl: null,
+      } : null,
+    });
+    
+    // Handle audio switching
+    if (audio && wasPlaying && autoPlay) {
+      const newStreamUrl = station?.url || DEFAULT_STREAM_URL;
+      
+      // Pause current stream
+      audio.pause();
+      
+      // Switch to new stream with slight delay for iOS compatibility
+      setTimeout(() => {
+        audio.src = newStreamUrl;
+        audio.play()
+          .then(() => {
+            set({ isLoading: false, isPlaying: true });
+            get().fetchNowPlaying();
+            console.log('Station switched successfully:', station?.name || 'Radio 2Go');
+          })
+          .catch((err) => {
+            console.error('Station switch playback failed:', err);
+            set({ isPlaying: false, isLoading: false });
+          });
+      }, 100);
+    }
   },
   
   getStreamUrl: () => {
@@ -498,29 +547,41 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       });
       
       // Handle pause event (might be triggered by iOS when switching apps or external controls)
-      // We need to be careful not to sync state when the pause is intentional (e.g., togglePlay)
+      // We need to be careful not to sync state when the pause is intentional (e.g., togglePlay, station switch)
+      let pauseHandlerTimeout: ReturnType<typeof setTimeout> | null = null;
+      
       currentAudio.addEventListener('pause', () => {
         const { isPlaying, isLoading } = get();
+        
+        // Clear any pending timeout to avoid stale handlers
+        if (pauseHandlerTimeout) {
+          clearTimeout(pauseHandlerTimeout);
+          pauseHandlerTimeout = null;
+        }
+        
         // Only sync state if we think we should still be playing but audio is paused
         // This handles cases like iOS background restrictions or external media controls
         if (isPlaying && !isLoading) {
-          console.log('Pause event detected - checking if sync needed');
-          // Longer delay to avoid race conditions with navigation and manual togglePlay
+          console.log('Pause event detected - scheduling state sync check');
+          // Longer delay to avoid race conditions with navigation, station switches, and manual togglePlay
           // This gives time for intentional pauses to update state first
-          setTimeout(() => {
+          pauseHandlerTimeout = setTimeout(() => {
             const audio = get().audio;
             const currentIsPlaying = get().isPlaying;
             const currentIsLoading = get().isLoading;
+            
             // Only update if audio is actually paused AND we still think we're playing
-            // AND we're not in a loading state (which could indicate a restart)
+            // AND we're not in a loading state (which could indicate a restart/switch)
             if (audio && audio.paused && currentIsPlaying && !currentIsLoading) {
-              // Double check that the audio source is still set (not cleared intentionally)
-              if (audio.src && audio.src !== '') {
+              // Check that the audio source is still set AND matches a valid stream
+              // (not cleared intentionally during a station switch)
+              if (audio.src && audio.src !== '' && !audio.src.includes('blob:')) {
                 console.log('Syncing isPlaying state to false due to unexpected pause');
                 set({ isPlaying: false });
               }
             }
-          }, 200);
+            pauseHandlerTimeout = null;
+          }, 300);
         }
       });
       

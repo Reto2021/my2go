@@ -24,7 +24,7 @@ interface FavoriteStationsSwitcherProps {
 
 export function FavoriteStationsSwitcher({ onSwitchComplete, className }: FavoriteStationsSwitcherProps) {
   const { favorites, isLoading } = useRadioFavorites();
-  const { customStation, isRadio2Go, setCustomStation } = useRadioStore();
+  const { customStation, isRadio2Go, switchStation } = useRadioStore();
   
   // Build stations list: Radio 2Go first, then favorites
   const allStations: RadioStation[] = [
@@ -43,18 +43,12 @@ export function FavoriteStationsSwitcher({ onSwitchComplete, className }: Favori
   const handleSelectStation = (station: RadioStation) => {
     hapticToggle();
     
-    // Get audio element reference before switching
-    const { audio, isPlaying: wasPlaying } = useRadioStore.getState();
-    
-    // Stop current playback first
-    if (audio && wasPlaying) {
-      audio.pause();
-      audio.src = '';
-    }
+    // Get current playback state
+    const { isPlaying: wasPlaying } = useRadioStore.getState();
     
     if (station.uuid === 'radio2go') {
-      // Switch to Radio 2Go (null custom station)
-      setCustomStation(null);
+      // Switch to Radio 2Go using proper switchStation method
+      switchStation(null, wasPlaying);
     } else {
       // Switch to external station
       const externalStation: ExternalStation = {
@@ -65,16 +59,7 @@ export function FavoriteStationsSwitcher({ onSwitchComplete, className }: Favori
         country: station.country,
         tags: station.tags,
       };
-      setCustomStation(externalStation);
-    }
-    
-    // If was playing, restart with new station URL immediately (within user gesture)
-    if (wasPlaying && audio) {
-      const newUrl = station.uuid === 'radio2go' 
-        ? 'https://uksoutha.streaming.broadcast.radio/radio2go'
-        : station.url;
-      audio.src = newUrl;
-      audio.play().catch(err => console.error('Playback failed:', err));
+      switchStation(externalStation, wasPlaying);
     }
     
     onSwitchComplete?.();

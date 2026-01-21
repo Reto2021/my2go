@@ -74,6 +74,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     isRadio2Go,
     customStation,
     setCustomStation,
+    switchStation,
     getLastExternalStation,
   } = useRadioStore();
   
@@ -370,31 +371,13 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 e.preventDefault();
                 hapticToggle();
                 
-                const audioEl = useRadioStore.getState().audio;
-                const wasPlaying = isPlaying;
-                
-                // Stop current playback
-                if (audioEl && wasPlaying) {
-                  audioEl.pause();
-                  audioEl.src = '';
-                }
-                
+                // Use the dedicated switchStation method for proper audio handling
                 if (isRadio2Go && targetStation) {
-                  // Switch to last external station
-                  setCustomStation(targetStation);
-                  
-                  if (wasPlaying && audioEl) {
-                    audioEl.src = targetStation.url;
-                    audioEl.play().catch(err => console.error('Playback failed:', err));
-                  }
+                  // Switch to external station
+                  switchStation(targetStation, isPlaying);
                 } else {
-                  // Switch to Radio 2Go
-                  setCustomStation(null);
-                  
-                  if (wasPlaying && audioEl) {
-                    audioEl.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
-                    audioEl.play().catch(err => console.error('Playback failed:', err));
-                  }
+                  // Switch back to Radio 2Go
+                  switchStation(null, isPlaying);
                 }
               };
               
