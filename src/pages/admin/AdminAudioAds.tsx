@@ -27,6 +27,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import AudioAdScheduleCalendar from '@/components/admin/AudioAdScheduleCalendar';
+import JingleManager from '@/components/admin/JingleManager';
 
 interface Partner {
   id: string;
@@ -627,23 +628,7 @@ export default function AdminAudioAds() {
         </TabsContent>
 
         <TabsContent value="jingles" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Music className="h-5 w-5" />
-                Jingle-Verpackungen
-              </CardTitle>
-              <CardDescription>
-                Intro/Outro Jingles für Audio-Ads (Coming Soon)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Jingle-Verwaltung wird in Phase 2 implementiert.
-                Hier kannst du Intro/Outro-Sounds hochladen und verwalten.
-              </p>
-            </CardContent>
-          </Card>
+          <JingleManager onRefresh={loadData} />
         </TabsContent>
 
         <TabsContent value="schedule" className="mt-4">
