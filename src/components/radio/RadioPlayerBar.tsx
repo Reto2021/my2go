@@ -172,6 +172,7 @@ export function RadioPlayerBar({ onExpand }: RadioPlayerBarProps) {
   const { streakStatus, isLoading: isStreakLoading, claimStreak, isClaiming } = useStreak();
   const authContext = useAuthSafe();
   const isAuthenticated = !!authContext?.user;
+  const addPendingTaler = authContext?.addPendingTaler;
 
   // Live events
   const { fetchEvents, subscribeToRealtime } = useLiveEventsStore();
@@ -199,8 +200,11 @@ export function RadioPlayerBar({ onExpand }: RadioPlayerBarProps) {
     isReady: () => sliderWidth.current > 0,
   });
 
-  // Callback when a tier is reached - show confetti celebration
+  // Callback when a tier is reached - show confetti & update balance optimistically
   const handleTierReached = useCallback((reward: number) => {
+    // Add pending Taler for optimistic UI update
+    addPendingTaler?.(reward);
+    
     // Show confetti celebration
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);
@@ -208,12 +212,12 @@ export function RadioPlayerBar({ onExpand }: RadioPlayerBarProps) {
     // Haptic feedback
     hapticSuccess();
     
-    // Show toast with Taler earned - clarify that it's credited when stopping
-    toast.success(`+${reward} Taler erreicht! 🎉`, {
-      description: 'Wird gutgeschrieben wenn du stoppst',
+    // Show toast with Taler earned
+    toast.success(`+${reward} Taler verdient! 🎉`, {
+      description: 'Weiter hören für mehr Belohnungen 🎧',
       icon: <TalerIcon className="h-5 w-5 text-accent" />,
     });
-  }, []);
+  }, [addPendingTaler]);
 
   // Load tiers and calculate session progress
   const tiers = useListeningTiers();

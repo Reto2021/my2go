@@ -23,6 +23,7 @@ export interface SessionSummaryData {
 export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
+  const clearPendingTaler = authContext?.clearPendingTaler;
   const { isPlaying } = useRadioStore();
   
   const sessionIdRef = useRef<string | null>(null);
@@ -123,7 +124,8 @@ export function useRadioRewards() {
         });
         setShowSummary(true);
         
-        // Refresh balance to show new Taler
+        // Clear pending Taler (optimistic balance) and refresh from server
+        clearPendingTaler?.();
         refreshBalance?.();
       }
       
@@ -132,7 +134,7 @@ export function useRadioRewards() {
     } catch (error) {
       console.error('Error ending listening session:', error);
     }
-  }, [refreshBalance, userId]);
+  }, [refreshBalance, clearPendingTaler, userId]);
   
   const closeSummary = useCallback(() => {
     setShowSummary(false);
