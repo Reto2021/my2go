@@ -11,6 +11,8 @@ import {
 } from '@/lib/supabase-helpers';
 import { checkIsPartnerAdmin, getPartnerAdminInfo, PartnerAdminInfo } from '@/lib/partner-helpers';
 import { useMilestoneStore, checkMilestoneCrossed, getMilestoneData } from '@/lib/milestone-store';
+import { useGuestRewardsStore } from '@/lib/guest-rewards-store';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -51,7 +53,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPendingTaler(0);
   }, []);
 
-  const loadUserData = async (userId: string) => {
+  // Sync guest rewards to database after login
+  const syncGuestRewards = async (userId: string) => {
+    const guestStore = useGuestRewardsStore.getState();
+    const guestTaler = guestStore.totalTalerEarned;
+    
+    if (guestTaler > 0) {
+      try {
+        // Insert transaction for guest rewards
+        const { error } = await supabase.from('transactions').insert({
+          user_id: userId,
+          amount: guestTaler,
+          type: 'earn' as const,
+          source: 'bonus' as const,
+          description: 'Gast-Hörbelohnung übertragen',
+        });
+        
+        if (!error) {
+          // Clear guest data after successful sync
+          guestStore.clearGuestData();
+          toast.success(`${guestTaler} Taler wurden deinem Konto gutgeschrieben!`, {
+            description: 'Deine Gast-Hörbelohnungen wurden übertragen.',
+          });
+        } else {
+          console.error('Failed to sync guest rewards:', error);
+        }
+      } catch (err) {
+        console.error('Error syncing guest rewards:', err);
+      }
+    }
+  };
+
+  const loadUserData = async (userId: string, isNewLogin = false) => {
+    // Sync guest rewards first if this is a new login
+    if (isNewLogin) {
+      await syncGuestRewards(userId);
+    }
+    
     const [profileData, balanceData, codeData] = await Promise.all([
       getProfile(userId),
       getUserBalance(userId),
@@ -144,9 +182,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Check if this is a new sign-in event (not just session restore)
+          const isNewLogin = event === 'SIGNED_IN';
+          
           // Defer data loading to avoid deadlock
           setTimeout(() => {
-            loadUserData(session.user.id);
+            loadUserData(session.user.id, isNewLogin);
           }, 0);
         } else {
           setProfile(null);
