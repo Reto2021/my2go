@@ -110,6 +110,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Subscribe to realtime transaction updates for cross-device sync
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`transactions-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'transactions',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Refresh balance when a new transaction is detected (from any device)
+          refreshBalance();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
