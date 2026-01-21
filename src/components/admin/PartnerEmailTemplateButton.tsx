@@ -152,7 +152,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <tr>
                   <td style="vertical-align: top; width: 80px;">
                     <div style="width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 2px solid #0C4A56;">
-                      <img src="https://ui-avatars.com/api/?name=Reto+Wettstein&background=0C4A56&color=fff&size=128&font-size=0.4" alt="Reto Wettstein" style="width: 64px; height: 64px; object-fit: cover; display: block;">
+                      <img src="https://my2go.lovable.app/images/reto-wettstein.jpg" alt="Reto Wettstein" style="width: 64px; height: 64px; object-fit: cover; display: block;">
                     </div>
                   </td>
                   <td style="vertical-align: middle; padding-left: 12px;">
