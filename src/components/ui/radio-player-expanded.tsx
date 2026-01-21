@@ -152,14 +152,20 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   }, [isOpen, tiers.length]);
 
   // Calculate current and next tier
+  // For external stations (not Radio 2Go), time requirements are doubled
+  const tierMultiplier = isRadio2Go ? 1 : 2;
+  
   const getCurrentAndNextTier = () => {
     if (tiers.length === 0) return { current: null, next: null, progress: 0 };
     
     let currentTier: ListeningTier | null = null;
     let nextTier: ListeningTier | null = null;
     
+    // Apply multiplier to tier durations for external stations
+    const adjustedDuration = currentSessionDuration / tierMultiplier;
+    
     for (let i = 0; i < tiers.length; i++) {
-      if (currentSessionDuration >= tiers[i].min_duration_seconds) {
+      if (adjustedDuration >= tiers[i].min_duration_seconds) {
         currentTier = tiers[i];
         nextTier = tiers[i + 1] || null;
       } else {
@@ -173,8 +179,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     // Calculate progress to next tier
     let progress = 0;
     if (nextTier) {
-      const startSeconds = currentTier?.min_duration_seconds || 0;
-      const endSeconds = nextTier.min_duration_seconds;
+      const startSeconds = (currentTier?.min_duration_seconds || 0) * tierMultiplier;
+      const endSeconds = nextTier.min_duration_seconds * tierMultiplier;
       const range = endSeconds - startSeconds;
       const elapsed = currentSessionDuration - startSeconds;
       progress = Math.min(100, Math.max(0, (elapsed / range) * 100));
@@ -187,9 +193,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
 
   const { current: currentTier, next: nextTier, progress } = getCurrentAndNextTier();
   
-  // Calculate remaining seconds for countdown animation
+  // Calculate remaining seconds for countdown animation (adjusted for external stations)
   const remainingSeconds = nextTier 
-    ? nextTier.min_duration_seconds - currentSessionDuration 
+    ? (nextTier.min_duration_seconds * tierMultiplier) - currentSessionDuration 
     : 0;
   const isCountdownUrgent = remainingSeconds > 0 && remainingSeconds <= 30;
   
