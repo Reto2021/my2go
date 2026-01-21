@@ -25,8 +25,6 @@ async function fetchAudioBuffer(url: string): Promise<ArrayBuffer> {
 }
 
 // Helper: Concatenate multiple audio buffers
-// Note: This is a simple concatenation of MP3 files. For production,
-// you might want to use a proper audio processing library.
 function concatenateAudioBuffers(...buffers: ArrayBuffer[]): Uint8Array {
   const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
   const result = new Uint8Array(totalLength);
@@ -38,6 +36,11 @@ function concatenateAudioBuffers(...buffers: ArrayBuffer[]): Uint8Array {
   }
   
   return result;
+}
+
+// Helper: Estimate duration from buffer size (rough: 16KB/s for 128kbps MP3)
+function estimateDurationFromBytes(bytes: number): number {
+  return Math.ceil(bytes / 16000);
 }
 
 serve(async (req) => {
@@ -130,42 +133,7 @@ serve(async (req) => {
 
       console.log(`Generating audio for ad: ${audioAd.title}`);
       console.log(`Jingle attached: ${audioAd.audio_jingles?.name || 'None'}`);
-
-      // Generate TTS for the claim text
-      const ttsResponse = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${audioAd.voice_id}?output_format=mp3_44100_128`,
-        {
-          method: 'POST',
-          headers: {
-            'xi-api-key': ELEVENLABS_API_KEY,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: audioAd.claim_text,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.75,
-              style: 0.3,
-            },
-          }),
-        }
-      );
-
-      if (!ttsResponse.ok) {
-        const error = await ttsResponse.text();
-        await supabase
-          .from('audio_ads')
-          .update({ 
-            generation_status: 'failed',
-            generation_error: error 
-          })
-          .eq('id', audioAdId);
-        throw new Error(`ElevenLabs API error: ${error}`);
-      }
-
-      const ttsBuffer = await ttsResponse.arrayBuffer();
-      console.log(`TTS generated: ${ttsBuffer.byteLength} bytes`);
+      console.log(`Using uploaded claim: ${audioAd.uploaded_claim_url ? 'Yes' : 'No (TTS)'}`);
 
       // Prepare audio segments
       const audioSegments: ArrayBuffer[] = [];
@@ -177,19 +145,65 @@ serve(async (req) => {
           console.log(`Fetching intro jingle: ${audioAd.audio_jingles.intro_url}`);
           const introBuffer = await fetchAudioBuffer(audioAd.audio_jingles.intro_url);
           audioSegments.push(introBuffer);
-          // Rough estimate: 1 second per 16KB for 128kbps MP3
-          totalDurationEstimate += Math.ceil(introBuffer.byteLength / 16000);
+          totalDurationEstimate += estimateDurationFromBytes(introBuffer.byteLength);
           console.log(`Intro jingle added: ${introBuffer.byteLength} bytes`);
         } catch (e) {
           console.error('Failed to fetch intro jingle:', e);
         }
       }
 
-      // Add TTS claim
-      audioSegments.push(ttsBuffer);
-      // Estimate TTS duration: ~150 words per minute for German
-      const wordCount = audioAd.claim_text.split(/\s+/).length;
-      totalDurationEstimate += Math.ceil((wordCount / 150) * 60);
+      // Get claim audio - either from uploaded file or generate TTS
+      let claimBuffer: ArrayBuffer;
+
+      if (audioAd.uploaded_claim_url) {
+        // Use uploaded audio file
+        console.log(`Using uploaded claim audio: ${audioAd.uploaded_claim_url}`);
+        claimBuffer = await fetchAudioBuffer(audioAd.uploaded_claim_url);
+        totalDurationEstimate += estimateDurationFromBytes(claimBuffer.byteLength);
+        console.log(`Uploaded claim audio: ${claimBuffer.byteLength} bytes`);
+      } else {
+        // Generate TTS for the claim text
+        console.log(`Generating TTS for claim: ${audioAd.claim_text.substring(0, 50)}...`);
+        const ttsResponse = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${audioAd.voice_id}?output_format=mp3_44100_128`,
+          {
+            method: 'POST',
+            headers: {
+              'xi-api-key': ELEVENLABS_API_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              text: audioAd.claim_text,
+              model_id: 'eleven_multilingual_v2',
+              voice_settings: {
+                stability: 0.5,
+                similarity_boost: 0.75,
+                style: 0.3,
+              },
+            }),
+          }
+        );
+
+        if (!ttsResponse.ok) {
+          const error = await ttsResponse.text();
+          await supabase
+            .from('audio_ads')
+            .update({ 
+              generation_status: 'failed',
+              generation_error: error 
+            })
+            .eq('id', audioAdId);
+          throw new Error(`ElevenLabs API error: ${error}`);
+        }
+
+        claimBuffer = await ttsResponse.arrayBuffer();
+        // Estimate TTS duration: ~150 words per minute for German
+        const wordCount = audioAd.claim_text.split(/\s+/).length;
+        totalDurationEstimate += Math.ceil((wordCount / 150) * 60);
+        console.log(`TTS generated: ${claimBuffer.byteLength} bytes`);
+      }
+
+      audioSegments.push(claimBuffer);
 
       // Add outro jingle if available
       if (audioAd.audio_jingles?.outro_url) {
@@ -197,7 +211,7 @@ serve(async (req) => {
           console.log(`Fetching outro jingle: ${audioAd.audio_jingles.outro_url}`);
           const outroBuffer = await fetchAudioBuffer(audioAd.audio_jingles.outro_url);
           audioSegments.push(outroBuffer);
-          totalDurationEstimate += Math.ceil(outroBuffer.byteLength / 16000);
+          totalDurationEstimate += estimateDurationFromBytes(outroBuffer.byteLength);
           console.log(`Outro jingle added: ${outroBuffer.byteLength} bytes`);
         } catch (e) {
           console.error('Failed to fetch outro jingle:', e);
@@ -256,6 +270,7 @@ serve(async (req) => {
         audioUrl: urlData.publicUrl,
         duration: totalDurationEstimate,
         hasJingle: !!audioAd.audio_jingles,
+        usedUploadedClaim: !!audioAd.uploaded_claim_url,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

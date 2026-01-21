@@ -24,7 +24,9 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  FileAudio
 } from 'lucide-react';
 import AudioAdScheduleCalendar from '@/components/admin/AudioAdScheduleCalendar';
 import JingleManager from '@/components/admin/JingleManager';
@@ -86,7 +88,10 @@ export default function AdminAudioAds() {
     voiceId: 'JBFqnCBsd6RMkjVDRZzb',
     triggerOnTier: false,
     jingleId: '',
+    useUploadedAudio: false,
   });
+  const [uploadedClaimFile, setUploadedClaimFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -197,13 +202,43 @@ export default function AdminAudioAds() {
   };
 
   const handleCreate = async () => {
-    if (!formData.partnerId || !formData.title || !formData.claimText) {
+    if (!formData.partnerId || !formData.title) {
       toast.error('Bitte fülle alle Pflichtfelder aus');
+      return;
+    }
+
+    // Require either claim text (for TTS) or uploaded file
+    if (!formData.useUploadedAudio && !formData.claimText.trim()) {
+      toast.error('Bitte gib einen Werbetext ein');
+      return;
+    }
+
+    if (formData.useUploadedAudio && !uploadedClaimFile) {
+      toast.error('Bitte wähle eine Audio-Datei aus');
       return;
     }
 
     setCreating(true);
     try {
+      let uploadedClaimUrl: string | null = null;
+
+      // Upload claim audio if using uploaded file
+      if (formData.useUploadedAudio && uploadedClaimFile) {
+        setUploading(true);
+        const uploadPath = `claims/${Date.now()}_${uploadedClaimFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('audio-ads')
+          .upload(uploadPath, uploadedClaimFile, { contentType: uploadedClaimFile.type });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('audio-ads')
+          .getPublicUrl(uploadPath);
+        uploadedClaimUrl = urlData.publicUrl;
+        setUploading(false);
+      }
+
       const selectedVoice = voices.find(v => v.id === formData.voiceId);
       
       const { data, error } = await supabase
@@ -211,11 +246,12 @@ export default function AdminAudioAds() {
         .insert({
           partner_id: formData.partnerId,
           title: formData.title,
-          claim_text: formData.claimText,
+          claim_text: formData.claimText || '(Hochgeladener Spot)',
           voice_id: formData.voiceId,
           voice_name: selectedVoice?.name || null,
           trigger_on_tier: formData.triggerOnTier,
           jingle_id: formData.jingleId || null,
+          uploaded_claim_url: uploadedClaimUrl,
         })
         .select()
         .single();
@@ -231,7 +267,9 @@ export default function AdminAudioAds() {
         voiceId: 'JBFqnCBsd6RMkjVDRZzb',
         triggerOnTier: false,
         jingleId: '',
+        useUploadedAudio: false,
       });
+      setUploadedClaimFile(null);
       
       // Reload and generate
       await loadData();
@@ -243,6 +281,7 @@ export default function AdminAudioAds() {
       toast.error('Fehler beim Erstellen');
     } finally {
       setCreating(false);
+      setUploading(false);
     }
   };
 
@@ -411,37 +450,84 @@ export default function AdminAudioAds() {
                 />
               </div>
 
-              {/* Claim Text */}
-              <div className="space-y-2">
-                <Label>Werbetext (Claim) *</Label>
-                <Textarea
-                  placeholder="Der Text, der gesprochen wird..."
-                  rows={3}
-                  value={formData.claimText}
-                  onChange={(e) => setFormData({ ...formData, claimText: e.target.value })}
+              {/* Audio Source Toggle */}
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  {formData.useUploadedAudio ? (
+                    <FileAudio className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Mic className="h-4 w-4 text-primary" />
+                  )}
+                  <div>
+                    <Label>Audio-Quelle</Label>
+                    <p className="text-xs text-muted-foreground">
+                      {formData.useUploadedAudio ? 'Fertiger Spot (MP3)' : 'TTS-Generierung'}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.useUploadedAudio}
+                  onCheckedChange={(v) => setFormData({ ...formData, useUploadedAudio: v })}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Tipp: Halte den Text kurz und prägnant (max. 30 Sekunden)
-                </p>
               </div>
 
-              {/* Voice Selection */}
-              <div className="space-y-2">
-                <Label>Stimme</Label>
-                <Select 
-                  value={formData.voiceId} 
-                  onValueChange={(v) => setFormData({ ...formData, voiceId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {voices.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Upload Claim Audio OR TTS Options */}
+              {formData.useUploadedAudio ? (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Audio-Spot hochladen *
+                  </Label>
+                  <Input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setUploadedClaimFile(e.target.files?.[0] || null)}
+                  />
+                  {uploadedClaimFile && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <FileAudio className="h-3 w-3" />
+                      {uploadedClaimFile.name}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Lade einen fertigen Werbespot hoch (MP3, WAV, etc.)
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Claim Text */}
+                  <div className="space-y-2">
+                    <Label>Werbetext (Claim) *</Label>
+                    <Textarea
+                      placeholder="Der Text, der gesprochen wird..."
+                      rows={3}
+                      value={formData.claimText}
+                      onChange={(e) => setFormData({ ...formData, claimText: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tipp: Halte den Text kurz und prägnant (max. 30 Sekunden)
+                    </p>
+                  </div>
+
+                  {/* Voice Selection */}
+                  <div className="space-y-2">
+                    <Label>Stimme</Label>
+                    <Select 
+                      value={formData.voiceId} 
+                      onValueChange={(v) => setFormData({ ...formData, voiceId: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {voices.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
 
               {/* Jingle Selection */}
               {jingles.length > 0 && (
@@ -483,33 +569,41 @@ export default function AdminAudioAds() {
                 />
               </div>
 
-              {/* Preview Button */}
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={handlePreview}
-                disabled={!formData.claimText.trim() || previewLoading}
-              >
-                {previewLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4 mr-2" />
-                )}
-                Vorschau anhören
-              </Button>
+              {/* Preview Button - only for TTS mode */}
+              {!formData.useUploadedAudio && (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handlePreview}
+                  disabled={!formData.claimText.trim() || previewLoading}
+                >
+                  {previewLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  Vorschau anhören
+                </Button>
+              )}
 
               {/* Create Button */}
               <Button 
                 className="w-full"
                 onClick={handleCreate}
-                disabled={creating || !formData.partnerId || !formData.title || !formData.claimText}
+                disabled={
+                  creating || 
+                  uploading ||
+                  !formData.partnerId || 
+                  !formData.title || 
+                  (formData.useUploadedAudio ? !uploadedClaimFile : !formData.claimText.trim())
+                }
               >
-                {creating ? (
+                {creating || uploading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Plus className="h-4 w-4 mr-2" />
                 )}
-                Erstellen & Generieren
+                {uploading ? 'Lade hoch...' : 'Erstellen & Generieren'}
               </Button>
             </div>
           </DialogContent>
