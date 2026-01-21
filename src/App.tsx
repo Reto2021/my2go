@@ -111,7 +111,21 @@ const FunnelTermsPage = lazy(() => import("./pages/funnel/legal/FunnelTermsPage"
 const FunnelPrivacyPage = lazy(() => import("./pages/funnel/legal/FunnelPrivacyPage"));
 const FunnelImprintPage = lazy(() => import("./pages/funnel/legal/FunnelImprintPage"));
 
-const queryClient = new QueryClient();
+// Optimized QueryClient with caching strategy
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache data for 5 minutes by default
+      staleTime: 5 * 60 * 1000,
+      // Keep unused data in cache for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Don't refetch on window focus for better performance
+      refetchOnWindowFocus: false,
+      // Retry failed requests up to 2 times
+      retry: 2,
+    },
+  },
+});
 
 // Setup Service Worker message listener for push notification handling
 function useServiceWorkerMessages() {
