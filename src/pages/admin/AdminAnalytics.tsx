@@ -628,11 +628,11 @@ export default function AdminAnalytics() {
               </div>
               <div className="flex items-center gap-6 mt-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-primary border-2 border-white" />
+                  <div className="w-4 h-4 rounded-full bg-secondary border-2 border-white shadow-sm" />
                   <span className="text-muted-foreground">Partner</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-accent/70 border-2 border-accent" />
+                  <div className="w-4 h-4 rounded-full bg-accent border-2 border-white shadow-sm" />
                   <span className="text-muted-foreground">Nutzer-Cluster</span>
                 </div>
               </div>
