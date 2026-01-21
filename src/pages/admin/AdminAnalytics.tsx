@@ -85,6 +85,7 @@ export default function AdminAnalytics() {
     queryFn: async () => {
       const startDate = subDays(new Date(), dateRange);
       
+      // Fetch listening sessions
       const { data: sessions, error } = await supabase
         .from('radio_listening_sessions')
         .select('started_at, duration_seconds, taler_awarded')
@@ -92,6 +93,15 @@ export default function AdminAnalytics() {
         .order('started_at', { ascending: true });
       
       if (error) throw error;
+      
+      // Fetch ALL earned Taler from transactions table (includes radio, visits, purchases, bonuses, etc.)
+      const { data: earnTransactions, error: txError } = await supabase
+        .from('transactions')
+        .select('amount, created_at')
+        .eq('type', 'earn')
+        .gte('created_at', startDate.toISOString());
+      
+      if (txError) throw txError;
       
       const dailyStats = new Map<string, { sessions: number; duration: number; taler: number }>();
       const hourlyStats = new Map<number, { sessions: number; duration: number }>();
@@ -106,12 +116,12 @@ export default function AdminAnalytics() {
         const day = format(sessionDate, 'yyyy-MM-dd');
         const hour = sessionDate.getHours();
         
-        // Daily stats
+        // Daily stats (sessions and duration only)
         const existing = dailyStats.get(day) || { sessions: 0, duration: 0, taler: 0 };
         dailyStats.set(day, {
           sessions: existing.sessions + 1,
           duration: existing.duration + (session.duration_seconds || 0),
-          taler: existing.taler + (session.taler_awarded || 0)
+          taler: existing.taler // Will be filled from transactions
         });
         
         // Hourly stats
@@ -119,6 +129,17 @@ export default function AdminAnalytics() {
         hourlyStats.set(hour, {
           sessions: hourlyExisting.sessions + 1,
           duration: hourlyExisting.duration + (session.duration_seconds || 0)
+        });
+      });
+      
+      // Add Taler from transactions (all earn sources)
+      earnTransactions?.forEach(tx => {
+        const txDate = new Date(tx.created_at);
+        const day = format(txDate, 'yyyy-MM-dd');
+        const existing = dailyStats.get(day) || { sessions: 0, duration: 0, taler: 0 };
+        dailyStats.set(day, {
+          ...existing,
+          taler: existing.taler + (tx.amount || 0)
         });
       });
       
@@ -140,7 +161,8 @@ export default function AdminAnalytics() {
       
       const totalSessions = sessions?.length || 0;
       const totalDuration = sessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
-      const totalTaler = sessions?.reduce((sum, s) => sum + (s.taler_awarded || 0), 0) || 0;
+      // Total Taler from ALL earn transactions (not just radio)
+      const totalTaler = earnTransactions?.reduce((sum, tx) => sum + (tx.amount || 0), 0) || 0;
       const avgDuration = totalSessions > 0 ? Math.round(totalDuration / totalSessions / 60) : 0;
       
       // Find peak hour
