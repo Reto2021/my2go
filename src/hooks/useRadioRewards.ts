@@ -110,9 +110,13 @@ export function useRadioRewards() {
     const sessionId = sessionIdRef.current;
     const userId = userIdRef.current;
     
-    if (!sessionId || isEndingRef.current) return;
+    if (!sessionId || isEndingRef.current) {
+      console.log('[RadioRewards] endSession skipped - no session or already ending');
+      return;
+    }
     
     isEndingRef.current = true;
+    console.log('[RadioRewards] Ending session:', sessionId);
     
     // Clear refs immediately to prevent double-calls
     sessionIdRef.current = null;
@@ -124,11 +128,14 @@ export function useRadioRewards() {
       });
       
       if (error) {
-        console.error('Error ending listening session:', error);
+        console.error('[RadioRewards] Error ending listening session:', error);
+        // Still refresh balance even on error
+        await refreshBalance?.();
         return;
       }
       
       const result = data as unknown as ListeningReward;
+      console.log('[RadioRewards] Session ended with result:', result);
       
       if (result?.success && result.reward > 0) {
         // Trigger visual Taler animation
@@ -149,13 +156,17 @@ export function useRadioRewards() {
           tier: result.tier,
         });
         setShowSummary(true);
-        
-        // Refresh balance from server FIRST, then clear pending to avoid visual drop
-        await refreshBalance?.();
-        clearPendingTaler?.();
       }
+      
+      // ALWAYS refresh balance after session ends, regardless of reward
+      console.log('[RadioRewards] Refreshing balance after session end');
+      await refreshBalance?.();
+      clearPendingTaler?.();
+      
     } catch (error) {
-      console.error('Error ending listening session:', error);
+      console.error('[RadioRewards] Error ending listening session:', error);
+      // Still try to refresh balance on error
+      await refreshBalance?.();
     } finally {
       isEndingRef.current = false;
     }
