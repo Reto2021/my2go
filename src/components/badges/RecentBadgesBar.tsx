@@ -53,7 +53,7 @@ export function RecentBadgesBar() {
           <div className="flex items-center gap-1.5">
             <Award className="h-4 w-4 text-amber-500" />
             <span className="text-sm font-semibold text-foreground">
-              {userBadges.length} Badge{userBadges.length !== 1 ? 's' : ''}
+              {userBadges.length} {userBadges.length === 1 ? 'Auszeichnung' : 'Auszeichnungen'}
             </span>
           </div>
           {remainingCount > 0 && (
