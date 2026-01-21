@@ -340,9 +340,15 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   },
   
   // Switch station with proper audio handling (avoids race conditions)
+  // Option A: Reset session on switch - credit earned Taler and start fresh
   switchStation: (station: ExternalStation | null, autoPlay = true) => {
-    const { audio, isPlaying } = get();
+    const { audio, isPlaying, isRadio2Go } = get();
     const wasPlaying = isPlaying;
+    const wasRadio2Go = isRadio2Go;
+    const isNowRadio2Go = station === null;
+    
+    // Detect if we're actually switching between different station types
+    const isStationTypeChange = wasRadio2Go !== isNowRadio2Go;
     
     // Save the station
     saveCustomStation(station);
@@ -350,10 +356,14 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       set({ lastExternalStation: station });
     }
     
+    // OPTION A: Reset session duration when switching station types
+    // This ensures Taler from previous station are credited and new session starts fresh
+    const shouldResetSession = isStationTypeChange && wasPlaying;
+    
     // Update store state - set isSwitching to prevent pause handler from interfering
     set({ 
       customStation: station, 
-      isRadio2Go: station === null,
+      isRadio2Go: isNowRadio2Go,
       isLoading: wasPlaying && autoPlay,
       isSwitching: wasPlaying && autoPlay,
       nowPlaying: station ? { 
@@ -362,7 +372,18 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         artworkUrl: station.favicon,
         videoUrl: null,
       } : null,
+      // Reset session timing for fresh start with new station's rate
+      ...(shouldResetSession ? {
+        sessionStartTime: new Date(),
+        currentSessionDuration: 0,
+      } : {}),
     });
+    
+    // Clear celebrated tiers on station type change (so user can earn again)
+    if (shouldResetSession) {
+      clearSessionFromStorage();
+      console.log('Session reset due to station type change:', wasRadio2Go ? 'Radio 2Go → External' : 'External → Radio 2Go');
+    }
     
     // Handle audio switching
     if (audio && wasPlaying && autoPlay) {
@@ -376,7 +397,18 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         audio.src = newStreamUrl;
         audio.play()
           .then(() => {
-            set({ isLoading: false, isSwitching: false, isPlaying: true });
+            // Set new session start time for fresh countdown
+            const newState: Partial<RadioStore> = { 
+              isLoading: false, 
+              isSwitching: false, 
+              isPlaying: true,
+            };
+            if (shouldResetSession) {
+              newState.sessionStartTime = new Date();
+              newState.currentSessionDuration = 0;
+              saveSessionToStorage(new Date(), []);
+            }
+            set(newState);
             get().fetchNowPlaying();
             console.log('Station switched successfully:', station?.name || 'Radio 2Go');
           })
