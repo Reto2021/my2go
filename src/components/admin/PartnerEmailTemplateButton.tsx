@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Copy, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Google-Bewertungen – kostenlos testen';
@@ -239,20 +239,20 @@ export function PartnerEmailTemplateButton() {
   };
   
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Mail className="h-4 w-4" />
           E-Mail-Vorlage anzeigen
         </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Partner-Akquise E-Mail</SheetTitle>
-          <SheetDescription>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Partner-Akquise E-Mail</DialogTitle>
+          <DialogDescription>
             Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
         
         <div className="space-y-6 mt-6">
           {/* Subject */}
@@ -316,7 +316,7 @@ export function PartnerEmailTemplateButton() {
             </p>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
