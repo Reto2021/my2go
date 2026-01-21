@@ -8,11 +8,12 @@ import { LiveHeaderButton } from '@/components/radio/LiveEventsPanel';
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { GuestSignupSheet } from '@/components/funnel/GuestSignupSheet';
 import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration';
+import { TriggerSlider } from '@/components/home/TriggerSlider';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
 import { useGuestRadioRewards } from '@/hooks/useGuestRadioRewards';
-import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, MapPin, Coins, Radio } from 'lucide-react';
-import { BrowseModeHomeProps, FeatureChipProps, colorClasses } from './types';
+import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, Coins, Radio } from 'lucide-react';
+import { BrowseModeHomeProps } from './types';
 import { cn } from '@/lib/utils';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
@@ -80,10 +81,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
                 </span>
               </span>
               <span className="block">Sammle Taler.</span>
-              <span className="relative inline-block mt-1">
-                <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
-                <span className="relative text-secondary font-black">Profitier vor Ort.</span>
-              </span>
+              <TriggerSlider />
             </h1>
             
             {/* Prominent Play Button */}
