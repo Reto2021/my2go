@@ -10,6 +10,34 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Build optimization for faster loading
+  build: {
+    // Enable minification
+    minify: 'esbuild',
+    // Split chunks for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React libraries
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // UI framework
+          'vendor-ui': ['framer-motion', '@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-tabs'],
+          // Data fetching
+          'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
+          // Charts (heavy, rarely used on initial load)
+          'vendor-charts': ['recharts'],
+        },
+      },
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 600,
+    // Enable source maps only in development
+    sourcemap: mode === 'development',
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),

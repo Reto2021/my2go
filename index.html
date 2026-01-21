@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     
+    <!-- Preconnect to critical domains for faster loading -->
+    <link rel="preconnect" href="https://xrgaddtlrbhjmkdwmipp.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://xrgaddtlrbhjmkdwmipp.supabase.co" />
+    
     <!-- App Info -->
     <title>My 2Go - Radio 2Go Bonusprogramm</title>
     <meta name="description" content="Das Bonusprogramm von Radio 2Go. 2Go Taler sammeln, Gutscheine bei lokalen Partnern einlösen." />
@@ -43,8 +47,20 @@
     <meta name="twitter:title" content="My 2Go" />
     <meta name="twitter:description" content="Das Bonusprogramm von Radio 2Go" />
     <meta name="twitter:image" content="/pwa-512x512.png" />
-    <!-- Google Cast SDK -->
-    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
+    
+    <!-- Critical CSS for faster initial paint -->
+    <style>
+      /* Minimal critical CSS for initial render */
+      :root { --background: 200 25% 98%; --secondary: 197 96% 18%; }
+      body { margin: 0; background: hsl(var(--background)); font-family: system-ui, -apple-system, sans-serif; }
+      #root { min-height: 100vh; }
+      /* Loading skeleton animation */
+      @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+      .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+    </style>
+    
+    <!-- Google Cast SDK - defer loading -->
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async defer></script>
   </head>
 
   <body>

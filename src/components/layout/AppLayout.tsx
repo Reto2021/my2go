@@ -1,21 +1,23 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import { RadioHeader } from '@/components/ui/radio-header';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
 import { BadgeNotificationProvider } from '@/components/badges/BadgeNotificationProvider';
-import { SessionSummarySheet } from '@/components/ui/session-summary-sheet';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { RadioPlayerBar } from '@/components/radio/RadioPlayerBar';
-import { ExpandedRadioPlayer } from '@/components/ui/radio-player-expanded';
-import { TierCelebration } from '@/components/radio/TierCelebration';
-import { OnboardingTutorial } from '@/components/onboarding/OnboardingTutorial';
-import { StreakDetailsSheet } from '@/components/streak/StreakDetailsSheet';
-import { MilestoneCelebration } from '@/components/achievements/MilestoneCelebration';
 import { useRadioRewards } from '@/hooks/useRadioRewards';
 import { useTierReachedNotification } from '@/hooks/useTierReachedNotification';
 import { useRadioStore } from '@/lib/radio-store';
 import { useMilestoneStore } from '@/lib/milestone-store';
+
+// Lazy load heavy components that aren't needed immediately
+const ExpandedRadioPlayer = lazy(() => import('@/components/ui/radio-player-expanded').then(m => ({ default: m.ExpandedRadioPlayer })));
+const TierCelebration = lazy(() => import('@/components/radio/TierCelebration').then(m => ({ default: m.TierCelebration })));
+const OnboardingTutorial = lazy(() => import('@/components/onboarding/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })));
+const StreakDetailsSheet = lazy(() => import('@/components/streak/StreakDetailsSheet').then(m => ({ default: m.StreakDetailsSheet })));
+const MilestoneCelebration = lazy(() => import('@/components/achievements/MilestoneCelebration').then(m => ({ default: m.MilestoneCelebration })));
+const SessionSummarySheet = lazy(() => import('@/components/ui/session-summary-sheet').then(m => ({ default: m.SessionSummarySheet })));
 
 interface AppLayoutProps {
   children?: ReactNode;
@@ -49,44 +51,57 @@ export function AppLayout({ children }: AppLayoutProps) {
           onStreakDetailsOpen={() => setShowStreakDetails(true)}
         />
         
-        {/* Expanded Player Bottom Sheet */}
-        <ExpandedRadioPlayer 
-          isOpen={isPlayerExpanded} 
-          onClose={() => setPlayerExpanded(false)} 
-        />
-        
-        {/* Tier Reached Celebration */}
-        <TierCelebration
-          isVisible={showCelebration}
-          talerAmount={currentTierReward}
-          tierName={currentTierName}
-          nextTierInfo={nextTierInfo}
-          onDismiss={dismissCelebration}
-        />
-        
-        {/* Milestone Celebration (Taler milestones, Redemption milestones, etc.) */}
-        <MilestoneCelebration
-          milestone={pendingMilestone}
-          onClose={dismissMilestone}
-        />
-        
-        {/* Streak Details Sheet */}
-        <StreakDetailsSheet 
-          open={showStreakDetails} 
-          onOpenChange={setShowStreakDetails} 
-        />
-        
-        {/* Onboarding Tutorial for new users */}
-        <OnboardingTutorial />
+        {/* Lazy-loaded overlays - only render when needed */}
+        <Suspense fallback={null}>
+          {/* Expanded Player Bottom Sheet */}
+          {isPlayerExpanded && (
+            <ExpandedRadioPlayer 
+              isOpen={isPlayerExpanded} 
+              onClose={() => setPlayerExpanded(false)} 
+            />
+          )}
+          
+          {/* Tier Reached Celebration */}
+          {showCelebration && (
+            <TierCelebration
+              isVisible={showCelebration}
+              talerAmount={currentTierReward}
+              tierName={currentTierName}
+              nextTierInfo={nextTierInfo}
+              onDismiss={dismissCelebration}
+            />
+          )}
+          
+          {/* Milestone Celebration */}
+          {pendingMilestone && (
+            <MilestoneCelebration
+              milestone={pendingMilestone}
+              onClose={dismissMilestone}
+            />
+          )}
+          
+          {/* Streak Details Sheet */}
+          {showStreakDetails && (
+            <StreakDetailsSheet 
+              open={showStreakDetails} 
+              onOpenChange={setShowStreakDetails} 
+            />
+          )}
+          
+          {/* Onboarding Tutorial for new users */}
+          <OnboardingTutorial />
+          
+          {/* Session Summary Modal */}
+          {showSummary && (
+            <SessionSummarySheet
+              isOpen={showSummary}
+              onClose={closeSummary}
+              sessionData={sessionSummary}
+            />
+          )}
+        </Suspense>
         
         <WhatsAppButton />
-        
-        {/* Session Summary Modal with Share Option */}
-        <SessionSummarySheet
-          isOpen={showSummary}
-          onClose={closeSummary}
-          sessionData={sessionSummary}
-        />
       </div>
     </BadgeNotificationProvider>
   );
