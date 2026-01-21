@@ -74,9 +74,18 @@ export function useRadioRewards() {
     
     isStartingRef.current = true;
     
+    // Get current station info from radio store
+    const radioStore = await import('@/lib/radio-store').then(m => m.useRadioStore.getState());
+    const streamType = radioStore.isRadio2Go ? 'radio2go' : 'external';
+    const stationName = radioStore.customStation?.name || null;
+    const stationUuid = radioStore.customStation?.uuid || null;
+    
     try {
       const { data, error } = await supabase.rpc('start_listening_session', {
-        _user_id: userId
+        _user_id: userId,
+        _stream_type: streamType,
+        _station_name: stationName,
+        _station_uuid: stationUuid,
       });
       
       if (error) {
@@ -86,7 +95,7 @@ export function useRadioRewards() {
       
       sessionIdRef.current = data as string;
       startTimeRef.current = new Date();
-      console.log('Radio listening session started:', data);
+      console.log('Radio listening session started:', data, 'stream:', streamType);
     } catch (error) {
       console.error('Error starting listening session:', error);
     } finally {

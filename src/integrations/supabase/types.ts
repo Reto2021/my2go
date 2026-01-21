@@ -1045,9 +1045,12 @@ export type Database = {
           created_at: string
           duration_seconds: number | null
           ended_at: string | null
+          external_station_name: string | null
+          external_station_uuid: string | null
           id: string
           rewarded: boolean
           started_at: string
+          stream_type: string
           taler_awarded: number | null
           user_id: string
         }
@@ -1055,9 +1058,12 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
+          external_station_name?: string | null
+          external_station_uuid?: string | null
           id?: string
           rewarded?: boolean
           started_at?: string
+          stream_type?: string
           taler_awarded?: number | null
           user_id: string
         }
@@ -1065,9 +1071,12 @@ export type Database = {
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
+          external_station_name?: string | null
+          external_station_uuid?: string | null
           id?: string
           rewarded?: boolean
           started_at?: string
+          stream_type?: string
           taler_awarded?: number | null
           user_id?: string
         }
@@ -1757,6 +1766,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_radio_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          station_country: string | null
+          station_favicon: string | null
+          station_homepage: string | null
+          station_name: string
+          station_tags: string[] | null
+          station_url: string
+          station_uuid: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          station_country?: string | null
+          station_favicon?: string | null
+          station_homepage?: string | null
+          station_name: string
+          station_tags?: string[] | null
+          station_url: string
+          station_uuid: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          station_country?: string | null
+          station_favicon?: string | null
+          station_homepage?: string | null
+          station_name?: string
+          station_tags?: string[] | null
+          station_url?: string
+          station_uuid?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2306,7 +2354,17 @@ export type Database = {
           success: boolean
         }[]
       }
-      start_listening_session: { Args: { _user_id: string }; Returns: string }
+      start_listening_session:
+        | { Args: { _user_id: string }; Returns: string }
+        | {
+            Args: {
+              _station_name?: string
+              _station_uuid?: string
+              _stream_type?: string
+              _user_id: string
+            }
+            Returns: string
+          }
       use_audio_credits: {
         Args: {
           _amount: number

@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.upgrade-partner-tier]
 verify_jwt = false
+
+[functions.search-radio-stations]
+verify_jwt = false
