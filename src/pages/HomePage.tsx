@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/lib/location';
@@ -6,7 +6,6 @@ import { getRewards, getPartnersWithMinRewardCost, Reward, PartnerWithMinCost } 
 import { prefetchCommonRoutes } from '@/lib/route-prefetch';
 import { DancePartySheet } from '@/components/video/DancePartySheet';
 import { LocationPermissionPrompt } from '@/components/location/LocationPermissionPrompt';
-import { useRadioStore } from '@/lib/radio-store';
 
 // Extracted components
 import { 
@@ -22,8 +21,7 @@ if (typeof window !== 'undefined') {
 }
 
 export default function HomePage() {
-  const { user, profile, balance, isLoading, refreshBalance } = useAuth();
-  const { isPlaying } = useRadioStore();
+  const { user, profile, balance, isLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { 
@@ -49,17 +47,6 @@ export default function HomePage() {
   const isAuthenticated = !!user;
   
   const [locationInitialized, setLocationInitialized] = useState(false);
-  
-  // Refresh balance periodically while radio is playing (every 30 seconds)
-  useEffect(() => {
-    if (!isAuthenticated || !isPlaying) return;
-    
-    const intervalId = setInterval(() => {
-      refreshBalance();
-    }, 30000); // Refresh every 30 seconds while playing
-    
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, isPlaying, refreshBalance]);
   
   // Check for dance party invite link
   useEffect(() => {
