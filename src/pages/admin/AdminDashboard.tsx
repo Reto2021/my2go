@@ -10,11 +10,15 @@ import {
   QrCode,
   TrendingUp,
   ChevronRight,
-  Award
+  Award,
+  FileDown,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BadgeIcon } from '@/components/badges/BadgeIcon';
 import { MarketingOptInWidget } from '@/components/admin/MarketingOptInWidget';
+import { FlyerDownloadButton } from '@/components/admin/FlyerDownloadButton';
+import { PartnerEmailTemplateButton } from '@/components/admin/PartnerEmailTemplateButton';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -264,6 +268,34 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground">Neuen Code generieren</p>
             </div>
           </Link>
+        </div>
+      </div>
+      
+      {/* Marketing Materials */}
+      <div className="card-base p-6">
+        <h2 className="text-lg font-bold mb-4">Marketing-Materialien</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-muted/50 space-y-3">
+            <div className="flex items-center gap-2">
+              <FileDown className="h-5 w-5 text-accent" />
+              <p className="font-semibold">Werbeflyer (A5)</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Zweiseitiger Flyer: Vorderseite für Endkunden, Rückseite für Partner.
+            </p>
+            <FlyerDownloadButton />
+          </div>
+          
+          <div className="p-4 rounded-xl bg-muted/50 space-y-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-500" />
+              <p className="font-semibold">Partner-Akquise E-Mail</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben.
+            </p>
+            <PartnerEmailTemplateButton />
+          </div>
         </div>
       </div>
     </div>
