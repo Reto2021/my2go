@@ -53,7 +53,7 @@ export default function SettingsPage() {
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const [showRadioSearch, setShowRadioSearch] = useState(false);
   
-  const { customStation, setCustomStation, isRadio2Go } = useRadioStore();
+  const { customStation, switchStation, isRadio2Go } = useRadioStore();
   
   // Handle #radio hash to auto-open search
   useEffect(() => {
@@ -299,7 +299,9 @@ export default function SettingsPage() {
                 <RadioStationSearch 
                   currentStation={customStation as any}
                   onSelectStation={(station) => {
-                    setCustomStation(station as ExternalStation | null);
+                    // Use switchStation for proper audio handling
+                    const { isPlaying } = useRadioStore.getState();
+                    switchStation(station as ExternalStation | null, isPlaying);
                     if (station) {
                       toast.success(`Wechsel zu ${station.name}`, {
                         description: 'Hinweis: Bei externen Sendern erhältst du halbe Taler.',
@@ -319,7 +321,8 @@ export default function SettingsPage() {
             {!isRadio2Go && (
               <button 
                 onClick={() => {
-                  setCustomStation(null);
+                  const { isPlaying } = useRadioStore.getState();
+                  switchStation(null, isPlaying);
                   toast.success('Zurück zu Radio 2Go', {
                     description: 'Volle Taler-Belohnungen aktiviert!',
                   });

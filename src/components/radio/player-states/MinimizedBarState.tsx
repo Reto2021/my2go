@@ -24,7 +24,7 @@ export function MinimizedBarState({
   elapsed,
   onRestore,
 }: MinimizedBarStateProps) {
-  const { isRadio2Go, setCustomStation, audio, isPlaying, customStation } = useRadioStore();
+  const { isRadio2Go, switchStation, isPlaying, customStation } = useRadioStore();
   const { favorites } = useRadioFavorites();
   
   // Get first favorite that's not Radio 2Go
@@ -37,12 +37,6 @@ export function MinimizedBarState({
     e.stopPropagation();
     hapticToggle();
     
-    // Stop current playback
-    if (audio && isPlaying) {
-      audio.pause();
-      audio.src = '';
-    }
-    
     if (isRadio2Go && firstFavorite) {
       // Switch to first favorite
       const externalStation: ExternalStation = {
@@ -53,22 +47,10 @@ export function MinimizedBarState({
         country: firstFavorite.station_country || '',
         tags: firstFavorite.station_tags || [],
       };
-      setCustomStation(externalStation);
-      
-      // Restart playback
-      if (isPlaying && audio) {
-        audio.src = firstFavorite.station_url;
-        audio.play().catch(err => console.error('Playback failed:', err));
-      }
+      switchStation(externalStation, isPlaying);
     } else {
       // Switch to Radio 2Go
-      setCustomStation(null);
-      
-      // Restart playback with Radio 2Go
-      if (isPlaying && audio) {
-        audio.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
-        audio.play().catch(err => console.error('Playback failed:', err));
-      }
+      switchStation(null, isPlaying);
     }
   };
   
