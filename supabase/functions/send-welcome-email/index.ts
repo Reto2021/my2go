@@ -31,7 +31,7 @@ serve(async (req) => {
     const displayName = firstName || "Neues Mitglied";
 
     const emailResponse = await resend.emails.send({
-      from: "2Go <noreply@my2go.ch>",
+      from: "2Go <onboarding@resend.dev>",
       to: [email],
       subject: "Willkommen bei 2Go! 🎉",
       html: `
