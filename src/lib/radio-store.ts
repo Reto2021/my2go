@@ -431,6 +431,54 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       currentAudio.volume = get().volume;
       // iOS requires preload attribute for better autoplay handling
       currentAudio.preload = 'auto';
+      
+      // Add error handler for stream recovery
+      currentAudio.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+        const { isPlaying } = get();
+        if (isPlaying) {
+          // Try to recover by reloading stream after a short delay
+          setTimeout(() => {
+            const { audio, isPlaying, getStreamUrl } = get();
+            if (audio && isPlaying) {
+              console.log('Attempting stream recovery...');
+              audio.src = getStreamUrl();
+              audio.play().catch(err => {
+                console.error('Recovery failed:', err);
+                set({ isPlaying: false, isLoading: false });
+              });
+            }
+          }, 2000);
+        }
+      });
+      
+      // Handle stream stall/waiting (buffering)
+      currentAudio.addEventListener('waiting', () => {
+        console.log('Stream buffering...');
+      });
+      
+      // Handle stream ended unexpectedly
+      currentAudio.addEventListener('ended', () => {
+        console.log('Stream ended, attempting restart...');
+        const { isPlaying, getStreamUrl } = get();
+        if (isPlaying) {
+          const audio = get().audio;
+          if (audio) {
+            audio.src = getStreamUrl();
+            audio.play().catch(err => console.error('Restart failed:', err));
+          }
+        }
+      });
+      
+      // Handle pause event (might be triggered by iOS when switching apps)
+      currentAudio.addEventListener('pause', () => {
+        const { isPlaying } = get();
+        // Only update state if we didn't trigger the pause ourselves
+        if (isPlaying && !get().isLoading) {
+          console.log('Unexpected pause detected');
+        }
+      });
+      
       set({ audio: currentAudio });
       
       // Setup media session handlers once
