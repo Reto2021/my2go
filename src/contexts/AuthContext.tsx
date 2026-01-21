@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -23,6 +23,9 @@ interface AuthContextType {
   partnerInfo: PartnerAdminInfo | null;
   refreshBalance: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  // Optimistic balance updates for real-time UI feedback
+  addPendingTaler: (amount: number) => void;
+  clearPendingTaler: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,10 +35,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [balance, setBalance] = useState<UserBalance | null>(null);
+  const [pendingTaler, setPendingTaler] = useState(0);
   const [userCode, setUserCode] = useState<UserCode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPartnerAdmin, setIsPartnerAdmin] = useState(false);
   const [partnerInfo, setPartnerInfo] = useState<PartnerAdminInfo | null>(null);
+
+  // Add pending Taler for optimistic UI updates (e.g., when radio tier is reached)
+  const addPendingTaler = useCallback((amount: number) => {
+    setPendingTaler(prev => prev + amount);
+  }, []);
+
+  // Clear pending Taler when session ends and real balance is refreshed
+  const clearPendingTaler = useCallback(() => {
+    setPendingTaler(0);
+  }, []);
 
   const loadUserData = async (userId: string) => {
     const [profileData, balanceData, codeData] = await Promise.all([
@@ -135,18 +149,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Compute effective balance including pending Taler
+  const effectiveBalance = balance ? {
+    ...balance,
+    taler_balance: balance.taler_balance + pendingTaler,
+    lifetime_earned: balance.lifetime_earned + pendingTaler,
+  } : null;
+
   return (
     <AuthContext.Provider value={{
       user,
       session,
       profile,
-      balance,
+      balance: effectiveBalance,
       userCode,
       isLoading,
       isPartnerAdmin,
       partnerInfo,
       refreshBalance,
       refreshProfile,
+      addPendingTaler,
+      clearPendingTaler,
     }}>
       {children}
     </AuthContext.Provider>
@@ -174,8 +197,8 @@ export function useUser() {
 }
 
 export function useBalance() {
-  const { balance, refreshBalance } = useAuth();
-  return { balance, refreshBalance };
+  const { balance, refreshBalance, addPendingTaler, clearPendingTaler } = useAuth();
+  return { balance, refreshBalance, addPendingTaler, clearPendingTaler };
 }
 
 export function useProfile() {
