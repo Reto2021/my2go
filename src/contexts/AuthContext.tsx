@@ -166,16 +166,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           table: 'transactions',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
+          console.log('[AuthContext] New transaction detected:', payload);
           // Refresh balance when a new transaction is detected (from any device)
           refreshBalance();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[AuthContext] Realtime subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
+  }, [user]);
+  
+  // Periodic balance refresh every 30 seconds while app is active
+  // This ensures balance stays in sync even if realtime misses events
+  useEffect(() => {
+    if (!user) return;
+    
+    const intervalId = setInterval(() => {
+      console.log('[AuthContext] Periodic balance refresh');
+      refreshBalance();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(intervalId);
   }, [user]);
 
   useEffect(() => {
