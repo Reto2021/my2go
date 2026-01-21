@@ -255,12 +255,30 @@ export async function getUserBalance(userId: string): Promise<UserBalance> {
   const { data, error } = await supabase
     .rpc('get_user_balance', { _user_id: userId });
   
-  if (error || !data || data.length === 0) {
+  if (error) {
     console.error('Error fetching balance:', error);
     return { taler_balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
   }
   
-  return data[0];
+  // RPC can return an array or single object depending on function definition
+  if (!data) {
+    console.warn('No balance data returned for user:', userId);
+    return { taler_balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+  }
+  
+  // Handle both array and object responses
+  const balanceData = Array.isArray(data) ? data[0] : data;
+  
+  if (!balanceData) {
+    console.warn('Empty balance data for user:', userId);
+    return { taler_balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+  }
+  
+  return {
+    taler_balance: balanceData.taler_balance ?? 0,
+    lifetime_earned: balanceData.lifetime_earned ?? 0,
+    lifetime_spent: balanceData.lifetime_spent ?? 0,
+  };
 }
 
 // ============================================================================
