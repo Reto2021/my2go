@@ -177,11 +177,11 @@ export function generateMarketingFlyer(): void {
   
   y += 8;
   const benefits = [
-    '✓ Lokale Reichweite: 1.400+ aktive Hörer in Ihrer Region',
-    '✓ Mehr Google-Bewertungen durch integriertes Review-System',
-    '✓ Echtzeit-Dashboard mit Einlösungen & Analysen',
-    '✓ Kein Risiko: Sie zahlen nur für echte Einlösungen',
-    '✓ Komplettes POS-Material inklusive',
+    '✓ Mehr Stammkunden – Kunden sammeln und kommen wieder',
+    '✓ Bessere Google-Bewertungen automatisch',
+    '✓ Radio-Präsenz ohne eigenes Werbebudget',
+    '✓ Live-Dashboard mit Analysen & Statistiken',
+    '✓ Alles inklusive: QR-Steller, Aufkleber, Onboarding',
   ];
   
   doc.setFont('helvetica', 'normal');
@@ -198,8 +198,8 @@ export function generateMarketingFlyer(): void {
   doc.roundedRect(margin, y, contentWidth, 24, 3, 3, 'F');
   
   const stats = [
-    { value: '1.400+', label: 'Hörer' },
-    { value: '85%', label: 'Stammkunden' },
+    { value: '12.400+', label: 'Nutzer' },
+    { value: '47', label: 'Partner' },
     { value: '4.8★', label: 'Bewertung' },
   ];
   
@@ -222,13 +222,13 @@ export function generateMarketingFlyer(): void {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(COLORS.petrol.r, COLORS.petrol.g, COLORS.petrol.b);
-  doc.text('EINSTIEG AB CHF 49/MONAT', margin, y);
+  doc.text('30 TAGE KOSTENLOS TESTEN', margin, y);
   
   y += 6;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(COLORS.dark.r, COLORS.dark.g, COLORS.dark.b);
-  doc.text('Starter-Paket: Ideal zum Testen. Jederzeit kündbar.', margin, y);
+  doc.text('Ab CHF 249/Monat • 30 Tage Geld-zurück-Garantie', margin, y);
   
   // CTA Section
   y += 14;
