@@ -12,6 +12,9 @@ interface AudioAdTargeting {
   target_subscription_tiers: string[] | null;
   target_min_streak: number | null;
   target_min_listen_hours: number | null;
+  target_lat: number | null;
+  target_lng: number | null;
+  target_radius_km: number | null;
 }
 
 interface ScheduledAd {
@@ -47,6 +50,24 @@ interface UserListeningStats {
   total_duration_seconds: number;
 }
 
+interface UserLocation {
+  lat: number;
+  lng: number;
+}
+
+// Haversine formula to calculate distance between two points in km
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 interface UseAudioAdPlayerOptions {
   enabled?: boolean;
   onAdStart?: (ad: ScheduledAd) => void;
@@ -73,7 +94,8 @@ function matchesTargeting(
   ad: ScheduledAd,
   userProfile: UserProfile | null,
   userStats: UserListeningStats | null,
-  currentStationUuid: string | null
+  currentStationUuid: string | null,
+  userLocation: UserLocation | null
 ): boolean {
   const targeting = ad.audio_ads;
   if (!targeting) return true;
@@ -95,6 +117,18 @@ function matchesTargeting(
       p => userProfile.postal_code?.startsWith(p.trim())
     );
     if (!matchesPostal) return false;
+  }
+
+  // Radius targeting (uses user's current GPS location)
+  if (targeting.target_lat !== null && targeting.target_lng !== null && targeting.target_radius_km !== null) {
+    if (!userLocation) return false;
+    const distance = haversineDistance(
+      userLocation.lat, 
+      userLocation.lng, 
+      targeting.target_lat, 
+      targeting.target_lng
+    );
+    if (distance > targeting.target_radius_km) return false;
   }
 
   // Station targeting
@@ -142,11 +176,30 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
   const [scheduledAds, setScheduledAds] = useState<ScheduledAd[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserListeningStats | null>(null);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   
   const adAudioRef = useRef<HTMLAudioElement | null>(null);
   const originalVolumeRef = useRef<number>(1);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastPlayedRef = useRef<Map<string, number>>(new Map());
+
+  // Get user's current location for radius targeting
+  useEffect(() => {
+    if (enabled && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.log('Geolocation not available for ad targeting:', error.message);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+    }
+  }, [enabled]);
 
   // Load user profile and stats for targeting
   const loadUserData = useCallback(async () => {
@@ -199,7 +252,10 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
           target_age_max,
           target_subscription_tiers,
           target_min_streak,
-          target_min_listen_hours
+          target_min_listen_hours,
+          target_lat,
+          target_lng,
+          target_radius_km
         )
       `)
       .eq('scheduled_date', today)
@@ -307,7 +363,7 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
     // Find ads configured for tier triggers that match targeting
     const tierAds = scheduledAds.filter(s => 
       s.audio_ads?.trigger_on_tier && 
-      matchesTargeting(s, userProfile, userStats, stationUuid)
+      matchesTargeting(s, userProfile, userStats, stationUuid, userLocation)
     );
     
     // Prefer ads from specific partner if provided
@@ -322,7 +378,7 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
     if (adToPlay) {
       await playAd(adToPlay);
     }
-  }, [scheduledAds, playAd, customStation, userProfile, userStats]);
+  }, [scheduledAds, playAd, customStation, userProfile, userStats, userLocation]);
 
   // Check if any ad should play now
   const checkSchedule = useCallback(() => {
@@ -335,7 +391,7 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
 
     for (const schedule of scheduledAds) {
       // Check targeting first
-      if (!matchesTargeting(schedule, userProfile, userStats, stationUuid)) {
+      if (!matchesTargeting(schedule, userProfile, userStats, stationUuid, userLocation)) {
         continue;
       }
 
@@ -371,7 +427,7 @@ export function useAudioAdPlayer(options: UseAudioAdPlayerOptions = {}) {
         }
       }
     }
-  }, [isPlaying, isPlayingAd, enabled, scheduledAds, playAd, customStation, userProfile, userStats]);
+  }, [isPlaying, isPlayingAd, enabled, scheduledAds, playAd, customStation, userProfile, userStats, userLocation]);
 
   // Load ads and user data on mount and when radio starts playing
   useEffect(() => {

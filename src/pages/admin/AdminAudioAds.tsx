@@ -69,6 +69,9 @@ interface AudioAd {
   target_subscription_tiers: string[] | null;
   target_min_streak: number | null;
   target_min_listen_hours: number | null;
+  target_lat: number | null;
+  target_lng: number | null;
+  target_radius_km: number | null;
 }
 
 interface Jingle {
@@ -110,6 +113,10 @@ export default function AdminAudioAds() {
     targetSubscriptionTiers: [] as string[],
     targetMinStreak: '',
     targetMinListenHours: '',
+    // Radius targeting
+    targetLat: '',
+    targetLng: '',
+    targetRadiusKm: '',
   });
   const [uploadedClaimFile, setUploadedClaimFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -293,6 +300,10 @@ export default function AdminAudioAds() {
           target_subscription_tiers: targetSubscriptionTiers,
           target_min_streak: formData.targetMinStreak ? parseInt(formData.targetMinStreak) : null,
           target_min_listen_hours: formData.targetMinListenHours ? parseInt(formData.targetMinListenHours) : null,
+          // Radius targeting
+          target_lat: formData.targetLat ? parseFloat(formData.targetLat) : null,
+          target_lng: formData.targetLng ? parseFloat(formData.targetLng) : null,
+          target_radius_km: formData.targetRadiusKm ? parseInt(formData.targetRadiusKm) : null,
         })
         .select()
         .single();
@@ -316,6 +327,9 @@ export default function AdminAudioAds() {
         targetSubscriptionTiers: [],
         targetMinStreak: '',
         targetMinListenHours: '',
+        targetLat: '',
+        targetLng: '',
+        targetRadiusKm: '',
       });
       setUploadedClaimFile(null);
       setShowTargeting(false);
@@ -661,6 +675,48 @@ export default function AdminAudioAds() {
                         value={formData.targetPostalCodes}
                         onChange={(e) => setFormData({ ...formData, targetPostalCodes: e.target.value })}
                       />
+                    </div>
+
+                    {/* Radius Targeting */}
+                    <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <Label className="flex items-center gap-1 text-sm font-medium">
+                        <MapPin className="h-3 w-3 text-primary" />
+                        Umkreis-Targeting (GPS)
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Breitengrad</Label>
+                          <Input
+                            type="number"
+                            step="0.0001"
+                            placeholder="47.3769"
+                            value={formData.targetLat}
+                            onChange={(e) => setFormData({ ...formData, targetLat: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Längengrad</Label>
+                          <Input
+                            type="number"
+                            step="0.0001"
+                            placeholder="8.5417"
+                            value={formData.targetLng}
+                            onChange={(e) => setFormData({ ...formData, targetLng: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Radius (km)</Label>
+                          <Input
+                            type="number"
+                            placeholder="10"
+                            value={formData.targetRadiusKm}
+                            onChange={(e) => setFormData({ ...formData, targetRadiusKm: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Tipp: Google Maps → Rechtsklick → Koordinaten kopieren
+                      </p>
                     </div>
 
                     {/* Age Targeting */}
