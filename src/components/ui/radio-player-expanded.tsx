@@ -429,10 +429,11 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 onClose();
                 navigate('/settings#radio');
               }}
-              className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation"
+              className="mb-4 flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation"
             >
+              <span>Neu: Alle</span>
               <span className="text-base">🇨🇭</span>
-              <span>Neu: Alle CH Sender</span>
+              <span>Sender</span>
             </button>
             
             {/* Large Cover Art or Video */}
