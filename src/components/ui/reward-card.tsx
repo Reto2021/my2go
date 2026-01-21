@@ -29,15 +29,21 @@ const typeConfig = {
 
 export const RewardCard = memo(function RewardCard({ reward, className, distance, sponsors }: RewardCardProps) {
   const { balance } = useBalance();
-  const { isSubscribed, isLoading: subLoading } = useSubscription();
+  const { isSubscribed, isTrial, isLoading: subLoading } = useSubscription();
   const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
   
   const config = typeConfig[reward.reward_type] || typeConfig.free_item;
   const Icon = config.icon;
   const colorClass = config.colorClass;
   
+  // Plus members get 50% discount on Taler cost
+  const isPlusUser = isSubscribed || isTrial;
+  const discountedCost = isPlusUser ? Math.floor(reward.taler_cost * 0.5) : reward.taler_cost;
+  const originalCost = reward.taler_cost;
+  const hasDiscount = isPlusUser && discountedCost < originalCost;
+  
   const userBalance = balance?.taler_balance ?? 0;
-  const canAfford = reward.taler_cost <= userBalance;
+  const canAfford = discountedCost <= userBalance; // Use discounted cost for affordability check
   
   // Check if this is a premium reward and user doesn't have subscription
   const isPremium = isPremiumReward(reward.reward_type);
@@ -131,18 +137,27 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
             )}
           </div>
           
-          {/* Points Badge */}
+          {/* Points Badge with Plus Discount */}
           <div className="flex items-center gap-2 mt-1.5">
             <span className={cn(
               'inline-flex items-center gap-1 text-sm font-bold',
               canAfford && !showPremiumOverlay ? 'text-success' : 'text-muted-foreground'
             )}>
               <Coins className="h-3.5 w-3.5" />
-              {reward.taler_cost.toLocaleString('de-CH')}
+              {hasDiscount ? (
+                <>
+                  <span className="line-through text-muted-foreground/60 font-normal text-xs">
+                    {originalCost.toLocaleString('de-CH')}
+                  </span>
+                  <span className="text-success">{discountedCost.toLocaleString('de-CH')}</span>
+                </>
+              ) : (
+                discountedCost.toLocaleString('de-CH')
+              )}
             </span>
             {!canAfford && userBalance > 0 && !showPremiumOverlay && (
               <span className="text-sm text-foreground/60">
-                noch {(reward.taler_cost - userBalance).toLocaleString('de-CH')} nötig
+                noch {(discountedCost - userBalance).toLocaleString('de-CH')} nötig
               </span>
             )}
           </div>
