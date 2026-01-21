@@ -28,8 +28,15 @@ const features = [
   'CHF-Rabatte bei Partnern einlösen',
   'Prozent-Rabatte nutzen',
   '2-für-1 Angebote freischalten',
-  'Alle Premium-Rewards verfügbar',
+  'Alle Premium-Gutscheine verfügbar',
   'Exklusive Partner-Deals',
+];
+
+const bonusFeatures = [
+  { text: '+50% Bonus-Taler bei jedem Besuch', highlight: true },
+  { text: '50% weniger Taler für Einlösungen', highlight: true },
+  { text: '12 statt 6 Monate Taler-Gültigkeit', highlight: false },
+  { text: '2x Punkte bei Einkäufen', highlight: true },
 ];
 
 export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeSheetProps) {
@@ -204,6 +211,39 @@ export function PlusUpgradeSheet({ open, onOpenChange, trigger }: PlusUpgradeShe
                     <Check className="h-3 w-3 text-green-600" />
                   </div>
                   <span className="text-sm">{feature}</span>
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Bonus Features */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+              Deine Plus-Vorteile
+            </h4>
+            <ul className="space-y-2">
+              {bonusFeatures.map((feature, i) => (
+                <motion.li
+                  key={feature.text}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: (features.length + i) * 0.05 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className={cn(
+                    "h-5 w-5 rounded-full flex items-center justify-center shrink-0",
+                    feature.highlight ? "bg-amber-500/20" : "bg-green-500/20"
+                  )}>
+                    {feature.highlight ? (
+                      <Sparkles className="h-3 w-3 text-amber-600" />
+                    ) : (
+                      <Check className="h-3 w-3 text-green-600" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-sm",
+                    feature.highlight && "font-medium text-amber-700 dark:text-amber-400"
+                  )}>{feature.text}</span>
                 </motion.li>
               ))}
             </ul>
