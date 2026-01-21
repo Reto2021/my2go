@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, Radio } from "lucide-react";
 import { hapticToggle } from "@/lib/haptics";
 import { Equalizer } from "../Equalizer";
 import { formatTime } from "../utils";
+import { useRadioStore } from "@/lib/radio-store";
+import { cn } from "@/lib/utils";
 
 interface NowPlaying {
   title?: string;
@@ -21,6 +23,29 @@ export function MinimizedBarState({
   elapsed,
   onRestore,
 }: MinimizedBarStateProps) {
+  const { isRadio2Go, setCustomStation, audio, isPlaying } = useRadioStore();
+  
+  // Quick switch to Radio 2Go
+  const handleSwitchToRadio2Go = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    hapticToggle();
+    
+    // Stop current playback
+    if (audio && isPlaying) {
+      audio.pause();
+      audio.src = '';
+    }
+    
+    // Switch to Radio 2Go
+    setCustomStation(null);
+    
+    // Restart playback with Radio 2Go
+    if (isPlaying && audio) {
+      audio.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
+      audio.play().catch(err => console.error('Playback failed:', err));
+    }
+  };
+  
   return (
     <motion.div
       key="minimized-bar"
@@ -44,6 +69,22 @@ export function MinimizedBarState({
       }}
       className="rounded-full bg-secondary/90 backdrop-blur-sm shadow-lg px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-secondary transition-colors"
     >
+      {/* Quick Radio 2Go Button - only show when on external station */}
+      {!isRadio2Go && (
+        <button
+          type="button"
+          onClick={handleSwitchToRadio2Go}
+          className="h-8 w-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
+          title="Zurück zu Radio 2Go"
+        >
+          <img 
+            src="/pwa-192x192.png" 
+            alt="Radio 2Go" 
+            className="h-5 w-5 rounded-full"
+          />
+        </button>
+      )}
+      
       {/* Equalizer */}
       <Equalizer className="flex-shrink-0" />
 

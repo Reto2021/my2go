@@ -321,22 +321,57 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 {isPlaying && <LiveListenerCount size="sm" className="bg-white/10 flex-shrink-0" />}
               </div>
               
-              {/* Station Switch Button - more prominent */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  hapticToggle();
-                  onClose();
-                  navigate('/settings#radio');
-                }}
-                className="h-10 px-3 rounded-full bg-white/15 flex items-center gap-2 hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
-                aria-label="Sender wechseln"
-                title="Sender wechseln"
-              >
-                <Search className="h-4 w-4 text-white" />
-                <span className="text-xs text-white/80 hidden sm:inline">Sender</span>
-              </button>
+              {/* Quick Radio 2Go Button or Station Switch */}
+              {!isRadio2Go ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    hapticToggle();
+                    
+                    // Get audio ref before switching
+                    const audioEl = useRadioStore.getState().audio;
+                    const wasPlaying = isPlaying;
+                    
+                    // Stop current playback
+                    if (audioEl && wasPlaying) {
+                      audioEl.pause();
+                      audioEl.src = '';
+                    }
+                    
+                    // Switch to Radio 2Go
+                    setCustomStation(null);
+                    
+                    // Restart playback with Radio 2Go
+                    if (wasPlaying && audioEl) {
+                      audioEl.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
+                      audioEl.play().catch(err => console.error('Playback failed:', err));
+                    }
+                  }}
+                  className="h-10 px-3 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
+                  aria-label="Zurück zu Radio 2Go"
+                  title="Zurück zu Radio 2Go"
+                >
+                  <img src="/pwa-192x192.png" alt="" className="h-5 w-5 rounded-full" />
+                  <span className="text-xs text-white font-medium hidden sm:inline">2Go</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    hapticToggle();
+                    onClose();
+                    navigate('/settings#radio');
+                  }}
+                  className="h-10 px-3 rounded-full bg-white/15 flex items-center gap-2 hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                  aria-label="Sender wechseln"
+                  title="Sender wechseln"
+                >
+                  <Search className="h-4 w-4 text-white" />
+                  <span className="text-xs text-white/80 hidden sm:inline">Sender</span>
+                </button>
+              )}
             </div>
           </div>
 
