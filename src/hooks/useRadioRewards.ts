@@ -124,9 +124,9 @@ export function useRadioRewards() {
         });
         setShowSummary(true);
         
-        // Clear pending Taler (optimistic balance) and refresh from server
+        // Refresh balance from server FIRST, then clear pending to avoid visual drop
+        await refreshBalance?.();
         clearPendingTaler?.();
-        refreshBalance?.();
       }
       
       sessionIdRef.current = null;
