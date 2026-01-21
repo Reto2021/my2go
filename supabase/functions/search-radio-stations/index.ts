@@ -56,21 +56,25 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const query = url.searchParams.get('query') || '';
-    const country = url.searchParams.get('country') || '';
+    // Default to Switzerland if no country specified
+    const country = url.searchParams.get('country') || 'Switzerland';
     const limit = parseInt(url.searchParams.get('limit') || '30');
     const offset = parseInt(url.searchParams.get('offset') || '0');
+    // Support ordering by clicks or votes
+    const orderBy = url.searchParams.get('order') || 'clickcount';
     
-    console.log(`Searching radio stations: query="${query}", country="${country}", limit=${limit}`);
+    console.log(`Searching radio stations: query="${query}", country="${country}", limit=${limit}, order=${orderBy}`);
 
     const server = await getWorkingServer();
     
     // Build search params
     const searchParams = new URLSearchParams();
     if (query) searchParams.append('name', query);
-    if (country) searchParams.append('country', country);
+    if (country && country !== 'all') searchParams.append('country', country);
     searchParams.append('limit', limit.toString());
     searchParams.append('offset', offset.toString());
-    searchParams.append('order', 'votes');
+    // Order by clickcount (popularity) for better Swiss station ranking
+    searchParams.append('order', orderBy);
     searchParams.append('reverse', 'true');
     searchParams.append('hidebroken', 'true');
     

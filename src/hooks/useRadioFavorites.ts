@@ -184,17 +184,18 @@ export function useRadioFavorites() {
 }
 
 // Search stations from radio-browser.info via edge function
-export async function searchRadioStations(query: string, country?: string): Promise<RadioStation[]> {
+// Default: Switzerland, ordered by clickcount (popularity)
+export async function searchRadioStations(
+  query: string, 
+  country: string = 'Switzerland',
+  orderBy: 'clickcount' | 'votes' = 'clickcount'
+): Promise<RadioStation[]> {
   try {
     const params = new URLSearchParams();
     if (query) params.append('query', query);
-    if (country) params.append('country', country);
+    params.append('country', country);
+    params.append('order', orderBy);
     params.append('limit', '50');
-    
-    const { data, error } = await supabase.functions.invoke('search-radio-stations', {
-      body: null,
-      headers: {},
-    });
     
     // Use fetch directly since we need query params
     const response = await fetch(
@@ -214,4 +215,9 @@ export async function searchRadioStations(query: string, country?: string): Prom
     console.error('Error searching radio stations:', error);
     return [];
   }
+}
+
+// Get popular Swiss stations (for initial display without search)
+export async function getPopularSwissStations(): Promise<RadioStation[]> {
+  return searchRadioStations('', 'Switzerland', 'clickcount');
 }

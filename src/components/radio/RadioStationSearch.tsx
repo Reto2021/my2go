@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Search, Radio, Heart, Play, Loader2, Star, Globe } from 'lucide-react';
+import { Search, Radio, Heart, Play, Loader2, Star, Globe, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRadioFavorites, searchRadioStations, RadioStation } from '@/hooks/useRadioFavorites';
+import { useRadioFavorites, searchRadioStations, getPopularSwissStations, RadioStation } from '@/hooks/useRadioFavorites';
 import { cn } from '@/lib/utils';
 
 // Simple debounce hook
@@ -45,13 +45,31 @@ const RADIO_2GO_STATION: RadioStation = {
 export function RadioStationSearch({ onSelectStation, currentStation, className }: RadioStationSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<RadioStation[]>([]);
+  const [popularStations, setPopularStations] = useState<RadioStation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingPopular, setIsLoadingPopular] = useState(true);
   const [activeTab, setActiveTab] = useState<'favorites' | 'search'>('favorites');
   
   const debouncedQuery = useDebounceValue(searchQuery, 400);
   const { favorites, isLoading: favoritesLoading, addFavorite, removeFavorite, isFavorite } = useRadioFavorites();
   
-  // Search when query changes
+  // Load popular Swiss stations on mount
+  useEffect(() => {
+    const loadPopular = async () => {
+      setIsLoadingPopular(true);
+      try {
+        const stations = await getPopularSwissStations();
+        setPopularStations(stations);
+      } catch (error) {
+        console.error('Error loading popular stations:', error);
+      } finally {
+        setIsLoadingPopular(false);
+      }
+    };
+    loadPopular();
+  }, []);
+  
+  // Search when query changes - always search in Switzerland, ranked by clicks
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setSearchResults([]);
@@ -61,7 +79,8 @@ export function RadioStationSearch({ onSelectStation, currentStation, className 
     const search = async () => {
       setIsSearching(true);
       try {
-        const results = await searchRadioStations(debouncedQuery);
+        // Search in Switzerland by default, ordered by clickcount (popularity)
+        const results = await searchRadioStations(debouncedQuery, 'Switzerland', 'clickcount');
         setSearchResults(results);
       } catch (error) {
         console.error('Search error:', error);
@@ -255,20 +274,36 @@ export function RadioStationSearch({ onSelectStation, currentStation, className 
           <ScrollArea className="h-[400px]">
             <div className="flex flex-col gap-2">
               {searchQuery.length < 2 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Gib mindestens 2 Zeichen ein</p>
-                  <p className="text-sm">um Sender zu suchen</p>
-                </div>
+                <>
+                  {/* Show popular Swiss stations when not searching */}
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Beliebte Schweizer Sender</span>
+                  </div>
+                  {isLoadingPopular ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : popularStations.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Radio className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>Keine Sender gefunden</p>
+                    </div>
+                  ) : (
+                    popularStations.slice(0, 15).map((station) => (
+                      <StationItem key={station.uuid} station={station} />
+                    ))
+                  )}
+                </>
               ) : isSearching ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  <span className="ml-2 text-muted-foreground">Suche...</span>
+                  <span className="ml-2 text-muted-foreground">Suche in der Schweiz...</span>
                 </div>
               ) : searchResults.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Radio className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Keine Sender gefunden</p>
+                  <p>Keine Sender in der Schweiz gefunden</p>
                   <p className="text-sm">Versuche einen anderen Suchbegriff</p>
                 </div>
               ) : (
