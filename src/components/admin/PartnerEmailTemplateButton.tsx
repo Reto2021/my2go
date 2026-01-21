@@ -148,16 +148,22 @@ const EMAIL_HTML = `<!DOCTYPE html>
               </table>
               
               <!-- Signature with photo -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px; border-top: 1px solid #e9ecef; padding-top: 24px;">
                 <tr>
-                  <td style="vertical-align: top; width: 70px;">
-                    <img src="https://www.my2go.app/images/reto-wettstein.jpg" alt="Reto Wettstein" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                  <td style="vertical-align: top; width: 80px;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 2px solid #0C4A56;">
+                      <img src="https://ui-avatars.com/api/?name=Reto+Wettstein&background=0C4A56&color=fff&size=128&font-size=0.4" alt="Reto Wettstein" style="width: 64px; height: 64px; object-fit: cover; display: block;">
+                    </div>
                   </td>
-                  <td style="vertical-align: middle; padding-left: 16px;">
-                    <p style="margin: 0; font-size: 15px; color: #333333;">
-                      Herzliche Grüsse<br>
-                      <strong>Reto Wettstein</strong><br>
-                      <span style="color: #666; font-size: 13px;">Ihr Radio 2Go Team</span>
+                  <td style="vertical-align: middle; padding-left: 12px;">
+                    <p style="margin: 0 0 4px; font-size: 15px; color: #333333;">
+                      Herzliche Grüsse
+                    </p>
+                    <p style="margin: 0 0 2px; font-size: 16px; color: #0C4A56; font-weight: 700;">
+                      Reto Wettstein
+                    </p>
+                    <p style="margin: 0; font-size: 13px; color: #666666;">
+                      Ihr Radio 2Go Team
                     </p>
                   </td>
                 </tr>
