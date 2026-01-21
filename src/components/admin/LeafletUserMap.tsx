@@ -1,19 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
-import { Icon, DivIcon } from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default marker icons in React-Leaflet
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-// @ts-ignore
-delete (Icon.Default.prototype as any)._getIconUrl;
-Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
+import { useEffect, useRef } from 'react';
 
 interface Partner {
   id: string;
@@ -57,97 +42,117 @@ const cityCoords: Record<string, [number, number]> = {
   'Frauenfeld': [47.5535, 8.8987],
 };
 
-// Create custom div icon for user clusters
-const createClusterIcon = (count: number) => {
-  const size = Math.min(60, 24 + count * 3);
-  return new DivIcon({
-    className: 'user-cluster-marker',
-    html: `<div style="
-      width: ${size}px;
-      height: ${size}px;
-      background: rgba(234, 179, 8, 0.8);
-      border: 2px solid rgb(234, 179, 8);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    ">${count}</div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
+// Convert lat/lng to SVG coordinates (Switzerland bounds)
+const BOUNDS = {
+  minLat: 45.8,
+  maxLat: 47.9,
+  minLng: 5.9,
+  maxLng: 10.5,
 };
 
-// Custom partner icon
-const partnerIcon = new DivIcon({
-  className: 'partner-marker',
-  html: `<div style="
-    width: 24px;
-    height: 24px;
-    background: #0C4A56;
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  "></div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-});
+function toSvgCoords(lat: number, lng: number, width: number, height: number): { x: number; y: number } {
+  const x = ((lng - BOUNDS.minLng) / (BOUNDS.maxLng - BOUNDS.minLng)) * width;
+  const y = height - ((lat - BOUNDS.minLat) / (BOUNDS.maxLat - BOUNDS.minLat)) * height;
+  return { x, y };
+}
 
 export default function LeafletUserMap({ partnerLocations, topCities }: LeafletUserMapProps) {
-  // Switzerland center
-  const center: [number, number] = [46.8182, 8.2275];
+  const width = 800;
+  const height = 400;
 
   return (
-    <MapContainer
-      center={center}
-      zoom={8}
-      style={{ height: '100%', width: '100%' }}
-      scrollWheelZoom={true}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      
-      {/* Partner markers */}
-      {partnerLocations.map((partner) => (
-        <Marker
-          key={partner.id}
-          position={[partner.lat, partner.lng]}
-          icon={partnerIcon}
-        >
-          <Popup>
-            <div className="font-sans">
-              <strong>{partner.name}</strong>
-              {partner.city && <><br />{partner.city}</>}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+    <div className="w-full h-full bg-gradient-to-b from-sky-50 to-sky-100 dark:from-slate-800 dark:to-slate-900 rounded-lg overflow-hidden relative">
+      {/* Switzerland outline (simplified) */}
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
+        {/* Background */}
+        <rect width={width} height={height} fill="transparent" />
+        
+        {/* Grid lines */}
+        {[0, 1, 2, 3, 4].map(i => (
+          <line
+            key={`h-${i}`}
+            x1={0}
+            y1={(height / 4) * i}
+            x2={width}
+            y2={(height / 4) * i}
+            stroke="currentColor"
+            strokeOpacity={0.1}
+            strokeWidth={1}
+          />
+        ))}
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          <line
+            key={`v-${i}`}
+            x1={(width / 8) * i}
+            y1={0}
+            x2={(width / 8) * i}
+            y2={height}
+            stroke="currentColor"
+            strokeOpacity={0.1}
+            strokeWidth={1}
+          />
+        ))}
 
-      {/* User cluster markers based on city */}
-      {topCities
-        .filter(city => city.name !== 'Unbekannt' && cityCoords[city.name])
-        .map((cityData) => {
-          const coords = cityCoords[cityData.name];
+        {/* User cluster markers */}
+        {topCities
+          .filter(city => city.name !== 'Unbekannt' && cityCoords[city.name])
+          .map((cityData) => {
+            const coords = cityCoords[cityData.name];
+            const { x, y } = toSvgCoords(coords[0], coords[1], width, height);
+            const size = Math.min(40, 16 + cityData.value * 2);
+            
+            return (
+              <g key={cityData.name}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={size}
+                  fill="rgba(234, 179, 8, 0.7)"
+                  stroke="rgb(234, 179, 8)"
+                  strokeWidth={2}
+                  className="drop-shadow-md"
+                />
+                <text
+                  x={x}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="white"
+                  fontSize={12}
+                  fontWeight="bold"
+                >
+                  {cityData.value}
+                </text>
+                <title>{cityData.name}: {cityData.value} Nutzer</title>
+              </g>
+            );
+          })}
+
+        {/* Partner markers */}
+        {partnerLocations.map((partner) => {
+          const { x, y } = toSvgCoords(partner.lat, partner.lng, width, height);
+          
           return (
-            <Marker
-              key={cityData.name}
-              position={coords}
-              icon={createClusterIcon(cityData.value)}
-            >
-              <Popup>
-                <div className="font-sans">
-                  <strong>{cityData.name}</strong>
-                  <br />{cityData.value} Nutzer
-                </div>
-              </Popup>
-            </Marker>
+            <g key={partner.id}>
+              <circle
+                cx={x}
+                cy={y}
+                r={10}
+                fill="hsl(197, 96%, 18%)"
+                stroke="white"
+                strokeWidth={2}
+                className="drop-shadow-md cursor-pointer hover:r-12 transition-all"
+              />
+              <title>{partner.name}{partner.city ? ` - ${partner.city}` : ''}</title>
+            </g>
           );
         })}
-    </MapContainer>
+      </svg>
+
+      {/* Labels */}
+      <div className="absolute bottom-4 left-4 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+        Schweiz
+      </div>
+    </div>
   );
 }
