@@ -75,8 +75,8 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6">
               <span className="block relative">
                 Hör Radio.
-                <span className="absolute -top-1 -right-2 sm:-right-4 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-accent text-secondary rounded-full whitespace-nowrap rotate-3 shadow-lg">
-                  Neu: Alle Sender
+                <span className="absolute -top-1 -right-2 sm:-right-4 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-amber-400 text-black rounded-full whitespace-nowrap rotate-3 shadow-lg">
+                  Neu: Alle 🇨🇭 Sender
                 </span>
               </span>
               <span className="block">Sammle Taler.</span>
