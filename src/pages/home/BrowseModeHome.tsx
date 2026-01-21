@@ -118,6 +118,15 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
                 )}
               </button>
               
+              {/* NEW: Swiss Stations Badge */}
+              <button
+                onClick={() => setPlayerExpanded(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation"
+              >
+                <span className="text-base">🇨🇭</span>
+                <span>Neu: Alle CH Sender</span>
+              </button>
+              
               {/* Now Playing or Call to Action */}
               <div className="text-center">
                 {isPlaying && nowPlaying ? (
