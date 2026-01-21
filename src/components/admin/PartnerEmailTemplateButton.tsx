@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
-const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Bewertungen – kostenlos testen';
+const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Google-Bewertungen – kostenlos testen';
 
 const EMAIL_HTML = `<!DOCTYPE html>
 <html>
@@ -116,8 +116,9 @@ const EMAIL_HTML = `<!DOCTYPE html>
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0C4A56; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 24px; text-align: center;">
-                    <p style="margin: 0 0 4px; color: #F7B500; font-size: 14px; font-weight: 600;">30 TAGE KOSTENLOS TESTEN</p>
-                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 28px; font-weight: 700;">Ab CHF 249<span style="font-size: 14px; opacity: 0.8;">/Monat</span></p>
+                    <p style="margin: 0 0 4px; color: #F7B500; font-size: 14px; font-weight: 600;">KOSTENLOS STARTEN</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 24px; font-weight: 700;">Free Tier ab CHF 0/Monat</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 16px; opacity: 0.9;">Premium ab CHF 249/Monat</p>
                     <p style="margin: 0; color: #ffffff; font-size: 13px; opacity: 0.8;">30 Tage Geld-zurück-Garantie • DSGVO-konform</p>
                   </td>
                 </tr>
@@ -127,7 +128,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
                 <tr>
                   <td align="center">
-                    <a href="https://my2go.lovable.app/go" style="display: inline-block; background-color: #F7B500; color: #0C4A56; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 8px;">
+                    <a href="https://www.my2go.app/go" style="display: inline-block; background-color: #F7B500; color: #0C4A56; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 8px;">
                       Jetzt kostenlos starten →
                     </a>
                   </td>
@@ -161,7 +162,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
           <tr>
             <td style="background-color: #f8f9fa; padding: 24px 40px; text-align: center; border-top: 1px solid #e9ecef;">
               <p style="margin: 0 0 8px; font-size: 13px; color: #666666;">
-                <a href="https://my2go.lovable.app/go" style="color: #0C4A56; text-decoration: none; font-weight: 600;">my2go.lovable.app/go</a>
+                <a href="https://www.my2go.app" style="color: #0C4A56; text-decoration: none; font-weight: 600;">www.my2go.app</a>
               </p>
               <p style="margin: 0; font-size: 12px; color: #999999;">
                 © 2025 My 2Go App von Radio 2Go • Das lokale Bonusprogramm
@@ -195,11 +196,11 @@ DAS BRINGT IHNEN DIE MY 2GO APP:
 ✓ Live-Dashboard – Scans, Einlösungen & Reviews auf einen Blick
 ✓ Alles inklusive – QR-Steller, Aufkleber, persönliches Onboarding
 
-30 TAGE KOSTENLOS TESTEN
-Ab CHF 249/Monat
+KOSTENLOS STARTEN
+Free Tier ab CHF 0/Monat • Premium ab CHF 249/Monat
 30 Tage Geld-zurück-Garantie • DSGVO-konform
 
-→ Jetzt kostenlos starten: https://my2go.lovable.app/go
+→ Jetzt kostenlos starten: https://www.my2go.app/go
 
 📅 Termin für Beratungsgespräch vereinbaren: https://calendly.com/radio2go/partner-demo
 
@@ -209,7 +210,7 @@ Herzliche Grüsse
 Ihr Radio 2Go Team
 
 ---
-my2go.lovable.app/go
+www.my2go.app
 © 2025 My 2Go App von Radio 2Go • Das lokale Bonusprogramm`;
 
 export function PartnerEmailTemplateButton() {
