@@ -16,7 +16,8 @@ import {
   Video,
   Image,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { hapticToggle, hapticSuccess } from '@/lib/haptics';
@@ -65,7 +66,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     updateSessionDuration,
     togglePlay, 
     toggleMute, 
-    setVolume 
+    setVolume,
+    isRadio2Go,
+    customStation,
   } = useRadioStore();
   
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
@@ -230,14 +233,38 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <Radio className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-semibold text-white">Radio 2Go Live</span>
+                  {customStation?.favicon && !isRadio2Go ? (
+                    <img src={customStation.favicon} alt="" className="h-5 w-5 rounded" />
+                  ) : (
+                    <Radio className="h-4 w-4 text-accent" />
+                  )}
+                  <span className="text-sm font-semibold text-white">
+                    {isRadio2Go ? 'Radio 2Go Live' : customStation?.name || 'Radio 2Go Live'}
+                  </span>
+                  {!isRadio2Go && (
+                    <span className="text-xs bg-white/20 text-white/80 px-1.5 py-0.5 rounded">
+                      ½ Taler
+                    </span>
+                  )}
                 </div>
                 {isPlaying && <LiveListenerCount size="sm" className="bg-white/10" />}
               </div>
               
-              {/* Empty spacer for balanced header */}
-              <div className="h-10 w-10" />
+              {/* Station Search Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  hapticToggle();
+                  onClose();
+                  navigate('/settings');
+                }}
+                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                aria-label="Sender wechseln"
+                title="Sender wechseln"
+              >
+                <Search className="h-5 w-5 text-white" />
+              </button>
             </div>
           </div>
 
