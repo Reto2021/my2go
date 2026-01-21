@@ -1,3 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { supabase } from '@/integrations/supabase/client';
+
 interface Partner {
   id: string;
   name: string;
@@ -40,167 +45,170 @@ const cityCoords: Record<string, [number, number]> = {
   'Frauenfeld': [47.5535, 8.8987],
 };
 
-// Switzerland bounds for coordinate conversion
-const BOUNDS = {
-  minLat: 45.8,
-  maxLat: 47.9,
-  minLng: 5.9,
-  maxLng: 10.6,
-};
-
-const SVG_WIDTH = 600;
-const SVG_HEIGHT = 380;
-
-function toSvgCoords(lat: number, lng: number): { x: number; y: number } {
-  const x = ((lng - BOUNDS.minLng) / (BOUNDS.maxLng - BOUNDS.minLng)) * SVG_WIDTH;
-  const y = SVG_HEIGHT - ((lat - BOUNDS.minLat) / (BOUNDS.maxLat - BOUNDS.minLat)) * SVG_HEIGHT;
-  return { x, y };
-}
-
-// Simplified Switzerland outline path (SVG coordinates)
-const SWITZERLAND_PATH = `
-  M 85,180 
-  L 75,160 L 60,155 L 45,165 L 30,175 L 25,195 L 35,215 
-  L 55,230 L 70,250 L 90,265 L 110,275 L 130,285 L 150,290 
-  L 175,285 L 195,275 L 220,280 L 245,290 L 270,295 L 295,290 
-  L 320,280 L 345,270 L 370,275 L 395,280 L 420,275 L 445,265 
-  L 470,255 L 495,260 L 520,270 L 545,265 L 560,250 L 570,230 
-  L 575,210 L 565,190 L 550,175 L 530,165 L 510,155 L 485,150 
-  L 460,145 L 435,135 L 410,125 L 385,115 L 360,110 L 335,105 
-  L 310,100 L 285,95 L 260,90 L 235,85 L 210,82 L 185,85 
-  L 160,90 L 135,100 L 115,115 L 100,135 L 90,155 L 85,180 
-  Z
-`;
-
 // Brand colors
 const BRAND_COLORS = {
-  primary: '#7AB8D6',       // Sky Blue
-  secondary: '#023F5A',     // Deep Teal  
-  accent: '#FCB900',        // Bright Yellow/Gold
-  success: '#22C55E',       // Green
+  primary: '#7AB8D6',
+  secondary: '#023F5A',
+  accent: '#FCB900',
 };
 
 export default function LeafletUserMap({ partnerLocations, topCities }: SwissMapProps) {
-  return (
-    <div className="w-full h-full relative">
-      <svg 
-        viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} 
-        className="w-full h-full"
-        style={{ minHeight: '350px' }}
-      >
-        {/* Background */}
-        <rect width={SVG_WIDTH} height={SVG_HEIGHT} fill="hsl(200, 25%, 97%)" rx={8} />
-        
-        {/* Switzerland outline */}
-        <path
-          d={SWITZERLAND_PATH}
-          fill="hsl(200, 30%, 92%)"
-          stroke="hsl(200, 30%, 80%)"
-          strokeWidth={2}
-          className="drop-shadow-sm"
-        />
-        
-        {/* Subtle inner shadow for depth */}
-        <path
-          d={SWITZERLAND_PATH}
-          fill="none"
-          stroke="hsl(200, 20%, 85%)"
-          strokeWidth={1}
-          strokeDasharray="4,4"
-        />
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
-        {/* User cluster markers (behind partners) */}
-        {topCities
-          .filter(city => city.name !== 'Unbekannt' && cityCoords[city.name])
-          .map((cityData) => {
-            const coords = cityCoords[cityData.name];
-            const { x, y } = toSvgCoords(coords[0], coords[1]);
-            const size = Math.min(32, 14 + cityData.value * 2.5);
-            
-            return (
-              <g key={cityData.name} className="cursor-pointer">
-                {/* Outer glow */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={size + 4}
-                  fill={BRAND_COLORS.accent}
-                  fillOpacity={0.2}
-                />
-                {/* Main circle */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={size}
-                  fill={BRAND_COLORS.accent}
-                  fillOpacity={0.85}
-                  stroke="white"
-                  strokeWidth={2}
-                />
-                {/* Count text */}
-                <text
-                  x={x}
-                  y={y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill={BRAND_COLORS.secondary}
-                  fontSize={11}
-                  fontWeight="bold"
-                  fontFamily="system-ui, sans-serif"
-                >
-                  {cityData.value}
-                </text>
-                <title>{cityData.name}: {cityData.value} Nutzer</title>
-              </g>
-            );
-          })}
+  // Fetch Mapbox token from edge function
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
+        if (error) throw error;
+        setMapboxToken(data.token);
+      } catch (err) {
+        console.error('Failed to fetch Mapbox token:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchToken();
+  }, []);
 
-        {/* Partner markers (on top) */}
-        {partnerLocations.map((partner) => {
-          const { x, y } = toSvgCoords(partner.lat, partner.lng);
+  // Initialize map
+  useEffect(() => {
+    if (!mapboxToken || !mapContainer.current || map.current) return;
+
+    mapboxgl.accessToken = mapboxToken;
+    
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [8.2275, 46.8182], // Center of Switzerland
+      zoom: 7,
+      maxBounds: [
+        [5.5, 45.5], // Southwest
+        [11.0, 48.0], // Northeast
+      ],
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    return () => {
+      markersRef.current.forEach(marker => marker.remove());
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [mapboxToken]);
+
+  // Add markers when map is ready
+  useEffect(() => {
+    if (!map.current) return;
+
+    const addMarkers = () => {
+      // Clear existing markers
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
+
+      // Add user cluster markers
+      topCities
+        .filter(city => city.name !== 'Unbekannt' && cityCoords[city.name])
+        .forEach((cityData) => {
+          const coords = cityCoords[cityData.name];
+          const size = Math.min(48, 24 + cityData.value * 3);
           
-          return (
-            <g key={partner.id} className="cursor-pointer">
-              {/* Outer glow */}
-              <circle
-                cx={x}
-                cy={y}
-                r={14}
-                fill={BRAND_COLORS.secondary}
-                fillOpacity={0.15}
-              />
-              {/* Main circle */}
-              <circle
-                cx={x}
-                cy={y}
-                r={10}
-                fill={BRAND_COLORS.secondary}
-                stroke="white"
-                strokeWidth={2.5}
-              />
-              {/* Inner dot */}
-              <circle
-                cx={x}
-                cy={y}
-                r={3}
-                fill="white"
-              />
-              <title>{partner.name}{partner.city ? ` – ${partner.city}` : ''}</title>
-            </g>
-          );
-        })}
+          const el = document.createElement('div');
+          el.className = 'user-cluster-marker';
+          el.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            background: ${BRAND_COLORS.accent};
+            border: 3px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: ${BRAND_COLORS.secondary};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+          `;
+          el.textContent = cityData.value.toString();
+          el.title = `${cityData.name}: ${cityData.value} Nutzer`;
+          
+          const marker = new mapboxgl.Marker({ element: el })
+            .setLngLat([coords[1], coords[0]])
+            .addTo(map.current!);
+          
+          markersRef.current.push(marker);
+        });
 
-        {/* Map attribution */}
-        <text
-          x={15}
-          y={SVG_HEIGHT - 12}
-          fill="hsl(200, 20%, 60%)"
-          fontSize={10}
-          fontFamily="system-ui, sans-serif"
-        >
-          Schweiz
-        </text>
-      </svg>
-    </div>
+      // Add partner markers
+      partnerLocations.forEach((partner) => {
+        const el = document.createElement('div');
+        el.className = 'partner-marker';
+        el.style.cssText = `
+          width: 24px;
+          height: 24px;
+          background: ${BRAND_COLORS.secondary};
+          border: 3px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+          cursor: pointer;
+          position: relative;
+        `;
+        
+        const inner = document.createElement('div');
+        inner.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 8px;
+          height: 8px;
+          background: white;
+          border-radius: 50%;
+        `;
+        el.appendChild(inner);
+        el.title = `${partner.name}${partner.city ? ` – ${partner.city}` : ''}`;
+        
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat([partner.lng, partner.lat])
+          .addTo(map.current!);
+        
+        markersRef.current.push(marker);
+      });
+    };
+
+    if (map.current.loaded()) {
+      addMarkers();
+    } else {
+      map.current.on('load', addMarkers);
+    }
+  }, [partnerLocations, topCities, mapboxToken]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-[400px] rounded-lg bg-muted animate-pulse flex items-center justify-center">
+        <span className="text-muted-foreground">Karte wird geladen...</span>
+      </div>
+    );
+  }
+
+  if (!mapboxToken) {
+    return (
+      <div className="w-full h-[400px] rounded-lg bg-muted flex items-center justify-center">
+        <span className="text-muted-foreground">Karte nicht verfügbar</span>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      ref={mapContainer} 
+      className="w-full h-[400px] rounded-lg overflow-hidden"
+      style={{ minHeight: '400px' }}
+    />
   );
 }
