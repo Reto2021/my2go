@@ -76,7 +76,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   } = useRadioStore();
   
   // Radio favorites hook
-  const { isFavorite, addFavorite, removeFavorite } = useRadioFavorites();
+  const { favorites, isFavorite, addFavorite, removeFavorite } = useRadioFavorites();
   
   // Check if current station is favorite (Radio 2Go uses special UUID)
   const RADIO_2GO_UUID = 'radio-2go-default';
@@ -321,57 +321,100 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 {isPlaying && <LiveListenerCount size="sm" className="bg-white/10 flex-shrink-0" />}
               </div>
               
-              {/* Quick Radio 2Go Button or Station Switch */}
-              {!isRadio2Go ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    hapticToggle();
+              {/* Quick Switch Button - bidirectional between Radio 2Go and first favorite */}
+              {(() => {
+                // Get first favorite that's not Radio 2Go
+                const firstFav = favorites.find(f => 
+                  f.station_uuid !== 'radio2go' && f.station_uuid !== 'radio-2go-default'
+                );
+                
+                const handleQuickSwitch = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  hapticToggle();
+                  
+                  const audioEl = useRadioStore.getState().audio;
+                  const wasPlaying = isPlaying;
+                  
+                  // Stop current playback
+                  if (audioEl && wasPlaying) {
+                    audioEl.pause();
+                    audioEl.src = '';
+                  }
+                  
+                  if (isRadio2Go && firstFav) {
+                    // Switch to first favorite
+                    setCustomStation({
+                      uuid: firstFav.station_uuid,
+                      name: firstFav.station_name,
+                      url: firstFav.station_url,
+                      favicon: firstFav.station_favicon,
+                      country: firstFav.station_country || '',
+                      tags: firstFav.station_tags || [],
+                    });
                     
-                    // Get audio ref before switching
-                    const audioEl = useRadioStore.getState().audio;
-                    const wasPlaying = isPlaying;
-                    
-                    // Stop current playback
-                    if (audioEl && wasPlaying) {
-                      audioEl.pause();
-                      audioEl.src = '';
+                    if (wasPlaying && audioEl) {
+                      audioEl.src = firstFav.station_url;
+                      audioEl.play().catch(err => console.error('Playback failed:', err));
                     }
-                    
+                  } else {
                     // Switch to Radio 2Go
                     setCustomStation(null);
                     
-                    // Restart playback with Radio 2Go
                     if (wasPlaying && audioEl) {
                       audioEl.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
                       audioEl.play().catch(err => console.error('Playback failed:', err));
                     }
-                  }}
-                  className="h-10 px-3 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
-                  aria-label="Zurück zu Radio 2Go"
-                  title="Zurück zu Radio 2Go"
-                >
-                  <img src="/pwa-192x192.png" alt="" className="h-5 w-5 rounded-full" />
-                  <span className="text-xs text-white font-medium hidden sm:inline">2Go</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    hapticToggle();
-                    onClose();
-                    navigate('/settings#radio');
-                  }}
-                  className="h-10 px-3 rounded-full bg-white/15 flex items-center gap-2 hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
-                  aria-label="Sender wechseln"
-                  title="Sender wechseln"
-                >
-                  <Search className="h-4 w-4 text-white" />
-                  <span className="text-xs text-white/80 hidden sm:inline">Sender</span>
-                </button>
-              )}
+                  }
+                };
+                
+                // Show switch button if: on external station OR (on Radio 2Go AND has favorites)
+                const showSwitch = !isRadio2Go || (isRadio2Go && firstFav);
+                
+                if (!showSwitch) {
+                  // Only show search button when no favorites
+                  return (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        hapticToggle();
+                        onClose();
+                        navigate('/settings#radio');
+                      }}
+                      className="h-10 px-3 rounded-full bg-white/15 flex items-center gap-2 hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                      aria-label="Sender wechseln"
+                      title="Sender wechseln"
+                    >
+                      <Search className="h-4 w-4 text-white" />
+                      <span className="text-xs text-white/80 hidden sm:inline">Sender</span>
+                    </button>
+                  );
+                }
+                
+                return (
+                  <button
+                    type="button"
+                    onClick={handleQuickSwitch}
+                    className="h-10 px-3 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
+                    aria-label={isRadio2Go ? `Zu ${firstFav?.station_name}` : "Zurück zu Radio 2Go"}
+                    title={isRadio2Go ? `Zu ${firstFav?.station_name}` : "Zurück zu Radio 2Go"}
+                  >
+                    {isRadio2Go && firstFav?.station_favicon ? (
+                      <img 
+                        src={firstFav.station_favicon} 
+                        alt="" 
+                        className="h-5 w-5 rounded-full object-cover"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <img src="/pwa-192x192.png" alt="" className="h-5 w-5 rounded-full" />
+                    )}
+                    <span className="text-xs text-white font-medium hidden sm:inline">
+                      {isRadio2Go ? (firstFav?.station_name?.substring(0, 8) || 'Favorit') : '2Go'}
+                    </span>
+                  </button>
+                );
+              })()}
             </div>
           </div>
 

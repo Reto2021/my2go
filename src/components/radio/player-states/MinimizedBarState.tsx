@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { ChevronUp, Radio } from "lucide-react";
+import { ChevronUp, Radio, ArrowLeftRight } from "lucide-react";
 import { hapticToggle } from "@/lib/haptics";
 import { Equalizer } from "../Equalizer";
 import { formatTime } from "../utils";
-import { useRadioStore } from "@/lib/radio-store";
+import { useRadioStore, ExternalStation } from "@/lib/radio-store";
+import { useRadioFavorites } from "@/hooks/useRadioFavorites";
 import { cn } from "@/lib/utils";
 
 interface NowPlaying {
@@ -23,10 +24,16 @@ export function MinimizedBarState({
   elapsed,
   onRestore,
 }: MinimizedBarStateProps) {
-  const { isRadio2Go, setCustomStation, audio, isPlaying } = useRadioStore();
+  const { isRadio2Go, setCustomStation, audio, isPlaying, customStation } = useRadioStore();
+  const { favorites } = useRadioFavorites();
   
-  // Quick switch to Radio 2Go
-  const handleSwitchToRadio2Go = (e: React.MouseEvent) => {
+  // Get first favorite that's not Radio 2Go
+  const firstFavorite = favorites.find(f => 
+    f.station_uuid !== 'radio2go' && f.station_uuid !== 'radio-2go-default'
+  );
+  
+  // Quick switch handler
+  const handleQuickSwitch = (e: React.MouseEvent) => {
     e.stopPropagation();
     hapticToggle();
     
@@ -36,15 +43,38 @@ export function MinimizedBarState({
       audio.src = '';
     }
     
-    // Switch to Radio 2Go
-    setCustomStation(null);
-    
-    // Restart playback with Radio 2Go
-    if (isPlaying && audio) {
-      audio.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
-      audio.play().catch(err => console.error('Playback failed:', err));
+    if (isRadio2Go && firstFavorite) {
+      // Switch to first favorite
+      const externalStation: ExternalStation = {
+        uuid: firstFavorite.station_uuid,
+        name: firstFavorite.station_name,
+        url: firstFavorite.station_url,
+        favicon: firstFavorite.station_favicon,
+        country: firstFavorite.station_country || '',
+        tags: firstFavorite.station_tags || [],
+      };
+      setCustomStation(externalStation);
+      
+      // Restart playback
+      if (isPlaying && audio) {
+        audio.src = firstFavorite.station_url;
+        audio.play().catch(err => console.error('Playback failed:', err));
+      }
+    } else {
+      // Switch to Radio 2Go
+      setCustomStation(null);
+      
+      // Restart playback with Radio 2Go
+      if (isPlaying && audio) {
+        audio.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
+        audio.play().catch(err => console.error('Playback failed:', err));
+      }
     }
   };
+  
+  // Determine what to show
+  const showSwitchButton = !isRadio2Go || (isRadio2Go && firstFavorite);
+  const switchTarget = isRadio2Go ? firstFavorite : null;
   
   return (
     <motion.div
@@ -69,19 +99,30 @@ export function MinimizedBarState({
       }}
       className="rounded-full bg-secondary/90 backdrop-blur-sm shadow-lg px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-secondary transition-colors"
     >
-      {/* Quick Radio 2Go Button - only show when on external station */}
-      {!isRadio2Go && (
+      {/* Quick Switch Button - bidirectional */}
+      {showSwitchButton && (
         <button
           type="button"
-          onClick={handleSwitchToRadio2Go}
+          onClick={handleQuickSwitch}
           className="h-8 w-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
-          title="Zurück zu Radio 2Go"
+          title={isRadio2Go ? `Zu ${switchTarget?.station_name}` : "Zurück zu Radio 2Go"}
         >
-          <img 
-            src="/pwa-192x192.png" 
-            alt="Radio 2Go" 
-            className="h-5 w-5 rounded-full"
-          />
+          {isRadio2Go && switchTarget?.station_favicon ? (
+            <img 
+              src={switchTarget.station_favicon} 
+              alt={switchTarget.station_name} 
+              className="h-5 w-5 rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            <img 
+              src="/pwa-192x192.png" 
+              alt="Radio 2Go" 
+              className="h-5 w-5 rounded-full"
+            />
+          )}
         </button>
       )}
       
