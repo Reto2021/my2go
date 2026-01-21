@@ -2399,6 +2399,7 @@ export type Database = {
         | "reward_redemption"
         | "system"
         | "referral"
+        | "radio"
       transaction_type: "earn" | "spend" | "expire" | "adjust"
       user_role: "user" | "partner_admin" | "admin"
     }
@@ -2548,6 +2549,7 @@ export const Constants = {
         "reward_redemption",
         "system",
         "referral",
+        "radio",
       ],
       transaction_type: ["earn", "spend", "expire", "adjust"],
       user_role: ["user", "partner_admin", "admin"],
