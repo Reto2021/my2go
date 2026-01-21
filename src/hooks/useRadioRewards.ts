@@ -31,7 +31,7 @@ export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
   const clearPendingTaler = authContext?.clearPendingTaler;
-  const { isPlaying, isRadio2Go } = useRadioStore();
+  const { isPlaying, isRadio2Go, isSwitching, isLoading } = useRadioStore();
   
   const sessionIdRef = useRef<string | null>(null);
   const startTimeRef = useRef<Date | null>(null);
@@ -39,6 +39,7 @@ export function useRadioRewards() {
   const isStartingRef = useRef(false);
   const isEndingRef = useRef(false);
   const lastStationTypeRef = useRef<boolean | null>(null); // Track station type for switch detection
+  const pendingStationSwitchRef = useRef(false); // Track if we're in the middle of a station switch
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -172,27 +173,40 @@ export function useRadioRewards() {
   // Track play/pause state changes AND station type changes
   // Option A: End session and start new one when switching between Radio 2Go and external
   useEffect(() => {
+    // CRITICAL: Ignore state changes during station switching or loading
+    // This prevents premature session ending during the brief pause between stations
+    if (isSwitching || isLoading) {
+      console.log('[RadioRewards] Ignoring state change during switch/load');
+      return;
+    }
+    
     const hasStationTypeChanged = lastStationTypeRef.current !== null && 
                                    lastStationTypeRef.current !== isRadio2Go;
     
     if (isPlaying && userIdRef.current) {
       // If station type changed while playing, end old session first, then start new
-      if (hasStationTypeChanged && sessionIdRef.current) {
-        console.log('Station type changed, ending old session and starting new');
+      if (hasStationTypeChanged && sessionIdRef.current && !pendingStationSwitchRef.current) {
+        pendingStationSwitchRef.current = true;
+        console.log('[RadioRewards] Station type changed, ending old session and starting new');
         endSession().then(() => {
           // Small delay to ensure clean separation
-          setTimeout(() => startSession(), 100);
+          setTimeout(() => {
+            startSession();
+            pendingStationSwitchRef.current = false;
+          }, 150);
         });
-      } else if (!sessionIdRef.current) {
+      } else if (!sessionIdRef.current && !pendingStationSwitchRef.current) {
+        console.log('[RadioRewards] Starting new session');
         startSession();
       }
-    } else if (!isPlaying && sessionIdRef.current) {
+    } else if (!isPlaying && sessionIdRef.current && !pendingStationSwitchRef.current) {
+      console.log('[RadioRewards] Playback stopped, ending session');
       endSession();
     }
     
     // Track current station type for next comparison
     lastStationTypeRef.current = isRadio2Go;
-  }, [isPlaying, isRadio2Go, startSession, endSession]);
+  }, [isPlaying, isRadio2Go, isSwitching, isLoading, startSession, endSession]);
   
   // Also end session on page unload
   useEffect(() => {
