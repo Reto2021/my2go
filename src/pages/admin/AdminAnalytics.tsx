@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,8 +36,9 @@ import {
 import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+
+// Lazy load Leaflet map to avoid SSR issues
+const LeafletUserMap = lazy(() => import('@/components/admin/LeafletUserMap').then(m => ({ default: m.LeafletUserMap })));
 
 // Fixed HSL color values for pie charts (CSS variables don't work well in recharts)
 const COLORS = [
@@ -59,25 +60,8 @@ const DATE_RANGE_OPTIONS = [
 export default function AdminAnalytics() {
   const [dateRange, setDateRange] = useState(30);
   const [activeTab, setActiveTab] = useState('listening');
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
-  const [mapInitialized, setMapInitialized] = useState(false);
 
-  // Fetch Mapbox token
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-        if (!error && data?.token) {
-          setMapboxToken(data.token);
-        }
-      } catch (err) {
-        console.error('Failed to fetch Mapbox token:', err);
-      }
-    };
-    fetchToken();
-  }, []);
+  // No more Mapbox token needed - using Leaflet/OpenStreetMap
 
   // Fetch listening stats
   const { data: listeningStats, isLoading: loadingListening } = useQuery({
@@ -286,158 +270,7 @@ export default function AdminAnalytics() {
     }
   });
 
-  // Initialize map only when users tab is active and container is ready
-  useEffect(() => {
-    // Only initialize when users tab is active
-    if (activeTab !== 'users') return;
-    if (!mapboxToken) return;
-    if (mapInitialized) {
-      // Just resize if already initialized
-      if (map.current) {
-        map.current.resize();
-      }
-      return;
-    }
-    
-    // Longer delay to ensure DOM is fully rendered after tab switch
-    const timer = setTimeout(() => {
-      if (!mapContainer.current) {
-        console.log('Map container not ready');
-        return;
-      }
-
-      mapboxgl.accessToken = mapboxToken;
-      
-      try {
-        map.current = new mapboxgl.Map({
-          container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/light-v11',
-          center: [8.2275, 46.8182], // Switzerland center
-          zoom: 7.5,
-        });
-
-        map.current.on('load', () => {
-          setMapInitialized(true);
-          console.log('Map loaded successfully');
-        });
-
-        map.current.addControl(
-          new mapboxgl.NavigationControl({
-            visualizePitch: true,
-          }),
-          'top-right'
-        );
-      } catch (error) {
-        console.error('Failed to initialize map:', error);
-      }
-    }, 300);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [mapboxToken, activeTab, mapInitialized]);
-
-  // Cleanup map on unmount
-  useEffect(() => {
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, []);
-
-  // Add markers for partners and user clusters
-  useEffect(() => {
-    if (!map.current || !partnerLocations) return;
-
-    // Clear existing markers
-    const existingMarkers = document.querySelectorAll('.mapboxgl-marker');
-    existingMarkers.forEach(marker => marker.remove());
-
-    // Add partner markers
-    partnerLocations.forEach(partner => {
-      if (partner.lat && partner.lng) {
-        const el = document.createElement('div');
-        el.className = 'partner-marker';
-        el.style.cssText = `
-          width: 24px;
-          height: 24px;
-          background: hsl(var(--primary));
-          border: 2px solid white;
-          border-radius: 50%;
-          cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        `;
-        
-        new mapboxgl.Marker(el)
-          .setLngLat([partner.lng, partner.lat])
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 })
-              .setHTML(`<div style="padding: 8px; font-family: system-ui;"><strong>${partner.name}</strong><br/>${partner.city || ''}</div>`)
-          )
-          .addTo(map.current!);
-      }
-    });
-
-    // Add user cluster markers based on city data
-    if (userStats?.topCities) {
-      // Swiss city coordinates (approximate)
-      const cityCoords: Record<string, [number, number]> = {
-        'Zürich': [8.5417, 47.3769],
-        'Bern': [7.4474, 46.9480],
-        'Basel': [7.5886, 47.5596],
-        'Genf': [6.1432, 46.2044],
-        'Lausanne': [6.6323, 46.5197],
-        'Winterthur': [8.7290, 47.5001],
-        'St. Gallen': [9.3767, 47.4245],
-        'Luzern': [8.3093, 47.0502],
-        'Lugano': [8.9511, 46.0037],
-        'Biel': [7.2467, 47.1368],
-        'Thun': [7.6280, 46.7580],
-        'Aarau': [8.0444, 47.3925],
-        'Chur': [9.5316, 46.8508],
-        'Zug': [8.5159, 47.1662],
-        'Schaffhausen': [8.6333, 47.6958],
-        'Brugg': [8.2088, 47.4830],
-        'Baden': [8.3069, 47.4736],
-        'Olten': [7.9079, 47.3521],
-        'Solothurn': [7.5396, 47.2088],
-        'Frauenfeld': [8.8987, 47.5535],
-      };
-
-      userStats.topCities.forEach(cityData => {
-        const coords = cityCoords[cityData.name];
-        if (coords && cityData.name !== 'Unbekannt') {
-          const el = document.createElement('div');
-          const size = Math.min(60, 20 + cityData.value * 2);
-          el.style.cssText = `
-            width: ${size}px;
-            height: ${size}px;
-            background: hsla(var(--accent), 0.7);
-            border: 2px solid hsl(var(--accent));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-          `;
-          el.textContent = String(cityData.value);
-          
-          new mapboxgl.Marker(el)
-            .setLngLat(coords)
-            .setPopup(
-              new mapboxgl.Popup({ offset: 25 })
-                .setHTML(`<div style="padding: 8px; font-family: system-ui;"><strong>${cityData.name}</strong><br/>${cityData.value} Nutzer</div>`)
-            )
-            .addTo(map.current!);
-        }
-      });
-    }
-  }, [partnerLocations, userStats?.topCities]);
+  // Map rendering is now handled by LeafletUserMap component
 
   // Fetch app usage stats
   const { data: appUsageStats, isLoading: loadingUsage } = useQuery({
@@ -781,14 +614,17 @@ export default function AdminAnalytics() {
             </CardHeader>
             <CardContent>
               <div className="relative w-full h-[400px] rounded-lg overflow-hidden border bg-muted/20">
-                {mapboxToken ? (
-                  <div ref={mapContainer} className="absolute inset-0 z-10" />
-                ) : (
+                <Suspense fallback={
                   <div className="flex flex-col items-center justify-center h-full bg-muted/50 rounded-lg gap-2">
                     <MapPin className="h-8 w-8 text-muted-foreground animate-pulse" />
                     <p className="text-muted-foreground">Karte wird geladen...</p>
                   </div>
-                )}
+                }>
+                  <LeafletUserMap 
+                    partnerLocations={partnerLocations || []}
+                    topCities={userStats?.topCities || []}
+                  />
+                </Suspense>
               </div>
               <div className="flex items-center gap-6 mt-4 text-sm">
                 <div className="flex items-center gap-2">
