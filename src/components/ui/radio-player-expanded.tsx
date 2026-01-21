@@ -268,30 +268,31 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             </div>
             
             {/* Header row with close button */}
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2 relative z-50">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 relative z-50 gap-2">
               {/* Close Button - clear and prominent */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   hapticToggle();
                   onClose();
                 }}
-                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation relative z-50"
+                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation flex-shrink-0"
                 aria-label="Schliessen"
               >
                 <ChevronDown className="h-6 w-6 text-white" />
               </button>
               
-              {/* Station Info with Favorite Star */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
+              {/* Station Info with Favorite Star - centered */}
+              <div className="flex items-center gap-2 flex-1 min-w-0 justify-center overflow-hidden">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleToggleFavorite();
                   }}
-                  className="h-8 w-8 flex items-center justify-center touch-manipulation"
+                  className="h-8 w-8 flex items-center justify-center touch-manipulation flex-shrink-0"
                   aria-label={isCurrentFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
                 >
                   <Star 
@@ -321,78 +322,87 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 {isPlaying && <LiveListenerCount size="sm" className="bg-white/10 flex-shrink-0" />}
               </div>
               
-              {/* Search Button - always visible */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  hapticToggle();
-                  onClose();
-                  navigate('/settings#radio');
-                }}
-                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation relative z-50"
-                aria-label="Sender suchen"
-                title="Sender suchen"
-              >
-                <Search className="h-5 w-5 text-white" />
-              </button>
+              {/* Right side buttons container - fixed width, no overflow issues */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Search Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    hapticToggle();
+                    onClose();
+                    setTimeout(() => {
+                      navigate('/settings#radio');
+                    }, 50);
+                  }}
+                  className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                  aria-label="Sender suchen"
+                  title="Sender suchen"
+                >
+                  <Search className="h-5 w-5 text-white" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Quick Switch Button - separate row below header for better touch targets */}
+            {(() => {
+              // Get first favorite that's not Radio 2Go
+              const firstFav = favorites.find(f => 
+                f.station_uuid !== 'radio2go' && f.station_uuid !== 'radio-2go-default'
+              );
               
-              {/* Quick Switch Button - bidirectional between Radio 2Go and first favorite */}
-              {(() => {
-                // Get first favorite that's not Radio 2Go
-                const firstFav = favorites.find(f => 
-                  f.station_uuid !== 'radio2go' && f.station_uuid !== 'radio-2go-default'
-                );
+              const handleQuickSwitch = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+                hapticToggle();
                 
-                const handleQuickSwitch = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  hapticToggle();
+                const audioEl = useRadioStore.getState().audio;
+                const wasPlaying = isPlaying;
+                
+                // Stop current playback
+                if (audioEl && wasPlaying) {
+                  audioEl.pause();
+                  audioEl.src = '';
+                }
+                
+                if (isRadio2Go && firstFav) {
+                  // Switch to first favorite
+                  setCustomStation({
+                    uuid: firstFav.station_uuid,
+                    name: firstFav.station_name,
+                    url: firstFav.station_url,
+                    favicon: firstFav.station_favicon,
+                    country: firstFav.station_country || '',
+                    tags: firstFav.station_tags || [],
+                  });
                   
-                  const audioEl = useRadioStore.getState().audio;
-                  const wasPlaying = isPlaying;
-                  
-                  // Stop current playback
-                  if (audioEl && wasPlaying) {
-                    audioEl.pause();
-                    audioEl.src = '';
+                  if (wasPlaying && audioEl) {
+                    audioEl.src = firstFav.station_url;
+                    audioEl.play().catch(err => console.error('Playback failed:', err));
                   }
+                } else {
+                  // Switch to Radio 2Go
+                  setCustomStation(null);
                   
-                  if (isRadio2Go && firstFav) {
-                    // Switch to first favorite
-                    setCustomStation({
-                      uuid: firstFav.station_uuid,
-                      name: firstFav.station_name,
-                      url: firstFav.station_url,
-                      favicon: firstFav.station_favicon,
-                      country: firstFav.station_country || '',
-                      tags: firstFav.station_tags || [],
-                    });
-                    
-                    if (wasPlaying && audioEl) {
-                      audioEl.src = firstFav.station_url;
-                      audioEl.play().catch(err => console.error('Playback failed:', err));
-                    }
-                  } else {
-                    // Switch to Radio 2Go
-                    setCustomStation(null);
-                    
-                    if (wasPlaying && audioEl) {
-                      audioEl.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
-                      audioEl.play().catch(err => console.error('Playback failed:', err));
-                    }
+                  if (wasPlaying && audioEl) {
+                    audioEl.src = 'https://uksoutha.streaming.broadcast.radio/radio2go';
+                    audioEl.play().catch(err => console.error('Playback failed:', err));
                   }
-                };
-                
-                // Show switch button if: on external station OR (on Radio 2Go AND has favorites)
-                const showSwitch = !isRadio2Go || (isRadio2Go && firstFav);
-                
-                if (!showSwitch) return null;
-                
-                return (
+                }
+              };
+              
+              // Show switch button if: on external station OR (on Radio 2Go AND has favorites)
+              const showSwitch = !isRadio2Go || (isRadio2Go && firstFav);
+              
+              if (!showSwitch) return null;
+              
+              return (
+                <div className="flex justify-center px-3 pb-2">
                   <button
                     type="button"
                     onClick={handleQuickSwitch}
-                    className="h-10 px-3 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
+                    className="h-9 px-4 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
                     aria-label={isRadio2Go ? `Zu ${firstFav?.station_name}` : "Zurück zu Radio 2Go"}
                     title={isRadio2Go ? `Zu ${firstFav?.station_name}` : "Zurück zu Radio 2Go"}
                   >
@@ -406,13 +416,13 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     ) : (
                       <img src="/pwa-192x192.png" alt="" className="h-5 w-5 rounded-full" />
                     )}
-                    <span className="text-xs text-white font-medium hidden sm:inline">
-                      {isRadio2Go ? (firstFav?.station_name?.substring(0, 8) || 'Favorit') : '2Go'}
+                    <span className="text-xs text-white font-medium">
+                      {isRadio2Go ? (firstFav?.station_name?.substring(0, 12) || 'Favorit') : 'Radio 2Go'}
                     </span>
                   </button>
-                );
-              })()}
-            </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Scrollable Main Content - NO drag on this container to allow button clicks */}
