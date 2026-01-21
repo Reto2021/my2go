@@ -100,6 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     console.log('[AuthContext] Loaded balance data:', balanceData);
     
+    // Store initial balance for milestone tracking
+    if (balanceData) {
+      prevBalanceRef.current = balanceData.lifetime_earned;
+    }
+    
     setProfile(profileData);
     setBalance(balanceData);
     setUserCode(codeData);

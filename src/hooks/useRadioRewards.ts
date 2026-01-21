@@ -46,6 +46,9 @@ export function useRadioRewards() {
   const [showFirstTalerCelebration, setShowFirstTalerCelebration] = useState(false);
   const [firstTalerAmount, setFirstTalerAmount] = useState(0);
   
+  // Track if user is ready
+  const [userReady, setUserReady] = useState(false);
+  
   // Get user ID from Supabase auth - store in ref to avoid re-renders
   useEffect(() => {
     let isMounted = true;
@@ -54,13 +57,18 @@ export function useRadioRewards() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!isMounted) return;
       userIdRef.current = user?.id || null;
+      setUserReady(!!user?.id);
+      console.log('[RadioRewards] User initialized:', user?.id ?? 'not logged in');
     };
     
     getUser();
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
-      userIdRef.current = session?.user?.id || null;
+      const userId = session?.user?.id || null;
+      userIdRef.current = userId;
+      setUserReady(!!userId);
+      console.log('[RadioRewards] Auth state changed:', event, userId ?? 'logged out');
     });
     
     return () => {
@@ -184,6 +192,12 @@ export function useRadioRewards() {
   // Track play/pause state changes AND station type changes
   // Option A: End session and start new one when switching between Radio 2Go and external
   useEffect(() => {
+    // CRITICAL: Wait for user to be ready before starting sessions
+    if (!userReady) {
+      console.log('[RadioRewards] Waiting for user to be ready');
+      return;
+    }
+    
     // CRITICAL: Ignore state changes during station switching or loading
     // This prevents premature session ending during the brief pause between stations
     if (isSwitching || isLoading) {
@@ -207,7 +221,7 @@ export function useRadioRewards() {
           }, 150);
         });
       } else if (!sessionIdRef.current && !pendingStationSwitchRef.current) {
-        console.log('[RadioRewards] Starting new session');
+        console.log('[RadioRewards] Starting new session, userId:', userIdRef.current);
         startSession();
       }
     } else if (!isPlaying && sessionIdRef.current && !pendingStationSwitchRef.current) {
@@ -217,17 +231,45 @@ export function useRadioRewards() {
     
     // Track current station type for next comparison
     lastStationTypeRef.current = isRadio2Go;
-  }, [isPlaying, isRadio2Go, isSwitching, isLoading, startSession, endSession]);
+  }, [isPlaying, isRadio2Go, isSwitching, isLoading, userReady, startSession, endSession]);
   
-  // Also end session on page unload
+  // Also end session on page unload using async-safe approach
   useEffect(() => {
-    const handleUnload = () => {
-      if (sessionIdRef.current) {
-        // Use sendBeacon for reliable delivery on page close
+    const handleUnload = async () => {
+      const sessionId = sessionIdRef.current;
+      if (!sessionId) return;
+      
+      // Clear ref immediately to prevent race conditions
+      sessionIdRef.current = null;
+      
+      try {
+        // Use sendBeacon with proper Supabase REST API format
         const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/end_listening_session`;
-        const body = JSON.stringify({ _session_id: sessionIdRef.current });
+        const body = JSON.stringify({ _session_id: sessionId });
         
-        navigator.sendBeacon?.(url, new Blob([body], { type: 'application/json' }));
+        // sendBeacon doesn't support custom headers, so we use a keepalive fetch instead
+        // This is more reliable for authenticated endpoints
+        const success = navigator.sendBeacon?.(url, new Blob([body], { 
+          type: 'application/json' 
+        }));
+        
+        // Fallback: If sendBeacon failed or isn't available, try keepalive fetch
+        // Note: This may not complete if page closes too fast, but it's a best-effort
+        if (!success) {
+          fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body,
+            keepalive: true,
+          }).catch(() => {
+            // Silently fail - page is closing
+          });
+        }
+      } catch (e) {
+        console.error('[RadioRewards] Error in unload handler:', e);
       }
     };
     
