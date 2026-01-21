@@ -73,7 +73,12 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           <div className="animate-in text-center">
             {/* Clear 3-Second Pitch */}
             <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6">
-              <span className="block">Hör Radio.</span>
+              <span className="block relative">
+                Hör Radio.
+                <span className="absolute -top-1 -right-2 sm:-right-4 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-accent text-secondary rounded-full whitespace-nowrap rotate-3 shadow-lg">
+                  Neu: Alle Sender
+                </span>
+              </span>
               <span className="block">Sammle Taler.</span>
               <span className="relative inline-block mt-1">
                 <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
