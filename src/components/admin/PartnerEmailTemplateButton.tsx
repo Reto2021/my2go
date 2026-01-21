@@ -246,7 +246,7 @@ export function PartnerEmailTemplateButton() {
           E-Mail-Vorlage anzeigen
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Partner-Akquise E-Mail</SheetTitle>
           <SheetDescription>
@@ -278,11 +278,13 @@ export function PartnerEmailTemplateButton() {
           <div className="space-y-2">
             <label className="text-sm font-semibold">Vorschau</label>
             <div className="border rounded-lg overflow-hidden bg-white">
-              <iframe
-                srcDoc={EMAIL_HTML}
-                title="Email Preview"
-                className="w-full h-[400px] border-0"
-              />
+              <div className="w-full overflow-x-auto">
+                <iframe
+                  srcDoc={EMAIL_HTML}
+                  title="Email Preview"
+                  className="w-[600px] h-[400px] border-0 origin-top-left scale-[0.85] sm:scale-100 sm:w-full"
+                />
+              </div>
             </div>
           </div>
           
