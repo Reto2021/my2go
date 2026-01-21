@@ -227,7 +227,7 @@ export function PartnerEmailTemplateButton() {
           E-Mail-Vorlage anzeigen
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl w-[95vw] max-h-[85vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Partner-Akquise E-Mail</DialogTitle>
         </DialogHeader>
