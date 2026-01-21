@@ -47,12 +47,12 @@ export function TriggerSlider() {
   }, [shuffledTriggers.length]);
 
   useEffect(() => {
-    const interval = setInterval(nextTrigger, 4000);
+    const interval = setInterval(nextTrigger, 6000);
     return () => clearInterval(interval);
   }, [nextTrigger]);
 
   return (
-    <span className="relative inline-block mt-1 overflow-hidden">
+    <span className="relative inline-block mt-1">
       <AnimatePresence mode="wait">
         <motion.span
           key={currentIndex}
@@ -63,10 +63,10 @@ export function TriggerSlider() {
             duration: 0.5, 
             ease: [0.22, 1, 0.36, 1] 
           }}
-          className="relative inline-block"
+          className="relative inline-flex items-center"
         >
-          <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
-          <span className="relative text-secondary font-black whitespace-nowrap px-1">
+          <span className="absolute inset-0 bg-accent rounded-lg -rotate-1 -mx-4 -my-1 scale-x-110" style={{ left: '-1rem', right: '-1rem', top: '-0.25rem', bottom: '-0.25rem' }} />
+          <span className="relative text-secondary font-black whitespace-nowrap px-2">
             {shuffledTriggers[currentIndex]}
           </span>
         </motion.span>
