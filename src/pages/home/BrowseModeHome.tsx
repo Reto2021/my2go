@@ -90,15 +90,14 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             <div className="flex flex-col items-center gap-4 mb-8">
               <button 
                 onClick={() => {
-                  // First expand the player to prevent flickering, then toggle play
+                  // CRITICAL: togglePlay MUST be called synchronously in the click handler
+                  // to preserve the user gesture context on iOS for audio autoplay.
+                  // DO NOT wrap in setTimeout, requestAnimationFrame, or any async call!
+                  togglePlay();
+                  
+                  // Expand player after triggering play (this is safe to do async)
                   if (!isPlaying) {
                     setPlayerExpanded(true);
-                    // Small delay to let the expansion animation start before audio loads
-                    requestAnimationFrame(() => {
-                      togglePlay();
-                    });
-                  } else {
-                    togglePlay();
                   }
                 }}
                 disabled={isRadioLoading}
