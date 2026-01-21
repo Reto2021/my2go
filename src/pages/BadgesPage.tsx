@@ -6,29 +6,34 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useIsAuthenticated } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 
-const categoryInfo: Record<string, { title: string; icon: React.ElementType; description: string }> = {
+const categoryInfo: Record<string, { title: string; displayName: string; icon: React.ElementType; description: string }> = {
   earning: {
-    title: "Taler sammeln",
+    title: "earning",
+    displayName: "Taler sammeln",
     icon: Coins,
     description: "Sammle Taler durch Radio hören & Aktionen",
   },
   redemption: {
-    title: "Gutscheine nutzen",
+    title: "redemption",
+    displayName: "Einlösungen",
     icon: Gift,
     description: "Nutze Gutscheine bei unseren Partnern",
   },
   referral: {
-    title: "Freunde einladen",
+    title: "referral",
+    displayName: "Empfehlungen",
     icon: Users,
     description: "Lade Freunde ein und profitiert beide",
   },
   leaderboard: {
-    title: "Rangliste",
+    title: "leaderboard",
+    displayName: "Rangliste",
     icon: Trophy,
     description: "Erreiche Top-Platzierungen in der Woche",
   },
   streak: {
-    title: "Treue-Serie",
+    title: "streak",
+    displayName: "Bonus-Serie",
     icon: Flame,
     description: "Sammle Taler an aufeinanderfolgenden Tagen",
   },
@@ -86,7 +91,7 @@ export default function BadgesPage() {
                   <Icon size={24} className="text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{info.title}</h3>
+                  <h3 className="font-semibold text-foreground">{info.displayName}</h3>
                   <p className="text-sm text-muted-foreground">{info.description}</p>
                 </div>
                 <Lock size={16} className="text-muted-foreground" />
@@ -170,7 +175,7 @@ export default function BadgesPage() {
                   <Icon size={20} className="text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-foreground">{info.title}</h2>
+                  <h2 className="font-semibold text-foreground">{info.displayName}</h2>
                   <p className="text-xs text-muted-foreground">{info.description}</p>
                 </div>
               </div>
