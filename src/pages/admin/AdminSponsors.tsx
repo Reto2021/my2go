@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Plus, Pencil, Trash2, ExternalLink, Upload, Search, Building2, Crown, Star, Home } from 'lucide-react';
+import { Plus, Pencil, Trash2, ExternalLink, Upload, Search, Building2, Crown, Star, Home, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type SponsorLevel = 'platinum' | 'gold' | 'silver' | 'bronze';
@@ -451,14 +451,19 @@ export default function AdminSponsors() {
         </div>
       )}
 
-      {/* Create/Edit Form Dialog */}
-      <Sheet open={showForm} onOpenChange={setShowForm}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {editingSponsor ? 'Sponsor bearbeiten' : 'Neuer Sponsor'}
-            </SheetTitle>
-          </SheetHeader>
+      {/* Create/Edit Form Drawer */}
+      <Drawer open={showForm} onOpenChange={setShowForm}>
+        <DrawerContent className="max-h-[90vh]">
+          <DrawerClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Schliessen</span>
+          </DrawerClose>
+          <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-8">
+            <DrawerHeader className="px-0">
+              <DrawerTitle>
+                {editingSponsor ? 'Sponsor bearbeiten' : 'Neuer Sponsor'}
+              </DrawerTitle>
+            </DrawerHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -621,7 +626,7 @@ export default function AdminSponsors() {
               />
             </div>
 
-            <SheetFooter className="pt-4">
+            <DrawerFooter className="pt-4 px-0">
               <Button
                 type="button"
                 variant="outline"
@@ -633,10 +638,11 @@ export default function AdminSponsors() {
                 {isSaving && <LoadingSpinner className="mr-2 h-4 w-4" />}
                 {editingSponsor ? 'Speichern' : 'Erstellen'}
               </Button>
-            </SheetFooter>
+            </DrawerFooter>
           </form>
-        </SheetContent>
-      </Sheet>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>

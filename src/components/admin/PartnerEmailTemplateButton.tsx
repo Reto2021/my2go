@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Copy, Check, Mail } from 'lucide-react';
+import { Copy, Check, Mail, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
@@ -146,14 +147,21 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 </tr>
               </table>
               
-              <p style="margin: 32px 0 0; font-size: 15px; color: #333333; line-height: 1.6;">
-                Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail – wir melden uns persönlich.
-              </p>
-              
-              <p style="margin: 24px 0 0; font-size: 15px; color: #333333;">
-                Herzliche Grüsse<br>
-                <strong>Ihr Radio 2Go Team</strong>
-              </p>
+              <!-- Signature with photo -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px;">
+                <tr>
+                  <td style="vertical-align: top; width: 70px;">
+                    <img src="https://my2go.lovable.app/images/reto-wettstein.jpg" alt="Reto Wettstein" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                  </td>
+                  <td style="vertical-align: middle; padding-left: 16px;">
+                    <p style="margin: 0; font-size: 15px; color: #333333;">
+                      Herzliche Grüsse<br>
+                      <strong>Reto Wettstein</strong><br>
+                      <span style="color: #666; font-size: 13px;">Ihr Radio 2Go Team</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
               
             </td>
           </tr>
@@ -207,6 +215,7 @@ Starter ab CHF 0/Monat • Partner ab CHF 249/Monat (exkl. MwSt.)
 Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail – wir melden uns persönlich.
 
 Herzliche Grüsse
+Reto Wettstein
 Ihr Radio 2Go Team
 
 ---
@@ -247,6 +256,10 @@ export function PartnerEmailTemplateButton() {
         </Button>
       </DrawerTrigger>
       <DrawerContent className="max-h-[90vh]">
+        <DrawerClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+          <X className="h-5 w-5" />
+          <span className="sr-only">Schliessen</span>
+        </DrawerClose>
         <div className="mx-auto w-full max-w-2xl overflow-y-auto px-4 pb-8">
           <DrawerHeader className="px-0">
             <DrawerTitle>Partner-Akquise E-Mail</DrawerTitle>
