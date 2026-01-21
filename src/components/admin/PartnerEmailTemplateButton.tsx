@@ -9,7 +9,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Bewertungen – kostenlos testen';
@@ -246,15 +245,15 @@ export function PartnerEmailTemplateButton() {
           E-Mail-Vorlage anzeigen
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl max-h-[calc(100vh-4rem)] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
           <DialogTitle>Partner-Akquise E-Mail</DialogTitle>
           <DialogDescription>
             Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 px-6">
+        <div className="space-y-6">
           <div className="space-y-6 pb-6">
             {/* Subject */}
             <div className="space-y-2">
@@ -315,7 +314,7 @@ export function PartnerEmailTemplateButton() {
               </p>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

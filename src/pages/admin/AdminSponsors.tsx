@@ -452,7 +452,7 @@ export default function AdminSponsors() {
 
       {/* Create/Edit Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {editingSponsor ? 'Sponsor bearbeiten' : 'Neuer Sponsor'}
