@@ -156,37 +156,12 @@ export function RadioHeader() {
           />
         </Link>
         
-        {/* Clock & Weather Widget - hide on mobile when playing */}
-        <ClockWeatherWidget compact className={cn(
-          "flex-shrink-0 sm:hidden",
-          isPlaying ? "hidden" : "flex"
-        )} />
+        {/* Clock & Weather Widget - always visible */}
+        <ClockWeatherWidget compact className="flex-shrink-0 sm:hidden" />
         <ClockWeatherWidget className="flex-shrink-0 hidden sm:flex" />
         
-        {/* Player area - Status only, larger touch target */}
-        <div 
-          className="flex-1 flex items-center gap-1 sm:gap-2 min-w-0 cursor-pointer overflow-hidden min-h-[44px] px-1" 
-          data-onboarding="radio-player"
-          onClick={() => {
-            if (!isPlaying && !isLoading) {
-              togglePlay();
-            }
-            setPlayerExpanded(true);
-          }}
-        >
-          {isPlaying ? (
-            <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 overflow-hidden">
-              {/* Equalizer indicator */}
-              <Equalizer className="flex-shrink-0" />
-              {/* Live Listener Count - always visible when playing */}
-              <LiveListenerCount size="sm" showLabel={false} className="flex-shrink-0" />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-accent/20" title="Radio starten">
-              <Play className="h-5 w-5 sm:h-6 sm:w-6 text-accent fill-accent" />
-            </div>
-          )}
-        </div>
+        {/* Spacer */}
+        <div className="flex-1" />
         {/* Taler Balance + User Menu - only when logged in */}
         {isAuthenticated && (
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
