@@ -260,6 +260,11 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       {/* Info / Footer */}
       <section className="container pb-32">
         <div className="p-6 rounded-2xl bg-secondary/5 border border-secondary/10">
+          {/* Brand Tagline */}
+          <p className="text-sm text-muted-foreground/80 text-center mb-3 flex items-center justify-center gap-1.5">
+            We <span className="text-red-500">♥</span> to be your #2
+          </p>
+          
           <p className="text-sm text-muted-foreground text-center mb-3">
             2Go Taler sind Bonuspunkte und nicht auszahlbar.
           </p>
