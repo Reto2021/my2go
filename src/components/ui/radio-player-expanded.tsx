@@ -555,7 +555,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                         </span>
                         {nextTier && (
                           <span className="text-white/60">
-                            Nächste Stufe: {formatDuration(nextTier.min_duration_seconds)}
+                            Nächste Stufe: {formatDuration(nextTier.min_duration_seconds * tierMultiplier)}
                           </span>
                         )}
                       </div>
