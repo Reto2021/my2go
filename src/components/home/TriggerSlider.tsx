@@ -69,8 +69,8 @@ export function TriggerSlider() {
           <span 
             className="absolute bg-accent -rotate-1"
             style={{ 
-              left: '-0.5rem', 
-              right: '-0.5rem', 
+              left: '-0.75rem', 
+              right: '-0.75rem', 
               top: '-0.15rem', 
               bottom: '-0.15rem',
               borderRadius: '4px 8px 6px 10px',
