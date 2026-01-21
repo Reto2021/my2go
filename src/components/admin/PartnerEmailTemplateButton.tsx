@@ -151,7 +151,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px;">
                 <tr>
                   <td style="vertical-align: top; width: 70px;">
-                    <img src="https://my2go.lovable.app/images/reto-wettstein.jpg" alt="Reto Wettstein" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
+                    <img src="https://www.my2go.app/images/reto-wettstein.jpg" alt="Reto Wettstein" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
                   </td>
                   <td style="vertical-align: middle; padding-left: 16px;">
                     <p style="margin: 0; font-size: 15px; color: #333333;">
@@ -173,7 +173,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <a href="https://www.my2go.app" style="color: #0C4A56; text-decoration: none; font-weight: 600;">www.my2go.app</a>
               </p>
               <p style="margin: 0; font-size: 12px; color: #999999;">
-                © 2025 My 2Go App von Radio 2Go • Das lokale Bonusprogramm
+                © 2026 My 2Go App von Radio 2Go • Das lokale Bonusprogramm
               </p>
             </td>
           </tr>
@@ -220,7 +220,7 @@ Ihr Radio 2Go Team
 
 ---
 www.my2go.app
-© 2025 My 2Go App von Radio 2Go • Das lokale Bonusprogramm`;
+© 2026 My 2Go App von Radio 2Go • Das lokale Bonusprogramm`;
 
 export function PartnerEmailTemplateButton() {
   const [isOpen, setIsOpen] = useState(false);
