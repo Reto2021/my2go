@@ -165,6 +165,22 @@ export async function signUp(email: string, password: string, firstName?: string
     },
   });
   
+  // Send welcome email on successful signup
+  if (data?.user && !error) {
+    try {
+      await supabase.functions.invoke('send-welcome-email', {
+        body: {
+          email: email,
+          firstName: firstName || email.split('@')[0],
+        },
+      });
+      console.log('Welcome email sent successfully');
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the signup if email fails
+    }
+  }
+  
   return { data, error };
 }
 
