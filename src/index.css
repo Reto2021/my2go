@@ -55,12 +55,14 @@
     --glass: 0 0% 100% / 0.85;
     --glass-blur: 20px;
     
-    /* Chart colors for recharts */
-    --chart-1: 200 50% 66%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 44 98% 49%;
-    --chart-4: 197 96% 18%;
-    --chart-5: 0 84% 60%;
+    /* Chart colors for recharts - Brand-safe professional palette */
+    --chart-1: 197 96% 18%;   /* Deep Teal - Primary brand */
+    --chart-2: 160 60% 45%;   /* Emerald Green - Success */
+    --chart-3: 44 90% 50%;    /* Warm Gold - Accent */
+    --chart-4: 200 50% 55%;   /* Sky Blue - Primary lighter */
+    --chart-5: 340 65% 55%;   /* Rose - Contrast */
+    --chart-6: 270 50% 55%;   /* Soft Purple */
+    --chart-7: 20 80% 55%;    /* Warm Orange */
   }
 
   .dark {
@@ -95,12 +97,14 @@
     --input: 197 30% 15%;
     --ring: 200 50% 60%;
     
-    /* Chart colors for recharts (dark mode) */
-    --chart-1: 200 50% 60%;
-    --chart-2: 160 84% 45%;
-    --chart-3: 44 98% 55%;
-    --chart-4: 197 70% 40%;
-    --chart-5: 0 84% 55%;
+    /* Chart colors for recharts (dark mode) - Brand-safe professional palette */
+    --chart-1: 197 70% 35%;   /* Deep Teal - Primary brand */
+    --chart-2: 160 55% 50%;   /* Emerald Green - Success */
+    --chart-3: 44 85% 55%;    /* Warm Gold - Accent */
+    --chart-4: 200 50% 60%;   /* Sky Blue - Primary lighter */
+    --chart-5: 340 60% 60%;   /* Rose - Contrast */
+    --chart-6: 270 45% 60%;   /* Soft Purple */
+    --chart-7: 20 75% 60%;    /* Warm Orange */
   }
 }
 

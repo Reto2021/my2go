@@ -40,15 +40,15 @@ import { cn } from '@/lib/utils';
 // Lazy load Leaflet map to avoid SSR issues
 const LeafletUserMap = lazy(() => import('@/components/admin/LeafletUserMap'));
 
-// Fixed HSL color values for pie charts (CSS variables don't work well in recharts)
+// Brand-safe professional color palette for pie charts
 const COLORS = [
-  'hsl(200, 50%, 66%)',  // Primary blue
-  'hsl(160, 84%, 39%)',  // Success green
-  'hsl(44, 98%, 49%)',   // Accent yellow
-  'hsl(197, 96%, 18%)',  // Secondary teal
-  'hsl(270, 60%, 55%)',  // Purple
-  'hsl(0, 84%, 60%)',    // Red
-  'hsl(30, 90%, 50%)',   // Orange
+  'hsl(197, 96%, 18%)',   // Deep Teal - Primary brand
+  'hsl(160, 60%, 45%)',   // Emerald Green - Success
+  'hsl(44, 90%, 50%)',    // Warm Gold - Accent
+  'hsl(200, 50%, 55%)',   // Sky Blue - Primary lighter
+  'hsl(340, 65%, 55%)',   // Rose - Contrast
+  'hsl(270, 50%, 55%)',   // Soft Purple
+  'hsl(20, 80%, 55%)',    // Warm Orange
 ];
 
 const DATE_RANGE_OPTIONS = [

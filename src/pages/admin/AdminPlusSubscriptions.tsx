@@ -38,7 +38,13 @@ import {
   Legend
 } from 'recharts';
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
+// Brand-safe professional color palette
+const COLORS = [
+  'hsl(197, 96%, 18%)',   // Deep Teal - Primary brand
+  'hsl(160, 60%, 45%)',   // Emerald Green - Success
+  'hsl(44, 90%, 50%)',    // Warm Gold - Accent
+  'hsl(200, 50%, 55%)',   // Sky Blue - Primary lighter
+];
 
 const DATE_RANGE_OPTIONS = [
   { label: '7 Tage', value: 7 },
