@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.send-daily-admin-stats]
 verify_jwt = false
+
+[functions.generate-audio-ad]
+verify_jwt = false

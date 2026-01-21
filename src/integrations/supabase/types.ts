@@ -53,6 +53,186 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_ad_plays: {
+        Row: {
+          audio_ad_id: string
+          completed: boolean | null
+          duration_listened_seconds: number | null
+          id: string
+          played_at: string
+          schedule_id: string | null
+          trigger_type: string
+          user_id: string | null
+        }
+        Insert: {
+          audio_ad_id: string
+          completed?: boolean | null
+          duration_listened_seconds?: number | null
+          id?: string
+          played_at?: string
+          schedule_id?: string | null
+          trigger_type?: string
+          user_id?: string | null
+        }
+        Update: {
+          audio_ad_id?: string
+          completed?: boolean | null
+          duration_listened_seconds?: number | null
+          id?: string
+          played_at?: string
+          schedule_id?: string | null
+          trigger_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_ad_plays_audio_ad_id_fkey"
+            columns: ["audio_ad_id"]
+            isOneToOne: false
+            referencedRelation: "audio_ads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audio_ad_plays_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "audio_ad_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audio_ad_schedules: {
+        Row: {
+          audio_ad_id: string
+          created_at: string
+          day_end_time: string | null
+          day_start_time: string | null
+          id: string
+          is_active: boolean | null
+          last_played_at: string | null
+          play_count: number | null
+          repeat_interval_minutes: number | null
+          scheduled_date: string
+          scheduled_time: string
+          weekdays: number[] | null
+        }
+        Insert: {
+          audio_ad_id: string
+          created_at?: string
+          day_end_time?: string | null
+          day_start_time?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_played_at?: string | null
+          play_count?: number | null
+          repeat_interval_minutes?: number | null
+          scheduled_date: string
+          scheduled_time: string
+          weekdays?: number[] | null
+        }
+        Update: {
+          audio_ad_id?: string
+          created_at?: string
+          day_end_time?: string | null
+          day_start_time?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_played_at?: string | null
+          play_count?: number | null
+          repeat_interval_minutes?: number | null
+          scheduled_date?: string
+          scheduled_time?: string
+          weekdays?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_ad_schedules_audio_ad_id_fkey"
+            columns: ["audio_ad_id"]
+            isOneToOne: false
+            referencedRelation: "audio_ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audio_ads: {
+        Row: {
+          claim_text: string
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          generated_audio_url: string | null
+          generation_error: string | null
+          generation_status: string
+          id: string
+          is_active: boolean | null
+          jingle_id: string | null
+          partner_id: string
+          title: string
+          trigger_on_tier: boolean | null
+          updated_at: string
+          voice_id: string
+          voice_name: string | null
+        }
+        Insert: {
+          claim_text: string
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          generated_audio_url?: string | null
+          generation_error?: string | null
+          generation_status?: string
+          id?: string
+          is_active?: boolean | null
+          jingle_id?: string | null
+          partner_id: string
+          title: string
+          trigger_on_tier?: boolean | null
+          updated_at?: string
+          voice_id?: string
+          voice_name?: string | null
+        }
+        Update: {
+          claim_text?: string
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          generated_audio_url?: string | null
+          generation_error?: string | null
+          generation_status?: string
+          id?: string
+          is_active?: boolean | null
+          jingle_id?: string | null
+          partner_id?: string
+          title?: string
+          trigger_on_tier?: boolean | null
+          updated_at?: string
+          voice_id?: string
+          voice_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_ads_jingle_id_fkey"
+            columns: ["jingle_id"]
+            isOneToOne: false
+            referencedRelation: "audio_jingles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audio_ads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "audio_ads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audio_credit_transactions: {
         Row: {
           amount: number
@@ -94,6 +274,60 @@ export type Database = {
           },
           {
             foreignKeyName: "audio_credit_transactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audio_jingles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          intro_url: string | null
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          outro_url: string | null
+          partner_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          intro_url?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          outro_url?: string | null
+          partner_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          intro_url?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          outro_url?: string | null
+          partner_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_jingles_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "audio_jingles_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"

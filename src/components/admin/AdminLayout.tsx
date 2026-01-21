@@ -16,7 +16,8 @@ import {
   Tv,
   Building2,
   Crown,
-  Ticket
+  Ticket,
+  Volume2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
@@ -34,6 +35,7 @@ const navItems = [
   { path: '/admin/customers', icon: Users, label: 'Kunden' },
   { path: '/admin/badges', icon: Award, label: 'Abzeichen' },
   { path: '/admin/radio', icon: Radio, label: 'Radio-Belohnungen' },
+  { path: '/admin/audio-ads', icon: Volume2, label: 'Audio-Ads' },
   { path: '/admin/live-events', icon: Tv, label: 'Live Events' },
   { path: '/admin/airdrops', icon: QrCode, label: 'Air Drops' },
   { path: '/admin/cron', icon: Clock, label: 'Cron-Jobs' },
