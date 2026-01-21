@@ -31,6 +31,17 @@ export interface UserRadioFavorite {
   created_at: string;
 }
 
+// Default Radio 2Go station as favorite
+const RADIO_2GO_DEFAULT: RadioStation = {
+  uuid: 'radio-2go-default',
+  name: 'Radio 2Go',
+  url: 'https://uksoutha.streaming.broadcast.radio/radio2go',
+  favicon: '/pwa-192x192.png',
+  country: 'CH',
+  tags: ['pop', 'hits', 'switzerland'],
+  homepage: 'https://my2go.lovable.app',
+};
+
 export function useRadioFavorites() {
   const authContext = useAuthSafe();
   const userId = authContext?.user?.id;
@@ -54,7 +65,36 @@ export function useRadioFavorites() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setFavorites(data || []);
+      
+      // If user has no favorites, automatically add Radio 2Go as default
+      if (!data || data.length === 0) {
+        const { error: insertError } = await supabase
+          .from('user_radio_favorites')
+          .insert({
+            user_id: userId,
+            station_uuid: RADIO_2GO_DEFAULT.uuid,
+            station_name: RADIO_2GO_DEFAULT.name,
+            station_url: RADIO_2GO_DEFAULT.url,
+            station_favicon: RADIO_2GO_DEFAULT.favicon,
+            station_country: RADIO_2GO_DEFAULT.country,
+            station_tags: RADIO_2GO_DEFAULT.tags,
+            station_homepage: RADIO_2GO_DEFAULT.homepage,
+          });
+        
+        if (!insertError) {
+          // Refetch to get the new favorite
+          const { data: newData } = await supabase
+            .from('user_radio_favorites')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+          setFavorites(newData || []);
+        } else {
+          setFavorites([]);
+        }
+      } else {
+        setFavorites(data);
+      }
     } catch (error) {
       console.error('Error fetching radio favorites:', error);
     } finally {

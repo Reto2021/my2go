@@ -17,8 +17,10 @@ import {
   Image,
   MessageCircle,
   Sparkles,
-  Search
+  Search,
+  Star
 } from 'lucide-react';
+import { useRadioFavorites } from '@/hooks/useRadioFavorites';
 import { cn } from '@/lib/utils';
 import { hapticToggle, hapticSuccess } from '@/lib/haptics';
 import { useRadioStore, SongHistoryItem } from '@/lib/radio-store';
@@ -69,7 +71,50 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
     setVolume,
     isRadio2Go,
     customStation,
+    setCustomStation,
   } = useRadioStore();
+  
+  // Radio favorites hook
+  const { isFavorite, addFavorite, removeFavorite } = useRadioFavorites();
+  
+  // Check if current station is favorite (Radio 2Go uses special UUID)
+  const RADIO_2GO_UUID = 'radio-2go-default';
+  const currentStationUuid = isRadio2Go ? RADIO_2GO_UUID : customStation?.uuid || '';
+  const isCurrentFavorite = isFavorite(currentStationUuid);
+  
+  const handleToggleFavorite = async () => {
+    hapticToggle();
+    if (isRadio2Go) {
+      // Radio 2Go as favorite
+      if (isCurrentFavorite) {
+        await removeFavorite(RADIO_2GO_UUID);
+      } else {
+        await addFavorite({
+          uuid: RADIO_2GO_UUID,
+          name: 'Radio 2Go',
+          url: 'https://uksoutha.streaming.broadcast.radio/radio2go',
+          favicon: '/pwa-192x192.png',
+          country: 'CH',
+          tags: ['pop', 'hits', 'switzerland'],
+          homepage: 'https://my2go.lovable.app',
+        });
+      }
+    } else if (customStation) {
+      if (isCurrentFavorite) {
+        await removeFavorite(customStation.uuid);
+      } else {
+        await addFavorite({
+          uuid: customStation.uuid,
+          name: customStation.name,
+          url: customStation.url,
+          favicon: customStation.favicon,
+          country: customStation.country,
+          tags: customStation.tags,
+          homepage: null,
+        });
+      }
+    }
+  };
   
   const [tiers, setTiers] = useState<ListeningTier[]>([]);
   const [showVideo, setShowVideo] = useState(true);
@@ -231,39 +276,59 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                 <ChevronDown className="h-6 w-6 text-white" />
               </button>
               
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
+              {/* Station Info with Favorite Star */}
+              <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFavorite();
+                  }}
+                  className="h-8 w-8 flex items-center justify-center touch-manipulation"
+                  aria-label={isCurrentFavorite ? 'Favorit entfernen' : 'Als Favorit markieren'}
+                >
+                  <Star 
+                    className={cn(
+                      "h-5 w-5 transition-colors",
+                      isCurrentFavorite ? "fill-yellow-400 text-yellow-400" : "text-white/60"
+                    )} 
+                  />
+                </button>
+                
+                <div className="flex items-center gap-2 min-w-0">
                   {customStation?.favicon && !isRadio2Go ? (
-                    <img src={customStation.favicon} alt="" className="h-5 w-5 rounded" />
+                    <img src={customStation.favicon} alt="" className="h-5 w-5 rounded flex-shrink-0" />
                   ) : (
-                    <Radio className="h-4 w-4 text-accent" />
+                    <Radio className="h-4 w-4 text-accent flex-shrink-0" />
                   )}
-                  <span className="text-sm font-semibold text-white">
-                    {isRadio2Go ? 'Radio 2Go Live' : customStation?.name || 'Radio 2Go Live'}
+                  <span className="text-sm font-semibold text-white truncate">
+                    {isRadio2Go ? 'Radio 2Go' : customStation?.name || 'Radio 2Go'}
                   </span>
                   {!isRadio2Go && (
-                    <span className="text-xs bg-white/20 text-white/80 px-1.5 py-0.5 rounded">
+                    <span className="text-xs bg-white/20 text-white/80 px-1.5 py-0.5 rounded flex-shrink-0">
                       ½ Taler
                     </span>
                   )}
                 </div>
-                {isPlaying && <LiveListenerCount size="sm" className="bg-white/10" />}
+                
+                {isPlaying && <LiveListenerCount size="sm" className="bg-white/10 flex-shrink-0" />}
               </div>
               
-              {/* Station Search Button */}
+              {/* Station Switch Button - more prominent */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   hapticToggle();
                   onClose();
-                  navigate('/settings');
+                  navigate('/settings#radio');
                 }}
-                className="h-10 w-10 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
+                className="h-10 px-3 rounded-full bg-white/15 flex items-center gap-2 hover:bg-white/25 active:bg-white/30 transition-colors touch-manipulation"
                 aria-label="Sender wechseln"
                 title="Sender wechseln"
               >
-                <Search className="h-5 w-5 text-white" />
+                <Search className="h-4 w-4 text-white" />
+                <span className="text-xs text-white/80 hidden sm:inline">Sender</span>
               </button>
             </div>
           </div>
