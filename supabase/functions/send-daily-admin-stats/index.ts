@@ -128,7 +128,7 @@ serve(async (req) => {
       : `<tr><td colspan="3" style="padding: 20px; text-align: center; color: #9ca3af;">Keine neuen Registrierungen</td></tr>`;
 
     const emailResponse = await resend.emails.send({
-      from: "2Go Admin <onboarding@resend.dev>",
+      from: "2Go Admin <noreply@2gomedia.ch>",
       to: [ADMIN_EMAIL],
       subject: `📊 2Go Tagesreport – ${dateFormatted}`,
       html: `
