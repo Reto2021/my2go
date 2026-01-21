@@ -33,6 +33,7 @@ import { useAuthSafe } from '@/contexts/AuthContext';
 import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
 import { TierCelebration } from '@/components/radio/TierCelebration';
 import { AnimatedVinylFallback } from '@/components/radio/AnimatedVinylFallback';
+import { FavoriteStationsSwitcher } from '@/components/radio/FavoriteStationsSwitcher';
 
 interface ListeningTier {
   id: string;
@@ -651,6 +652,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </div>
             </div>
             
+            {/* Quick Station Switcher for Favorites */}
+            <FavoriteStationsSwitcher className="mb-4" />
             
             {/* Song History - always show if available */}
             {songHistory.length > 0 && (
