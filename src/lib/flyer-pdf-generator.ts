@@ -373,11 +373,11 @@ export function generateMarketingFlyer(): void {
   doc.setFont(FONT_FAMILY, 'bold');
   doc.setFontSize(14);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
-  doc.text('Free Tier ab CHF 0/Mt.', pageWidth / 2, y + 14, { align: 'center' });
+  doc.text('Starter Tier ab CHF 0/Mt.', pageWidth / 2, y + 14, { align: 'center' });
   
   doc.setFont(FONT_FAMILY, 'normal');
   doc.setFontSize(9);
-  doc.text('Premium ab CHF 249/Mt. • 30 Tage Geld-zurück', pageWidth / 2, y + 22, { align: 'center' });
+  doc.text('Partner Tier ab CHF 249/Mt. • 30 Tage Geld-zurück', pageWidth / 2, y + 22, { align: 'center' });
   
   // CTA Button
   y += 34;

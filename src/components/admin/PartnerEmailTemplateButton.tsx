@@ -117,8 +117,8 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <tr>
                   <td style="padding: 24px; text-align: center;">
                     <p style="margin: 0 0 4px; color: #F7B500; font-size: 14px; font-weight: 600;">KOSTENLOS STARTEN</p>
-                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 24px; font-weight: 700;">Free Tier ab CHF 0/Monat</p>
-                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 16px; opacity: 0.9;">Premium ab CHF 249/Monat</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 24px; font-weight: 700;">Starter Tier ab CHF 0/Monat</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 16px; opacity: 0.9;">Partner Tier ab CHF 249/Monat</p>
                     <p style="margin: 0; color: #ffffff; font-size: 13px; opacity: 0.8;">30 Tage Geld-zurück-Garantie • DSGVO-konform</p>
                   </td>
                 </tr>
@@ -197,7 +197,7 @@ DAS BRINGT IHNEN DIE MY 2GO APP:
 ✓ Alles inklusive – QR-Steller, Aufkleber, persönliches Onboarding
 
 KOSTENLOS STARTEN
-Free Tier ab CHF 0/Monat • Premium ab CHF 249/Monat
+Starter Tier ab CHF 0/Monat • Partner Tier ab CHF 249/Monat
 30 Tage Geld-zurück-Garantie • DSGVO-konform
 
 → Jetzt kostenlos starten: https://www.my2go.app/go
