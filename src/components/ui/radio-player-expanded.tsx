@@ -420,6 +420,21 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4 relative z-20" 
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
           >
+            {/* NEW: Swiss Stations Badge */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                hapticToggle();
+                onClose();
+                navigate('/settings#radio');
+              }}
+              className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation"
+            >
+              <span className="text-base">🇨🇭</span>
+              <span>Neu: Alle CH Sender</span>
+            </button>
+            
             {/* Large Cover Art or Video */}
             <ArtworkDisplay 
               artworkUrl={nowPlaying?.artworkUrl} 
