@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles, Share, Plus, Crown } from 'lucide-react';
+import { ArrowLeft, Volume2, Vibrate, Bell, Gift, ChevronRight, BellRing, Loader2, Users, Award, LogOut, User, Download, Smartphone, Eye, HelpCircle, Shield, Store, Settings2, Sparkles, Share, Plus, Crown, Radio } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -22,6 +22,8 @@ import { toast } from 'sonner';
 import { BadgeProgressRing } from '@/components/badges/BadgeProgressRing';
 import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 import { SubscriptionSettings } from '@/components/subscription/SubscriptionSettings';
+import { RadioStationSearch } from '@/components/radio/RadioStationSearch';
+import { useRadioStore, ExternalStation } from '@/lib/radio-store';
 
 // Visit tracking keys (same as in install-prompt.tsx)
 const VISIT_COUNT_KEY = 'pwa-visit-count';
@@ -49,6 +51,9 @@ export default function SettingsPage() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [showRadioSearch, setShowRadioSearch] = useState(false);
+  
+  const { customStation, setCustomStation, isRadio2Go } = useRadioStore();
   
   useEffect(() => {
     // Check admin status
@@ -461,6 +466,105 @@ export default function SettingsPage() {
                 onCheckedChange={setVibrationEnabled}
               />
             </div>
+          </div>
+        </section>
+        
+        {/* Radio Section */}
+        <section className="animate-in">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Radio className="h-4 w-4" />
+            Radio
+          </h2>
+          
+          <div className="card-base divide-y divide-border">
+            {/* Current Station */}
+            <button 
+              onClick={() => setShowRadioSearch(!showRadioSearch)}
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center overflow-hidden">
+                  {customStation?.favicon ? (
+                    <img 
+                      src={customStation.favicon} 
+                      alt={customStation.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Radio className="h-5 w-5 text-accent" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="font-medium flex items-center gap-2">
+                    {isRadio2Go ? 'Radio 2Go' : customStation?.name || 'Radio 2Go'}
+                    {isRadio2Go && (
+                      <span className="text-xs bg-accent text-accent-foreground px-1.5 py-0.5 rounded">
+                        Volle Taler
+                      </span>
+                    )}
+                    {!isRadio2Go && (
+                      <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                        ½ Taler
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {showRadioSearch ? 'Sender wechseln' : 'Tippen um Sender zu wechseln'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className={`h-5 w-5 text-muted-foreground transition-transform ${showRadioSearch ? 'rotate-90' : ''}`} />
+            </button>
+            
+            {/* Radio Station Search - expandable */}
+            {showRadioSearch && (
+              <div className="p-4 bg-muted/30 animate-in">
+                <RadioStationSearch 
+                  currentStation={customStation as any}
+                  onSelectStation={(station) => {
+                    setCustomStation(station as ExternalStation | null);
+                    if (station) {
+                      toast.success(`Wechsel zu ${station.name}`, {
+                        description: 'Hinweis: Bei externen Sendern erhältst du halbe Taler.',
+                      });
+                    } else {
+                      toast.success('Zurück zu Radio 2Go', {
+                        description: 'Volle Taler-Belohnungen aktiviert!',
+                      });
+                    }
+                    setShowRadioSearch(false);
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Reset to Radio 2Go if using external */}
+            {!isRadio2Go && (
+              <button 
+                onClick={() => {
+                  setCustomStation(null);
+                  toast.success('Zurück zu Radio 2Go', {
+                    description: 'Volle Taler-Belohnungen aktiviert!',
+                  });
+                }}
+                className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-accent"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-accent" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium">Zurück zu Radio 2Go</p>
+                    <p className="text-sm text-muted-foreground">
+                      Für volle Taler-Belohnungen
+                    </p>
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
         </section>
         
