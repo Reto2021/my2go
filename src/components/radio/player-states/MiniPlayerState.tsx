@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Lock, Loader2, Pause, VolumeX, Volume2, ChevronUp, Radio } from "lucide-react";
+import { Lock, Loader2, Pause, Play, VolumeX, Volume2, ChevronUp, Radio } from "lucide-react";
 import { TalerIcon } from "@/components/icons/TalerIcon";
 import { cn } from "@/lib/utils";
 import { hapticToggle } from "@/lib/haptics";
@@ -261,8 +261,10 @@ export function MiniPlayerState({
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : isLocked ? (
             <Lock className="h-4 w-4" />
-          ) : (
+          ) : isPlaying ? (
             <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4 ml-0.5" />
           )}
         </button>
 

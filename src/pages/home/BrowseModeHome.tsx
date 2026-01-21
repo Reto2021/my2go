@@ -82,7 +82,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
               <span className="block">Sammle Taler.</span>
               <span className="relative inline-block mt-1">
                 <span className="absolute -inset-x-3 -inset-y-1 bg-accent rounded-lg -rotate-1" />
-                <span className="relative text-secondary font-black">Geniess vor Ort.</span>
+                <span className="relative text-secondary font-black">Profitier vor Ort.</span>
               </span>
             </h1>
             
