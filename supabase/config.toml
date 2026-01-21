@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.send-welcome-email]
 verify_jwt = false
+
+[functions.send-daily-admin-stats]
+verify_jwt = false
