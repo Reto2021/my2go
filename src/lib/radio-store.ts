@@ -471,18 +471,29 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       });
       
       // Handle pause event (might be triggered by iOS when switching apps or external controls)
+      // We need to be careful not to sync state when the pause is intentional (e.g., togglePlay)
       currentAudio.addEventListener('pause', () => {
         const { isPlaying, isLoading } = get();
-        // Update state to reflect actual audio state - this ensures button shows "play"
+        // Only sync state if we think we should still be playing but audio is paused
+        // This handles cases like iOS background restrictions or external media controls
         if (isPlaying && !isLoading) {
-          console.log('Pause event detected - syncing state');
-          // Small delay to avoid race condition with manual togglePlay
+          console.log('Pause event detected - checking if sync needed');
+          // Longer delay to avoid race conditions with navigation and manual togglePlay
+          // This gives time for intentional pauses to update state first
           setTimeout(() => {
             const audio = get().audio;
-            if (audio && audio.paused && get().isPlaying) {
-              set({ isPlaying: false });
+            const currentIsPlaying = get().isPlaying;
+            const currentIsLoading = get().isLoading;
+            // Only update if audio is actually paused AND we still think we're playing
+            // AND we're not in a loading state (which could indicate a restart)
+            if (audio && audio.paused && currentIsPlaying && !currentIsLoading) {
+              // Double check that the audio source is still set (not cleared intentionally)
+              if (audio.src && audio.src !== '') {
+                console.log('Syncing isPlaying state to false due to unexpected pause');
+                set({ isPlaying: false });
+              }
             }
-          }, 50);
+          }, 200);
         }
       });
       
