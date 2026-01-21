@@ -249,25 +249,69 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
   }, [isOpen, onClose]);
 
 
+  // Touch swipe down to close
+  const touchStartY = useRef<number | null>(null);
+  const touchCurrentY = useRef<number | null>(null);
+  const [dragY, setDragY] = useState(0);
+  const isDragging = useRef(false);
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchCurrentY.current = e.touches[0].clientY;
+    isDragging.current = false;
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    touchCurrentY.current = e.touches[0].clientY;
+    const deltaY = touchCurrentY.current - touchStartY.current;
+    
+    // Only drag if moving downward
+    if (deltaY > 10) {
+      isDragging.current = true;
+      setDragY(Math.min(deltaY, 200));
+    }
+  };
+  
+  const handleTouchEnd = () => {
+    if (touchStartY.current !== null && touchCurrentY.current !== null) {
+      const deltaY = touchCurrentY.current - touchStartY.current;
+      if (deltaY > 80) {
+        hapticToggle();
+        onClose();
+      }
+    }
+    touchStartY.current = null;
+    touchCurrentY.current = null;
+    isDragging.current = false;
+    setDragY(0);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0, y: '100%' }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: dragY }}
           exit={{ opacity: 0, y: '100%' }}
-          transition={{ type: 'spring', damping: 30, stiffness: 350, mass: 0.8 }}
+          transition={isDragging.current ? { duration: 0 } : { type: 'spring', damping: 30, stiffness: 350, mass: 0.8 }}
           className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-gradient-to-b from-secondary via-secondary to-black"
           style={{ willChange: 'transform, opacity' }}
         >
-          {/* Header with integrated close button and swipe indicator */}
+          {/* Header with integrated close button and swipe indicator - SWIPE ENABLED */}
           <div 
-            className="flex-shrink-0 relative z-50 pointer-events-auto" 
+            className="flex-shrink-0 relative z-50 pointer-events-auto touch-pan-y" 
             style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            {/* Swipe indicator - purely visual, positioned above header content */}
+            {/* Swipe indicator - swipe down to close */}
             <div className="flex justify-center pt-2 pb-1">
-              <div className="w-10 h-1 rounded-full bg-white/30" />
+              <div className={cn(
+                "w-10 h-1 rounded-full transition-all",
+                dragY > 20 ? "bg-white/60 w-12" : "bg-white/30"
+              )} />
             </div>
             
             {/* Header row with close button */}
