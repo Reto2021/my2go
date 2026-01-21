@@ -68,6 +68,7 @@ const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminAirDrops = lazy(() => import("./pages/admin/AdminAirDrops"));
 const AdminBadges = lazy(() => import("./pages/admin/AdminBadges"));
 const AdminRadioTiers = lazy(() => import("./pages/admin/AdminRadioTiers"));
+const AdminAudioAds = lazy(() => import("./pages/admin/AdminAudioAds"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminCronJobs = lazy(() => import("./pages/admin/AdminCronJobs"));
 const AdminPartnerApplications = lazy(() => import("./pages/admin/AdminPartnerApplications"));
@@ -235,13 +236,13 @@ function AppContent() {
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="badges" element={<AdminBadges />} />
             <Route path="radio" element={<AdminRadioTiers />} />
+            <Route path="audio-ads" element={<AdminAudioAds />} />
             <Route path="airdrops" element={<AdminAirDrops />} />
             <Route path="applications" element={<AdminPartnerApplications />} />
             <Route path="live-events" element={<AdminLiveEvents />} />
             <Route path="cron" element={<AdminCronJobs />} />
             <Route path="plus" element={<AdminPlusSubscriptions />} />
             <Route path="promo-codes" element={<AdminPromoCodes />} />
-            <Route path="settings" element={<AdminSettings />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
           
