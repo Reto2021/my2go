@@ -85,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loadUserData = async (userId: string, isNewLogin = false) => {
+    console.log('[AuthContext] Loading user data for:', userId, 'isNewLogin:', isNewLogin);
+    
     // Sync guest rewards first if this is a new login
     if (isNewLogin) {
       await syncGuestRewards(userId);
@@ -95,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getUserBalance(userId),
       getUserCode(userId),
     ]);
+    
+    console.log('[AuthContext] Loaded balance data:', balanceData);
     
     setProfile(profileData);
     setBalance(balanceData);
