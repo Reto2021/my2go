@@ -18,7 +18,8 @@ import {
   MessageCircle,
   Sparkles,
   Search,
-  Star
+  Star,
+  ArrowLeftRight
 } from 'lucide-react';
 import { useRadioFavorites } from '@/hooks/useRadioFavorites';
 import { cn } from '@/lib/utils';
@@ -404,27 +405,40 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               
               return (
                 <div className="flex justify-center px-3 pb-2">
-                  <button
+                  <motion.button
                     type="button"
                     onClick={handleQuickSwitch}
-                    className="h-9 px-4 rounded-full bg-accent/20 border border-accent/40 flex items-center gap-2 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="group relative h-11 px-5 rounded-full bg-gradient-to-r from-accent/30 via-accent/20 to-accent/30 border border-accent/50 flex items-center gap-3 hover:border-accent/70 transition-all touch-manipulation shadow-lg shadow-accent/10 overflow-hidden"
                     aria-label={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu Radio 2Go"}
                     title={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu Radio 2Go"}
                   >
-                    {isRadio2Go && targetStation?.favicon ? (
-                      <img 
-                        src={targetStation.favicon} 
-                        alt="" 
-                        className="h-5 w-5 rounded-full object-cover"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      />
-                    ) : (
-                      <img src="/pwa-192x192.png" alt="" className="h-5 w-5 rounded-full" />
-                    )}
-                    <span className="text-xs text-white font-medium">
-                      {isRadio2Go ? (targetStation?.name?.substring(0, 12) || 'Zuletzt') : 'Radio 2Go'}
+                    {/* Animated background shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    
+                    {/* Switch arrow icon */}
+                    <ArrowLeftRight className="h-4 w-4 text-accent flex-shrink-0" />
+                    
+                    {/* Station icon */}
+                    <div className="relative flex items-center justify-center">
+                      {isRadio2Go && targetStation?.favicon ? (
+                        <img 
+                          src={targetStation.favicon} 
+                          alt="" 
+                          className="h-6 w-6 rounded-full object-cover ring-2 ring-white/20"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <img src="/pwa-192x192.png" alt="" className="h-6 w-6 rounded-full ring-2 ring-white/20" />
+                      )}
+                    </div>
+                    
+                    {/* Station name */}
+                    <span className="text-sm text-white font-semibold tracking-wide">
+                      {isRadio2Go ? (targetStation?.name?.substring(0, 15) || 'Zuletzt') : 'Radio 2Go'}
                     </span>
-                  </button>
+                  </motion.button>
                 </div>
               );
             })()}
@@ -435,21 +449,6 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
             className="flex-1 flex flex-col items-center overflow-y-auto overflow-x-hidden px-4 sm:px-8 py-2 sm:py-4 relative z-20" 
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
           >
-            {/* NEW: Swiss Stations Badge */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                hapticToggle();
-                onClose();
-                navigate('/settings#radio');
-              }}
-              className="mb-4 flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 text-black text-sm font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform touch-manipulation relative z-30"
-            >
-              <span>Neu: Alle</span>
-              <span className="text-base">🇨🇭</span>
-              <span>Sender</span>
-            </button>
             
             {/* Large Cover Art or Video */}
             <ArtworkDisplay 
