@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LiveEventsPanel } from "./LiveEventsPanel";
 import { useLiveEventsStore } from "@/lib/live-events-store";
 import { TalerIcon } from "@/components/icons/TalerIcon";
+import { useAudioAdPlayer } from "@/hooks/useAudioAdPlayer";
 
 // Custom hooks
 import { useWiggleAnimation } from "@/hooks/useWiggleAnimation";
@@ -217,12 +218,26 @@ export function RadioPlayerBar({ onExpand }: RadioPlayerBarProps) {
       description: 'Weiter hören für mehr Belohnungen 🎧',
       icon: <TalerIcon className="h-5 w-5 text-accent" />,
     });
+    
+    // Play tier-triggered audio ad if configured
+    playTierAd();
   }, [addPendingTaler]);
 
   // Load tiers and calculate session progress
   const tiers = useListeningTiers();
   const { elapsed, earnedTaler, pendingTaler, progress, isMaxTier, secondsToNextTier, justReachedTier } =
     useSessionProgress(tiers, isAuthenticated ? handleTierReached : undefined);
+
+  // Audio ad player with ducking
+  const { isPlayingAd, currentAd, playTierAd } = useAudioAdPlayer({
+    enabled: isAuthenticated && isPlaying,
+    onAdStart: () => {
+      console.log('Audio ad started, ducking stream...');
+    },
+    onAdEnd: () => {
+      console.log('Audio ad ended, restoring volume');
+    },
+  });
 
   // Streak data
   const canClaim = streakStatus?.can_claim ?? false;

@@ -15,6 +15,31 @@ const SWISS_VOICES = [
   { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam (Male)' },
 ];
 
+// Helper: Fetch audio from URL as ArrayBuffer
+async function fetchAudioBuffer(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch audio: ${url}`);
+  }
+  return response.arrayBuffer();
+}
+
+// Helper: Concatenate multiple audio buffers
+// Note: This is a simple concatenation of MP3 files. For production,
+// you might want to use a proper audio processing library.
+function concatenateAudioBuffers(...buffers: ArrayBuffer[]): Uint8Array {
+  const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+  const result = new Uint8Array(totalLength);
+  
+  let offset = 0;
+  for (const buffer of buffers) {
+    result.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  }
+  
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -80,13 +105,13 @@ serve(async (req) => {
       });
     }
 
-    // Action: generate - Generate and save full audio ad
+    // Action: generate - Generate and save full audio ad (with optional jingle)
     if (action === 'generate') {
       if (!audioAdId) {
         throw new Error('Missing audioAdId');
       }
 
-      // Get the audio ad details
+      // Get the audio ad details with jingle
       const { data: audioAd, error: adError } = await supabase
         .from('audio_ads')
         .select('*, audio_jingles(*)')
@@ -104,6 +129,7 @@ serve(async (req) => {
         .eq('id', audioAdId);
 
       console.log(`Generating audio for ad: ${audioAd.title}`);
+      console.log(`Jingle attached: ${audioAd.audio_jingles?.name || 'None'}`);
 
       // Generate TTS for the claim text
       const ttsResponse = await fetch(
@@ -138,16 +164,56 @@ serve(async (req) => {
         throw new Error(`ElevenLabs API error: ${error}`);
       }
 
-      const audioBuffer = await ttsResponse.arrayBuffer();
-      const audioBytes = new Uint8Array(audioBuffer);
+      const ttsBuffer = await ttsResponse.arrayBuffer();
+      console.log(`TTS generated: ${ttsBuffer.byteLength} bytes`);
 
-      // For now, save just the TTS audio
-      // TODO: In Phase 2, stitch with jingle intro/outro
+      // Prepare audio segments
+      const audioSegments: ArrayBuffer[] = [];
+      let totalDurationEstimate = 0;
+
+      // Add intro jingle if available
+      if (audioAd.audio_jingles?.intro_url) {
+        try {
+          console.log(`Fetching intro jingle: ${audioAd.audio_jingles.intro_url}`);
+          const introBuffer = await fetchAudioBuffer(audioAd.audio_jingles.intro_url);
+          audioSegments.push(introBuffer);
+          // Rough estimate: 1 second per 16KB for 128kbps MP3
+          totalDurationEstimate += Math.ceil(introBuffer.byteLength / 16000);
+          console.log(`Intro jingle added: ${introBuffer.byteLength} bytes`);
+        } catch (e) {
+          console.error('Failed to fetch intro jingle:', e);
+        }
+      }
+
+      // Add TTS claim
+      audioSegments.push(ttsBuffer);
+      // Estimate TTS duration: ~150 words per minute for German
+      const wordCount = audioAd.claim_text.split(/\s+/).length;
+      totalDurationEstimate += Math.ceil((wordCount / 150) * 60);
+
+      // Add outro jingle if available
+      if (audioAd.audio_jingles?.outro_url) {
+        try {
+          console.log(`Fetching outro jingle: ${audioAd.audio_jingles.outro_url}`);
+          const outroBuffer = await fetchAudioBuffer(audioAd.audio_jingles.outro_url);
+          audioSegments.push(outroBuffer);
+          totalDurationEstimate += Math.ceil(outroBuffer.byteLength / 16000);
+          console.log(`Outro jingle added: ${outroBuffer.byteLength} bytes`);
+        } catch (e) {
+          console.error('Failed to fetch outro jingle:', e);
+        }
+      }
+
+      // Concatenate all audio segments
+      const finalAudio = concatenateAudioBuffers(...audioSegments);
+      console.log(`Final audio: ${finalAudio.byteLength} bytes, ~${totalDurationEstimate}s`);
+
+      // Upload to storage
       const fileName = `${audioAdId}/${Date.now()}.mp3`;
       
       const { error: uploadError } = await supabase.storage
         .from('audio-ads')
-        .upload(fileName, audioBytes, {
+        .upload(fileName, finalAudio, {
           contentType: 'audio/mpeg',
           upsert: true,
         });
@@ -168,10 +234,6 @@ serve(async (req) => {
         .from('audio-ads')
         .getPublicUrl(fileName);
 
-      // Estimate duration (rough: ~150 words per minute for German)
-      const wordCount = audioAd.claim_text.split(/\s+/).length;
-      const estimatedDuration = Math.ceil((wordCount / 150) * 60);
-
       // Update audio ad with URL and status
       const { error: updateError } = await supabase
         .from('audio_ads')
@@ -179,7 +241,7 @@ serve(async (req) => {
           generated_audio_url: urlData.publicUrl,
           generation_status: 'completed',
           generation_error: null,
-          duration_seconds: estimatedDuration,
+          duration_seconds: totalDurationEstimate,
         })
         .eq('id', audioAdId);
 
@@ -192,7 +254,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         audioUrl: urlData.publicUrl,
-        duration: estimatedDuration,
+        duration: totalDurationEstimate,
+        hasJingle: !!audioAd.audio_jingles,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
