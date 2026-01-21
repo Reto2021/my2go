@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Copy, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { toast } from 'sonner';
 
 const EMAIL_SUBJECT = 'Mehr Stammkunden, bessere Google-Bewertungen – kostenlos testen';
@@ -239,84 +239,82 @@ export function PartnerEmailTemplateButton() {
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Mail className="h-4 w-4" />
           E-Mail-Vorlage anzeigen
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Partner-Akquise E-Mail</DialogTitle>
-          <DialogDescription>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Partner-Akquise E-Mail</SheetTitle>
+          <SheetDescription>
             Formatierte E-Mail-Vorlage für die Erstansprache von Partnerbetrieben
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
         
-        <div className="space-y-6">
-          <div className="space-y-6 pb-6">
-            {/* Subject */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold">Betreff</label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(EMAIL_SUBJECT, 'subject')}
-                  className="gap-1"
-                >
-                  {copiedSubject ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  Kopieren
-                </Button>
-              </div>
-              <div className="p-3 bg-muted rounded-lg text-sm font-medium">
-                {EMAIL_SUBJECT}
-              </div>
-            </div>
-            
-            {/* Preview */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">Vorschau</label>
-              <div className="border rounded-lg overflow-hidden bg-white">
-                <iframe
-                  srcDoc={EMAIL_HTML}
-                  title="Email Preview"
-                  className="w-full h-[350px] border-0"
-                />
-              </div>
-            </div>
-            
-            {/* Copy Buttons */}
-            <div className="flex flex-wrap gap-3">
+        <div className="space-y-6 mt-6">
+          {/* Subject */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold">Betreff</label>
               <Button
-                onClick={() => copyToClipboard(EMAIL_HTML, 'html')}
-                className="gap-2"
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(EMAIL_SUBJECT, 'subject')}
+                className="gap-1"
               >
-                {copiedHtml ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                HTML kopieren
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={() => copyToClipboard(EMAIL_PLAIN, 'plain')}
-                className="gap-2"
-              >
-                {copiedPlain ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                Plain-Text kopieren
+                {copiedSubject ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                Kopieren
               </Button>
             </div>
-            
-            {/* Usage Hint */}
-            <div className="p-4 bg-accent/10 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                <strong>Tipp:</strong> Kopiere den HTML-Code und füge ihn in deinen E-Mail-Client ein 
-                (z.B. Gmail: "Als HTML einfügen" oder Mailchimp). Für einfache E-Mails nutze die Plain-Text-Version.
-              </p>
+            <div className="p-3 bg-muted rounded-lg text-sm font-medium">
+              {EMAIL_SUBJECT}
             </div>
           </div>
+          
+          {/* Preview */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Vorschau</label>
+            <div className="border rounded-lg overflow-hidden bg-white">
+              <iframe
+                srcDoc={EMAIL_HTML}
+                title="Email Preview"
+                className="w-full h-[400px] border-0"
+              />
+            </div>
+          </div>
+          
+          {/* Copy Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => copyToClipboard(EMAIL_HTML, 'html')}
+              className="gap-2"
+            >
+              {copiedHtml ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              HTML kopieren
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => copyToClipboard(EMAIL_PLAIN, 'plain')}
+              className="gap-2"
+            >
+              {copiedPlain ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              Plain-Text kopieren
+            </Button>
+          </div>
+          
+          {/* Usage Hint */}
+          <div className="p-4 bg-accent/10 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Tipp:</strong> Kopiere den HTML-Code und füge ihn in deinen E-Mail-Client ein 
+              (z.B. Gmail: "Als HTML einfügen" oder Mailchimp). Für einfache E-Mails nutze die Plain-Text-Version.
+            </p>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
