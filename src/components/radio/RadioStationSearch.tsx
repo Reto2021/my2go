@@ -135,11 +135,6 @@ export function RadioStationSearch({ onSelectStation, currentStation, className 
             />
           ) : null}
           <Radio className={cn("h-6 w-6 text-muted-foreground", station.favicon && "hidden")} />
-          {isRadio2Go && (
-            <div className="absolute -top-1 -right-1 bg-accent rounded-full p-0.5">
-              <Star className="h-3 w-3 text-accent-foreground" />
-            </div>
-          )}
         </div>
         
         {/* Station info */}
