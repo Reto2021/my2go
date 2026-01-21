@@ -19,7 +19,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radio 2Go Partner werden</title>
+  <title>My 2Go App von Radio 2Go</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   
@@ -28,11 +28,12 @@ const EMAIL_HTML = `<!DOCTYPE html>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
           
-          <!-- Header -->
+          <!-- Header with Logo -->
           <tr>
             <td style="background: linear-gradient(135deg, #0C4A56 0%, #0a3d47 100%); padding: 32px 40px; text-align: center;">
-              <h1 style="margin: 0; color: #F7B500; font-size: 28px; font-weight: 700;">Radio 2Go</h1>
-              <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">Hör Radio. Sammle Taler. Geniess vor Ort.</p>
+              <img src="https://my2go.lovable.app/pwa-192x192.png" alt="Radio 2Go Logo" style="width: 80px; height: 80px; margin-bottom: 16px; border-radius: 16px;">
+              <h1 style="margin: 0; color: #F7B500; font-size: 28px; font-weight: 700;">My 2Go App</h1>
+              <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">von Radio 2Go • Hör Radio. Sammle Taler. Geniess vor Ort.</p>
             </td>
           </tr>
           
@@ -54,21 +55,21 @@ const EMAIL_HTML = `<!DOCTYPE html>
               </p>
               
               <p style="margin: 0 0 24px; font-size: 16px; color: #333333; line-height: 1.6;">
-                Mit <strong>Radio 2Go</strong> ändern Sie das – ganz ohne Aufwand.
+                Mit der <strong>My 2Go App von Radio 2Go</strong> ändern Sie das – ganz ohne Aufwand.
               </p>
               
               <!-- Value Proposition Box -->
               <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 8px; margin-bottom: 24px;">
                 <tr>
                   <td style="padding: 24px;">
-                    <h2 style="margin: 0 0 16px; font-size: 18px; color: #0C4A56;">So funktioniert's:</h2>
+                    <h2 style="margin: 0 0 16px; font-size: 18px; color: #0C4A56;">So funktioniert die My 2Go App:</h2>
                     <table cellpadding="0" cellspacing="0" width="100%">
                       <tr>
                         <td style="padding: 8px 0; vertical-align: top; width: 40px;">
                           <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56;">1</span>
                         </td>
                         <td style="padding: 8px 0; color: #333333; font-size: 15px;">
-                          <strong>Kunden hören Radio 2Go</strong> und sammeln dabei automatisch Taler
+                          <strong>Kunden hören Radio 2Go</strong> in der App und sammeln dabei automatisch Taler
                         </td>
                       </tr>
                       <tr>
@@ -93,7 +94,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
               </table>
               
               <!-- Benefits -->
-              <h3 style="margin: 0 0 16px; font-size: 16px; color: #0C4A56;">Das bringt Ihnen Radio 2Go:</h3>
+              <h3 style="margin: 0 0 16px; font-size: 16px; color: #0C4A56;">Das bringt Ihnen die My 2Go App:</h3>
               <table cellpadding="0" cellspacing="0" style="margin-bottom: 24px;" width="100%">
                 <tr>
                   <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Mehr Stammkunden</strong> – Kunden sammeln Taler und kommen wieder</td>
@@ -123,12 +124,23 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 </tr>
               </table>
               
-              <!-- CTA -->
-              <table width="100%" cellpadding="0" cellspacing="0">
+              <!-- CTAs -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
                 <tr>
                   <td align="center">
                     <a href="https://my2go.lovable.app/go" style="display: inline-block; background-color: #F7B500; color: #0C4A56; font-size: 16px; font-weight: 700; text-decoration: none; padding: 16px 40px; border-radius: 8px;">
                       Jetzt kostenlos starten →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Calendar Link -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://calendly.com/radio2go/partner-demo" style="display: inline-block; background-color: #ffffff; color: #0C4A56; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 32px; border-radius: 8px; border: 2px solid #0C4A56;">
+                      📅 Termin für Beratungsgespräch vereinbaren
                     </a>
                   </td>
                 </tr>
@@ -153,7 +165,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
                 <a href="https://my2go.lovable.app/go" style="color: #0C4A56; text-decoration: none; font-weight: 600;">my2go.lovable.app/go</a>
               </p>
               <p style="margin: 0; font-size: 12px; color: #999999;">
-                © 2025 Radio 2Go • Das lokale Bonusprogramm
+                © 2025 My 2Go App von Radio 2Go • Das lokale Bonusprogramm
               </p>
             </td>
           </tr>
@@ -170,14 +182,14 @@ const EMAIL_PLAIN = `Guten Tag,
 
 Wussten Sie, dass 70% der Neukunden nie wiederkommen? Und nur 5% hinterlassen aktiv eine Google-Bewertung?
 
-Mit Radio 2Go ändern Sie das – ganz ohne Aufwand.
+Mit der My 2Go App von Radio 2Go ändern Sie das – ganz ohne Aufwand.
 
-SO FUNKTIONIERT'S:
-1. Kunden hören Radio 2Go und sammeln dabei automatisch Taler
+SO FUNKTIONIERT DIE MY 2GO APP:
+1. Kunden hören Radio 2Go in der App und sammeln dabei automatisch Taler
 2. Sie bieten Prämien – z.B. 10% Rabatt oder ein Gratis-Getränk
 3. Kunden lösen bei Ihnen ein – und kommen wieder
 
-DAS BRINGT IHNEN RADIO 2GO:
+DAS BRINGT IHNEN DIE MY 2GO APP:
 ✓ Mehr Stammkunden – Kunden sammeln Taler und kommen wieder
 ✓ Bessere Google-Bewertungen – automatische Review-Anfragen
 ✓ Radio-Präsenz – Ihr Name im Radio, ohne eigenes Werbebudget
@@ -190,6 +202,8 @@ Ab CHF 249/Monat
 
 → Jetzt kostenlos starten: https://my2go.lovable.app/go
 
+📅 Termin für Beratungsgespräch vereinbaren: https://calendly.com/radio2go/partner-demo
+
 Haben Sie Fragen? Antworten Sie einfach auf diese E-Mail – wir melden uns persönlich.
 
 Herzliche Grüsse
@@ -197,7 +211,7 @@ Ihr Radio 2Go Team
 
 ---
 my2go.lovable.app/go
-© 2025 Radio 2Go • Das lokale Bonusprogramm`;
+© 2025 My 2Go App von Radio 2Go • Das lokale Bonusprogramm`;
 
 export function PartnerEmailTemplateButton() {
   const [isOpen, setIsOpen] = useState(false);
