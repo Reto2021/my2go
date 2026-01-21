@@ -170,6 +170,7 @@ export type Database = {
           title: string
           trigger_on_tier: boolean | null
           updated_at: string
+          uploaded_claim_url: string | null
           voice_id: string
           voice_name: string | null
         }
@@ -188,6 +189,7 @@ export type Database = {
           title: string
           trigger_on_tier?: boolean | null
           updated_at?: string
+          uploaded_claim_url?: string | null
           voice_id?: string
           voice_name?: string | null
         }
@@ -206,6 +208,7 @@ export type Database = {
           title?: string
           trigger_on_tier?: boolean | null
           updated_at?: string
+          uploaded_claim_url?: string | null
           voice_id?: string
           voice_name?: string | null
         }
