@@ -16,8 +16,17 @@ const PENDING_SESSION_KEY = 'pending_radio_session';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Global tracking to prevent double-saves from interval + render cycles
+// ============================================
+// GLOBAL state for session management
+// This ensures the interval persists across component remounts
+// ============================================
+let globalSessionId: string | null = null;
+let globalStartTimeMs: number | null = null;
+let globalSaveInterval: ReturnType<typeof setInterval> | null = null;
 let globalSaveInProgress = false;
+let globalIsStarting = false;
+let globalIsEnding = false;
+let globalRefreshBalance: (() => void) | undefined = undefined;
 
 interface ListeningReward {
   success: boolean;
@@ -94,18 +103,24 @@ function sendEndSessionBeacon(sessionId: string) {
   console.log('[RadioRewards] Sent end session beacon for:', sessionId);
 }
 
-// Direct RPC call to save progress - standalone function that doesn't rely on React state
-async function saveProgressDirect(sessionId: string, startTimeMs: number, refreshBalance?: () => void) {
+// Direct RPC call to save progress - GLOBAL function that doesn't rely on React
+async function saveProgressGlobal() {
   if (globalSaveInProgress) {
     console.log('[RadioRewards] 💾 Save already in progress, skipping');
     return;
   }
   
+  if (!globalSessionId || !globalStartTimeMs) {
+    console.log('[RadioRewards] 💾 No active session to save');
+    return;
+  }
+  
   globalSaveInProgress = true;
   
-  const currentDuration = Math.floor((Date.now() - startTimeMs) / 1000);
+  const currentDuration = Math.floor((Date.now() - globalStartTimeMs) / 1000);
+  const sessionId = globalSessionId;
   
-  console.log('[RadioRewards] 💾 Saving progress directly:', sessionId, 'duration:', currentDuration);
+  console.log('[RadioRewards] 💾 Saving progress:', sessionId, 'duration:', currentDuration, 'seconds');
   
   try {
     const { data, error } = await supabase.rpc('save_session_progress', {
@@ -117,12 +132,39 @@ async function saveProgressDirect(sessionId: string, startTimeMs: number, refres
       console.error('[RadioRewards] ❌ Error saving progress:', error);
     } else {
       console.log('[RadioRewards] ✅ Progress saved:', data);
-      refreshBalance?.();
+      // Refresh balance if callback is available
+      globalRefreshBalance?.();
     }
   } catch (err) {
     console.error('[RadioRewards] ❌ Exception saving progress:', err);
   } finally {
     globalSaveInProgress = false;
+  }
+}
+
+// Start the global save interval
+function startGlobalSaveInterval() {
+  // Clear any existing interval first
+  if (globalSaveInterval) {
+    clearInterval(globalSaveInterval);
+    globalSaveInterval = null;
+  }
+  
+  console.log('[RadioRewards] ⏱️ Starting 15-second global save interval');
+  
+  // Start new interval
+  globalSaveInterval = setInterval(() => {
+    console.log('[RadioRewards] ⏱️ Interval tick');
+    saveProgressGlobal();
+  }, 15000);
+}
+
+// Stop the global save interval
+function stopGlobalSaveInterval() {
+  if (globalSaveInterval) {
+    console.log('[RadioRewards] ⏱️ Stopping global save interval');
+    clearInterval(globalSaveInterval);
+    globalSaveInterval = null;
   }
 }
 
@@ -133,24 +175,9 @@ export function useRadioRewards() {
   const user = authContext?.user;
   const { isPlaying, isRadio2Go, isSwitching, isLoading } = useRadioStore();
   
-  // Use a single ref object to avoid stale closure issues
-  const sessionRef = useRef<{
-    id: string | null;
-    startTimeMs: number | null;
-    isStarting: boolean;
-    isEnding: boolean;
-  }>({
-    id: null,
-    startTimeMs: null,
-    isStarting: false,
-    isEnding: false,
-  });
-  
   const lastStationTypeRef = useRef<boolean | null>(null);
   const pendingStationSwitchRef = useRef(false);
   const hasRecoveredRef = useRef(false);
-  const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isMountedRef = useRef(true);
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -159,44 +186,10 @@ export function useRadioRewards() {
   
   const userId = user?.id;
   
-  // Store refreshBalance in a ref so the interval can access the latest version
-  const refreshBalanceRef = useRef(refreshBalance);
+  // Keep global refreshBalance updated
   useEffect(() => {
-    refreshBalanceRef.current = refreshBalance;
+    globalRefreshBalance = refreshBalance;
   }, [refreshBalance]);
-  
-  // Start the 15-second save interval - this runs independently of React state
-  const startSaveInterval = useCallback(() => {
-    // Clear any existing interval first
-    if (saveIntervalRef.current) {
-      clearInterval(saveIntervalRef.current);
-      saveIntervalRef.current = null;
-    }
-    
-    console.log('[RadioRewards] ⏱️ Starting 15-second save interval');
-    
-    // Start new interval - accesses refs directly, not React state
-    saveIntervalRef.current = setInterval(() => {
-      const session = sessionRef.current;
-      
-      if (!session.id || !session.startTimeMs) {
-        console.log('[RadioRewards] ⏱️ Interval tick but no active session');
-        return;
-      }
-      
-      console.log('[RadioRewards] ⏱️ Interval tick - saving progress for session:', session.id);
-      saveProgressDirect(session.id, session.startTimeMs, refreshBalanceRef.current);
-    }, 15000);
-  }, []);
-  
-  // Stop the save interval
-  const stopSaveInterval = useCallback(() => {
-    if (saveIntervalRef.current) {
-      console.log('[RadioRewards] ⏱️ Stopping save interval');
-      clearInterval(saveIntervalRef.current);
-      saveIntervalRef.current = null;
-    }
-  }, []);
   
   // Recover and end any pending/orphaned sessions from previous page load
   useEffect(() => {
@@ -241,26 +234,24 @@ export function useRadioRewards() {
   
   // Start a listening session when radio starts playing
   const startSession = useCallback(async () => {
-    const session = sessionRef.current;
-    
     // Strict guard against duplicate starts
     if (!userId) {
       console.log('[RadioRewards] startSession skipped: no userId');
       return;
     }
     
-    if (session.isStarting) {
+    if (globalIsStarting) {
       console.log('[RadioRewards] startSession skipped: already starting');
       return;
     }
     
-    if (session.id) {
-      console.log('[RadioRewards] startSession skipped: session already exists:', session.id);
+    if (globalSessionId) {
+      console.log('[RadioRewards] startSession skipped: session already exists:', globalSessionId);
       return;
     }
     
     // Set guard IMMEDIATELY before any async work
-    session.isStarting = true;
+    globalIsStarting = true;
     console.log('[RadioRewards] 🎵 Starting session for user:', userId);
     
     // Get current station info from radio store
@@ -279,70 +270,68 @@ export function useRadioRewards() {
       
       if (error) {
         console.error('[RadioRewards] Error starting listening session:', error);
-        session.isStarting = false;
+        globalIsStarting = false;
         return;
       }
       
       const newSessionId = data as string;
       
       // Double-check we didn't get a duplicate start
-      if (session.id) {
-        console.warn('[RadioRewards] Race condition detected, session already set:', session.id);
-        session.isStarting = false;
+      if (globalSessionId) {
+        console.warn('[RadioRewards] Race condition detected, session already set:', globalSessionId);
+        globalIsStarting = false;
         return;
       }
       
-      // Update session ref
-      session.id = newSessionId;
-      session.startTimeMs = Date.now();
+      // Update global session state
+      globalSessionId = newSessionId;
+      globalStartTimeMs = Date.now();
       
       // Save to localStorage for recovery after page refresh
       savePendingSession(newSessionId, userId);
       
-      // Start the 15-second save interval
-      startSaveInterval();
+      // Start the global 15-second save interval
+      startGlobalSaveInterval();
       
       console.log('[RadioRewards] ✅ Session started:', newSessionId, 'stream:', streamType);
     } catch (error) {
       console.error('[RadioRewards] Error starting listening session:', error);
     } finally {
-      session.isStarting = false;
+      globalIsStarting = false;
     }
-  }, [userId, startSaveInterval]);
+  }, [userId]);
   
   // End a listening session when radio stops
   const endSession = useCallback(async () => {
-    const session = sessionRef.current;
-    
-    if (!session.id) {
+    if (!globalSessionId) {
       console.log('[RadioRewards] endSession skipped: no session');
       return;
     }
     
-    if (session.isEnding) {
+    if (globalIsEnding) {
       console.log('[RadioRewards] endSession skipped: already ending');
       return;
     }
     
     // Set guard IMMEDIATELY
-    session.isEnding = true;
-    console.log('[RadioRewards] 🛑 Ending session:', session.id);
+    globalIsEnding = true;
+    console.log('[RadioRewards] 🛑 Ending session:', globalSessionId);
     
     // Stop the save interval immediately
-    stopSaveInterval();
+    stopGlobalSaveInterval();
     
     // Save final progress before ending
-    if (session.id && session.startTimeMs) {
-      await saveProgressDirect(session.id, session.startTimeMs, refreshBalanceRef.current);
+    if (globalSessionId && globalStartTimeMs) {
+      await saveProgressGlobal();
     }
     
-    // Clear refs immediately to prevent double-calls
-    const endingSessionId = session.id;
-    session.id = null;
-    session.startTimeMs = null;
+    // Clear global state immediately to prevent double-calls
+    const endingSessionId = globalSessionId;
+    globalSessionId = null;
+    globalStartTimeMs = null;
     
     if (!endingSessionId) {
-      session.isEnding = false;
+      globalIsEnding = false;
       return;
     }
     
@@ -393,9 +382,9 @@ export function useRadioRewards() {
       console.error('[RadioRewards] Error ending listening session:', error);
       await refreshBalance?.();
     } finally {
-      session.isEnding = false;
+      globalIsEnding = false;
     }
-  }, [userId, refreshBalance, clearPendingTaler, stopSaveInterval]);
+  }, [userId, refreshBalance, clearPendingTaler]);
   
   const closeSummary = useCallback(() => {
     setShowSummary(false);
@@ -420,13 +409,12 @@ export function useRadioRewards() {
       return;
     }
     
-    const session = sessionRef.current;
     const hasStationTypeChanged = lastStationTypeRef.current !== null && 
                                    lastStationTypeRef.current !== isRadio2Go;
     
     if (isPlaying) {
       // If station type changed while playing, end old session first, then start new
-      if (hasStationTypeChanged && session.id && !pendingStationSwitchRef.current) {
+      if (hasStationTypeChanged && globalSessionId && !pendingStationSwitchRef.current) {
         pendingStationSwitchRef.current = true;
         console.log('[RadioRewards] Station type changed, ending old session and starting new');
         endSession().then(() => {
@@ -435,11 +423,11 @@ export function useRadioRewards() {
             pendingStationSwitchRef.current = false;
           }, 150);
         });
-      } else if (!session.id && !pendingStationSwitchRef.current) {
+      } else if (!globalSessionId && !pendingStationSwitchRef.current) {
         console.log('[RadioRewards] Starting new session, userId:', userId);
         startSession();
       }
-    } else if (!isPlaying && session.id && !pendingStationSwitchRef.current) {
+    } else if (!isPlaying && globalSessionId && !pendingStationSwitchRef.current) {
       console.log('[RadioRewards] Playback stopped, ending session');
       endSession();
     }
@@ -451,11 +439,10 @@ export function useRadioRewards() {
   // Handle visibility change - end session when app goes to background
   useEffect(() => {
     const handleVisibilityChange = () => {
-      const session = sessionRef.current;
-      if (document.visibilityState === 'hidden' && session.id) {
+      if (document.visibilityState === 'hidden' && globalSessionId) {
         console.log('[RadioRewards] App hidden, ending session');
         // Use beacon for reliability when tab is hidden
-        sendEndSessionBeacon(session.id);
+        sendEndSessionBeacon(globalSessionId);
         // Also try normal end for immediate processing
         endSession();
       }
@@ -468,18 +455,16 @@ export function useRadioRewards() {
   // Handle page unload - use beacon for reliable session ending
   useEffect(() => {
     const handleBeforeUnload = () => {
-      const session = sessionRef.current;
-      if (session.id) {
-        console.log('[RadioRewards] Page unloading, sending beacon to end session:', session.id);
-        sendEndSessionBeacon(session.id);
+      if (globalSessionId) {
+        console.log('[RadioRewards] Page unloading, sending beacon to end session:', globalSessionId);
+        sendEndSessionBeacon(globalSessionId);
       }
     };
     
     const handlePageHide = (event: PageTransitionEvent) => {
-      const session = sessionRef.current;
-      if (session.id && !event.persisted) {
-        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', session.id);
-        sendEndSessionBeacon(session.id);
+      if (globalSessionId && !event.persisted) {
+        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', globalSessionId);
+        sendEndSessionBeacon(globalSessionId);
       }
     };
     
@@ -492,25 +477,16 @@ export function useRadioRewards() {
     };
   }, []);
   
-  // Cleanup on unmount
+  // Cleanup on unmount - but DON'T clear the global interval!
+  // The interval should persist across component remounts
   useEffect(() => {
-    isMountedRef.current = true;
-    
     return () => {
-      isMountedRef.current = false;
-      stopSaveInterval();
-      
-      // End session on unmount if still active
-      const session = sessionRef.current;
-      if (session.id) {
-        console.log('[RadioRewards] Unmount cleanup, sending beacon');
-        sendEndSessionBeacon(session.id);
-      }
+      // Only cleanup if we're truly leaving the app
+      // The global state persists for the lifetime of the page
     };
-  }, [stopSaveInterval]);
+  }, []);
   
   return {
-    sessionId: sessionRef.current.id,
     sessionSummary,
     showSummary,
     closeSummary,
