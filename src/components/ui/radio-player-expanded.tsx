@@ -485,6 +485,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               isPlaying={isPlaying}
               showVideo={showVideo}
               onToggleMedia={() => setShowVideo(!showVideo)}
+              isRadio2Go={isRadio2Go}
             />
 
             {/* Song Info with change animation */}
@@ -967,7 +968,8 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
   title,
   isPlaying,
   showVideo,
-  onToggleMedia
+  onToggleMedia,
+  isRadio2Go
 }: {
   artworkUrl?: string | null;
   videoUrl?: string | null;
@@ -975,6 +977,7 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
   isPlaying: boolean;
   showVideo: boolean;
   onToggleMedia: () => void;
+  isRadio2Go: boolean;
 }) {
   const hasVideo = !!videoUrl;
   const shouldShowVideo = showVideo && hasVideo;
@@ -1050,6 +1053,17 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Radio 2 Go Logo watermark - bottom left */}
+        {isRadio2Go && (
+          <div className="absolute bottom-3 left-3 z-10">
+            <img 
+              src="/pwa-192x192.png" 
+              alt="Radio 2Go" 
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl shadow-lg shadow-black/30 ring-1 ring-white/20"
+            />
+          </div>
+        )}
         
         {/* Playing indicator */}
         {isPlaying && !shouldShowVideo && !showHint && (
