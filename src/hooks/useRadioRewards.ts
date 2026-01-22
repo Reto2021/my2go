@@ -74,15 +74,12 @@ function getPendingSession(): PendingSession | null {
   }
 }
 
-// Send beacon to end session on page unload (most reliable way)
-function sendEndSessionBeacon(sessionId: string) {
+// Send beacon to SAVE progress first, then end session on page unload
+function sendSaveAndEndBeacon(sessionId: string, durationSeconds: number) {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.warn('[RadioRewards] Missing Supabase config for beacon');
     return;
   }
-  
-  const url = `${SUPABASE_URL}/rest/v1/rpc/end_listening_session`;
-  const payload = JSON.stringify({ _session_id: sessionId });
   
   const headers = {
     'Content-Type': 'application/json',
@@ -90,29 +87,52 @@ function sendEndSessionBeacon(sessionId: string) {
     'Authorization': `Bearer ${SUPABASE_KEY}`,
   };
   
-  // Use fetch with keepalive for reliable delivery during page unload
-  fetch(url, {
+  // First, save progress to ensure duration and rewards are recorded
+  if (durationSeconds >= 60) {
+    const saveUrl = `${SUPABASE_URL}/rest/v1/rpc/save_session_progress`;
+    const savePayload = JSON.stringify({ 
+      _session_id: sessionId, 
+      _duration_seconds: durationSeconds 
+    });
+    
+    fetch(saveUrl, {
+      method: 'POST',
+      headers,
+      body: savePayload,
+      keepalive: true,
+    }).catch(() => {
+      console.log('[RadioRewards] Save beacon failed');
+    });
+    
+    console.log('[RadioRewards] Sent save beacon for:', sessionId, 'duration:', durationSeconds);
+  }
+  
+  // Then end the session
+  const endUrl = `${SUPABASE_URL}/rest/v1/rpc/end_listening_session`;
+  const endPayload = JSON.stringify({ _session_id: sessionId });
+  
+  fetch(endUrl, {
     method: 'POST',
     headers,
-    body: payload,
+    body: endPayload,
     keepalive: true,
   }).catch(() => {
-    console.log('[RadioRewards] fetch keepalive failed, session will be recovered on next load');
+    console.log('[RadioRewards] End beacon failed, session will be recovered on next load');
   });
   
   console.log('[RadioRewards] Sent end session beacon for:', sessionId);
 }
 
 // Direct RPC call to save progress - GLOBAL function that doesn't rely on React
-async function saveProgressGlobal() {
+async function saveProgressGlobal(): Promise<boolean> {
   if (globalSaveInProgress) {
     console.log('[RadioRewards] 💾 Save already in progress, skipping');
-    return;
+    return false;
   }
   
   if (!globalSessionId || !globalStartTimeMs) {
     console.log('[RadioRewards] 💾 No active session to save');
-    return;
+    return false;
   }
   
   globalSaveInProgress = true;
@@ -122,6 +142,13 @@ async function saveProgressGlobal() {
   
   console.log('[RadioRewards] 💾 Saving progress:', sessionId, 'duration:', currentDuration, 'seconds');
   
+  // Only save if we've listened long enough to potentially earn something (30+ seconds)
+  if (currentDuration < 30) {
+    console.log('[RadioRewards] 💾 Duration too short to save, skipping');
+    globalSaveInProgress = false;
+    return false;
+  }
+  
   try {
     const { data, error } = await supabase.rpc('save_session_progress', {
       _session_id: sessionId,
@@ -130,15 +157,19 @@ async function saveProgressGlobal() {
     
     if (error) {
       console.error('[RadioRewards] ❌ Error saving progress:', error);
+      globalSaveInProgress = false;
+      return false;
     } else {
       console.log('[RadioRewards] ✅ Progress saved:', data);
       // Refresh balance if callback is available
       globalRefreshBalance?.();
+      globalSaveInProgress = false;
+      return true;
     }
   } catch (err) {
     console.error('[RadioRewards] ❌ Exception saving progress:', err);
-  } finally {
     globalSaveInProgress = false;
+    return false;
   }
 }
 
@@ -152,11 +183,18 @@ function startGlobalSaveInterval() {
   
   console.log('[RadioRewards] ⏱️ Starting 15-second global save interval');
   
-  // Start new interval
+  // Start new interval - saves progress every 15 seconds
   globalSaveInterval = setInterval(() => {
-    console.log('[RadioRewards] ⏱️ Interval tick');
+    console.log('[RadioRewards] ⏱️ Interval tick - saving progress');
     saveProgressGlobal();
   }, 15000);
+  
+  // IMPORTANT: Also do a first save after 60 seconds (when first tier is reached)
+  // This ensures we capture the first tier even if the user leaves before the interval triggers
+  setTimeout(() => {
+    console.log('[RadioRewards] ⏱️ First tier check (60s elapsed)');
+    saveProgressGlobal();
+  }, 62000); // 62 seconds to be safe
 }
 
 // Stop the global save interval
@@ -439,10 +477,11 @@ export function useRadioRewards() {
   // Handle visibility change - end session when app goes to background
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && globalSessionId) {
+      if (document.visibilityState === 'hidden' && globalSessionId && globalStartTimeMs) {
         console.log('[RadioRewards] App hidden, ending session');
-        // Use beacon for reliability when tab is hidden
-        sendEndSessionBeacon(globalSessionId);
+        const durationSeconds = Math.floor((Date.now() - globalStartTimeMs) / 1000);
+        // Use beacon for reliability when tab is hidden - saves progress first
+        sendSaveAndEndBeacon(globalSessionId, durationSeconds);
         // Also try normal end for immediate processing
         endSession();
       }
@@ -455,16 +494,18 @@ export function useRadioRewards() {
   // Handle page unload - use beacon for reliable session ending
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (globalSessionId) {
-        console.log('[RadioRewards] Page unloading, sending beacon to end session:', globalSessionId);
-        sendEndSessionBeacon(globalSessionId);
+      if (globalSessionId && globalStartTimeMs) {
+        const durationSeconds = Math.floor((Date.now() - globalStartTimeMs) / 1000);
+        console.log('[RadioRewards] Page unloading, sending beacon to end session:', globalSessionId, 'duration:', durationSeconds);
+        sendSaveAndEndBeacon(globalSessionId, durationSeconds);
       }
     };
     
     const handlePageHide = (event: PageTransitionEvent) => {
-      if (globalSessionId && !event.persisted) {
-        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', globalSessionId);
-        sendEndSessionBeacon(globalSessionId);
+      if (globalSessionId && globalStartTimeMs && !event.persisted) {
+        const durationSeconds = Math.floor((Date.now() - globalStartTimeMs) / 1000);
+        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', globalSessionId, 'duration:', durationSeconds);
+        sendSaveAndEndBeacon(globalSessionId, durationSeconds);
       }
     };
     
