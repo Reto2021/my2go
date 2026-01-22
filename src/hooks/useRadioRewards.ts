@@ -13,6 +13,8 @@ if (import.meta.hot) {
 
 const FIRST_TALER_KEY = 'first_taler_celebrated';
 const PENDING_SESSION_KEY = 'pending_radio_session';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 interface ListeningReward {
   success: boolean;
@@ -60,6 +62,42 @@ function getPendingSession(): PendingSession | null {
   }
 }
 
+// Send beacon to end session on page unload (most reliable way)
+function sendEndSessionBeacon(sessionId: string) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.warn('[RadioRewards] Missing Supabase config for beacon');
+    return;
+  }
+  
+  const url = `${SUPABASE_URL}/rest/v1/rpc/end_listening_session`;
+  const payload = JSON.stringify({ _session_id: sessionId });
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+  };
+  
+  // Use sendBeacon for reliable delivery during page unload
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: 'application/json' });
+    
+    // Create a FormData-like structure with headers isn't possible with sendBeacon
+    // So we use fetch with keepalive instead
+    fetch(url, {
+      method: 'POST',
+      headers,
+      body: payload,
+      keepalive: true, // Critical: ensures request survives page navigation
+    }).catch(() => {
+      // Fallback: try sendBeacon (may not include auth headers properly)
+      console.log('[RadioRewards] fetch keepalive failed, session will be recovered on next load');
+    });
+  }
+  
+  console.log('[RadioRewards] Sent end session beacon for:', sessionId);
+}
+
 export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
@@ -82,29 +120,45 @@ export function useRadioRewards() {
   
   const userId = user?.id;
   
-  // Recover and end any pending sessions from previous page load
+  // Recover and end any pending/orphaned sessions from previous page load
   useEffect(() => {
     if (!userId || hasRecoveredRef.current) return;
     hasRecoveredRef.current = true;
     
+    // First, try to recover the specific pending session from localStorage
     const pending = getPendingSession();
     if (pending && pending.userId === userId) {
-      console.log('[RadioRewards] Found pending session to recover:', pending.sessionId);
+      console.log('[RadioRewards] Found pending session in localStorage:', pending.sessionId);
       
       // End the pending session
       supabase.rpc('end_listening_session', { _session_id: pending.sessionId })
         .then(({ data, error }) => {
           if (error) {
-            console.error('[RadioRewards] Error recovering session:', error);
+            console.error('[RadioRewards] Error recovering pending session:', error);
           } else {
-            console.log('[RadioRewards] Recovered session result:', data);
-            refreshBalance?.();
+            console.log('[RadioRewards] Recovered pending session result:', data);
           }
           clearPendingSession();
         });
     } else {
       clearPendingSession();
     }
+    
+    // Also recover any orphaned sessions on the server (catches cases where beacon failed)
+    console.log('[RadioRewards] Checking for orphaned sessions on server...');
+    supabase.rpc('recover_orphaned_sessions', { _user_id: userId })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('[RadioRewards] Error recovering orphaned sessions:', error);
+        } else if (data && typeof data === 'object') {
+          const result = data as { recovered_sessions?: number; total_reward?: number };
+          if (result.recovered_sessions && result.recovered_sessions > 0) {
+            console.log('[RadioRewards] Recovered orphaned sessions:', result);
+            // Refresh balance to show recovered Taler
+            refreshBalance?.();
+          }
+        }
+      });
   }, [userId, refreshBalance]);
   
   // Start a listening session when radio starts playing
@@ -273,6 +327,9 @@ export function useRadioRewards() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && sessionIdRef.current) {
         console.log('[RadioRewards] App hidden, ending session');
+        // Use beacon for reliability when tab is hidden
+        sendEndSessionBeacon(sessionIdRef.current);
+        // Also try normal end for immediate processing
         endSession();
       }
     };
@@ -281,16 +338,33 @@ export function useRadioRewards() {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [endSession]);
   
-  // Handle page unload - save session for recovery
+  // Handle page unload - use beacon for reliable session ending
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Session is already saved to localStorage when started
-      // It will be recovered on next page load
-      console.log('[RadioRewards] Page unloading, session will be recovered on reload');
+      const sessionId = sessionIdRef.current;
+      if (sessionId) {
+        console.log('[RadioRewards] Page unloading, sending beacon to end session:', sessionId);
+        // Send beacon - this is the most reliable way to end session on page close
+        sendEndSessionBeacon(sessionId);
+      }
+    };
+    
+    // Also handle pagehide for mobile browsers (more reliable than beforeunload)
+    const handlePageHide = (event: PageTransitionEvent) => {
+      const sessionId = sessionIdRef.current;
+      if (sessionId && !event.persisted) {
+        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', sessionId);
+        sendEndSessionBeacon(sessionId);
+      }
     };
     
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
   }, []);
   
   return {

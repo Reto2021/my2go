@@ -2612,6 +2612,7 @@ export type Database = {
             Returns: Json
           }
       purchase_streak_freeze: { Args: { _user_id: string }; Returns: Json }
+      recover_orphaned_sessions: { Args: { _user_id: string }; Returns: Json }
       redeem_air_drop_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
