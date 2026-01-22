@@ -29,6 +29,28 @@ let globalIsEnding = false;
 let globalRefreshBalance: (() => void) | undefined = undefined;
 let globalUserId: string | null = null;
 
+// CRITICAL: Restore global state from localStorage immediately on module load
+// This ensures that after a page refresh, the session continues
+function restoreGlobalStateFromStorage() {
+  try {
+    const data = localStorage.getItem(PENDING_SESSION_KEY);
+    if (!data) return;
+    
+    const parsed = JSON.parse(data);
+    if (parsed.sessionId && parsed.startTime) {
+      globalSessionId = parsed.sessionId;
+      globalStartTimeMs = parsed.startTime;
+      globalUserId = parsed.userId || null;
+      console.log('[RadioRewards] 🔄 RESTORED global state from localStorage on module load:', globalSessionId);
+    }
+  } catch (e) {
+    console.error('[RadioRewards] Error restoring from localStorage:', e);
+  }
+}
+
+// Run immediately when module loads
+restoreGlobalStateFromStorage();
+
 interface ListeningReward {
   success: boolean;
   duration: number;
@@ -62,6 +84,8 @@ function savePendingSession(sessionId: string, userId: string, startTime: number
 
 function clearPendingSession() {
   localStorage.removeItem(PENDING_SESSION_KEY);
+  globalSessionId = null;
+  globalStartTimeMs = null;
   console.log('[RadioRewards] 🗑️ Cleared pending session from localStorage');
 }
 
@@ -161,53 +185,6 @@ function stopGlobalSaveInterval() {
   }
 }
 
-// Resume session from localStorage if radio is playing and session exists
-async function resumeSessionFromStorage(userId: string): Promise<boolean> {
-  const pending = getPendingSession();
-  
-  if (!pending) {
-    console.log('[RadioRewards] No pending session in localStorage');
-    return false;
-  }
-  
-  if (pending.userId !== userId) {
-    console.log('[RadioRewards] Pending session belongs to different user');
-    clearPendingSession();
-    return false;
-  }
-  
-  // Check if session is still active on server
-  const { data: session, error } = await supabase
-    .from('radio_listening_sessions')
-    .select('id, ended_at, started_at')
-    .eq('id', pending.sessionId)
-    .single();
-  
-  if (error || !session || session.ended_at) {
-    console.log('[RadioRewards] Pending session no longer active on server');
-    clearPendingSession();
-    return false;
-  }
-  
-  // Session is still active! Resume it
-  console.log('[RadioRewards] 🔄 RESUMING session from localStorage:', pending.sessionId);
-  
-  globalSessionId = pending.sessionId;
-  globalStartTimeMs = pending.startTime;
-  globalUserId = userId;
-  
-  // Start the save interval immediately
-  startGlobalSaveInterval();
-  
-  // Do an immediate save to sync progress
-  setTimeout(() => {
-    console.log('[RadioRewards] 🔄 Immediate save after resume');
-    saveProgressGlobal();
-  }, 1000);
-  
-  return true;
-}
-
 export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
@@ -217,7 +194,7 @@ export function useRadioRewards() {
   
   const lastStationTypeRef = useRef<boolean | null>(null);
   const pendingStationSwitchRef = useRef(false);
-  const hasResumedRef = useRef(false);
+  const hasInitializedRef = useRef(false);
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -234,70 +211,50 @@ export function useRadioRewards() {
     }
   }, [refreshBalance, userId]);
   
-  // On mount: Try to resume session from localStorage if radio is playing
+  // CRITICAL: On mount, check if we have a pending session and restart the save interval
+  // This handles page refresh scenarios
   useEffect(() => {
-    if (!userId || hasResumedRef.current) return;
-    hasResumedRef.current = true;
+    if (!userId || hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
     
-    // Check if radio is currently playing and we have a pending session
-    const radioStore = useRadioStore.getState();
+    console.log('[RadioRewards] 🚀 Initializing... globalSessionId:', globalSessionId, 'globalStartTimeMs:', globalStartTimeMs);
     
-    if (radioStore.isPlaying) {
-      // Radio is playing, try to resume session
-      resumeSessionFromStorage(userId).then(resumed => {
-        if (resumed) {
-          console.log('[RadioRewards] ✅ Successfully resumed session after page reload');
-        }
-      });
-    } else {
-      // Radio is not playing, end any orphaned sessions
-      const pending = getPendingSession();
-      if (pending && pending.userId === userId) {
-        console.log('[RadioRewards] Radio not playing, ending orphaned session:', pending.sessionId);
-        
-        // Calculate duration and save progress before ending
-        const durationSeconds = Math.floor((Date.now() - pending.startTime) / 1000);
-        
-        // First save progress, then end session
-        if (durationSeconds >= 60) {
-          supabase.rpc('save_session_progress', {
-            _session_id: pending.sessionId,
-            _duration_seconds: durationSeconds
-          }).then(({ error }) => {
-            if (error) {
-              console.error('[RadioRewards] Error saving orphaned session progress:', error);
-            } else {
-              console.log('[RadioRewards] ✅ Saved orphaned session progress');
-            }
-            
-            // Now end the session
-            supabase.rpc('end_listening_session', { _session_id: pending.sessionId })
-              .then(({ data, error: endError }) => {
-                if (endError) {
-                  console.error('[RadioRewards] Error ending orphaned session:', endError);
-                } else {
-                  console.log('[RadioRewards] ✅ Ended orphaned session:', data);
-                  refreshBalance?.();
-                }
-                clearPendingSession();
-              });
-          });
-        } else {
-          // Too short, just end without saving
-          supabase.rpc('end_listening_session', { _session_id: pending.sessionId })
-            .then(({ data, error }) => {
-              if (error) {
-                console.error('[RadioRewards] Error ending orphaned session:', error);
-              } else {
-                console.log('[RadioRewards] ✅ Ended short orphaned session:', data);
-              }
-              clearPendingSession();
-            });
-        }
-      }
+    // If we already have global state (restored from localStorage on module load), 
+    // verify the session is still valid and start the save interval
+    if (globalSessionId && globalStartTimeMs) {
+      console.log('[RadioRewards] 🔄 Found existing session, verifying on server...');
       
-      // Also recover any other orphaned sessions on the server
-      console.log('[RadioRewards] Checking for orphaned sessions on server...');
+      // Verify session is still active
+      supabase
+        .from('radio_listening_sessions')
+        .select('id, ended_at')
+        .eq('id', globalSessionId)
+        .single()
+        .then(({ data: session, error }) => {
+          if (error || !session || session.ended_at) {
+            console.log('[RadioRewards] Session no longer active on server, clearing');
+            clearPendingSession();
+            return;
+          }
+          
+          // Session is valid! Start the save interval
+          console.log('[RadioRewards] ✅ Session still active, starting save interval');
+          startGlobalSaveInterval();
+          
+          // Do an immediate save
+          const elapsed = Math.floor((Date.now() - globalStartTimeMs!) / 1000);
+          console.log('[RadioRewards] Elapsed since session start:', elapsed, 'seconds');
+          
+          if (elapsed >= 60) {
+            setTimeout(() => {
+              console.log('[RadioRewards] 🔄 Immediate save after page reload');
+              saveProgressGlobal();
+            }, 500);
+          }
+        });
+    } else {
+      // No active session, check for orphaned sessions
+      console.log('[RadioRewards] No active session, checking for orphaned sessions...');
       supabase.rpc('recover_orphaned_sessions', { _user_id: userId })
         .then(({ data, error }) => {
           if (error) {
