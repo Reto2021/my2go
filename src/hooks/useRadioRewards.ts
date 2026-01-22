@@ -16,6 +16,9 @@ const PENDING_SESSION_KEY = 'pending_radio_session';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Global tracking to prevent double-saves from interval + render cycles
+let globalSaveInProgress = false;
+
 interface ListeningReward {
   success: boolean;
   duration: number;
@@ -78,24 +81,49 @@ function sendEndSessionBeacon(sessionId: string) {
     'Authorization': `Bearer ${SUPABASE_KEY}`,
   };
   
-  // Use sendBeacon for reliable delivery during page unload
-  if (navigator.sendBeacon) {
-    const blob = new Blob([payload], { type: 'application/json' });
-    
-    // Create a FormData-like structure with headers isn't possible with sendBeacon
-    // So we use fetch with keepalive instead
-    fetch(url, {
-      method: 'POST',
-      headers,
-      body: payload,
-      keepalive: true, // Critical: ensures request survives page navigation
-    }).catch(() => {
-      // Fallback: try sendBeacon (may not include auth headers properly)
-      console.log('[RadioRewards] fetch keepalive failed, session will be recovered on next load');
-    });
-  }
+  // Use fetch with keepalive for reliable delivery during page unload
+  fetch(url, {
+    method: 'POST',
+    headers,
+    body: payload,
+    keepalive: true,
+  }).catch(() => {
+    console.log('[RadioRewards] fetch keepalive failed, session will be recovered on next load');
+  });
   
   console.log('[RadioRewards] Sent end session beacon for:', sessionId);
+}
+
+// Direct RPC call to save progress - standalone function that doesn't rely on React state
+async function saveProgressDirect(sessionId: string, startTimeMs: number, refreshBalance?: () => void) {
+  if (globalSaveInProgress) {
+    console.log('[RadioRewards] 💾 Save already in progress, skipping');
+    return;
+  }
+  
+  globalSaveInProgress = true;
+  
+  const currentDuration = Math.floor((Date.now() - startTimeMs) / 1000);
+  
+  console.log('[RadioRewards] 💾 Saving progress directly:', sessionId, 'duration:', currentDuration);
+  
+  try {
+    const { data, error } = await supabase.rpc('save_session_progress', {
+      _session_id: sessionId,
+      _duration_seconds: currentDuration
+    });
+    
+    if (error) {
+      console.error('[RadioRewards] ❌ Error saving progress:', error);
+    } else {
+      console.log('[RadioRewards] ✅ Progress saved:', data);
+      refreshBalance?.();
+    }
+  } catch (err) {
+    console.error('[RadioRewards] ❌ Exception saving progress:', err);
+  } finally {
+    globalSaveInProgress = false;
+  }
 }
 
 export function useRadioRewards() {
@@ -105,15 +133,23 @@ export function useRadioRewards() {
   const user = authContext?.user;
   const { isPlaying, isRadio2Go, isSwitching, isLoading } = useRadioStore();
   
-  const sessionIdRef = useRef<string | null>(null);
-  const startTimeRef = useRef<Date | null>(null);
-  const isStartingRef = useRef(false);
-  const isEndingRef = useRef(false);
+  // Use a single ref object to avoid stale closure issues
+  const sessionRef = useRef<{
+    id: string | null;
+    startTimeMs: number | null;
+    isStarting: boolean;
+    isEnding: boolean;
+  }>({
+    id: null,
+    startTimeMs: null,
+    isStarting: false,
+    isEnding: false,
+  });
+  
   const lastStationTypeRef = useRef<boolean | null>(null);
   const pendingStationSwitchRef = useRef(false);
   const hasRecoveredRef = useRef(false);
   const saveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastSavedDurationRef = useRef<number>(0);
   const isMountedRef = useRef(true);
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
@@ -123,47 +159,13 @@ export function useRadioRewards() {
   
   const userId = user?.id;
   
-  // Persist session progress every 15 seconds - uses current refs directly
-  const saveSessionProgress = useCallback(async () => {
-    const sessionId = sessionIdRef.current;
-    const startTime = startTimeRef.current;
-    
-    if (!sessionId || !startTime || !userId || !isMountedRef.current) {
-      console.log('[RadioRewards] saveProgress skipped:', { sessionId: !!sessionId, startTime: !!startTime, userId: !!userId });
-      return;
-    }
-    
-    const currentDuration = Math.floor((Date.now() - startTime.getTime()) / 1000);
-    const lastSaved = lastSavedDurationRef.current;
-    
-    // Only save if at least 10 seconds of new progress
-    if (currentDuration - lastSaved < 10) {
-      console.log('[RadioRewards] Not enough progress to save:', currentDuration - lastSaved, 'seconds since last save');
-      return;
-    }
-    
-    console.log('[RadioRewards] 💾 Saving session progress:', currentDuration, 'seconds (last saved:', lastSaved, ')');
-    
-    try {
-      const { data, error } = await supabase.rpc('save_session_progress', {
-        _session_id: sessionId,
-        _duration_seconds: currentDuration
-      });
-      
-      if (error) {
-        console.error('[RadioRewards] ❌ Error saving progress:', error);
-      } else {
-        lastSavedDurationRef.current = currentDuration;
-        console.log('[RadioRewards] ✅ Progress saved successfully:', data);
-        // Refresh balance to show accumulated Taler in UI
-        refreshBalance?.();
-      }
-    } catch (err) {
-      console.error('[RadioRewards] ❌ Exception saving progress:', err);
-    }
-  }, [userId, refreshBalance]);
+  // Store refreshBalance in a ref so the interval can access the latest version
+  const refreshBalanceRef = useRef(refreshBalance);
+  useEffect(() => {
+    refreshBalanceRef.current = refreshBalance;
+  }, [refreshBalance]);
   
-  // Start the 15-second save interval
+  // Start the 15-second save interval - this runs independently of React state
   const startSaveInterval = useCallback(() => {
     // Clear any existing interval first
     if (saveIntervalRef.current) {
@@ -173,12 +175,19 @@ export function useRadioRewards() {
     
     console.log('[RadioRewards] ⏱️ Starting 15-second save interval');
     
-    // Start new interval
+    // Start new interval - accesses refs directly, not React state
     saveIntervalRef.current = setInterval(() => {
-      console.log('[RadioRewards] ⏱️ Interval tick - calling saveSessionProgress');
-      saveSessionProgress();
+      const session = sessionRef.current;
+      
+      if (!session.id || !session.startTimeMs) {
+        console.log('[RadioRewards] ⏱️ Interval tick but no active session');
+        return;
+      }
+      
+      console.log('[RadioRewards] ⏱️ Interval tick - saving progress for session:', session.id);
+      saveProgressDirect(session.id, session.startTimeMs, refreshBalanceRef.current);
     }, 15000);
-  }, [saveSessionProgress]);
+  }, []);
   
   // Stop the save interval
   const stopSaveInterval = useCallback(() => {
@@ -232,24 +241,26 @@ export function useRadioRewards() {
   
   // Start a listening session when radio starts playing
   const startSession = useCallback(async () => {
+    const session = sessionRef.current;
+    
     // Strict guard against duplicate starts
     if (!userId) {
       console.log('[RadioRewards] startSession skipped: no userId');
       return;
     }
     
-    if (isStartingRef.current) {
+    if (session.isStarting) {
       console.log('[RadioRewards] startSession skipped: already starting');
       return;
     }
     
-    if (sessionIdRef.current) {
-      console.log('[RadioRewards] startSession skipped: session already exists:', sessionIdRef.current);
+    if (session.id) {
+      console.log('[RadioRewards] startSession skipped: session already exists:', session.id);
       return;
     }
     
     // Set guard IMMEDIATELY before any async work
-    isStartingRef.current = true;
+    session.isStarting = true;
     console.log('[RadioRewards] 🎵 Starting session for user:', userId);
     
     // Get current station info from radio store
@@ -268,22 +279,22 @@ export function useRadioRewards() {
       
       if (error) {
         console.error('[RadioRewards] Error starting listening session:', error);
-        isStartingRef.current = false;
+        session.isStarting = false;
         return;
       }
       
       const newSessionId = data as string;
       
       // Double-check we didn't get a duplicate start
-      if (sessionIdRef.current) {
-        console.warn('[RadioRewards] Race condition detected, session already set:', sessionIdRef.current);
-        isStartingRef.current = false;
+      if (session.id) {
+        console.warn('[RadioRewards] Race condition detected, session already set:', session.id);
+        session.isStarting = false;
         return;
       }
       
-      sessionIdRef.current = newSessionId;
-      startTimeRef.current = new Date();
-      lastSavedDurationRef.current = 0;
+      // Update session ref
+      session.id = newSessionId;
+      session.startTimeMs = Date.now();
       
       // Save to localStorage for recovery after page refresh
       savePendingSession(newSessionId, userId);
@@ -295,42 +306,43 @@ export function useRadioRewards() {
     } catch (error) {
       console.error('[RadioRewards] Error starting listening session:', error);
     } finally {
-      isStartingRef.current = false;
+      session.isStarting = false;
     }
   }, [userId, startSaveInterval]);
   
   // End a listening session when radio stops
   const endSession = useCallback(async () => {
-    const sessionId = sessionIdRef.current;
+    const session = sessionRef.current;
     
-    if (!sessionId) {
+    if (!session.id) {
       console.log('[RadioRewards] endSession skipped: no session');
       return;
     }
     
-    if (isEndingRef.current) {
+    if (session.isEnding) {
       console.log('[RadioRewards] endSession skipped: already ending');
       return;
     }
     
     // Set guard IMMEDIATELY
-    isEndingRef.current = true;
-    console.log('[RadioRewards] 🛑 Ending session:', sessionId);
+    session.isEnding = true;
+    console.log('[RadioRewards] 🛑 Ending session:', session.id);
     
     // Stop the save interval immediately
     stopSaveInterval();
     
     // Save final progress before ending
-    await saveSessionProgress();
+    if (session.id && session.startTimeMs) {
+      await saveProgressDirect(session.id, session.startTimeMs, refreshBalanceRef.current);
+    }
     
     // Clear refs immediately to prevent double-calls
-    const endingSessionId = sessionIdRef.current;
-    sessionIdRef.current = null;
-    startTimeRef.current = null;
-    lastSavedDurationRef.current = 0;
+    const endingSessionId = session.id;
+    session.id = null;
+    session.startTimeMs = null;
     
     if (!endingSessionId) {
-      isEndingRef.current = false;
+      session.isEnding = false;
       return;
     }
     
@@ -381,9 +393,9 @@ export function useRadioRewards() {
       console.error('[RadioRewards] Error ending listening session:', error);
       await refreshBalance?.();
     } finally {
-      isEndingRef.current = false;
+      session.isEnding = false;
     }
-  }, [userId, refreshBalance, clearPendingTaler, stopSaveInterval, saveSessionProgress]);
+  }, [userId, refreshBalance, clearPendingTaler, stopSaveInterval]);
   
   const closeSummary = useCallback(() => {
     setShowSummary(false);
@@ -408,12 +420,13 @@ export function useRadioRewards() {
       return;
     }
     
+    const session = sessionRef.current;
     const hasStationTypeChanged = lastStationTypeRef.current !== null && 
                                    lastStationTypeRef.current !== isRadio2Go;
     
     if (isPlaying) {
       // If station type changed while playing, end old session first, then start new
-      if (hasStationTypeChanged && sessionIdRef.current && !pendingStationSwitchRef.current) {
+      if (hasStationTypeChanged && session.id && !pendingStationSwitchRef.current) {
         pendingStationSwitchRef.current = true;
         console.log('[RadioRewards] Station type changed, ending old session and starting new');
         endSession().then(() => {
@@ -422,11 +435,11 @@ export function useRadioRewards() {
             pendingStationSwitchRef.current = false;
           }, 150);
         });
-      } else if (!sessionIdRef.current && !pendingStationSwitchRef.current) {
+      } else if (!session.id && !pendingStationSwitchRef.current) {
         console.log('[RadioRewards] Starting new session, userId:', userId);
         startSession();
       }
-    } else if (!isPlaying && sessionIdRef.current && !pendingStationSwitchRef.current) {
+    } else if (!isPlaying && session.id && !pendingStationSwitchRef.current) {
       console.log('[RadioRewards] Playback stopped, ending session');
       endSession();
     }
@@ -438,10 +451,11 @@ export function useRadioRewards() {
   // Handle visibility change - end session when app goes to background
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && sessionIdRef.current) {
+      const session = sessionRef.current;
+      if (document.visibilityState === 'hidden' && session.id) {
         console.log('[RadioRewards] App hidden, ending session');
         // Use beacon for reliability when tab is hidden
-        sendEndSessionBeacon(sessionIdRef.current);
+        sendEndSessionBeacon(session.id);
         // Also try normal end for immediate processing
         endSession();
       }
@@ -454,20 +468,18 @@ export function useRadioRewards() {
   // Handle page unload - use beacon for reliable session ending
   useEffect(() => {
     const handleBeforeUnload = () => {
-      const sessionId = sessionIdRef.current;
-      if (sessionId) {
-        console.log('[RadioRewards] Page unloading, sending beacon to end session:', sessionId);
-        // Send beacon - this is the most reliable way to end session on page close
-        sendEndSessionBeacon(sessionId);
+      const session = sessionRef.current;
+      if (session.id) {
+        console.log('[RadioRewards] Page unloading, sending beacon to end session:', session.id);
+        sendEndSessionBeacon(session.id);
       }
     };
     
-    // Also handle pagehide for mobile browsers (more reliable than beforeunload)
     const handlePageHide = (event: PageTransitionEvent) => {
-      const sessionId = sessionIdRef.current;
-      if (sessionId && !event.persisted) {
-        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', sessionId);
-        sendEndSessionBeacon(sessionId);
+      const session = sessionRef.current;
+      if (session.id && !event.persisted) {
+        console.log('[RadioRewards] Page hiding (not cached), sending beacon:', session.id);
+        sendEndSessionBeacon(session.id);
       }
     };
     
@@ -489,17 +501,16 @@ export function useRadioRewards() {
       stopSaveInterval();
       
       // End session on unmount if still active
-      const sessionId = sessionIdRef.current;
-      if (sessionId) {
-        console.log('[RadioRewards] Component unmounting with active session, sending beacon');
-        sendEndSessionBeacon(sessionId);
+      const session = sessionRef.current;
+      if (session.id) {
+        console.log('[RadioRewards] Unmount cleanup, sending beacon');
+        sendEndSessionBeacon(session.id);
       }
     };
   }, [stopSaveInterval]);
   
   return {
-    isTracking: !!sessionIdRef.current,
-    startTime: startTimeRef.current,
+    sessionId: sessionRef.current.id,
     sessionSummary,
     showSummary,
     closeSummary,
