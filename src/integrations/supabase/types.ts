@@ -2625,6 +2625,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      save_session_progress: {
+        Args: { _duration_seconds: number; _session_id: string }
+        Returns: Json
+      }
       start_listening_session:
         | { Args: { _user_id: string }; Returns: string }
         | {

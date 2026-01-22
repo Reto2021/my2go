@@ -112,6 +112,8 @@ export function useRadioRewards() {
   const lastStationTypeRef = useRef<boolean | null>(null);
   const pendingStationSwitchRef = useRef(false);
   const hasRecoveredRef = useRef(false);
+  const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedDurationRef = useRef<number>(0);
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -119,6 +121,39 @@ export function useRadioRewards() {
   const [firstTalerAmount, setFirstTalerAmount] = useState(0);
   
   const userId = user?.id;
+  
+  // Persist session progress every 15 seconds
+  const saveSessionProgress = useCallback(async () => {
+    const sessionId = sessionIdRef.current;
+    const startTime = startTimeRef.current;
+    
+    if (!sessionId || !startTime || !userId) return;
+    
+    const currentDuration = Math.floor((Date.now() - startTime.getTime()) / 1000);
+    
+    // Only save if we have meaningful progress (at least 5 seconds more than last save)
+    if (currentDuration - lastSavedDurationRef.current < 5) return;
+    
+    console.log('[RadioRewards] Saving session progress:', currentDuration, 'seconds');
+    
+    try {
+      const { error } = await supabase.rpc('save_session_progress', {
+        _session_id: sessionId,
+        _duration_seconds: currentDuration
+      });
+      
+      if (error) {
+        console.error('[RadioRewards] Error saving progress:', error);
+      } else {
+        lastSavedDurationRef.current = currentDuration;
+        console.log('[RadioRewards] Progress saved successfully');
+        // Refresh balance to show accumulated Taler
+        refreshBalance?.();
+      }
+    } catch (err) {
+      console.error('[RadioRewards] Error saving progress:', err);
+    }
+  }, [userId, refreshBalance]);
   
   // Recover and end any pending/orphaned sessions from previous page load
   useEffect(() => {
@@ -193,9 +228,18 @@ export function useRadioRewards() {
       const newSessionId = data as string;
       sessionIdRef.current = newSessionId;
       startTimeRef.current = new Date();
+      lastSavedDurationRef.current = 0;
       
       // Save to localStorage for recovery after page refresh
       savePendingSession(newSessionId, userId);
+      
+      // Start 15-second interval to save progress
+      if (saveIntervalRef.current) {
+        clearInterval(saveIntervalRef.current);
+      }
+      saveIntervalRef.current = setInterval(() => {
+        saveSessionProgress();
+      }, 15000); // Every 15 seconds
       
       console.log('[RadioRewards] Session started:', newSessionId, 'stream:', streamType);
     } catch (error) {
@@ -203,7 +247,7 @@ export function useRadioRewards() {
     } finally {
       isStartingRef.current = false;
     }
-  }, [userId]);
+  }, [userId, saveSessionProgress]);
   
   // End a listening session when radio stops
   const endSession = useCallback(async () => {
@@ -217,9 +261,19 @@ export function useRadioRewards() {
     isEndingRef.current = true;
     console.log('[RadioRewards] Ending session:', sessionId);
     
+    // Clear the save interval
+    if (saveIntervalRef.current) {
+      clearInterval(saveIntervalRef.current);
+      saveIntervalRef.current = null;
+    }
+    
+    // Save final progress before ending
+    await saveSessionProgress();
+    
     // Clear refs immediately to prevent double-calls
     sessionIdRef.current = null;
     startTimeRef.current = null;
+    lastSavedDurationRef.current = 0;
     
     try {
       const { data, error } = await supabase.rpc('end_listening_session', {
