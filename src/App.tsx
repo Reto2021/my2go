@@ -84,6 +84,7 @@ const PartnerRewards = lazy(() => import("./pages/partner/PartnerRewards"));
 const PartnerRedemptions = lazy(() => import("./pages/partner/PartnerRedemptions"));
 const PartnerReviews = lazy(() => import("./pages/partner/PartnerReviews"));
 const PartnerSettingsPage = lazy(() => import("./pages/partner/PartnerSettings"));
+const PartnerRadioPage = lazy(() => import("./pages/partner/PartnerRadio"));
 const PartnerLivePage = lazy(() => import("./pages/partner/PartnerLivePage"));
 const PartnerPOSMaterials = lazy(() => import("./pages/partner/PartnerPOSMaterials"));
 
@@ -112,6 +113,8 @@ const FunnelTermsPage = lazy(() => import("./pages/funnel/legal/FunnelTermsPage"
 const FunnelPrivacyPage = lazy(() => import("./pages/funnel/legal/FunnelPrivacyPage"));
 const FunnelImprintPage = lazy(() => import("./pages/funnel/legal/FunnelImprintPage"));
 
+// Public Partner Radio page
+const PublicPartnerRadioPage = lazy(() => import("./pages/radio/PartnerRadioPage"));
 // Optimized QueryClient with caching strategy
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -254,6 +257,7 @@ function AppContent() {
             <Route path="redemptions" element={<PartnerRedemptions />} />
             <Route path="pos" element={<PartnerPOSMaterials />} />
             <Route path="reviews" element={<PartnerReviews />} />
+            <Route path="radio" element={<PartnerRadioPage />} />
             <Route path="live" element={<PartnerLivePage />} />
             <Route path="settings" element={<PartnerSettingsPage />} />
           </Route>
@@ -315,6 +319,9 @@ function AppContent() {
             <Route path="/my-stats" element={<MyStatsPage />} />
             <Route path="/gift/success" element={<GiftSuccessPage />} />
           </Route>
+          
+          {/* Public Partner Radio Page */}
+          <Route path="/radio/:slug" element={<PublicPartnerRadioPage />} />
           
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
