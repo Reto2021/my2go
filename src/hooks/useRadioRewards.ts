@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { triggerTalerAnimation } from '@/components/taler/TalerEarnAnimation';
+import { toast } from 'sonner';
 
 // Force HMR boundary to prevent React queue corruption during hot reload
 if (import.meta.hot) {
@@ -13,6 +14,7 @@ if (import.meta.hot) {
 
 const FIRST_TALER_KEY = 'first_taler_celebrated';
 const PENDING_SESSION_KEY = 'pending_radio_session';
+const AUTH_TOKEN_KEY = 'pending_radio_auth_token';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -28,6 +30,7 @@ let globalIsStarting = false;
 let globalIsEnding = false;
 let globalRefreshBalance: (() => void) | undefined = undefined;
 let globalUserId: string | null = null;
+let globalAccessToken: string | null = null;
 
 // CRITICAL: Restore global state from localStorage immediately on module load
 // This ensures that after a page refresh, the session continues
@@ -42,6 +45,13 @@ function restoreGlobalStateFromStorage() {
       globalStartTimeMs = parsed.startTime;
       globalUserId = parsed.userId || null;
       console.log('[RadioRewards] 🔄 RESTORED global state from localStorage on module load:', globalSessionId);
+    }
+    
+    // Also restore auth token if available
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (token) {
+      globalAccessToken = token;
+      console.log('[RadioRewards] 🔄 RESTORED auth token from localStorage');
     }
   } catch (e) {
     console.error('[RadioRewards] Error restoring from localStorage:', e);
@@ -82,10 +92,19 @@ function savePendingSession(sessionId: string, userId: string, startTime: number
   console.log('[RadioRewards] 💾 Saved pending session to localStorage:', sessionId, 'startTime:', startTime);
 }
 
+// Save auth token for background saves
+function saveAuthToken(token: string) {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  globalAccessToken = token;
+  console.log('[RadioRewards] 🔐 Saved auth token for background saves');
+}
+
 function clearPendingSession() {
   localStorage.removeItem(PENDING_SESSION_KEY);
+  localStorage.removeItem(AUTH_TOKEN_KEY);
   globalSessionId = null;
   globalStartTimeMs = null;
+  globalAccessToken = null;
   console.log('[RadioRewards] 🗑️ Cleared pending session from localStorage');
 }
 
@@ -99,8 +118,23 @@ function getPendingSession(): PendingSession | null {
   }
 }
 
+// Get fresh auth token from Supabase
+async function getFreshAuthToken(): Promise<string | null> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      saveAuthToken(session.access_token);
+      return session.access_token;
+    }
+    return globalAccessToken; // Fallback to cached token
+  } catch (e) {
+    console.error('[RadioRewards] Error getting auth token:', e);
+    return globalAccessToken;
+  }
+}
+
 // Direct RPC call to save progress - GLOBAL function that doesn't rely on React
-async function saveProgressGlobal(): Promise<boolean> {
+async function saveProgressGlobal(showFeedback = false): Promise<boolean> {
   if (globalSaveInProgress) {
     console.log('[RadioRewards] 💾 Save already in progress, skipping');
     return false;
@@ -133,6 +167,11 @@ async function saveProgressGlobal(): Promise<boolean> {
     
     if (error) {
       console.error('[RadioRewards] ❌ Error saving progress:', error);
+      if (showFeedback) {
+        toast.error('Fehler beim Speichern des Fortschritts', {
+          description: error.message,
+        });
+      }
       globalSaveInProgress = false;
       return false;
     } else {
@@ -142,11 +181,20 @@ async function saveProgressGlobal(): Promise<boolean> {
         console.log('[RadioRewards] 🔄 Triggering balance refresh...');
         globalRefreshBalance();
       }
+      const result = data as { taler_awarded?: number; success?: boolean } | null;
+      if (showFeedback && result?.taler_awarded && result.taler_awarded > 0) {
+        toast.success(`${result.taler_awarded} Taler gespeichert!`, {
+          duration: 2000,
+        });
+      }
       globalSaveInProgress = false;
       return true;
     }
   } catch (err) {
     console.error('[RadioRewards] ❌ Exception saving progress:', err);
+    if (showFeedback) {
+      toast.error('Netzwerkfehler beim Speichern');
+    }
     globalSaveInProgress = false;
     return false;
   }
@@ -172,7 +220,7 @@ function startGlobalSaveInterval() {
   // This ensures we capture the first tier even if the user leaves before the interval triggers
   setTimeout(() => {
     console.log('[RadioRewards] ⏱️ First tier check triggered (65s elapsed since interval start)');
-    saveProgressGlobal();
+    saveProgressGlobal(true); // Show feedback for first save
   }, 65000);
 }
 
@@ -185,16 +233,58 @@ function stopGlobalSaveInterval() {
   }
 }
 
+// Background save with proper auth token - for page unload events
+async function saveWithKeepalive() {
+  if (!globalSessionId || !globalStartTimeMs || !SUPABASE_URL || !SUPABASE_KEY) {
+    return;
+  }
+  
+  const durationSeconds = Math.floor((Date.now() - globalStartTimeMs) / 1000);
+  
+  if (durationSeconds < 60) {
+    console.log('[RadioRewards] 🚨 Duration too short for unload save:', durationSeconds);
+    return;
+  }
+  
+  // Get the best auth token we have
+  const authToken = globalAccessToken || SUPABASE_KEY;
+  
+  console.log('[RadioRewards] 🚨 Sending keepalive save request:', globalSessionId, 'duration:', durationSeconds, 'hasUserToken:', !!globalAccessToken);
+  
+  // Use fetch with keepalive - this includes proper auth headers
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/rpc/save_session_progress`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ 
+        _session_id: globalSessionId, 
+        _duration_seconds: durationSeconds 
+      }),
+      keepalive: true,
+    }).catch(err => {
+      console.log('[RadioRewards] Keepalive save failed:', err);
+    });
+  } catch (e) {
+    console.error('[RadioRewards] Error in keepalive save:', e);
+  }
+}
+
 export function useRadioRewards() {
   const authContext = useAuthSafe();
   const refreshBalance = authContext?.refreshBalance;
   const clearPendingTaler = authContext?.clearPendingTaler;
   const user = authContext?.user;
+  const session = authContext?.session;
   const { isPlaying, isRadio2Go, isSwitching, isLoading } = useRadioStore();
   
   const lastStationTypeRef = useRef<boolean | null>(null);
   const pendingStationSwitchRef = useRef(false);
   const hasInitializedRef = useRef(false);
+  const authReadyRef = useRef(false);
   
   const [sessionSummary, setSessionSummary] = useState<SessionSummaryData | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -203,21 +293,42 @@ export function useRadioRewards() {
   
   const userId = user?.id;
   
-  // Keep global refreshBalance updated
+  // Keep global refreshBalance and auth token updated
   useEffect(() => {
     globalRefreshBalance = refreshBalance;
     if (userId) {
       globalUserId = userId;
     }
-  }, [refreshBalance, userId]);
-  
-  // CRITICAL: On mount, check if we have a pending session and restart the save interval
-  // This handles page refresh scenarios
-  useEffect(() => {
-    if (!userId || hasInitializedRef.current) return;
-    hasInitializedRef.current = true;
     
-    console.log('[RadioRewards] 🚀 Initializing... globalSessionId:', globalSessionId, 'globalStartTimeMs:', globalStartTimeMs);
+    // CRITICAL: Store the access token for background saves
+    if (session?.access_token) {
+      saveAuthToken(session.access_token);
+      authReadyRef.current = true;
+    }
+  }, [refreshBalance, userId, session?.access_token]);
+  
+  // CRITICAL: On mount OR when userId becomes available, check for pending sessions
+  // This handles both initial load and delayed auth
+  useEffect(() => {
+    if (!userId) {
+      console.log('[RadioRewards] Waiting for user authentication...');
+      return;
+    }
+    
+    // If we already initialized for this user, skip
+    if (hasInitializedRef.current && globalUserId === userId) {
+      return;
+    }
+    
+    hasInitializedRef.current = true;
+    globalUserId = userId;
+    
+    console.log('[RadioRewards] 🚀 Initializing for user:', userId, 'globalSessionId:', globalSessionId, 'globalStartTimeMs:', globalStartTimeMs);
+    
+    // Get fresh auth token
+    getFreshAuthToken().then(token => {
+      console.log('[RadioRewards] Got auth token:', !!token);
+    });
     
     // If we already have global state (restored from localStorage on module load), 
     // verify the session is still valid and start the save interval
@@ -227,12 +338,19 @@ export function useRadioRewards() {
       // Verify session is still active
       supabase
         .from('radio_listening_sessions')
-        .select('id, ended_at')
+        .select('id, ended_at, user_id')
         .eq('id', globalSessionId)
         .single()
-        .then(({ data: session, error }) => {
-          if (error || !session || session.ended_at) {
-            console.log('[RadioRewards] Session no longer active on server, clearing');
+        .then(({ data: sessionData, error }) => {
+          if (error || !sessionData || sessionData.ended_at) {
+            console.log('[RadioRewards] Session no longer active on server, clearing. Error:', error?.message);
+            clearPendingSession();
+            return;
+          }
+          
+          // Verify session belongs to current user
+          if (sessionData.user_id !== userId) {
+            console.log('[RadioRewards] Session belongs to different user, clearing');
             clearPendingSession();
             return;
           }
@@ -241,14 +359,14 @@ export function useRadioRewards() {
           console.log('[RadioRewards] ✅ Session still active, starting save interval');
           startGlobalSaveInterval();
           
-          // Do an immediate save
+          // Do an immediate save if enough time has passed
           const elapsed = Math.floor((Date.now() - globalStartTimeMs!) / 1000);
           console.log('[RadioRewards] Elapsed since session start:', elapsed, 'seconds');
           
           if (elapsed >= 60) {
             setTimeout(() => {
               console.log('[RadioRewards] 🔄 Immediate save after page reload');
-              saveProgressGlobal();
+              saveProgressGlobal(true);
             }, 500);
           }
         });
@@ -263,6 +381,9 @@ export function useRadioRewards() {
             const result = data as { recovered_sessions?: number; total_reward?: number };
             if (result.recovered_sessions && result.recovered_sessions > 0) {
               console.log('[RadioRewards] ✅ Recovered orphaned sessions:', result);
+              toast.success(`${result.total_reward || 0} Taler wiederhergestellt!`, {
+                description: `${result.recovered_sessions} unterbrochene Session(s) wurden abgerechnet.`,
+              });
               refreshBalance?.();
             }
           }
@@ -291,6 +412,9 @@ export function useRadioRewards() {
     // Set guard IMMEDIATELY before any async work
     globalIsStarting = true;
     console.log('[RadioRewards] 🎵 Starting NEW session for user:', userId);
+    
+    // Get fresh auth token before starting
+    await getFreshAuthToken();
     
     // Get current station info from radio store
     const radioStore = useRadioStore.getState();
@@ -486,6 +610,8 @@ export function useRadioRewards() {
         saveProgressGlobal();
       } else if (document.visibilityState === 'visible' && globalSessionId) {
         console.log('[RadioRewards] 📱 App visible again, session still active:', globalSessionId);
+        // Refresh auth token when coming back
+        getFreshAuthToken();
       }
     };
     
@@ -495,38 +621,6 @@ export function useRadioRewards() {
   
   // Handle page unload - save progress using fetch with keepalive for reliability
   useEffect(() => {
-    const saveWithKeepalive = () => {
-      if (!globalSessionId || !globalStartTimeMs || !SUPABASE_URL || !SUPABASE_KEY) {
-        return;
-      }
-      
-      const durationSeconds = Math.floor((Date.now() - globalStartTimeMs) / 1000);
-      
-      if (durationSeconds < 60) {
-        console.log('[RadioRewards] 🚨 Duration too short for unload save:', durationSeconds);
-        return;
-      }
-      
-      console.log('[RadioRewards] 🚨 Sending keepalive save request:', globalSessionId, 'duration:', durationSeconds);
-      
-      // Use fetch with keepalive - this includes proper auth headers unlike sendBeacon
-      fetch(`${SUPABASE_URL}/rest/v1/rpc/save_session_progress`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-        },
-        body: JSON.stringify({ 
-          _session_id: globalSessionId, 
-          _duration_seconds: durationSeconds 
-        }),
-        keepalive: true,
-      }).catch(err => {
-        console.log('[RadioRewards] Keepalive save failed:', err);
-      });
-    };
-    
     const handleBeforeUnload = () => {
       console.log('[RadioRewards] 🚨 beforeunload event triggered');
       saveWithKeepalive();

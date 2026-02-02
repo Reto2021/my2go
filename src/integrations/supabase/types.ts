@@ -837,6 +837,75 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_radios: {
+        Row: {
+          brand_color: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          enable_taler_rewards: boolean | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          name: string
+          partner_id: string
+          play_count: number | null
+          preroll_audio_url: string | null
+          slug: string
+          stream_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand_color?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          enable_taler_rewards?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name: string
+          partner_id: string
+          play_count?: number | null
+          preroll_audio_url?: string | null
+          slug: string
+          stream_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand_color?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          enable_taler_rewards?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          name?: string
+          partner_id?: string
+          play_count?: number | null
+          preroll_audio_url?: string | null
+          slug?: string
+          stream_url?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_radios_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "partner_radios_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_reviews: {
         Row: {
           author_name: string
@@ -2580,6 +2649,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_partner_radio_plays: {
+        Args: { _radio_id: string }
+        Returns: undefined
       }
       insert_qr_scan_rate_limited: {
         Args: {
