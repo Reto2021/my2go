@@ -46,7 +46,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   return (
     <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section - Simplified 3-Second Pitch */}
-      <section className="hero-section text-secondary pt-20">
+      <section className="hero-section text-white pt-20">
         {/* City Skyline */}
         <div className="skyline-container">
           <div className="skyline-distant" />
@@ -108,33 +108,33 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
                 )}
               >
                 {isRadioLoading ? (
-                  <Loader2 className="h-10 w-10 text-secondary animate-spin" />
+                  <Loader2 className="h-10 w-10 text-accent-foreground animate-spin" />
                 ) : isPlaying ? (
-                  <Pause className="h-10 w-10 text-secondary ml-0" />
+                  <Pause className="h-10 w-10 text-accent-foreground ml-0" />
                 ) : (
-                  <Play className="h-10 w-10 text-secondary ml-1" />
+                  <Play className="h-10 w-10 text-accent-foreground ml-1" />
                 )}
               </button>
               
               {/* Now Playing or Call to Action */}
               <div className="text-center">
                 {isPlaying && nowPlaying ? (
-                  <p className="text-secondary/80 text-sm font-medium">
+                  <p className="text-white/80 text-sm font-medium">
                     <span className="inline-block w-2 h-2 bg-accent rounded-full mr-2 animate-pulse" />
                     {nowPlaying.artist} – {nowPlaying.title}
                   </p>
                 ) : (
-                  <p className="text-secondary/70 text-lg font-semibold">
+                  <p className="text-white/80 text-lg font-semibold">
                     Jetzt Radio 2Go hören
                   </p>
                 )}
                 
                 {/* Guest Taler Earned Badge */}
                 {totalEarned > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/20 text-accent">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white">
                     <Coins className="h-4 w-4" />
                     <span className="font-bold">{totalEarned} Taler</span>
-                    <span className="text-secondary/70 text-sm">gesammelt!</span>
+                    <span className="text-white/70 text-sm">gesammelt!</span>
                   </div>
                 )}
               </div>
@@ -230,8 +230,8 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       
       {/* Partner Section */}
       <section className="container pb-8">
-        <div className="p-5 rounded-2xl bg-accent/10 border border-accent/20">
-          <h3 className="font-bold text-secondary text-center mb-2">Für Geschäftspartner</h3>
+        <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20">
+          <h3 className="font-bold text-primary text-center mb-2">Für Geschäftspartner</h3>
           <p className="text-sm text-muted-foreground text-center mb-4">
             Werde Teil des My 2Go Netzwerks und erreiche neue Kunden.
           </p>
@@ -244,7 +244,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             </Link>
             <Link 
               to="/auth?partner=true" 
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-secondary/20 text-secondary font-semibold text-sm hover:bg-secondary/5 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-primary/30 text-primary font-semibold text-sm hover:bg-primary/5 transition-colors"
             >
               Partner Login
             </Link>
@@ -257,7 +257,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       
       {/* Info / Footer */}
       <section className="container pb-32">
-        <div className="p-6 rounded-2xl bg-secondary/5 border border-secondary/10">
+        <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10">
           {/* Brand Tagline */}
           <p className="text-sm text-muted-foreground/80 text-center mb-3 flex items-center justify-center gap-1.5">
             We <span className="text-red-500">♥</span> to be your #2
