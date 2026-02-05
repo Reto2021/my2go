@@ -451,43 +451,42 @@ export async function getRewards(): Promise<Reward[]> {
 }
 
 export async function getRewardById(id: string): Promise<Reward | null> {
-  const { data, error } = await supabase
-    .from('rewards')
-    .select(`
-      *,
-      partner:partners(*)
-    `)
-    .eq('id', id)
-    .eq('is_active', true)
-    .maybeSingle();
+  // Use SECURITY DEFINER RPCs to bypass RLS for public access
+  const { data: rewardsData, error: rewardsError } = await supabase
+    .rpc('get_public_rewards_safe');
   
-  if (error) {
-    console.error('Error fetching reward:', error);
+  if (rewardsError) {
+    console.error('Error fetching rewards:', rewardsError);
     return null;
   }
   
-  if (!data) return null;
+  const rewardData = (rewardsData || []).find((r: { id: string }) => r.id === id);
+  if (!rewardData) return null;
+  
+  // Fetch partner info via safe RPC
+  const { data: partnerData } = await supabase
+    .rpc('get_public_partner_by_id', { partner_id: rewardData.partner_id });
+  
+  const partner = Array.isArray(partnerData) && partnerData.length > 0 ? partnerData[0] : null;
   
   return {
-    ...data,
-    partner: Array.isArray(data.partner) ? data.partner[0] : data.partner,
-  } as Reward;
+    ...rewardData,
+    partner,
+  } as unknown as Reward;
 }
 
 export async function getRewardsByPartner(partnerId: string): Promise<Reward[]> {
-  const { data, error } = await supabase
-    .from('rewards')
-    .select('*')
-    .eq('partner_id', partnerId)
-    .eq('is_active', true)
-    .order('taler_cost');
+  // Use SECURITY DEFINER RPC to bypass RLS for public access
+  const { data, error } = await supabase.rpc('get_public_rewards_safe');
   
   if (error) {
     console.error('Error fetching partner rewards:', error);
     return [];
   }
   
-  return data || [];
+  return ((data || []) as unknown as Reward[])
+    .filter((r) => r.partner_id === partnerId)
+    .sort((a, b) => a.taler_cost - b.taler_cost);
 }
 
 // ============================================================================
