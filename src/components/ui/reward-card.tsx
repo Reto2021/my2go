@@ -6,7 +6,7 @@ import { Coffee, Ticket, Star, Gift, Coins, ChevronRight, MapPin, Percent, Spark
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { SponsorBadgeCompact, type RewardSponsor } from '@/components/sponsors/SponsorBadge';
-import { useSubscription, isPremiumReward } from '@/hooks/useSubscription';
+import { useSubscription, isPremiumReward, isGatedReward } from '@/hooks/useSubscription';
 import { PremiumRewardOverlay, PremiumBadge } from '@/components/subscription/PremiumRewardOverlay';
 import { PlusUpgradeSheet } from '@/components/subscription/PlusUpgradeSheet';
 
@@ -47,7 +47,8 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
   
   // Check if this is a premium reward and user doesn't have subscription
   const isPremium = isPremiumReward(reward.reward_type);
-  const showPremiumOverlay = isPremium && !isSubscribed && !subLoading;
+  const isGated = isGatedReward(reward.reward_type, reward.taler_cost);
+  const showPremiumOverlay = (isPremium || (isGated && !isPlusUser)) && !isSubscribed && !subLoading;
   
   const formatDistance = (km: number) => {
     if (km < 1) {

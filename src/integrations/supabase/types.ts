@@ -1145,11 +1145,13 @@ export type Database = {
           avatar_url: string | null
           birth_date: string | null
           city: string | null
+          comeback_bonus_claimed_at: string | null
           created_at: string
           current_streak: number | null
           display_name: string | null
           email: string | null
           first_name: string | null
+          free_streak_repair_used_at: string | null
           free_trial_started_at: string | null
           id: string
           last_activity_at: string | null
@@ -1176,11 +1178,13 @@ export type Database = {
           avatar_url?: string | null
           birth_date?: string | null
           city?: string | null
+          comeback_bonus_claimed_at?: string | null
           created_at?: string
           current_streak?: number | null
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          free_streak_repair_used_at?: string | null
           free_trial_started_at?: string | null
           id: string
           last_activity_at?: string | null
@@ -1207,11 +1211,13 @@ export type Database = {
           avatar_url?: string | null
           birth_date?: string | null
           city?: string | null
+          comeback_bonus_claimed_at?: string | null
           created_at?: string
           current_streak?: number | null
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          free_streak_repair_used_at?: string | null
           free_trial_started_at?: string | null
           id?: string
           last_activity_at?: string | null
@@ -2352,6 +2358,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      claim_comeback_bonus: { Args: { _user_id: string }; Returns: Json }
       claim_daily_streak: { Args: { _user_id: string }; Returns: Json }
       end_listening_session: { Args: { _session_id: string }; Returns: Json }
       expire_old_taler_batches: {
@@ -2727,6 +2734,7 @@ export type Database = {
         }
         Returns: Json
       }
+      use_free_streak_repair: { Args: { _user_id: string }; Returns: Json }
       use_promo_code: { Args: { _code: string }; Returns: boolean }
       validate_air_drop_code: { Args: { _code: string }; Returns: Json }
       validate_promo_code: { Args: { _code: string }; Returns: Json }

@@ -40,7 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen bg-background">
         <OfflineIndicator />
         <RadioHeader />
-        <main className="pt-20 pb-60">
+        <main className="pt-20 pb-40">
           {children || <Outlet />}
         </main>
         <BottomNav />
