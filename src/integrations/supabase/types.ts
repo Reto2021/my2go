@@ -2320,6 +2320,10 @@ export type Database = {
         }
       }
       award_leaderboard_badges: { Args: never; Returns: undefined }
+      award_navigation_taler: {
+        Args: { _partner_id: string; _user_id: string }
+        Returns: Json
+      }
       award_review_bonus: {
         Args: { _review_request_id: string; _user_id: string }
         Returns: Json
@@ -2748,6 +2752,7 @@ export type Database = {
         | "system"
         | "referral"
         | "radio"
+        | "navigation"
       transaction_type: "earn" | "spend" | "expire" | "adjust"
       user_role: "user" | "partner_admin" | "admin"
     }
@@ -2898,6 +2903,7 @@ export const Constants = {
         "system",
         "referral",
         "radio",
+        "navigation",
       ],
       transaction_type: ["earn", "spend", "expire", "adjust"],
       user_role: ["user", "partner_admin", "admin"],
