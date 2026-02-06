@@ -215,7 +215,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       {/* Partner Section */}
       <section className="container pb-8">
         <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20">
-          <h3 className="font-bold text-primary text-center mb-2">Für Geschäftspartner</h3>
+          <h3 className="font-bold text-accent text-center mb-2">Für Geschäftspartner</h3>
           <p className="text-sm text-muted-foreground text-center mb-4">
             Werde Teil des My 2Go Netzwerks und erreiche neue Kunden.
           </p>
