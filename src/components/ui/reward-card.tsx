@@ -20,8 +20,8 @@ interface RewardCardProps {
 // Map reward_type to icons and colors
 const typeConfig = {
   experience: { icon: Star, colorClass: 'bg-accent/15 text-accent' },
-  fixed_discount: { icon: Ticket, colorClass: 'bg-success/15 text-success' },
-  percent_discount: { icon: Percent, colorClass: 'bg-success/15 text-success' },
+  fixed_discount: { icon: Ticket, colorClass: 'bg-accent/15 text-accent' },
+  percent_discount: { icon: Percent, colorClass: 'bg-accent/15 text-accent' },
   free_item: { icon: Gift, colorClass: 'bg-accent/15 text-accent' },
   topup_bonus: { icon: Sparkles, colorClass: 'bg-accent/15 text-accent' },
   two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
