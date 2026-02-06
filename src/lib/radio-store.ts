@@ -265,16 +265,17 @@ const fetchITunesMedia = async (title: string, artist: string): Promise<iTunesMe
   return { artworkUrl: null, videoUrl: null };
 };
 
-// Update Media Session API for lock screen controls
-const updateMediaSession = (nowPlaying: NowPlayingData | null, isPlaying: boolean) => {
+// Update Media Session API for lock screen / Bluetooth / CarPlay controls
+const updateMediaSession = (nowPlaying: NowPlayingData | null, isPlaying: boolean, stationName?: string) => {
   if (!('mediaSession' in navigator)) return;
   
   const artwork = nowPlaying?.artworkUrl || DEFAULT_ARTWORK;
+  const album = stationName || 'Radio 2Go';
   
   navigator.mediaSession.metadata = new MediaMetadata({
-    title: nowPlaying?.title || 'Radio 2Go',
+    title: nowPlaying?.title || album,
     artist: nowPlaying?.artist || 'Live Stream',
-    album: 'Radio 2Go',
+    album,
     artwork: [
       { src: artwork, sizes: '96x96', type: 'image/png' },
       { src: artwork, sizes: '128x128', type: 'image/png' },
@@ -500,7 +501,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         }
         
         set({ nowPlaying });
-        updateMediaSession(nowPlaying, get().isPlaying);
+        updateMediaSession(nowPlaying, get().isPlaying, get().getStationName());
       }
     } catch (error) {
       console.error('Failed to fetch now playing:', error);
@@ -644,7 +645,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       currentAudio.src = '';
       clearSessionFromStorage();
       set({ isPlaying: false, isLoading: false, isSwitching: false, sessionStartTime: null, currentSessionDuration: 0 });
-      updateMediaSession(nowPlaying, false);
+      updateMediaSession(nowPlaying, false, get().getStationName());
     } else {
       // isLoading and isSwitching were already set to true at the beginning of togglePlay
       // iOS Safari Autoplay Fix:
@@ -671,7 +672,7 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
             
             set({ isPlaying: true, isLoading: false, isSwitching: false });
             get().fetchNowPlaying();
-            updateMediaSession(get().nowPlaying, true);
+            updateMediaSession(get().nowPlaying, true, get().getStationName());
           })
           .catch((err) => {
             console.error('Playback failed:', err);
