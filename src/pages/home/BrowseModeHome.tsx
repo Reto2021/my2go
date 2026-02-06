@@ -160,13 +160,13 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             <span className="text-xs sm:text-sm font-semibold text-foreground">Hören</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent">
               <Coins className="h-5 w-5" />
             </div>
             <span className="text-xs sm:text-sm font-semibold text-foreground">Sammeln</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent">
               <Gift className="h-5 w-5" />
             </div>
             <span className="text-xs sm:text-sm font-semibold text-foreground">Geniessen</span>
@@ -221,7 +221,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </p>
           <div className="flex gap-3 justify-center">
             <Link to="/go" className="btn-primary text-sm py-2.5 px-5">Partner werden</Link>
-            <Link to="/auth?partner=true" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-primary/30 text-primary font-semibold text-sm hover:bg-primary/5 transition-colors">
+            <Link to="/auth?partner=true" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl border-2 border-foreground/30 text-foreground font-semibold text-sm hover:bg-foreground/10 transition-colors">
               Partner Login
             </Link>
           </div>

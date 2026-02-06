@@ -48,7 +48,7 @@ export const PartnerCard = memo(function PartnerCard({
       )}
       
       {/* Logo */}
-      <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
+      <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
         {partner.logo_url ? (
           <OptimizedImage
             src={partner.logo_url}
@@ -58,13 +58,13 @@ export const PartnerCard = memo(function PartnerCard({
             className="h-full w-full rounded-2xl"
           />
         ) : (
-          <Store className="h-7 w-7 text-secondary" />
+          <Store className="h-7 w-7 text-foreground/70" />
         )}
       </div>
       
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+        <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
           {partner.name}
         </h3>
         <p className="text-sm text-muted-foreground line-clamp-1">
@@ -98,7 +98,7 @@ export const PartnerCard = memo(function PartnerCard({
       
       {/* Arrow */}
       {showArrow && (
-        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
       )}
     </Link>
   );
