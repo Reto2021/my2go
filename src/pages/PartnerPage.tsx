@@ -370,18 +370,18 @@ function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceP
   return (
     <Link to={`/partner/${partner.slug}`} className="flex items-center gap-4 p-4 rounded-2xl bg-card border border-border/50 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 active:scale-[0.99] group">
       {/* Logo */}
-      <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-primary/20 flex-shrink-0 flex items-center justify-center">
+      <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
         {partner.logo_url ? (
           <img src={partner.logo_url} alt={partner.name} className="h-full w-full object-cover" />
         ) : (
-          <Store className="h-7 w-7 text-secondary" />
+          <Store className="h-7 w-7 text-foreground/70" />
         )}
       </div>
       
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+          <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
             {partner.name}
           </h3>
           {partner.minRewardCost !== undefined && (
@@ -419,7 +419,7 @@ function PartnerCardWithDistance({ partner, distance }: PartnerCardWithDistanceP
       </div>
       
       {/* Arrow */}
-      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0" />
     </Link>
   );
 }
