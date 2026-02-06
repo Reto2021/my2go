@@ -20,11 +20,11 @@ interface RewardCardProps {
 // Map reward_type to icons and colors
 const typeConfig = {
   experience: { icon: Star, colorClass: 'bg-accent/15 text-accent' },
-  fixed_discount: { icon: Ticket, colorClass: 'bg-accent/15 text-accent' },
-  percent_discount: { icon: Percent, colorClass: 'bg-accent/15 text-accent' },
+  fixed_discount: { icon: Ticket, colorClass: 'bg-muted text-foreground' },
+  percent_discount: { icon: Percent, colorClass: 'bg-muted text-foreground' },
   free_item: { icon: Gift, colorClass: 'bg-accent/15 text-accent' },
-  topup_bonus: { icon: Sparkles, colorClass: 'bg-accent/15 text-accent' },
-  two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
+  topup_bonus: { icon: Sparkles, colorClass: 'bg-muted text-foreground' },
+  two_for_one: { icon: Users, colorClass: 'bg-muted text-foreground' },
 };
 
 export const RewardCard = memo(function RewardCard({ reward, className, distance, sponsors }: RewardCardProps) {
