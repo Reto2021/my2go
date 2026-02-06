@@ -409,7 +409,7 @@
   }
 
   .badge-primary {
-    @apply badge bg-primary/15 text-secondary;
+    @apply badge bg-primary/15 text-primary-foreground;
   }
 
   /* Section spacing */
@@ -426,8 +426,8 @@
   }
 
   .section-link {
-    @apply text-sm font-semibold text-secondary 
-           hover:text-secondary/80 transition-colors
+    @apply text-sm font-semibold text-accent 
+           hover:text-accent/80 transition-colors
            flex items-center gap-1;
   }
 
