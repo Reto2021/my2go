@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ComebackBanner } from '@/components/home/ComebackBanner';
+import { useComebackBonus } from '@/hooks/useComebackBonus';
 import { RewardCard } from '@/components/ui/reward-card';
 import { SkeletonRewardCard } from '@/components/ui/skeleton';
 import { BalanceCard } from '@/components/ui/balance-card';
@@ -33,6 +35,7 @@ export function SessionModeHome({
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const [showLiveEvents, setShowLiveEvents] = useState(false);
   const [showDriveSearch, setShowDriveSearch] = useState(false);
+  const { showComebackBanner, isClaiming, claimBonus, dismissBanner } = useComebackBonus();
   
   useEffect(() => {
     fetchEvents();
@@ -91,6 +94,18 @@ export function SessionModeHome({
       <section className="container pb-3">
         <InstallBanner />
       </section>
+      
+      {/* Comeback Banner for returning users */}
+      {showComebackBanner && (
+        <section className="container pb-3">
+          <ComebackBanner 
+            isVisible={showComebackBanner} 
+            isClaiming={isClaiming} 
+            onClaim={claimBonus} 
+            onDismiss={dismissBanner} 
+          />
+        </section>
+      )}
       
       <section className="container pb-3">
         <PlusBanner />

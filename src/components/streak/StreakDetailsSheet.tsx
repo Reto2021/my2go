@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, Check, Snowflake, Trophy, ShoppingCart, Loader2 } from "lucide-react";
+import { Flame, Check, Snowflake, Trophy, ShoppingCart, Loader2, Wrench } from "lucide-react";
 import { useStreak } from "@/hooks/useStreak";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import talerCoin from "@/assets/taler-coin.png";
 import {
   Sheet,
@@ -20,8 +22,9 @@ interface StreakDetailsSheetProps {
 }
 
 export function StreakDetailsSheet({ open, onOpenChange }: StreakDetailsSheetProps) {
-  const { balance } = useAuth();
+  const { balance, user } = useAuth();
   const { streakStatus, isLoading, purchaseFreeze, isPurchasing } = useStreak();
+  const [isRepairing, setIsRepairing] = useState(false);
   
   if (isLoading || !streakStatus) {
     return null;
@@ -59,7 +62,27 @@ export function StreakDetailsSheet({ open, onOpenChange }: StreakDetailsSheetPro
       },
     });
   };
-  
+
+  const handleFreeRepair = async () => {
+    if (!user) return;
+    setIsRepairing(true);
+    try {
+      const { data, error } = await supabase.rpc('use_free_streak_repair', { _user_id: user.id });
+      if (error) throw error;
+      const result = data as unknown as { success: boolean; error?: string; message?: string };
+      if (result.success) {
+        toast.success("Serie repariert! 🔧", { description: result.message });
+      } else {
+        toast.error(result.error || "Reparatur fehlgeschlagen");
+      }
+    } catch {
+      toast.error("Fehler bei der Reparatur");
+    } finally {
+      setIsRepairing(false);
+    }
+  };
+
+  const showRepairOption = currentStreak === 0 && longestStreak > 0;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl max-h-[85vh] overflow-y-auto pb-safe">
@@ -144,6 +167,29 @@ export function StreakDetailsSheet({ open, onOpenChange }: StreakDetailsSheetPro
           </div>
         </div>
         
+        {/* Free Streak Repair */}
+        {showRepairOption && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Wrench className="h-4 w-4 text-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-600">Serie reparieren</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 font-bold">GRATIS</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              1x pro Monat kannst du deine Serie kostenlos wiederherstellen.
+            </p>
+            <Button
+              onClick={handleFreeRepair}
+              disabled={isRepairing}
+              size="sm"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              {isRepairing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Wrench className="h-4 w-4 mr-2" />}
+              Gratis reparieren
+            </Button>
+          </div>
+        )}
+
         {/* Streak Protection */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium flex items-center gap-2">

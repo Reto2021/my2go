@@ -69,6 +69,7 @@ const SOCIAL_PROOF = [
   { value: "12'400+", label: "Aktive Nutzer" },
   { value: "47", label: "Partner schweizweit" },
   { value: "4.8", label: "Ø Bewertung", suffix: "★" },
+  { value: "3'200+", label: "Einlösungen/Monat" },
 ];
 
 const BENEFITS = [

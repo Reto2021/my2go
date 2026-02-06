@@ -142,8 +142,16 @@ export function useSubscription() {
 }
 
 // Premium reward types that require subscription
-export const PREMIUM_REWARD_TYPES = ['fixed_discount', 'percent_discount', 'two_for_one'];
+export const PREMIUM_REWARD_TYPES = ['experience'];
+
+// Rewards visible but locked for free users (gated for conversion)
+export const GATED_REWARD_TYPES = ['two_for_one', 'experience'];
 
 export function isPremiumReward(rewardType: string): boolean {
   return PREMIUM_REWARD_TYPES.includes(rewardType);
+}
+
+export function isGatedReward(rewardType: string, talerCost: number): boolean {
+  // Gate high-value rewards (>150 Taler) OR specific premium types for free users
+  return GATED_REWARD_TYPES.includes(rewardType) || talerCost >= 200;
 }
