@@ -22,8 +22,8 @@ const typeConfig = {
   experience: { icon: Star, colorClass: 'bg-accent/15 text-accent' },
   fixed_discount: { icon: Ticket, colorClass: 'bg-success/15 text-success' },
   percent_discount: { icon: Percent, colorClass: 'bg-success/15 text-success' },
-  free_item: { icon: Gift, colorClass: 'bg-primary/30 text-primary-foreground' },
-  topup_bonus: { icon: Sparkles, colorClass: 'bg-primary/20 text-primary-foreground' },
+  free_item: { icon: Gift, colorClass: 'bg-accent/15 text-accent' },
+  topup_bonus: { icon: Sparkles, colorClass: 'bg-accent/15 text-accent' },
   two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
 };
 
