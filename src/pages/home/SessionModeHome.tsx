@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ComebackBanner } from '@/components/home/ComebackBanner';
+import { WeeklyWrappedBanner } from '@/components/wrapped/WeeklyWrappedBanner';
+import { useGeoProximityAlerts } from '@/hooks/useGeoProximityAlerts';
+import { RecommendedRewardsSection } from '@/components/rewards/RecommendedRewardsSection';
 import { useComebackBonus } from '@/hooks/useComebackBonus';
 import { RewardCard } from '@/components/ui/reward-card';
 import { SkeletonRewardCard } from '@/components/ui/skeleton';
@@ -35,6 +38,9 @@ export function SessionModeHome({
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const [showLiveEvents, setShowLiveEvents] = useState(false);
   const [showDriveSearch, setShowDriveSearch] = useState(false);
+  // Activate geo proximity alerts
+  useGeoProximityAlerts();
+  
   const { showComebackBanner, isClaiming, claimBonus, dismissBanner } = useComebackBonus();
   
   useEffect(() => {
@@ -119,9 +125,16 @@ export function SessionModeHome({
         <NewPartnerBanner />
       </section>
       
+      <section className="container pb-3">
+        <WeeklyWrappedBanner />
+      </section>
+
       <section className="container pb-4">
         <ReferralGameCard />
       </section>
+      
+      {/* AI Recommended Rewards */}
+      <RecommendedRewardsSection />
       
       {/* Rewards */}
       <section className="container section" data-onboarding="rewards-section">
