@@ -17,7 +17,8 @@ import {
   Building2,
   Crown,
   Ticket,
-  Volume2
+  Volume2,
+  Megaphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WhatsAppButton } from '@/components/ui/whatsapp-button';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { path: '/admin/plus', icon: Crown, label: '2Go Plus' },
   { path: '/admin/promo-codes', icon: Ticket, label: 'Promo-Codes' },
+  { path: '/admin/campaigns', icon: Megaphone, label: 'Kampagnen' },
   { path: '/admin/partners', icon: Store, label: 'Partner' },
   { path: '/admin/sponsors', icon: Building2, label: 'Sponsoren' },
   { path: '/admin/sponsoring', icon: FileText, label: 'Sponsoring' },

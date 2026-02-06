@@ -416,6 +416,55 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_partners: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          custom_badge_text: string | null
+          id: string
+          partner_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          custom_badge_text?: string | null
+          id?: string
+          partner_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          custom_badge_text?: string | null
+          id?: string
+          partner_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_partners_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "seasonal_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_partners_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "campaign_partners_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       code_claims: {
         Row: {
           claimed_at: string
@@ -1802,6 +1851,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seasonal_campaigns: {
+        Row: {
+          badge_color: string | null
+          badge_text: string | null
+          banner_image_url: string | null
+          bonus_multiplier: number | null
+          bonus_taler: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          badge_color?: string | null
+          badge_text?: string | null
+          banner_image_url?: string | null
+          bonus_multiplier?: number | null
+          bonus_taler?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          badge_color?: string | null
+          badge_text?: string | null
+          banner_image_url?: string | null
+          bonus_multiplier?: number | null
+          bonus_taler?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       sponsoring_inquiries: {
         Row: {
