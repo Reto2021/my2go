@@ -67,6 +67,10 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontFamily: {
+        heading: ["'Montserrat'", "system-ui", "sans-serif"],
+        body: ["'Open Sans'", "system-ui", "sans-serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -91,7 +95,8 @@ export default {
         "soft": "0 2px 8px -2px rgb(0 0 0 / 0.08)",
         "medium": "0 4px 16px -4px rgb(0 0 0 / 0.1)",
         "strong": "0 8px 32px -8px rgb(0 0 0 / 0.15)",
-        "glow-accent": "0 0 24px -4px hsl(44 98% 49% / 0.4)",
+        "glow-accent": "0 0 40px hsl(43 95% 55% / 0.3)",
+        "card-brand": "0 8px 32px hsl(174 70% 5% / 0.5)",
       },
       keyframes: {
         "accordion-down": {
