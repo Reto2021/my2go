@@ -13,8 +13,9 @@ import { LiveHeaderButton, LiveEventsPanel } from '@/components/radio/LiveEvents
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { PlusBanner } from '@/components/subscription/PlusBanner';
 import { PlusExpiryBanner } from '@/components/subscription/PlusExpiryBanner';
+import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
 import { useLiveEventsStore } from '@/lib/live-events-store';
-import { ChevronRight, Navigation, X } from 'lucide-react';
+import { ChevronRight, Navigation as NavigationIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SessionModeHomeProps } from './types';
 
@@ -31,6 +32,7 @@ export function SessionModeHome({
 }: SessionModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const [showLiveEvents, setShowLiveEvents] = useState(false);
+  const [showDriveSearch, setShowDriveSearch] = useState(false);
   
   useEffect(() => {
     fetchEvents();
@@ -47,124 +49,107 @@ export function SessionModeHome({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Compact Header with Greeting + Live Activity + Live Button */}
+      {/* Compact Header */}
       <header className="container pt-4 pb-3">
         <div className="animate-in space-y-2">
-          {/* Greeting row with Live button */}
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
               {getGreeting()}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
             </p>
-            <LiveHeaderButton 
-              onClick={() => setShowLiveEvents(true)}
-              hasLiveEvents={hasLiveEvents}
-            />
+            <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
           </div>
-          
-          {/* Live Activity Ticker - Social Proof */}
           <ActivityTicker className="text-xs" />
         </div>
       </header>
       
-      {/* Live Events Panel */}
-      <LiveEventsPanel 
-        isOpen={showLiveEvents} 
-        onClose={() => setShowLiveEvents(false)} 
-      />
+      <LiveEventsPanel isOpen={showLiveEvents} onClose={() => setShowLiveEvents(false)} />
       
-      {/* Balance Card - Primary Dashboard Element */}
+      {/* Balance Card */}
       {balance && (
         <section className="container pb-4">
           <BalanceCard balance={balance} userId={userId} />
         </section>
       )}
+
+      {/* Drive Mode Quick Action */}
+      <section className="container pb-3">
+        <button
+          onClick={() => setShowDriveSearch(true)}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl bg-accent/10 border border-accent/20 hover:bg-accent/15 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
+            <NavigationIcon className="h-5 w-5 text-accent-foreground" />
+          </div>
+          <div className="text-left flex-1 min-w-0">
+            <p className="font-semibold text-sm">Wohin geht's?</p>
+            <p className="text-xs text-muted-foreground">Navigation starten mit Radio 🎵</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
+      </section>
       
-      {/* Install Banner - for users who haven't installed the PWA */}
       <section className="container pb-3">
         <InstallBanner />
       </section>
       
-      {/* 2Go Plus Banner - for users without subscription */}
       <section className="container pb-3">
         <PlusBanner />
       </section>
       
-      {/* Plus Expiry Warning - for users whose subscription is expiring soon */}
       <section className="container pb-3">
         <PlusExpiryBanner />
       </section>
       
-      {/* New Partner Banner - Show when new partners are in user's area */}
       <section className="container pb-3">
         <NewPartnerBanner />
       </section>
       
-      {/* Referral Game Card - Gamified */}
       <section className="container pb-4">
         <ReferralGameCard />
       </section>
       
-      {/* Rewards - Primary Content */}
+      {/* Rewards */}
       <section className="container section" data-onboarding="rewards-section">
         <div className="section-header">
-          <h2 className="section-title">
-            {userLocation ? 'In deiner Nähe' : 'Gutscheine für dich'}
-          </h2>
-          <Link to="/rewards" className="section-link">
-            Alle <ChevronRight className="h-4 w-4" />
-          </Link>
+          <h2 className="section-title">{userLocation ? 'In deiner Nähe' : 'Gutscheine für dich'}</h2>
+          <Link to="/rewards" className="section-link">Alle <ChevronRight className="h-4 w-4" /></Link>
         </div>
         
-        {/* Location Status Chip */}
         {userLocation ? (
-          <button
-            onClick={onClearLocation}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent/10 text-accent mb-3"
-          >
-            <Navigation className="h-3.5 w-3.5" />
+          <button onClick={onClearLocation} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-accent/10 text-accent mb-3">
+            <NavigationIcon className="h-3.5 w-3.5" />
             Standort aktiv
             <X className="h-3 w-3 ml-1" />
           </button>
         ) : (
-          <button
-            onClick={onRequestLocation}
-            disabled={isRequestingLocation}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground mb-3 hover:bg-muted/80 transition-colors"
-          >
-            <Navigation className={cn("h-3.5 w-3.5", isRequestingLocation && "animate-pulse")} />
+          <button onClick={onRequestLocation} disabled={isRequestingLocation} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground mb-3 hover:bg-muted/80 transition-colors">
+            <NavigationIcon className={cn("h-3.5 w-3.5", isRequestingLocation && "animate-pulse")} />
             {isRequestingLocation ? 'Suche...' : 'Standort aktivieren'}
           </button>
         )}
         
         <div className="space-y-3 stagger-children">
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <SkeletonRewardCard key={i} />
-            ))
+            Array.from({ length: 3 }).map((_, i) => <SkeletonRewardCard key={i} />)
           ) : rewards.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Keine Gutscheine verfügbar.</p>
-            </div>
+            <div className="text-center py-8 text-muted-foreground"><p>Keine Gutscheine verfügbar.</p></div>
           ) : (
-            rewards.map(reward => (
-              <RewardCard key={reward.id} reward={reward} />
-            ))
+            rewards.map(reward => <RewardCard key={reward.id} reward={reward} />)
           )}
         </div>
       </section>
       
-      {/* Recent Badges - Compact */}
       <section className="container pb-4">
         <RecentBadgesBar />
       </section>
       
-      {/* Social Proof - Compact */}
       <section className="container pb-4">
         <TopListenersWidget />
       </section>
       
-      {/* Featured Platinum Sponsors */}
       <FeaturedSponsorsBar />
+      
+      <DriveSearchSheet open={showDriveSearch} onOpenChange={setShowDriveSearch} />
     </div>
   );
 }
