@@ -14,7 +14,12 @@
     <meta name="author" content="Radio 2Go" />
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#023F5A" />
+    <meta name="theme-color" content="#061E1C" />
+    
+    <!-- Brand Fonts: Montserrat (Headlines) + Open Sans (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="My 2Go" />
@@ -51,12 +56,11 @@
     <!-- Critical CSS for faster initial paint -->
     <style>
       /* Minimal critical CSS for initial render */
-      :root { --background: 200 25% 98%; --secondary: 197 96% 18%; }
-      body { margin: 0; background: hsl(var(--background)); font-family: system-ui, -apple-system, sans-serif; }
+      :root { --background: 174 70% 8%; --foreground: 0 0% 98%; }
+      body { margin: 0; background: hsl(var(--background)); font-family: 'Open Sans', system-ui, sans-serif; }
       #root { min-height: 100vh; }
-      /* Loading skeleton animation */
       @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-      .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+      .skeleton { background: linear-gradient(90deg, #1C3F3A 25%, #17423B 50%, #1C3F3A 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
     </style>
     
     <!-- Google Cast SDK - defer loading -->
