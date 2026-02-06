@@ -14,6 +14,7 @@ interface PartnerCardProps {
   showArrow?: boolean;
   redemptionCount?: number;
   minTalerCost?: number;
+  campaignBadge?: string | null;
 }
 
 export const PartnerCard = memo(function PartnerCard({ 
@@ -21,7 +22,8 @@ export const PartnerCard = memo(function PartnerCard({
   className, 
   showArrow = true, 
   redemptionCount, 
-  minTalerCost 
+  minTalerCost,
+  campaignBadge
 }: PartnerCardProps) {
   // Use provided count or fetch it
   const { data: fetchedCount } = usePartnerRedemptionCount(partner.id);
@@ -92,6 +94,11 @@ export const PartnerCard = memo(function PartnerCard({
           )}
           {partner.is_featured && (
             <span className="text-xs font-semibold text-accent">Featured</span>
+          )}
+          {campaignBadge && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-accent/15 text-accent whitespace-nowrap">
+              {campaignBadge}
+            </span>
           )}
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ComebackBanner } from '@/components/home/ComebackBanner';
 import { WeeklyWrappedBanner } from '@/components/wrapped/WeeklyWrappedBanner';
+import { CampaignBanner } from '@/components/home/CampaignBanner';
 import { useGeoProximityAlerts } from '@/hooks/useGeoProximityAlerts';
 import { RecommendedRewardsSection } from '@/components/rewards/RecommendedRewardsSection';
 import { useComebackBonus } from '@/hooks/useComebackBonus';
@@ -128,6 +129,9 @@ export function SessionModeHome({
       <section className="container pb-3">
         <WeeklyWrappedBanner />
       </section>
+      
+      {/* Seasonal Campaign Banner */}
+      <CampaignBanner />
 
       <section className="container pb-4">
         <ReferralGameCard />
