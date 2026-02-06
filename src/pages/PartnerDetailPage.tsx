@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getPartnerBySlug, getPartnerById, getRewardsByPartner, Partner, Reward } from '@/lib/supabase-helpers';
 import { RewardCard } from '@/components/ui/reward-card';
@@ -10,6 +10,10 @@ import { TestimonialCarousel } from '@/components/partner/TestimonialCarousel';
 import { RedemptionCountBadge } from '@/components/social-proof/RedemptionCountBadge';
 import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useQRScanTracking } from '@/hooks/useQRScanTracking';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { TalerIcon } from '@/components/icons/TalerIcon';
+import { toast } from 'sonner';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -26,6 +30,7 @@ import { cn } from '@/lib/utils';
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [partner, setPartner] = useState<Partner | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -74,13 +79,43 @@ export default function PartnerDetailPage() {
     return parts.join(', ');
   };
   
-  // Open in maps app
-  const openInMaps = () => {
+  // Navigate to partner and award Taler
+  const navigateToPartner = useCallback(async () => {
     if (!partner) return;
     const query = encodeURIComponent(getAddress());
-    // Try Google Maps first, falls back to Apple Maps on iOS
-    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-  };
+    
+    // Detect iOS for Apple Maps, otherwise Google Maps
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const mapsUrl = isIOS
+      ? `maps://maps.apple.com/?q=${query}`
+      : `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    // Open maps
+    window.open(mapsUrl, '_blank');
+
+    // Award navigation Taler if logged in
+    if (user) {
+      try {
+        const { data, error } = await supabase.rpc('award_navigation_taler', {
+          _user_id: user.id,
+          _partner_id: partner.id,
+        });
+        if (data && typeof data === 'object' && 'success' in data) {
+          const result = data as { success: boolean; taler_awarded?: number; already_awarded?: boolean; message?: string };
+          if (result.success) {
+            toast.success('+3 Taler', {
+              description: 'Navigations-Bonus erhalten!',
+              icon: '🧭',
+            });
+          }
+          // Silently skip if already_awarded today
+        }
+      } catch (err) {
+        // Don't block navigation if Taler award fails
+        console.error('Navigation taler award failed:', err);
+      }
+    }
+  }, [partner, user]);
   
   if (isLoading) {
     return <PageLoader />;
@@ -155,13 +190,20 @@ export default function PartnerDetailPage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button 
-            onClick={openInMaps}
+            onClick={navigateToPartner}
             className="card-interactive p-4 flex flex-col items-center gap-2"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
               <Navigation className="h-5 w-5 text-accent" />
             </div>
-            <span className="text-sm font-semibold">Route</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-semibold">Route</span>
+              {user && (
+                <span className="text-2xs text-accent font-bold flex items-center gap-0.5">
+                  +3 <TalerIcon size={10} className="text-accent" />
+                </span>
+              )}
+            </div>
           </button>
           
           {rewards.length > 0 && (
@@ -202,7 +244,7 @@ export default function PartnerDetailPage() {
         {address && (
           <div className="card-base p-4 mb-4">
             <button 
-              onClick={openInMaps}
+              onClick={navigateToPartner}
               className="flex items-start gap-4 w-full text-left group"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
