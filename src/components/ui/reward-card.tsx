@@ -22,8 +22,8 @@ const typeConfig = {
   experience: { icon: Star, colorClass: 'bg-accent/15 text-accent' },
   fixed_discount: { icon: Ticket, colorClass: 'bg-success/15 text-success' },
   percent_discount: { icon: Percent, colorClass: 'bg-success/15 text-success' },
-  free_item: { icon: Gift, colorClass: 'bg-primary/30 text-secondary' },
-  topup_bonus: { icon: Sparkles, colorClass: 'bg-secondary/10 text-secondary' },
+  free_item: { icon: Gift, colorClass: 'bg-primary/30 text-primary-foreground' },
+  topup_bonus: { icon: Sparkles, colorClass: 'bg-primary/20 text-primary-foreground' },
   two_for_one: { icon: Users, colorClass: 'bg-accent/15 text-accent' },
 };
 
@@ -114,7 +114,7 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
         {/* Content */}
         <div className={cn("flex-1 min-w-0", showPremiumOverlay && 'blur-[2px]')}>
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+            <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
               {reward.title}
             </h3>
             {distance !== undefined && (
@@ -166,7 +166,7 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
         
         {/* Arrow */}
         <ChevronRight className={cn(
-          "h-5 w-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0",
+          "h-5 w-5 text-muted-foreground group-hover:text-accent group-hover:translate-x-0.5 transition-all flex-shrink-0",
           showPremiumOverlay && 'blur-[2px]'
         )} />
       </Link>

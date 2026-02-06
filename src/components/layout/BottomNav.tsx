@@ -66,16 +66,16 @@ export function BottomNav() {
               className={cn(
                 'flex flex-col items-center gap-1 min-w-[52px] min-h-[52px] px-3 py-2 rounded-xl transition-all duration-200',
                 isActive
-                  ? 'text-secondary'
+                  ? 'text-accent'
                   : isHighlight 
-                    ? 'text-secondary'
+                    ? 'text-accent-foreground'
                     : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <div className={cn(
                 'relative p-2 rounded-lg transition-all duration-200',
                 isActive && 'bg-primary/20',
-                isHighlight && !isActive && 'bg-accent text-secondary'
+                isHighlight && !isActive && 'bg-accent text-accent-foreground'
               )}>
                 {/* Subtle glow ring for QR button - only for new users */}
                 {isHighlight && !isActive && !hasVisitedQR && (

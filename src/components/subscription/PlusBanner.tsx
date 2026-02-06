@@ -28,18 +28,18 @@ export function PlusBanner() {
           onClick={() => setShowUpgradeSheet(true)}
           className={cn(
             "cursor-pointer p-4",
-            "bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20",
-            "border border-amber-500/30 rounded-2xl",
+            "bg-gradient-to-r from-accent/20 via-accent/15 to-accent/20",
+            "border border-accent/30 rounded-2xl",
             "flex items-center justify-between gap-3",
-            "hover:border-amber-500/50 transition-colors"
+            "hover:border-accent/50 transition-colors"
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shrink-0">
-              <Sparkles className="h-5 w-5 text-white" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-accent to-accent/80 shrink-0">
+              <Sparkles className="h-5 w-5 text-accent-foreground" />
             </div>
             <div>
-              <p className="font-semibold text-amber-700 dark:text-amber-400">
+              <p className="font-semibold text-accent">
                 Noch {trialDaysRemaining} Tage Premium gratis
               </p>
               <p className="text-sm text-muted-foreground">
@@ -47,7 +47,7 @@ export function PlusBanner() {
               </p>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+          <ChevronRight className="h-5 w-5 text-accent shrink-0" />
         </div>
         
         <PlusUpgradeSheet 
@@ -70,25 +70,25 @@ export function PlusBanner() {
         onClick={() => setShowUpgradeSheet(true)}
         className={cn(
           "cursor-pointer p-4",
-          "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500",
+          "bg-gradient-to-r from-accent via-accent/90 to-accent",
           "flex items-center justify-between gap-3",
           "hover:opacity-95 transition-opacity"
         )}
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-white/20 shrink-0">
-            <Crown className="h-5 w-5 text-white" />
+          <div className="p-2 rounded-xl bg-accent-foreground/20 shrink-0">
+            <Crown className="h-5 w-5 text-accent-foreground" />
           </div>
           <div>
-            <p className="font-semibold text-white">
+            <p className="font-semibold text-accent-foreground">
               2Go Plus entdecken
             </p>
-            <p className="text-sm text-white/80">
+            <p className="text-sm text-accent-foreground/80">
               CHF-Rabatte, 2für1 & mehr ab CHF 4.90/Monat
             </p>
           </div>
         </div>
-        <ChevronRight className="h-5 w-5 text-white shrink-0" />
+        <ChevronRight className="h-5 w-5 text-accent-foreground shrink-0" />
       </div>
       
       <PlusUpgradeSheet 
