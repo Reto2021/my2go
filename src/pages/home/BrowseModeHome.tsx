@@ -154,22 +154,22 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       <section className="container -mt-12 relative z-20">
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent">
-              <Radio className="h-5 w-5" />
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <Radio className="h-5 w-5 text-amber-600" />
             </div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Hören</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-800">Hören</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent">
-              <Coins className="h-5 w-5" />
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <Coins className="h-5 w-5 text-amber-600" />
             </div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Sammeln</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-800">Sammeln</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-accent">
-              <Gift className="h-5 w-5" />
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+              <Gift className="h-5 w-5 text-amber-600" />
             </div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Geniessen</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-800">Geniessen</span>
           </div>
         </div>
       </section>
