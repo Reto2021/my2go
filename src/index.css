@@ -63,7 +63,7 @@
     --glass-blur: 20px;
 
     /* Brand gradients */
-    --gradient-hero: linear-gradient(135deg, #061E1C 0%, #163D37 50%, #0D2925 100%);
+    --gradient-hero: linear-gradient(180deg, #0B1D2C 0%, #1A3A52 30%, #3B6B8A 60%, #7AADCA 80%, #C8D8E4 95%, #E8DDD0 100%);
     --gradient-button: linear-gradient(135deg, #F0B510 0%, #E6A200 100%);
     --gradient-card: linear-gradient(180deg, #17423B 0%, #133832 100%);
 
@@ -114,7 +114,7 @@
     --input: 174 15% 88%;
     --ring: 43 95% 55%;
 
-    --gradient-hero: linear-gradient(135deg, #061E1C 0%, #163D37 50%, #0D2925 100%);
+    --gradient-hero: linear-gradient(180deg, #0B1D2C 0%, #1A3A52 30%, #3B6B8A 60%, #7AADCA 80%, #C8D8E4 95%, #E8DDD0 100%);
     --gradient-button: linear-gradient(135deg, #F0B510 0%, #E6A200 100%);
     --gradient-card: linear-gradient(180deg, #f8fafa 0%, #f0f5f4 100%);
 
@@ -270,7 +270,7 @@
     left: 0;
     right: 0;
     height: 25px;
-    background: linear-gradient(to top, hsl(174 70% 8%) 0%, hsl(174 70% 8% / 0.85) 60%, transparent 100%);
+    background: linear-gradient(to top, hsl(200 20% 12%) 0%, hsl(200 20% 12% / 0.85) 60%, transparent 100%);
     z-index: 10;
   }
 
