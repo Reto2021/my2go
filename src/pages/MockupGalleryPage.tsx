@@ -1,42 +1,80 @@
-import mockupHome from "@/assets/mockup-home.jpg";
-import mockupRewards from "@/assets/mockup-rewards.jpg";
-import mockupQR from "@/assets/mockup-qr.jpg";
-import mockupRadio from "@/assets/mockup-radio.jpg";
-
-const mockups = [
-  { src: mockupHome, label: "Home Screen", file: "mockup-home.jpg" },
-  { src: mockupRewards, label: "Rewards", file: "mockup-rewards.jpg" },
-  { src: mockupQR, label: "QR Code", file: "mockup-qr.jpg" },
-  { src: mockupRadio, label: "Radio Player", file: "mockup-radio.jpg" },
+const screens = [
+  { path: "/", label: "Home Screen" },
+  { path: "/rewards", label: "Gutscheine" },
+  { path: "/partner", label: "Partner" },
+  { path: "/auth", label: "Login / Onboarding" },
 ];
 
+const PREVIEW_BASE = window.location.origin;
+
 export default function MockupGalleryPage() {
-  const handleDownload = (src: string, filename: string) => {
-    const a = document.createElement("a");
-    a.href = src;
-    a.download = filename;
-    a.click();
-  };
-
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-2">App Mockups</h1>
-        <p className="text-muted-foreground mb-8">Klicke auf «Herunterladen» um die Bilder zu speichern.</p>
+    <div className="min-h-screen bg-[#0a0a0a] p-6 pb-24">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-2xl font-bold text-white mb-1">App Screens</h1>
+        <p className="text-white/50 mb-10 text-sm">Live-Vorschau der echten App-Screens im iPhone-Rahmen</p>
 
-        <div className="grid grid-cols-2 gap-6">
-          {mockups.map(({ src, label, file }) => (
-            <div key={file} className="bg-card rounded-xl overflow-hidden border border-border shadow-sm">
-              <img src={src} alt={label} className="w-full object-cover" />
-              <div className="p-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">{label}</span>
-                <button
-                  onClick={() => handleDownload(src, file)}
-                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 justify-items-center">
+          {screens.map(({ path, label }) => (
+            <div key={path} className="flex flex-col items-center gap-3">
+              {/* iPhone frame */}
+              <div
+                className="relative"
+                style={{
+                  width: 200,
+                  height: 432,
+                  background: '#1a1a1a',
+                  borderRadius: 36,
+                  padding: 8,
+                  boxShadow: '0 0 0 2px #3a3a3a, 0 24px 60px rgba(0,0,0,0.7), inset 0 0 0 1px #444',
+                }}
+              >
+                {/* Notch */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 60,
+                    height: 18,
+                    background: '#1a1a1a',
+                    borderRadius: 12,
+                    zIndex: 10,
+                  }}
+                />
+                {/* Screen */}
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: 28,
+                    overflow: 'hidden',
+                    background: '#000',
+                    position: 'relative',
+                  }}
                 >
-                  Herunterladen
-                </button>
+                  <iframe
+                    src={`${PREVIEW_BASE}${path}`}
+                    style={{
+                      width: 390,
+                      height: 844,
+                      border: 'none',
+                      transform: 'scale(0.47)',
+                      transformOrigin: 'top left',
+                      pointerEvents: 'none',
+                    }}
+                    title={label}
+                    loading="lazy"
+                  />
+                </div>
+                {/* Side buttons */}
+                <div style={{ position: 'absolute', right: -3, top: 80, width: 3, height: 30, background: '#3a3a3a', borderRadius: 2 }} />
+                <div style={{ position: 'absolute', left: -3, top: 70, width: 3, height: 22, background: '#3a3a3a', borderRadius: 2 }} />
+                <div style={{ position: 'absolute', left: -3, top: 100, width: 3, height: 40, background: '#3a3a3a', borderRadius: 2 }} />
+                <div style={{ position: 'absolute', left: -3, top: 148, width: 3, height: 40, background: '#3a3a3a', borderRadius: 2 }} />
               </div>
+              <span className="text-white/70 text-sm font-medium">{label}</span>
             </div>
           ))}
         </div>
