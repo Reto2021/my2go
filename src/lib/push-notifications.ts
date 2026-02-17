@@ -46,7 +46,7 @@ export async function subscribeToPush(): Promise<boolean> {
     }
 
     // Get service worker registration
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await navigator.serviceWorker.ready as ServiceWorkerRegistration & { pushManager: PushManager };
 
     // Subscribe to push
     const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
@@ -80,7 +80,7 @@ export async function unsubscribeFromPush(): Promise<boolean> {
   try {
     if (!isPushSupported()) return false;
 
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await navigator.serviceWorker.ready as ServiceWorkerRegistration & { pushManager: PushManager };
     const subscription = await registration.pushManager.getSubscription();
 
     if (!subscription) {
@@ -111,7 +111,7 @@ export async function getPushSubscriptionStatus(): Promise<boolean> {
   try {
     if (!isPushSupported()) return false;
 
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await navigator.serviceWorker.ready as ServiceWorkerRegistration & { pushManager: PushManager };
     const subscription = await registration.pushManager.getSubscription();
 
     return subscription !== null;
