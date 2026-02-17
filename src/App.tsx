@@ -57,6 +57,7 @@ const PlusSuccessPage = lazy(() => import("./pages/PlusSuccessPage"));
 const RedeemDiscountPage = lazy(() => import("./pages/RedeemDiscountPage"));
 const MyStatsPage = lazy(() => import("./pages/MyStatsPage"));
 const GiftSuccessPage = lazy(() => import("./pages/GiftSuccessPage"));
+const MockupGalleryPage = lazy(() => import("./pages/MockupGalleryPage"));
 
 // Admin pages - lazy loaded (rarely accessed)
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -320,6 +321,7 @@ function AppContent() {
             <Route path="/plus/discount" element={<RedeemDiscountPage />} />
             <Route path="/my-stats" element={<MyStatsPage />} />
             <Route path="/gift/success" element={<GiftSuccessPage />} />
+            <Route path="/mockups" element={<MockupGalleryPage />} />
           </Route>
           
           {/* Public Partner Radio Page */}
