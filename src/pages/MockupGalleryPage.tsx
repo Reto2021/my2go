@@ -7,6 +7,14 @@ const screens = [
 
 const PREVIEW_BASE = window.location.origin;
 
+// iPhone inner screen dimensions (without padding)
+const SCREEN_W = 184; // 200 - 2*8
+const SCREEN_H = 398; // 432 - 2*8 - but let's compute: 200 frame, 8px padding each side
+// scale so 390px fits into 184px → 184/390 ≈ 0.4718
+const SCALE = SCREEN_W / 390;
+// iframe height at this scale: 844 * SCALE
+const IFRAME_H = Math.round(844 * SCALE); // ≈ 398px
+
 export default function MockupGalleryPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] p-6 pb-24">
@@ -17,12 +25,12 @@ export default function MockupGalleryPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 justify-items-center">
           {screens.map(({ path, label }) => (
             <div key={path} className="flex flex-col items-center gap-3">
-              {/* iPhone frame */}
+              {/* iPhone frame: padding 8px each side → inner 184×(IFRAME_H) */}
               <div
                 className="relative"
                 style={{
                   width: 200,
-                  height: 432,
+                  height: IFRAME_H + 16, // inner height + 2×8px padding
                   background: '#1a1a1a',
                   borderRadius: 36,
                   padding: 8,
@@ -46,8 +54,8 @@ export default function MockupGalleryPage() {
                 {/* Screen */}
                 <div
                   style={{
-                    width: '100%',
-                    height: '100%',
+                    width: SCREEN_W,
+                    height: IFRAME_H,
                     borderRadius: 28,
                     overflow: 'hidden',
                     background: '#000',
@@ -60,7 +68,7 @@ export default function MockupGalleryPage() {
                       width: 390,
                       height: 844,
                       border: 'none',
-                      transform: 'scale(0.47)',
+                      transform: `scale(${SCALE})`,
                       transformOrigin: 'top left',
                       pointerEvents: 'none',
                     }}
