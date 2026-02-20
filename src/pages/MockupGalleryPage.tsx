@@ -7,13 +7,16 @@ const screens = [
 
 const PREVIEW_BASE = window.location.origin;
 
-// iPhone inner screen dimensions (without padding)
-const SCREEN_W = 184; // 200 - 2*8
-const SCREEN_H = 398; // 432 - 2*8 - but let's compute: 200 frame, 8px padding each side
-// scale so 390px fits into 184px → 184/390 ≈ 0.4718
-const SCALE = SCREEN_W / 390;
-// iframe height at this scale: 844 * SCALE
-const IFRAME_H = Math.round(844 * SCALE); // ≈ 398px
+// Real device viewport
+const DEVICE_W = 390;
+const DEVICE_H = 844;
+
+// Visible screen area inside the iPhone frame (200px frame - 2×8px padding)
+const SCREEN_W = 184;
+const SCALE = SCREEN_W / DEVICE_W; // ≈ 0.4718
+
+// Scaled height = exactly how many px the clipping container must be
+const SCREEN_H = Math.round(DEVICE_H * SCALE); // ≈ 398px
 
 export default function MockupGalleryPage() {
   return (
@@ -25,12 +28,12 @@ export default function MockupGalleryPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 justify-items-center">
           {screens.map(({ path, label }) => (
             <div key={path} className="flex flex-col items-center gap-3">
-              {/* iPhone frame: padding 8px each side → inner 184×(IFRAME_H) */}
+              {/* iPhone frame */}
               <div
                 className="relative"
                 style={{
                   width: 200,
-                  height: IFRAME_H + 16, // inner height + 2×8px padding
+                  height: SCREEN_H + 16, // clipped screen + 2×8px padding
                   background: '#1a1a1a',
                   borderRadius: 36,
                   padding: 8,
@@ -51,11 +54,12 @@ export default function MockupGalleryPage() {
                     zIndex: 10,
                   }}
                 />
-                {/* Screen */}
+
+                {/* Clipping screen container — clips the scaled iframe to exactly SCREEN_H pixels */}
                 <div
                   style={{
                     width: SCREEN_W,
-                    height: IFRAME_H,
+                    height: SCREEN_H,
                     borderRadius: 28,
                     overflow: 'hidden',
                     background: '#000',
@@ -65,17 +69,19 @@ export default function MockupGalleryPage() {
                   <iframe
                     src={`${PREVIEW_BASE}${path}`}
                     style={{
-                      width: 390,
-                      height: 844,
+                      width: DEVICE_W,
+                      height: DEVICE_H,
                       border: 'none',
                       transform: `scale(${SCALE})`,
                       transformOrigin: 'top left',
                       pointerEvents: 'none',
+                      display: 'block',
                     }}
                     title={label}
                     loading="lazy"
                   />
                 </div>
+
                 {/* Side buttons */}
                 <div style={{ position: 'absolute', right: -3, top: 80, width: 3, height: 30, background: '#3a3a3a', borderRadius: 2 }} />
                 <div style={{ position: 'absolute', left: -3, top: 70, width: 3, height: 22, background: '#3a3a3a', borderRadius: 2 }} />
