@@ -1,8 +1,9 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Gift, QrCode, Store, Bell } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Home, Gift, QrCode, Store, Bell, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useCallback, useState, useEffect } from 'react';
+import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
 
 const QR_VISITED_KEY = 'qr_page_visited';
 
@@ -20,6 +21,7 @@ export function BottomNav() {
   const [hasVisitedQR, setHasVisitedQR] = useState(() => {
     return localStorage.getItem(QR_VISITED_KEY) === 'true';
   });
+  const [driveOpen, setDriveOpen] = useState(false);
   
   // Track when user visits QR page
   useEffect(() => {
@@ -31,7 +33,6 @@ export function BottomNav() {
   
   const handleNavClick = (e: React.MouseEvent, path: string) => {
     e.preventDefault();
-    // Force navigation to home even if already on home (closes balance card etc.)
     if (path === '/') {
       navigate('/', { replace: true });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -46,57 +47,94 @@ export function BottomNav() {
   }, []);
   
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50" data-onboarding="bottom-nav">
-      {/* Background blur */}
-      <div className="absolute inset-0 bg-background/95 backdrop-blur-xl border-t border-border/30" />
-      
-      <div className="relative container flex items-center justify-around py-3 pb-safe">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path || 
-            (item.path !== '/' && location.pathname.startsWith(item.path));
-          const isHighlight = item.highlight;
-          
-          return (
-            <button
-              key={item.path}
-              onClick={(e) => handleNavClick(e, item.path)}
-              onMouseEnter={() => handlePrefetch(item.path)}
-              onTouchStart={() => handlePrefetch(item.path)}
-              className={cn(
-                'flex flex-col items-center gap-1 min-w-[52px] min-h-[52px] px-3 py-2 rounded-xl transition-all duration-200',
-                isActive
-                  ? 'text-accent'
-                  : isHighlight 
-                    ? 'text-accent-foreground'
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 z-50" data-onboarding="bottom-nav">
+        {/* Background blur */}
+        <div className="absolute inset-0 bg-background/95 backdrop-blur-xl border-t border-border/30" />
+        
+        <div className="relative container flex items-center justify-around py-3 pb-safe">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path || 
+              (item.path !== '/' && location.pathname.startsWith(item.path));
+            const isHighlight = item.highlight;
+            
+            if (isHighlight) {
+              // Combined QR + Drive button
+              return (
+                <div key={item.path} className="flex flex-col items-center gap-1 min-w-[52px]">
+                  <div className="relative">
+                    {/* Main QR button */}
+                    <button
+                      onClick={(e) => handleNavClick(e, item.path)}
+                      onMouseEnter={() => handlePrefetch(item.path)}
+                      onTouchStart={() => handlePrefetch(item.path)}
+                      className={cn(
+                        'relative p-2 rounded-lg transition-all duration-200',
+                        isActive ? 'bg-primary/20 text-accent' : 'bg-accent text-accent-foreground'
+                      )}
+                    >
+                      {/* Subtle glow ring for new users */}
+                      {!isActive && !hasVisitedQR && (
+                        <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
+                      )}
+                      <Icon className="relative h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
+                    </button>
+
+                    {/* Drive/Navigation badge button */}
+                    <button
+                      onClick={() => setDriveOpen(true)}
+                      className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                      title="Navigation starten"
+                    >
+                      <Navigation className="h-3 w-3" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  <span className={cn(
+                    'text-xs font-semibold leading-tight',
+                    isActive ? 'text-accent opacity-100' : 'text-accent-foreground opacity-70'
+                  )}>
+                    {item.label}
+                  </span>
+                </div>
+              );
+            }
+            
+            return (
+              <button
+                key={item.path}
+                onClick={(e) => handleNavClick(e, item.path)}
+                onMouseEnter={() => handlePrefetch(item.path)}
+                onTouchStart={() => handlePrefetch(item.path)}
+                className={cn(
+                  'flex flex-col items-center gap-1 min-w-[52px] min-h-[52px] px-3 py-2 rounded-xl transition-all duration-200',
+                  isActive
+                    ? 'text-accent'
                     : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <div className={cn(
-                'relative p-2 rounded-lg transition-all duration-200',
-                isActive && 'bg-primary/20',
-                isHighlight && !isActive && 'bg-accent text-accent-foreground'
-              )}>
-                {/* Subtle glow ring for QR button - only for new users */}
-                {isHighlight && !isActive && !hasVisitedQR && (
-                  <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
                 )}
-                <Icon className={cn(
-                  'relative h-5 w-5 transition-transform duration-200',
-                  isActive && 'scale-110',
-                  isHighlight && 'h-6 w-6'
-                )} strokeWidth={isActive || isHighlight ? 2.5 : 2} />
-              </div>
-              <span className={cn(
-                'text-xs font-semibold leading-tight',
-                isActive ? 'opacity-100' : 'opacity-70'
-              )}>
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+              >
+                <div className={cn(
+                  'relative p-2 rounded-lg transition-all duration-200',
+                  isActive && 'bg-primary/20',
+                )}>
+                  <Icon className={cn(
+                    'relative h-5 w-5 transition-transform duration-200',
+                    isActive && 'scale-110',
+                  )} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+                <span className={cn(
+                  'text-xs font-semibold leading-tight',
+                  isActive ? 'opacity-100' : 'opacity-70'
+                )}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <DriveSearchSheet open={driveOpen} onOpenChange={setDriveOpen} />
+    </>
   );
 }
