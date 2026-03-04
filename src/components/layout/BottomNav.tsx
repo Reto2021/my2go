@@ -60,36 +60,32 @@ export function BottomNav() {
             const isHighlight = item.highlight;
             
             if (isHighlight) {
-              // Combined QR + Drive button
               return (
                 <div key={item.path} className="flex flex-col items-center gap-1 min-w-[52px]">
-                  <div className="relative">
-                    {/* Main QR button */}
-                    <button
-                      onClick={(e) => handleNavClick(e, item.path)}
-                      onMouseEnter={() => handlePrefetch(item.path)}
-                      onTouchStart={() => handlePrefetch(item.path)}
-                      className={cn(
-                        'relative p-2 rounded-lg transition-all duration-200',
-                        isActive ? 'bg-primary/20 text-accent' : 'bg-accent text-accent-foreground'
-                      )}
-                    >
-                      {/* Subtle glow ring for new users */}
-                      {!isActive && !hasVisitedQR && (
-                        <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
-                      )}
-                      <Icon className="relative h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
-                    </button>
-
-                    {/* Drive/Navigation badge button */}
-                    <button
-                      onClick={() => setDriveOpen(true)}
-                      className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-                      title="Navigation starten"
-                    >
-                      <Navigation className="h-3 w-3" strokeWidth={2.5} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => handleNavClick(e, item.path)}
+                    onMouseEnter={() => handlePrefetch(item.path)}
+                    onTouchStart={() => handlePrefetch(item.path)}
+                    className={cn(
+                      'relative p-2.5 rounded-xl transition-all duration-200',
+                      isActive ? 'bg-primary/20 text-accent' : 'bg-accent text-accent-foreground'
+                    )}
+                  >
+                    {!isActive && !hasVisitedQR && (
+                      <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
+                    )}
+                    <div className="relative h-6 w-6">
+                      <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
+                      <Navigation
+                        className="absolute -bottom-1.5 -right-1.5 h-3 w-3 text-primary drop-shadow-sm cursor-pointer"
+                        strokeWidth={3}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDriveOpen(true);
+                        }}
+                      />
+                    </div>
+                  </button>
                   <span className={cn(
                     'text-xs font-semibold leading-tight',
                     isActive ? 'text-accent opacity-100' : 'text-accent-foreground opacity-70'
