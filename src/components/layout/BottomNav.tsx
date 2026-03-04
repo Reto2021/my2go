@@ -77,7 +77,7 @@ export function BottomNav() {
                     <div className="relative flex items-center justify-center h-6 w-6">
                       <Icon className="h-6 w-6 opacity-40" strokeWidth={isActive ? 2.5 : 2} />
                       <Navigation
-                        className="absolute h-3 w-3 cursor-pointer"
+                        className="absolute h-4 w-4 cursor-pointer drop-shadow-sm"
                         style={{ color: 'currentColor' }}
                         strokeWidth={3}
                         onClick={(e) => {
