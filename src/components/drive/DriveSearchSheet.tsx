@@ -8,9 +8,10 @@ import { useRadioStore } from '@/lib/radio-store';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
 import { 
   Search, MapPin, Car, Footprints, Navigation, ExternalLink, 
-  Loader2, X, Clock, Ruler, Volume2, VolumeX, Coins
+  Loader2, X, Clock, Ruler, Volume2, VolumeX, Coins, QrCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -38,8 +39,21 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
   const { userLocation, requestLocation } = useLocation();
   const { isPlaying, togglePlay, volume, setVolume } = useRadioStore();
   const { user } = useAuth();
+  const [userQRCode, setUserQRCode] = useState<string | null>(null);
 
-  const prevVolumeRef = useState(1)[1]; // store previous volume for unmute
+  // Fetch user QR code
+  useEffect(() => {
+    if (!user || !open) return;
+    supabase
+      .from('user_codes')
+      .select('permanent_code')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .single()
+      .then(({ data }) => {
+        setUserQRCode(data?.permanent_code || null);
+      });
+  }, [user, open]);
 
   // Search as user types
   useEffect(() => {
@@ -256,6 +270,27 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
           {isSearching && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {/* User QR Code - shown when no search active and no destination */}
+          {!selectedDestination && !query && !isSearching && userQRCode && (
+            <div className="flex-1 flex flex-col items-center justify-center px-5 gap-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <QrCode className="h-4 w-4" />
+                Dein QR-Code
+              </div>
+              <div className="p-4 bg-white rounded-2xl shadow-sm">
+                <QRCodeSVG
+                  value={userQRCode}
+                  size={180}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center max-w-[240px]">
+                Zeige diesen Code beim Partner vor, um Taler zu sammeln
+              </p>
             </div>
           )}
 
