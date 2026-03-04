@@ -39,7 +39,7 @@ export function useMapboxSearch() {
       try {
         const token = await getMapboxToken();
         const proximity = userLat && userLng ? `&proximity=${userLng},${userLat}` : '';
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=ch&language=de&limit=5${proximity}`;
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=ch&language=de&limit=5&types=poi,address,place,locality${proximity}`;
         
         const res = await fetch(url);
         const data = await res.json();
