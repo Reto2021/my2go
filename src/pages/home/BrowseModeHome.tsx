@@ -9,18 +9,18 @@ import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { GuestSignupSheet } from '@/components/funnel/GuestSignupSheet';
 import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration';
 import { TriggerSlider } from '@/components/home/TriggerSlider';
-import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
+
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
 import { useGuestRadioRewards } from '@/hooks/useGuestRadioRewards';
-import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, Coins, Radio, Navigation } from 'lucide-react';
+import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, Coins, Radio } from 'lucide-react';
 import { BrowseModeHomeProps } from './types';
 import { cn } from '@/lib/utils';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying, setPlayerExpanded } = useRadioStore();
-  const [showDriveSearch, setShowDriveSearch] = useState(false);
+  
   
   const {
     totalEarned,
@@ -77,48 +77,31 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
               <TriggerSlider />
             </h1>
             
-            {/* Dual Play + Route Buttons */}
+            {/* Play Button */}
             <div className="flex flex-col items-center gap-4 mb-8">
-              <div className="flex items-center gap-6">
-                {/* Play Button */}
-                <button 
-                  onClick={() => {
-                    togglePlay();
-                    if (!isPlaying) setPlayerExpanded(true);
-                  }}
-                  disabled={isRadioLoading}
-                  className={cn(
-                    "relative w-20 h-20 rounded-full flex items-center justify-center",
-                    "bg-accent shadow-2xl shadow-accent/40",
-                    "hover:scale-105 active:scale-95 transition-all duration-200",
-                    "ring-4 ring-accent/30 ring-offset-2 ring-offset-primary/20",
-                    isPlaying && "animate-pulse"
-                  )}
-                >
-                  {isRadioLoading ? (
-                    <Loader2 className="h-8 w-8 text-accent-foreground animate-spin" />
-                  ) : isPlaying ? (
-                    <Pause className="h-8 w-8 text-accent-foreground" />
-                  ) : (
-                    <Play className="h-8 w-8 text-accent-foreground ml-1" />
-                  )}
-                  <span className="absolute -bottom-5 text-[10px] font-bold text-white/70 uppercase tracking-wider">Play</span>
-                </button>
-
-                {/* Route Button */}
-                <button
-                  onClick={() => setShowDriveSearch(true)}
-                  className={cn(
-                    "relative w-20 h-20 rounded-full flex items-center justify-center",
-                    "bg-white/15 backdrop-blur-sm border-2 border-white/30",
-                    "hover:scale-105 hover:bg-white/25 active:scale-95 transition-all duration-200",
-                    "shadow-xl"
-                  )}
-                >
-                  <Navigation className="h-8 w-8 text-white" />
-                  <span className="absolute -bottom-5 text-[10px] font-bold text-white/70 uppercase tracking-wider">Route</span>
-                </button>
-              </div>
+              <button 
+                onClick={() => {
+                  togglePlay();
+                  if (!isPlaying) setPlayerExpanded(true);
+                }}
+                disabled={isRadioLoading}
+                className={cn(
+                  "relative w-20 h-20 rounded-full flex items-center justify-center",
+                  "bg-accent shadow-2xl shadow-accent/40",
+                  "hover:scale-105 active:scale-95 transition-all duration-200",
+                  "ring-4 ring-accent/30 ring-offset-2 ring-offset-primary/20",
+                  isPlaying && "animate-pulse"
+                )}
+              >
+                {isRadioLoading ? (
+                  <Loader2 className="h-8 w-8 text-accent-foreground animate-spin" />
+                ) : isPlaying ? (
+                  <Pause className="h-8 w-8 text-accent-foreground" />
+                ) : (
+                  <Play className="h-8 w-8 text-accent-foreground ml-1" />
+                )}
+                <span className="absolute -bottom-5 text-[10px] font-bold text-white/70 uppercase tracking-wider">Play</span>
+              </button>
               
               <div className="text-center mt-4">
                 {isPlaying && nowPlaying ? (
@@ -128,7 +111,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
                   </p>
                 ) : (
                   <p className="text-white/80 text-lg font-semibold">
-                    Hören &amp; Navigieren
+                    Radio hören &amp; Taler sammeln
                   </p>
                 )}
                 
@@ -248,7 +231,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       
       <GuestSignupSheet isOpen={shouldShowSignup} onClose={markSignupShown} earnedTaler={totalEarned} listeningMinutes={listeningMinutes} />
       <FirstTalerCelebration isOpen={showFirstTalerCelebration} onClose={closeFirstTalerCelebration} talerAmount={firstTalerAmount} isGuest={true} />
-      <DriveSearchSheet open={showDriveSearch} onOpenChange={setShowDriveSearch} />
+      
     </div>
   );
 }
