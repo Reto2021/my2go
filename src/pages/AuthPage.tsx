@@ -429,8 +429,46 @@ export default function AuthPage() {
                 )}
               </div>
             )}
+
+            {/* Terms & Privacy Acceptance - Required for signup (Swiss nDSG) */}
+            {mode === 'signup' && (
+              <div className={cn(
+                "p-4 rounded-2xl border-2 transition-all",
+                errors.terms 
+                  ? "border-destructive bg-destructive/5" 
+                  : termsAccepted 
+                    ? "border-primary/30 bg-primary/5" 
+                    : "border-transparent bg-muted/50"
+              )}>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="termsAccepted"
+                    checked={termsAccepted}
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      setErrors(prev => ({ ...prev, terms: undefined }));
+                    }}
+                    className="mt-0.5 h-5 w-5 rounded border-border text-primary focus:ring-primary accent-primary"
+                  />
+                  <div className="space-y-1">
+                    <span className="text-sm text-foreground block leading-relaxed">
+                      Ich akzeptiere die{' '}
+                      <a href="/agb" target="_blank" className="text-accent underline hover:no-underline">AGB</a>
+                      {' '}und{' '}
+                      <a href="/datenschutz" target="_blank" className="text-accent underline hover:no-underline">Datenschutzerklärung</a>
+                      {' '}und stimme der Erhebung meiner Nutzungsdaten (inkl. Radio-Hördaten) gemäss der Datenschutzerklärung zu. *
+                    </span>
+                  </div>
+                </label>
+                {errors.terms && (
+                  <p className="text-sm text-destructive mt-2 flex items-center gap-1">
+                    <span>⚠️</span> {errors.terms}
+                  </p>
+                )}
+              </div>
+            )}
             
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
