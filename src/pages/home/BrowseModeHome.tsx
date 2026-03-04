@@ -10,6 +10,8 @@ import { GuestSignupSheet } from '@/components/funnel/GuestSignupSheet';
 import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration';
 import { TriggerSlider } from '@/components/home/TriggerSlider';
 import { HeroAnimations } from '@/components/ui/HeroAnimations';
+import { HeroDynamic } from '@/components/ui/HeroDynamic';
+import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
@@ -21,6 +23,8 @@ import { cn } from '@/lib/utils';
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying, setPlayerExpanded } = useRadioStore();
+  const { timeOfDay } = useTimeOfDay();
+  const showBirds = timeOfDay !== 'night';
   
   
   const {
@@ -47,9 +51,10 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   
   return (
     <div className="min-h-screen bg-background -mt-20">
-      {/* Hero Section */}
-      <section className="hero-section text-foreground pt-20">
-        <HeroAnimations />
+      {/* Hero Section – Dynamic: 4 Jahreszeiten × 4 Tageszeiten + Wetter */}
+      <section className="relative overflow-hidden text-foreground pt-20" style={{ minHeight: '60vh' }}>
+        <HeroDynamic />
+        {showBirds && <HeroAnimations />}
         
         <div className="container relative z-10 pt-6 pb-28">
           <div className="flex items-center justify-between mb-6">

@@ -24,6 +24,7 @@ import { useLiveEventsStore } from '@/lib/live-events-store';
 import { ChevronRight, Navigation as NavigationIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SessionModeHomeProps } from './types';
+import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 
 export function SessionModeHome({
   displayName, 
@@ -50,12 +51,7 @@ export function SessionModeHome({
     return () => unsubscribe();
   }, [fetchEvents, subscribeToRealtime]);
   
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Guten Morgen';
-    if (hour < 18) return 'Hallo';
-    return 'Guten Abend';
-  };
+  const { greeting } = useTimeOfDay();
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,7 +60,7 @@ export function SessionModeHome({
         <div className="animate-in space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
-              {getGreeting()}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
+              {greeting}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
             </p>
             <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
           </div>
