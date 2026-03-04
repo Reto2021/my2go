@@ -25,9 +25,10 @@ export default function AuthPage() {
   const [firstName, setFirstName] = useState('');
   const [phone, setPhone] = useState('');
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string; firstName?: string; marketing?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; phone?: string; firstName?: string; marketing?: string; terms?: string }>({});
   
   // Check for referral code in URL
   const referralCode = searchParams.get('ref') || '';
@@ -81,7 +82,7 @@ export default function AuthPage() {
   };
   
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string; phone?: string; firstName?: string; marketing?: string } = {};
+    const newErrors: { email?: string; password?: string; phone?: string; firstName?: string; marketing?: string; terms?: string } = {};
     
     try {
       emailSchema.parse(email);
@@ -119,6 +120,11 @@ export default function AuthPage() {
       // Marketing consent is required for signup
       if (!marketingConsent) {
         newErrors.marketing = 'Bitte stimme zu, um fortzufahren';
+      }
+      
+      // Terms acceptance is required for signup (Swiss nDSG compliance)
+      if (!termsAccepted) {
+        newErrors.terms = 'Bitte akzeptiere die AGB und Datenschutzerklärung';
       }
     }
     
