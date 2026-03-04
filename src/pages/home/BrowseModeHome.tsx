@@ -9,6 +9,7 @@ import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { GuestSignupSheet } from '@/components/funnel/GuestSignupSheet';
 import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration';
 import { TriggerSlider } from '@/components/home/TriggerSlider';
+import { HeroAnimations } from '@/components/ui/HeroAnimations';
 
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
@@ -47,17 +48,8 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   return (
     <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section */}
-      <section className="hero-section text-white pt-20">
-        <div className="skyline-container">
-          <div className="skyline-distant" />
-          <div className="skyline-mid" />
-          <div className="skyline-front" />
-        </div>
-        <div className="clouds-container">
-          <div className="cloud cloud-1" />
-          <div className="cloud cloud-2" />
-          <div className="cloud cloud-3" />
-        </div>
+      <section className="hero-section text-foreground pt-20">
+        <HeroAnimations />
         
         <div className="container relative z-10 pt-6 pb-28">
           <div className="flex items-center justify-between mb-6">
