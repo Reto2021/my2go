@@ -123,6 +123,28 @@ export function HeroDynamic() {
         </div>
       )}
 
+      {/* Shooting stars – occasional */}
+      {timeOfDay === "night" && (
+        <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
+          {[12, 28, 45].map((delay, i) => (
+            <div
+              key={`shoot-${i}`}
+              className="absolute"
+              style={{
+                top: `${8 + i * 12}%`,
+                left: `${15 + i * 20}%`,
+                width: 0,
+                height: '2px',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.9), rgba(200,220,255,0.4), transparent)',
+                borderRadius: '2px',
+                boxShadow: '0 0 6px 1px rgba(200,220,255,0.5)',
+                animation: `shooting-star ${delay + 8}s ease-in-out ${delay}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Vignette */}
       <div
         className="absolute inset-0 pointer-events-none z-[3]"

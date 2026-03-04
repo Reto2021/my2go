@@ -296,6 +296,14 @@
     70%      { opacity: 1; transform: scale(2); filter: blur(0.6px); }
   }
 
+  @keyframes shooting-star {
+    0% { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 0; width: 0; }
+    5% { opacity: 1; width: 80px; }
+    15% { opacity: 1; width: 120px; }
+    30% { opacity: 0; width: 0; transform: translateX(250px) translateY(160px) rotate(-35deg); }
+    100% { opacity: 0; width: 0; transform: translateX(250px) translateY(160px) rotate(-35deg); }
+  }
+
   @keyframes sun-pulse {
     0%, 100% { opacity: 0.3; transform: scale(1); }
     50%      { opacity: 0.5; transform: scale(1.05); }
