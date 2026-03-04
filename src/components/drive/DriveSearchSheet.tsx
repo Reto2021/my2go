@@ -275,7 +275,7 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
 
           {/* User QR Code - shown when no search active and no destination */}
           {!selectedDestination && !query && !isSearching && userQRCode && (
-            <div className="flex-1 flex flex-col items-center justify-center px-5 gap-4">
+            <div className="flex-1 flex flex-col items-center justify-start pt-6 pb-24 px-5 gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <QrCode className="h-4 w-4" />
                 Dein QR-Code
