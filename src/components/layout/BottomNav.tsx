@@ -77,8 +77,9 @@ export function BottomNav() {
                     <div className="relative h-6 w-6">
                       <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
                       <Navigation
-                        className="absolute -bottom-1.5 -right-1.5 h-3 w-3 text-primary drop-shadow-sm cursor-pointer"
-                        strokeWidth={3}
+                        className="absolute -bottom-1 -right-1 h-3.5 w-3.5 cursor-pointer"
+                        style={{ color: 'currentColor' }}
+                        strokeWidth={2.5}
                         onClick={(e) => {
                           e.stopPropagation();
                           setDriveOpen(true);
