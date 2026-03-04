@@ -189,6 +189,14 @@ export default function AuthPage() {
           return;
         }
         
+        // Store terms acceptance timestamp (Swiss nDSG compliance)
+        if (data?.user) {
+          await supabase
+            .from('profiles')
+            .update({ terms_accepted_at: new Date().toISOString() })
+            .eq('id', data.user.id);
+        }
+        
         toast({
           title: 'Willkommen! 🎉',
           description: 'Dein Konto wurde erstellt. Du erhältst 50 Willkommens-Taler!',
