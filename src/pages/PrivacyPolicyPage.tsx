@@ -53,8 +53,9 @@ export default function PrivacyPolicyPage() {
               Bei der Nutzung der Radio 2Go App erheben wir folgende Daten:
             </p>
             <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1 mt-2">
-              <li><strong>Registrierungsdaten:</strong> E-Mail-Adresse, optional: Name, Geburtsdatum</li>
+              <li><strong>Registrierungsdaten:</strong> E-Mail-Adresse, Telefonnummer, optional: Name, Geburtsdatum</li>
               <li><strong>Nutzungsdaten:</strong> Login-Zeiten, gesammelte Taler, eingelöste Gutscheine, Streak-Daten</li>
+              <li><strong>Radio-Hördaten:</strong> Gehörte Radiosender, Hördauer, Zeitpunkt und Dauer einzelner Hörsessions. Diese Daten werden zur Berechnung Ihrer Taler-Belohnungen und zur Verbesserung des Dienstes erhoben.</li>
               <li><strong>Technische Daten:</strong> Gerätetyp, Betriebssystem, App-Version, IP-Adresse</li>
               <li><strong>Standortdaten:</strong> Nur wenn Sie dies für die Partnerkarte explizit erlauben</li>
               <li><strong>Push-Benachrichtigungen:</strong> Subscription-Daten für Push-Nachrichten (optional)</li>
@@ -79,12 +80,12 @@ export default function PrivacyPolicyPage() {
           <section>
             <h3 className="text-base font-semibold">4. Rechtsgrundlage</h3>
             <p className="text-sm text-muted-foreground">
-              Die Verarbeitung Ihrer Daten erfolgt auf Grundlage von:
+              Die Verarbeitung Ihrer Daten erfolgt auf Grundlage des Schweizerischen Bundesgesetzes über den Datenschutz (DSG/nDSG):
             </p>
             <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1 mt-2">
-              <li>Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO) für die Bereitstellung des Bonusprogramms</li>
-              <li>Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) für Push-Benachrichtigungen und Marketing</li>
-              <li>Berechtigte Interessen (Art. 6 Abs. 1 lit. f DSGVO) für Sicherheit und Betrugsprävention</li>
+              <li><strong>Vertragserfüllung (Art. 31 Abs. 2 lit. a DSG):</strong> Bereitstellung des Bonusprogramms, Berechnung von Taler-Belohnungen basierend auf Radio-Hördaten</li>
+              <li><strong>Einwilligung (Art. 31 Abs. 1 DSG):</strong> Push-Benachrichtigungen, Marketing-Kommunikation per E-Mail, SMS und WhatsApp</li>
+              <li><strong>Überwiegende Interessen (Art. 31 Abs. 2 lit. a DSG):</strong> Sicherheit, Betrugsprävention und Verbesserung der App</li>
             </ul>
           </section>
           
@@ -174,7 +175,7 @@ export default function PrivacyPolicyPage() {
           
           <div className="pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              Stand: Januar 2025
+              Stand: März 2026
             </p>
           </div>
           
