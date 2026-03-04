@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { useToast } from '@/hooks/use-toast';
-import logoRadio2go from '@/assets/logo-2go-header.png';
+import logo2go from '@/assets/logo-2go-header.png';
 
 interface SessionSummaryData {
   duration: number;
@@ -84,13 +84,13 @@ export function SessionSummarySheet({ isOpen, onClose, sessionData }: SessionSum
         return;
       }
 
-      const file = new File([blob], 'radio2go-session.png', { type: 'image/png' });
+      const file = new File([blob], '2go-session.png', { type: 'image/png' });
       
       // Try native share API first
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
-          title: 'Meine Radio 2Go Session',
-          text: `Ich habe ${getDurationText(sessionData.duration)} Radio 2Go gehört und ${sessionData.reward} Taler verdient! 🎧`,
+          title: 'Meine 2Go Session',
+          text: `Ich habe ${getDurationText(sessionData.duration)} 2Go gehört und ${sessionData.reward} Taler verdient! 🎧`,
           files: [file],
         });
         toast({
@@ -102,7 +102,7 @@ export function SessionSummarySheet({ isOpen, onClose, sessionData }: SessionSum
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'radio2go-session.png';
+        a.download = '2go-session.png';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -144,7 +144,7 @@ export function SessionSummarySheet({ isOpen, onClose, sessionData }: SessionSum
           >
             {/* Logo Header */}
             <div className="flex items-center justify-center gap-2 mb-6">
-              <img src={logoRadio2go} alt="Radio 2Go" className="h-8 object-contain" />
+              <img src={logo2go} alt="2Go" className="h-8 object-contain" />
             </div>
 
             {/* Main Stats */}

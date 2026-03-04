@@ -80,7 +80,7 @@ export function FunnelRadioPlayer({
                     {nowPlaying.artist} – {nowPlaying.title}
                   </p>
                 ) : (
-                  <p className="text-sm text-white/70">Radio 2Go</p>
+                  <p className="text-sm text-white/70">2Go</p>
                 )}
               </div>
 
