@@ -74,18 +74,16 @@ export function BottomNav() {
                     {!isActive && !hasVisitedQR && (
                       <span className="absolute -inset-1 rounded-xl bg-accent/20 animate-pulse" />
                     )}
-                    <div className="relative flex items-center justify-center h-6 w-6">
-                      <Icon className="h-6 w-6 opacity-30" strokeWidth={isActive ? 2.5 : 2} />
-                      <Navigation
-                        className="absolute h-4 w-4 cursor-pointer"
-                        style={{ color: 'currentColor' }}
-                        strokeWidth={2.5}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDriveOpen(true);
-                        }}
-                      />
-                    </div>
+                    <Icon className="h-6 w-6" strokeWidth={isActive ? 2.5 : 2} />
+                    <span
+                      className="absolute -bottom-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-background shadow-sm border border-border/50 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDriveOpen(true);
+                      }}
+                    >
+                      <Navigation className="h-2.5 w-2.5 text-accent" strokeWidth={3} />
+                    </span>
                   </button>
                   <span className={cn(
                     'text-xs font-semibold leading-tight',
