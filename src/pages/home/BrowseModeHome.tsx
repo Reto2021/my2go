@@ -231,7 +231,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       
       <GuestSignupSheet isOpen={shouldShowSignup} onClose={markSignupShown} earnedTaler={totalEarned} listeningMinutes={listeningMinutes} />
       <FirstTalerCelebration isOpen={showFirstTalerCelebration} onClose={closeFirstTalerCelebration} talerAmount={firstTalerAmount} isGuest={true} />
-      <DriveSearchSheet open={showDriveSearch} onOpenChange={setShowDriveSearch} />
+      
     </div>
   );
 }
