@@ -1,269 +1,198 @@
 
-# Comprehensive Review & Plan
 
-## Part 1: Taler Persistence Bug Analysis
+## Plan: Gesamtüberblick — Logo-Tausch, Taler-Bug-Fix, Stream-Stabilität, Sammelkarten-System
 
-### Root Cause Identified
+Dieser Plan konsolidiert alle offenen Aufgaben und stellt sicher, dass alles fehlerfrei implementiert wird.
 
-After deep analysis of the database and code, I found the critical issue:
+---
 
-**Recent radio listening sessions show:**
-- `ended_at: NULL` (sessions never closed)
-- `taler_awarded: 0` (rewards never written)
-- `duration_seconds: NULL` (never updated)
-- Last successful radio transaction: **2026-01-22** (11+ days ago)
+### 1. Logo-Tausch: "Radio 2Go" → "2Go" (5 Dateien)
 
-The `save_session_progress` RPC function is correct in the database, but **it's never being called** because:
+Das hochgeladene `Logo_2Go_1-2.png` wird als `src/assets/logo-2go-header.png` gespeichert. Dann Import-Tausch in **allen** 5 Dateien, die `logo-radio2go.png` verwenden:
 
-1. **Authentication Race Condition**: The console log shows `[RadioRewards] Waiting for user authentication` - the hook waits for `userId` before starting sessions, but the global module-level state (session ID, timers) gets wiped on auth state changes.
+| Datei | Zeile | Aktion |
+|-------|-------|--------|
+| `src/components/ui/radio-header.tsx` | 11 | Import ändern |
+| `src/components/funnel/FunnelLayout.tsx` | 3 | Import ändern |
+| `src/components/ui/session-summary-sheet.tsx` | 9 | Import ändern |
+| `src/pages/RedemptionDetailPage.tsx` | 35 | Import ändern |
+| `src/pages/go/PartnerLandingPage.tsx` | 34 | Import ändern |
 
-2. **Global State Reset on Page Load**: While `restoreGlobalStateFromStorage()` runs on module load, the `useEffect` that verifies the session and starts the save interval depends on `userId`. If auth is slow, the session data is restored but never verified/resumed.
+Alt-Text jeweils von "Radio 2Go" auf "2Go" aktualisieren.
 
-3. **Missing User Authentication in Background Saves**: The keepalive `fetch` on page unload uses `SUPABASE_KEY` as the Bearer token, but the RPC requires an authenticated user session to look up `user_id` from the session record.
+---
 
-4. **Silent Failures**: The `save_session_progress` RPC checks if session is found and active, but returns `{success: false}` without the frontend reacting to failures.
+### 2. Hero-Claim umkehren
 
-### Technical Fix Strategy
+In `src/pages/home/BrowseModeHome.tsx` (Zeile 69-77):
+- "Hör Radio." → "Sammle Taler."
+- "Sammle Taler." → "Hör Radio."
+
+Reihenfolge wird: **"Sammle Taler. Hör Radio."** — Gutscheine zuerst.
+
+---
+
+### 3. Radio-Stream Stabilität (Reise-Modus)
+
+In `src/lib/radio-store.ts`, die bestehenden Event-Listener erweitern:
+
+**a) `waiting`-Event (Zeile 574):** Statt nur zu loggen, nach 5s automatisch Stream neu laden falls noch im `waiting`-State.
+
+**b) `error`-Event (Zeile 554):** Exponential Backoff einbauen (2s → 4s → 8s, max 3 Versuche) statt fixer 2s.
+
+**c) Neuer `stalled`-Event Listener:** Nach 8s Stream neu laden.
+
+**d) Netzwerkwechsel-Listener:** In `togglePlay()` nach erfolgreichem Play einen `online`-Event-Listener registrieren, der bei Netzwerk-Recovery den Stream neu startet:
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│ Current Flow (Broken)                                           │
-├─────────────────────────────────────────────────────────────────┤
-│ 1. User plays radio                                             │
-│ 2. Hook waits for userId (may be slow)                         │
-│ 3. Session started in DB                                        │
-│ 4. 15s interval starts                                          │
-│ 5. User refreshes page                                          │
-│ 6. Global state restored from localStorage                      │
-│ 7. Hook re-mounts, userId not yet available                    │
-│ 8. Session verification never happens                           │
-│ 9. Save interval never restarts                                 │
-│ ❌ Points lost forever                                          │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│ Fixed Flow                                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ 1. On module load: restore session from localStorage            │
-│ 2. On any user auth: immediately verify session in DB           │
-│ 3. If session valid: restart 15s save interval immediately     │
-│ 4. On page unload: use proper auth token (not anon key)        │
-│ 5. Background save via service worker for reliability          │
-│ 6. Show toast on save success/failure for debugging            │
-│ ✅ Points persisted reliably                                    │
-└─────────────────────────────────────────────────────────────────┘
+navigator.onLine → false → true: sofort Stream reload
+navigator.connection?.addEventListener('change'): Stream reload bei Netztyp-Wechsel
 ```
 
-### Files to Modify
-
-1. **`src/hooks/useRadioRewards.ts`**:
-   - Fix auth token retrieval for keepalive requests (get actual user JWT)
-   - Move session verification to run immediately when auth becomes available
-   - Add retry logic with exponential backoff for failed saves
-   - Add visible feedback (toast) on save success for debugging
-   - Ensure interval restarts even if userId arrives late
-
-2. **`src/contexts/AuthContext.tsx`**:
-   - Ensure `refreshBalance` is called immediately after detecting new radio transactions
-   - Add realtime subscription to taler_monthly_batches for faster balance updates
-
-3. **Guest Mode (`src/lib/guest-rewards-store.ts`)**:
-   - Guest rewards are stored only in localStorage (zustand persist)
-   - On login, `syncGuestRewards` in AuthContext transfers them
-   - This flow works but could be more robust with offline support
+**e) Stall-Detection Timer:** Alle 10s prüfen ob `audio.currentTime` sich bewegt. Falls 10s still → Stream reload.
 
 ---
 
-## Part 2: Business Radio Feature Analysis
+### 4. Taler-Persistenz Bug-Fix
 
-### Current Capabilities
+Die Analyse im Plan identifiziert korrekt, dass `saveWithKeepalive()` (Zeile 237-274) den `globalAccessToken` oder den anon-Key als Fallback nutzt. Das ist bereits korrekt implementiert — der Token wird in `saveAuthToken()` gespeichert und über `getFreshAuthToken()` aktualisiert.
 
-The platform already has infrastructure for audio advertising:
+**Verbleibende Verbesserungen:**
 
-1. **Audio Ads System** (`supabase/functions/generate-audio-ad/`):
-   - TTS generation via ElevenLabs (Swiss German voices)
-   - Jingle intro/outro management
-   - MP3 upload support
-   - Audio mastering via Auphonic API
-   - Targeting by location, demographics, subscription tier
-
-2. **Jingle Manager** (`src/components/admin/JingleManager.tsx`):
-   - Upload custom intro/outro audio
-   - Partner-specific jingles possible (`partner_id` field)
-
-3. **Partner Dashboard** (`src/pages/partner/`):
-   - Full analytics suite
-   - Reward management
-   - QR scan tracking
-
-### Proposed "Business Radio" Feature
-
-Allow business partners to create their own branded radio landing pages with:
-
-1. **Custom Stream Configuration**:
-   - Enter external stream URL
-   - Upload pre-roll audio (MP3)
-   - Upload logo/cover image
-   - Set brand colors
-
-2. **Generated Landing Page**:
-   - Simple, mobile-optimized HTML page
-   - Partner logo prominently displayed
-   - Play button to start custom stream
-   - Pre-roll audio plays before stream starts
-   - Optionally embed Taler earning (if partner pays for premium)
-
-3. **Technical Implementation**:
-
-```text
-Database Schema Addition:
-┌─────────────────────────────────────────────────────────────────┐
-│ partner_radios                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│ id: uuid (PK)                                                   │
-│ partner_id: uuid (FK → partners)                                │
-│ name: text                                                      │
-│ stream_url: text (required)                                     │
-│ preroll_audio_url: text (optional)                             │
-│ logo_url: text (optional, defaults to partner logo)            │
-│ cover_image_url: text (optional)                               │
-│ brand_color: text (hex, optional)                              │
-│ slug: text (unique, for URL: /radio/{slug})                    │
-│ is_active: boolean                                              │
-│ play_count: integer (analytics)                                │
-│ created_at: timestamp                                           │
-│ updated_at: timestamp                                           │
-└─────────────────────────────────────────────────────────────────┘
-
-New Files:
-- src/pages/radio/[slug].tsx - Public radio landing page
-- src/pages/partner/PartnerRadio.tsx - Partner config UI
-- supabase/functions/partner-radio-stats/ - Track plays
-```
-
-4. **Partner Dashboard UI**:
-   - New tab: "Mein Radio" (My Radio)
-   - Stream URL input with validation
-   - Pre-roll MP3 upload (max 30 seconds)
-   - Logo upload
-   - Color picker for brand color
-   - Preview button
-   - Generated shareable URL: `https://my2go.lovable.app/radio/partner-slug`
-   - Embed code for partner's website
-
-5. **Public Radio Page Flow**:
-```
-User visits /radio/cafe-schoenau
-→ Page loads with Café Schönau branding
-→ User taps PLAY button
-→ Pre-roll audio plays (if configured)
-→ Stream starts automatically after pre-roll
-→ Optional: Taler earning widget shows progress
-```
+- **Retry bei fehlgeschlagenem Save:** In `saveProgressGlobal()` bei Netzwerkfehler automatisch nach 5s retry (max 2x).
+- **Session-Recovery robuster:** In der `useEffect` bei `userId`-Initialisierung (Zeile 312-392): Falls `globalSessionId` existiert aber Server-Verifikation fehlschlägt wegen Netzwerk, nicht sofort clearen sondern retry.
 
 ---
 
-## Implementation Priority
+### 5. Sammelkarten-System (Neumärtli Taler)
 
-### Phase 1 (Critical - Taler Bug Fix)
-
-1. Fix authentication in background saves
-2. Add proper session recovery on auth state change
-3. Add save success/failure feedback
-4. Test with actual user listening sessions
-
-### Phase 2 (Business Radio MVP)
-
-1. Create `partner_radios` database table
-2. Build partner configuration UI
-3. Create public radio landing page
-4. Implement pre-roll audio playback
-5. Add play count analytics
-
-### Phase 3 (Enhancement)
-
-1. Embed code generator for partners
-2. Optional Taler earning on partner radios
-3. Custom HTML page theming
-4. Mobile PWA support for partner radios
-
----
-
-## Technical Details
-
-### Taler Bug Fix - Key Code Changes
-
-```typescript
-// In useRadioRewards.ts - Fix auth token retrieval
-async function saveWithProperAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    console.error('[RadioRewards] No auth session for save');
-    return;
-  }
-  
-  fetch(`${SUPABASE_URL}/rest/v1/rpc/save_session_progress`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${session.access_token}`, // Use actual JWT
-    },
-    body: JSON.stringify({
-      _session_id: globalSessionId,
-      _duration_seconds: durationSeconds
-    }),
-    keepalive: true,
-  });
-}
-```
-
-### Business Radio - Database Migration
+#### 5a. DB-Migration — 4 Tabellen
 
 ```sql
-CREATE TABLE public.partner_radios (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  partner_id UUID REFERENCES partners(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  stream_url TEXT NOT NULL,
-  preroll_audio_url TEXT,
-  logo_url TEXT,
-  cover_image_url TEXT,
-  brand_color TEXT DEFAULT '#C7A94E',
-  is_active BOOLEAN DEFAULT true,
-  play_count INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- collecting_campaigns: Admin-konfigurierte Kampagnen
+CREATE TABLE collecting_campaigns (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug text NOT NULL UNIQUE,
+  title text NOT NULL,
+  subtitle text,
+  grid_size int NOT NULL DEFAULT 6,
+  required_purchases int NOT NULL DEFAULT 11,
+  min_unique_shops int NOT NULL DEFAULT 4,
+  scan_cooldown_hours int NOT NULL DEFAULT 4,
+  max_scans_per_day int NOT NULL DEFAULT 3,
+  min_days_to_complete int NOT NULL DEFAULT 3,
+  milestones jsonb DEFAULT '[]',
+  prize_description text,
+  logo_url text,
+  is_active boolean DEFAULT true,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  created_at timestamptz DEFAULT now()
 );
 
--- RLS: Partners can manage their own radios
-ALTER TABLE partner_radios ENABLE ROW LEVEL SECURITY;
+-- collecting_cards: User-Fortschritt
+CREATE TABLE collecting_cards (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  campaign_id uuid NOT NULL REFERENCES collecting_campaigns(id),
+  current_row int DEFAULT 0,
+  current_col int DEFAULT 0,
+  total_purchases int DEFAULT 0,
+  is_completed boolean DEFAULT false,
+  completed_at timestamptz,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(user_id, campaign_id)
+);
 
-CREATE POLICY "Partners can manage own radios"
-  ON partner_radios
-  FOR ALL
-  USING (partner_id IN (
-    SELECT partner_id FROM partner_admins WHERE user_id = auth.uid()
-  ));
+-- collecting_card_cells: Scan-History pro Feld
+CREATE TABLE collecting_card_cells (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  card_id uuid NOT NULL REFERENCES collecting_cards(id) ON DELETE CASCADE,
+  row_pos int NOT NULL,
+  col_pos int NOT NULL,
+  partner_id uuid NOT NULL REFERENCES partners(id),
+  move_type text NOT NULL CHECK (move_type IN ('horizontal','vertical')),
+  scanned_at timestamptz DEFAULT now(),
+  sponsored_cell_id uuid,
+  bonus_claimed boolean DEFAULT false
+);
 
--- Public can view active radios
-CREATE POLICY "Public can view active radios"
-  ON partner_radios
-  FOR SELECT
-  USING (is_active = true);
+-- collecting_sponsored_cells: Partner-buchbare Bonusfelder
+CREATE TABLE collecting_sponsored_cells (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id uuid NOT NULL REFERENCES collecting_campaigns(id),
+  partner_id uuid NOT NULL REFERENCES partners(id),
+  cell_position int NOT NULL,
+  bonus_type text DEFAULT 'extra_taler',
+  bonus_value int,
+  bonus_reward_id uuid,
+  display_text text,
+  is_active boolean DEFAULT true,
+  price_chf numeric,
+  paid_at timestamptz,
+  created_at timestamptz DEFAULT now()
+);
 ```
+
+**RLS-Policies:**
+- `collecting_campaigns`: Public SELECT wenn `is_active = true`; Admin ALL
+- `collecting_cards`: User SELECT/INSERT/UPDATE eigene; Admin ALL
+- `collecting_card_cells`: User SELECT via card ownership; INSERT via Edge Function (service_role)
+- `collecting_sponsored_cells`: Public SELECT; Admin + Partner-Admin ALL
+
+#### 5b. Edge Function: `collecting-card-scan`
+
+Fraud-Checks in dieser Reihenfolge:
+
+```text
+1. Partner identifizieren (via QR-Code partner_id)
+2. User identifizieren (via Auth)
+3. Campaign finden (via slug/UTM)
+4. Card finden oder erstellen
+5. FRAUD CHECK 1: Cooldown — letzter Scan bei diesem Shop < scan_cooldown_hours? → REJECT
+6. FRAUD CHECK 2: Tages-Limit — Scans heute ≥ max_scans_per_day? → REJECT
+7. Move-Type bestimmen:
+   - Shop schon auf dieser Karte? → horizontal ("einmal mehr")
+   - Shop neu auf dieser Karte? → vertical ("einmal anders")
+8. Position updaten (row/col)
+9. FRAUD CHECK 3: Am Ziel angekommen?
+   a. unique_shops < min_unique_shops? → REJECT Completion
+   b. Tage seit Start < min_days_to_complete? → REJECT Completion
+   c. Sonst: mark completed, award prize
+10. Sponsored Cell prüfen → Bonus gutschreiben
+11. Milestone prüfen → Bonus-Taler gutschreiben
+12. Card-State zurückgeben
+```
+
+#### 5c. Frontend
+
+Neue Dateien:
+- `src/pages/CollectingCardPage.tsx` — Route `/sammeln/:slug`
+- `src/components/collecting/CollectingGrid.tsx` — 6×6 Grid mit CSS Grid
+- `src/components/collecting/CollectingMilestone.tsx` — Meilenstein-Badges
+- `src/hooks/useCollectingCard.ts` — Daten-Hook (fetch card + cells)
+
+Route in `App.tsx` hinzufügen: `/sammeln/:slug`
+
+#### 5d. Admin-Verwaltung
+
+Neue Seite `src/pages/admin/AdminCollectingCampaigns.tsx`:
+- Campaign CRUD (Name, Grid-Grösse, Fraud-Parameter, Milestones)
+- Sponsored-Cell-Verwaltung (welcher Partner, welches Feld, Preis)
+
+Route in `App.tsx` unter `/admin/collecting`
 
 ---
 
-## Summary
+### Umsetzungsreihenfolge
 
-| Issue | Status | Priority |
-|-------|--------|----------|
-| Taler not persisting after refresh | Root cause identified | **Critical** |
-| Background save using wrong auth token | Fix required | **Critical** |
-| Session never verified after page reload | Fix required | **Critical** |
-| Guest rewards sync | Working, minor improvements | Low |
-| Business Radio feature | New feature, fully feasible | Medium |
-| Partner custom stream + pre-roll | Extends existing audio infrastructure | Medium |
-| Embeddable radio player | Enhancement | Low |
+1. Logo-Tausch (alle 5 Dateien)
+2. Hero-Claim umkehren
+3. Stream-Stabilität verbessern
+4. Taler-Save Retry-Logik
+5. DB-Migration (4 Tabellen + RLS)
+6. Edge Function `collecting-card-scan`
+7. Sammelkarten-UI (Grid, Page, Hook)
+8. Admin-Kampagnen-Verwaltung
+9. Route-Integration
+
