@@ -511,6 +511,7 @@ export type Database = {
           min_unique_shops: number
           prize_description: string | null
           prize_taler: number | null
+          region_id: string | null
           required_purchases: number
           scan_cooldown_hours: number
           slug: string
@@ -532,6 +533,7 @@ export type Database = {
           min_unique_shops?: number
           prize_description?: string | null
           prize_taler?: number | null
+          region_id?: string | null
           required_purchases?: number
           scan_cooldown_hours?: number
           slug: string
@@ -553,6 +555,7 @@ export type Database = {
           min_unique_shops?: number
           prize_description?: string | null
           prize_taler?: number | null
+          region_id?: string | null
           required_purchases?: number
           scan_cooldown_hours?: number
           slug?: string
@@ -561,7 +564,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "collecting_campaigns_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       collecting_card_cells: {
         Row: {
@@ -1309,6 +1320,7 @@ export type Database = {
           phone: string | null
           plan_tier: string | null
           postal_code: string | null
+          region_id: string | null
           review_request_delay_minutes: number | null
           review_request_enabled: boolean | null
           short_description: string | null
@@ -1364,6 +1376,7 @@ export type Database = {
           phone?: string | null
           plan_tier?: string | null
           postal_code?: string | null
+          region_id?: string | null
           review_request_delay_minutes?: number | null
           review_request_enabled?: boolean | null
           short_description?: string | null
@@ -1419,6 +1432,7 @@ export type Database = {
           phone?: string | null
           plan_tier?: string | null
           postal_code?: string | null
+          region_id?: string | null
           review_request_delay_minutes?: number | null
           review_request_enabled?: boolean | null
           short_description?: string | null
@@ -1433,7 +1447,15 @@ export type Database = {
           verified_at?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "partners_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -2112,6 +2134,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          region_id: string | null
           slug: string
           starts_at: string
           updated_at: string
@@ -2129,6 +2152,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          region_id?: string | null
           slug: string
           starts_at: string
           updated_at?: string
@@ -2146,11 +2170,20 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          region_id?: string | null
           slug?: string
           starts_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "seasonal_campaigns_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sponsoring_inquiries: {
         Row: {
@@ -2361,6 +2394,58 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trigger_slides: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          partner_id: string | null
+          priority: number
+          region_id: string | null
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          partner_id?: string | null
+          priority?: number
+          region_id?: string | null
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          partner_id?: string | null
+          priority?: number
+          region_id?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trigger_slides_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "trigger_slides_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trigger_slides_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
             referencedColumns: ["id"]
           },
         ]

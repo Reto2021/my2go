@@ -1,34 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useRegion } from '@/hooks/useRegion';
 
-const TRIGGERS = [
+// Fallback triggers when DB is empty or loading
+const FALLBACK_TRIGGERS = [
   "Gönn dir einen Kaffee.",
   "Geniesse ein Dessert.",
   "Mach's zum Apéro.",
   "Hol dir den Lunch.",
   "Stoss regional an.",
-  "Degustiere lokalen Wein.",
-  "Geh ins Museum.",
-  "Entdecke Geschichte live.",
-  "Bleib länger im Bad.",
-  "Gönn dir Wellness.",
   "Tu dir etwas Gutes.",
-  "Trainiere mit Vorteil.",
-  "Hol dir neue Energie.",
-  "Check deine Sicht.",
-  "Bring Ordnung in die Finanzen.",
-  "Mach den Auto-Service.",
-  "Hol dir ein neues Outfit.",
-  "Ein Buch geht immer.",
-  "Schreib's dir schön.",
-  "Mach Kultur spontan.",
-  "Entdeck Brugg neu.",
-  "Mach Pause am Wasser.",
   "Shop lokal smarter.",
-  "Lesezeit für dich.",
+  "Entdeck deine Stadt neu.",
 ];
 
-// Shuffle array on mount for randomness
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -39,12 +25,59 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export function TriggerSlider() {
-  const [shuffledTriggers] = useState(() => shuffleArray(TRIGGERS));
+  const { region } = useRegion();
+  const [slides, setSlides] = useState<string[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Load slides from DB
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSlides() {
+      try {
+        // Fetch slides for this region OR global (region_id IS NULL)
+        let query = supabase
+          .from('trigger_slides')
+          .select('text, priority, region_id')
+          .eq('is_active', true)
+          .order('priority', { ascending: false });
+
+        if (region?.id) {
+          query = query.or(`region_id.eq.${region.id},region_id.is.null`);
+        } else {
+          query = query.is('region_id', null);
+        }
+
+        const { data, error } = await query;
+
+        if (!cancelled) {
+          if (error || !data?.length) {
+            setSlides(shuffleArray(FALLBACK_TRIGGERS));
+          } else {
+            setSlides(shuffleArray(data.map((s) => s.text)));
+          }
+          setCurrentIndex(0);
+        }
+      } catch {
+        if (!cancelled) {
+          setSlides(shuffleArray(FALLBACK_TRIGGERS));
+        }
+      }
+    }
+
+    loadSlides();
+    return () => { cancelled = true; };
+  }, [region?.id]);
+
+  // Use fallback while loading
+  const displaySlides = useMemo(
+    () => (slides.length > 0 ? slides : shuffleArray(FALLBACK_TRIGGERS)),
+    [slides]
+  );
+
   const nextTrigger = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % shuffledTriggers.length);
-  }, [shuffledTriggers.length]);
+    setCurrentIndex((prev) => (prev + 1) % displaySlides.length);
+  }, [displaySlides.length]);
 
   useEffect(() => {
     const interval = setInterval(nextTrigger, 6000);
@@ -78,7 +111,7 @@ export function TriggerSlider() {
             }} 
           />
           <span className="relative text-secondary font-black whitespace-nowrap">
-            {shuffledTriggers[currentIndex]}
+            {displaySlides[currentIndex]}
           </span>
         </motion.span>
       </AnimatePresence>
