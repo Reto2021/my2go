@@ -8,7 +8,7 @@ import { useRadioStore } from '@/lib/radio-store';
 import { useAuthSafe } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-import logo from '@/assets/logo-radio2go.png';
+import logo from '@/assets/logo-2go-header.png';
 
 import { ClockWeatherWidget } from './weather-widget';
 import { LiveListenerCount } from '@/components/social-proof/LiveListenerCount';
@@ -148,7 +148,7 @@ export function RadioHeader() {
         <Link to="/" className="flex-shrink-0 min-h-[44px] flex items-center">
           <img 
             src={logo} 
-            alt="Radio 2Go" 
+            alt="2Go" 
             className={cn(
               "hover:opacity-80 transition-opacity",
               isPlaying ? "h-8 sm:h-14" : "h-10 sm:h-14"

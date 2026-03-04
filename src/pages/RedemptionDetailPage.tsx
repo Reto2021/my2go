@@ -32,7 +32,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import logoRadio2go from '@/assets/logo-radio2go.png';
+import logoRadio2go from '@/assets/logo-2go-header.png';
 import html2canvas from 'html2canvas';
 import {
   Dialog,
