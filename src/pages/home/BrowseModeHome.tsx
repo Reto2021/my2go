@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying, setPlayerExpanded } = useRadioStore();
-  const [showDriveSearch, setShowDriveSearch] = useState(false);
+  
   
   const {
     totalEarned,
