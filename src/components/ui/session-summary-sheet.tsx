@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { useToast } from '@/hooks/use-toast';
-import logoRadio2go from '@/assets/logo-radio2go.png';
+import logoRadio2go from '@/assets/logo-2go-header.png';
 
 interface SessionSummaryData {
   duration: number;

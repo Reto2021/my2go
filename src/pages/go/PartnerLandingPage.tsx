@@ -31,7 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import logoRadio2go from "@/assets/logo-radio2go.png";
+import logoRadio2go from "@/assets/logo-2go-header.png";
 import logo2go from "@/assets/logo-2go.png";
 import logo2goWhite from "@/assets/logo-2go-white.png";
 import { PartnerFitQuiz } from "@/components/go/quiz";

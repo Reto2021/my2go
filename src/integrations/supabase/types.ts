@@ -497,6 +497,252 @@ export type Database = {
           },
         ]
       }
+      collecting_campaigns: {
+        Row: {
+          created_at: string | null
+          ends_at: string | null
+          grid_size: number
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          max_scans_per_day: number
+          milestones: Json | null
+          min_days_to_complete: number
+          min_unique_shops: number
+          prize_description: string | null
+          prize_taler: number | null
+          required_purchases: number
+          scan_cooldown_hours: number
+          slug: string
+          starts_at: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          ends_at?: string | null
+          grid_size?: number
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_scans_per_day?: number
+          milestones?: Json | null
+          min_days_to_complete?: number
+          min_unique_shops?: number
+          prize_description?: string | null
+          prize_taler?: number | null
+          required_purchases?: number
+          scan_cooldown_hours?: number
+          slug: string
+          starts_at?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          ends_at?: string | null
+          grid_size?: number
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_scans_per_day?: number
+          milestones?: Json | null
+          min_days_to_complete?: number
+          min_unique_shops?: number
+          prize_description?: string | null
+          prize_taler?: number | null
+          required_purchases?: number
+          scan_cooldown_hours?: number
+          slug?: string
+          starts_at?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      collecting_card_cells: {
+        Row: {
+          bonus_claimed: boolean | null
+          card_id: string
+          cell_position: number
+          id: string
+          move_type: string
+          partner_id: string
+          scanned_at: string | null
+          sponsored_cell_id: string | null
+        }
+        Insert: {
+          bonus_claimed?: boolean | null
+          card_id: string
+          cell_position: number
+          id?: string
+          move_type: string
+          partner_id: string
+          scanned_at?: string | null
+          sponsored_cell_id?: string | null
+        }
+        Update: {
+          bonus_claimed?: boolean | null
+          card_id?: string
+          cell_position?: number
+          id?: string
+          move_type?: string
+          partner_id?: string
+          scanned_at?: string | null
+          sponsored_cell_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collecting_card_cells_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "collecting_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collecting_card_cells_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "collecting_card_cells_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collecting_card_cells_sponsored_cell_id_fkey"
+            columns: ["sponsored_cell_id"]
+            isOneToOne: false
+            referencedRelation: "collecting_sponsored_cells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collecting_cards: {
+        Row: {
+          campaign_id: string
+          completed_at: string | null
+          created_at: string | null
+          current_position: number | null
+          id: string
+          is_completed: boolean | null
+          total_purchases: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          current_position?: number | null
+          id?: string
+          is_completed?: boolean | null
+          total_purchases?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          current_position?: number | null
+          id?: string
+          is_completed?: boolean | null
+          total_purchases?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collecting_cards_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "collecting_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collecting_sponsored_cells: {
+        Row: {
+          bonus_reward_id: string | null
+          bonus_type: string | null
+          bonus_value: number | null
+          campaign_id: string
+          cell_position: number
+          created_at: string | null
+          display_text: string | null
+          id: string
+          is_active: boolean | null
+          paid_at: string | null
+          partner_id: string
+          price_chf: number | null
+        }
+        Insert: {
+          bonus_reward_id?: string | null
+          bonus_type?: string | null
+          bonus_value?: number | null
+          campaign_id: string
+          cell_position: number
+          created_at?: string | null
+          display_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          paid_at?: string | null
+          partner_id: string
+          price_chf?: number | null
+        }
+        Update: {
+          bonus_reward_id?: string | null
+          bonus_type?: string | null
+          bonus_value?: number | null
+          campaign_id?: string
+          cell_position?: number
+          created_at?: string | null
+          display_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          paid_at?: string | null
+          partner_id?: string
+          price_chf?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collecting_sponsored_cells_bonus_reward_id_fkey"
+            columns: ["bonus_reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collecting_sponsored_cells_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "collecting_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collecting_sponsored_cells_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partner_tier_features"
+            referencedColumns: ["partner_id"]
+          },
+          {
+            foreignKeyName: "collecting_sponsored_cells_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_codes: {
         Row: {
           code: string

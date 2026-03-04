@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import logoRadio2go from "@/assets/logo-radio2go.png";
+import logoRadio2go from "@/assets/logo-2go-header.png";
 import { WhatsAppButton } from "@/components/ui/whatsapp-button";
 
 export function FunnelLayout() {
@@ -18,7 +18,7 @@ export function FunnelLayout() {
             <Link to="/u" className="flex items-center gap-2">
               <img 
                 src={logoRadio2go} 
-                alt="My2Go" 
+                alt="2Go" 
                 className="h-8 w-auto"
               />
               <span className="font-bold text-lg text-foreground">My2Go</span>

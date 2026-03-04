@@ -550,30 +550,116 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       // iOS requires preload attribute for better autoplay handling
       currentAudio.preload = 'auto';
       
-      // Add error handler for stream recovery
+      // --- Stream Recovery: exponential backoff ---
+      let recoveryAttempts = 0;
+      const MAX_RECOVERY_ATTEMPTS = 3;
+      
       currentAudio.addEventListener('error', (e) => {
         console.error('Audio error:', e);
         const { isPlaying } = get();
-        if (isPlaying) {
-          // Try to recover by reloading stream after a short delay
+        if (isPlaying && recoveryAttempts < MAX_RECOVERY_ATTEMPTS) {
+          recoveryAttempts++;
+          const delay = Math.pow(2, recoveryAttempts) * 1000; // 2s, 4s, 8s
+          console.log(`Stream recovery attempt ${recoveryAttempts}/${MAX_RECOVERY_ATTEMPTS} in ${delay}ms`);
           setTimeout(() => {
             const { audio, isPlaying, getStreamUrl } = get();
             if (audio && isPlaying) {
-              console.log('Attempting stream recovery...');
               audio.src = getStreamUrl();
               audio.play().catch(err => {
                 console.error('Recovery failed:', err);
-                set({ isPlaying: false, isLoading: false });
+                if (recoveryAttempts >= MAX_RECOVERY_ATTEMPTS) {
+                  set({ isPlaying: false, isLoading: false });
+                }
               });
             }
-          }, 2000);
+          }, delay);
+        } else if (recoveryAttempts >= MAX_RECOVERY_ATTEMPTS) {
+          set({ isPlaying: false, isLoading: false });
+          recoveryAttempts = 0;
         }
       });
       
-      // Handle stream stall/waiting (buffering)
+      // --- Waiting (buffering) with auto-recovery after 5s ---
+      let waitingTimer: ReturnType<typeof setTimeout> | null = null;
       currentAudio.addEventListener('waiting', () => {
         console.log('Stream buffering...');
+        if (waitingTimer) clearTimeout(waitingTimer);
+        waitingTimer = setTimeout(() => {
+          const { audio, isPlaying, getStreamUrl } = get();
+          if (audio && isPlaying && audio.readyState < 3) {
+            console.log('Buffering timeout — reloading stream');
+            audio.src = getStreamUrl();
+            audio.play().catch(err => console.error('Buffering recovery failed:', err));
+          }
+          waitingTimer = null;
+        }, 5000);
       });
+      currentAudio.addEventListener('playing', () => {
+        // Clear waiting timer when playback resumes
+        if (waitingTimer) { clearTimeout(waitingTimer); waitingTimer = null; }
+        recoveryAttempts = 0; // Reset recovery counter on success
+      });
+      
+      // --- Stalled event: reload after 8s ---
+      let stalledTimer: ReturnType<typeof setTimeout> | null = null;
+      currentAudio.addEventListener('stalled', () => {
+        console.log('Stream stalled...');
+        if (stalledTimer) clearTimeout(stalledTimer);
+        stalledTimer = setTimeout(() => {
+          const { audio, isPlaying, getStreamUrl } = get();
+          if (audio && isPlaying) {
+            console.log('Stall timeout — reloading stream');
+            audio.src = getStreamUrl();
+            audio.play().catch(err => console.error('Stall recovery failed:', err));
+          }
+          stalledTimer = null;
+        }, 8000);
+      });
+      
+      // --- Stall detection: check currentTime advancement every 10s ---
+      let lastCurrentTime = 0;
+      let stallCheckInterval: ReturnType<typeof setInterval> | null = null;
+      stallCheckInterval = setInterval(() => {
+        const { audio, isPlaying, getStreamUrl } = get();
+        if (audio && isPlaying && !audio.paused) {
+          if (audio.currentTime === lastCurrentTime && lastCurrentTime > 0) {
+            console.log('Stall detected (currentTime not advancing) — reloading stream');
+            audio.src = getStreamUrl();
+            audio.play().catch(err => console.error('Stall check recovery failed:', err));
+          }
+          lastCurrentTime = audio.currentTime;
+        }
+      }, 10000);
+      
+      // --- Network change listeners for travel mode ---
+      const handleOnline = () => {
+        const { audio, isPlaying, getStreamUrl } = get();
+        if (audio && isPlaying) {
+          console.log('Network recovered — reloading stream');
+          setTimeout(() => {
+            const { audio: a, isPlaying: ip, getStreamUrl: gsu } = get();
+            if (a && ip) {
+              a.src = gsu();
+              a.play().catch(err => console.error('Online recovery failed:', err));
+            }
+          }, 500);
+        }
+      };
+      window.addEventListener('online', handleOnline);
+      
+      // Listen for network type changes (WiFi ↔ LTE)
+      const connection = (navigator as any).connection;
+      const handleConnectionChange = () => {
+        const { audio, isPlaying, getStreamUrl } = get();
+        if (audio && isPlaying) {
+          console.log('Network type changed — reloading stream');
+          audio.src = getStreamUrl();
+          audio.play().catch(err => console.error('Connection change recovery failed:', err));
+        }
+      };
+      if (connection) {
+        connection.addEventListener('change', handleConnectionChange);
+      }
       
       // Handle stream ended unexpectedly
       currentAudio.addEventListener('ended', () => {
