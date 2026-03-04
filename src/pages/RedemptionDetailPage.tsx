@@ -32,7 +32,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import logoRadio2go from '@/assets/logo-2go-header.png';
+import logo2go from '@/assets/logo-2go-header.png';
 import html2canvas from 'html2canvas';
 import {
   Dialog,
@@ -80,7 +80,7 @@ const InstagramShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
         {/* Main Content */}
         <div className="relative z-10 h-full flex flex-col items-center justify-center px-8 py-12">
           <div className="mb-6">
-            <img src={logoRadio2go} alt="Radio 2Go" className="h-10 object-contain" />
+            <img src={logo2go} alt="2Go" className="h-10 object-contain" />
           </div>
 
           <div 
@@ -163,7 +163,7 @@ const InstagramShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
             </p>
             <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl" style={{ background: 'hsl(197 96% 18%)', color: 'white' }}>
               <Radio className="w-5 h-5" />
-              <span className="font-bold">radio2go.fm</span>
+              <span className="font-bold">2go.fm</span>
             </div>
           </div>
         </div>
@@ -450,13 +450,13 @@ export default function RedemptionDetailPage() {
         try {
           const response = await fetch(dataUrl);
           const blob = await response.blob();
-          const file = new File([blob], 'radio2go-share.png', { type: 'image/png' });
+          const file = new File([blob], '2go-share.png', { type: 'image/png' });
           
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
-              title: 'Radio 2Go Gutschein',
-              text: 'Schau mal, was ich bei Radio 2Go gespart habe! 🎧💰',
+               title: '2Go Gutschein',
+               text: 'Schau mal, was ich bei 2Go gespart habe! 🎧💰',
             });
             setShowInstagramDialog(false);
             return;
@@ -468,7 +468,7 @@ export default function RedemptionDetailPage() {
       
       // Fallback: download the image
       const link = document.createElement('a');
-      link.download = 'radio2go-story.png';
+      link.download = '2go-story.png';
       link.href = dataUrl;
       link.click();
       
@@ -722,7 +722,7 @@ export default function RedemptionDetailPage() {
             </div>
             
             <p className="text-sm text-muted-foreground mb-4">
-              Teile deine Ersparnis mit Freunden und lade sie zu Radio 2Go ein!
+              Teile deine Ersparnis mit Freunden und lade sie zu 2Go ein!
             </p>
             
             <div className="grid grid-cols-3 gap-3">
