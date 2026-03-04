@@ -9,11 +9,11 @@ import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { GuestSignupSheet } from '@/components/funnel/GuestSignupSheet';
 import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration';
 import { TriggerSlider } from '@/components/home/TriggerSlider';
-import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
+
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { useRadioStore } from '@/lib/radio-store';
 import { useGuestRadioRewards } from '@/hooks/useGuestRadioRewards';
-import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, Coins, Radio, Navigation } from 'lucide-react';
+import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, Coins, Radio } from 'lucide-react';
 import { BrowseModeHomeProps } from './types';
 import { cn } from '@/lib/utils';
 
