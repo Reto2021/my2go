@@ -97,21 +97,29 @@ export function HeroDynamic() {
       {/* Stars for night */}
       {timeOfDay === "night" && (
         <div className="absolute inset-0 z-[1] pointer-events-none">
-          {Array.from({ length: 25 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute rounded-full bg-white"
-              style={{
-                width: `${1 + Math.random() * 2}px`,
-                height: `${1 + Math.random() * 2}px`,
-                top: `${5 + Math.random() * 45}%`,
-                left: `${Math.random() * 100}%`,
-                opacity: 0.3 + Math.random() * 0.5,
-                animation: `hero-twinkle ${2 + Math.random() * 4}s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 5}s`,
-              }}
-            />
-          ))}
+          {Array.from({ length: 40 }).map((_, i) => {
+            const size = 1.5 + Math.random() * 3;
+            const isLarge = i < 8;
+            return (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: `${isLarge ? size + 1.5 : size}px`,
+                  height: `${isLarge ? size + 1.5 : size}px`,
+                  top: `${3 + Math.random() * 50}%`,
+                  left: `${Math.random() * 100}%`,
+                  opacity: 0.2 + Math.random() * 0.6,
+                  background: isLarge
+                    ? 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(200,220,255,0.6) 50%, transparent 100%)'
+                    : 'white',
+                  boxShadow: isLarge ? '0 0 6px 2px rgba(200,220,255,0.4)' : '0 0 3px 1px rgba(255,255,255,0.3)',
+                  animation: `hero-twinkle ${1.5 + Math.random() * 3.5}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 6}s`,
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
