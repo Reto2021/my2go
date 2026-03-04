@@ -114,8 +114,8 @@ export function HeroDynamic() {
                     ? 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(200,220,255,0.6) 50%, transparent 100%)'
                     : 'white',
                   boxShadow: isLarge ? '0 0 6px 2px rgba(200,220,255,0.4)' : '0 0 3px 1px rgba(255,255,255,0.3)',
-                  animation: `hero-twinkle ${1.5 + Math.random() * 3.5}s ease-in-out infinite`,
-                  animationDelay: `${Math.random() * 6}s`,
+                  animation: `hero-twinkle ${3 + Math.random() * 7}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 10}s`,
                 }}
               />
             );
@@ -123,22 +123,26 @@ export function HeroDynamic() {
         </div>
       )}
 
-      {/* Shooting stars – occasional */}
+      {/* Shooting stars – rare, different angles */}
       {timeOfDay === "night" && (
         <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
-          {[12, 28, 45].map((delay, i) => (
+          {[
+            { top: '10%', left: '60%', anim: 'shooting-star-1', dur: '45s', delay: '8s' },
+            { top: '25%', left: '20%', anim: 'shooting-star-2', dur: '62s', delay: '30s' },
+            { top: '15%', left: '75%', anim: 'shooting-star-3', dur: '80s', delay: '55s' },
+          ].map((s, i) => (
             <div
               key={`shoot-${i}`}
               className="absolute"
               style={{
-                top: `${8 + i * 12}%`,
-                left: `${15 + i * 20}%`,
+                top: s.top,
+                left: s.left,
                 width: 0,
-                height: '2px',
-                background: 'linear-gradient(90deg, rgba(255,255,255,0.9), rgba(200,220,255,0.4), transparent)',
+                height: '1.5px',
+                background: 'linear-gradient(90deg, rgba(255,255,255,0.95), rgba(200,220,255,0.3), transparent)',
                 borderRadius: '2px',
-                boxShadow: '0 0 6px 1px rgba(200,220,255,0.5)',
-                animation: `shooting-star ${delay + 8}s ease-in-out ${delay}s infinite`,
+                boxShadow: '0 0 4px 1px rgba(200,220,255,0.3)',
+                animation: `${s.anim} ${s.dur} ease-in-out ${s.delay} infinite`,
               }}
             />
           ))}

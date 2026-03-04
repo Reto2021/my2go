@@ -290,18 +290,31 @@
   }
 
   @keyframes hero-twinkle {
-    0%, 100% { opacity: 0.15; transform: scale(1); filter: blur(0px); }
-    30%      { opacity: 1; transform: scale(1.8); filter: blur(0.5px); }
-    50%      { opacity: 0.9; transform: scale(1.5); filter: blur(0.3px); }
-    70%      { opacity: 1; transform: scale(2); filter: blur(0.6px); }
+    0%, 100% { opacity: 0.1; transform: scale(1); filter: blur(0px); }
+    40%      { opacity: 0.7; transform: scale(1.4); filter: blur(0.3px); }
+    60%      { opacity: 0.3; transform: scale(1.1); filter: blur(0px); }
+    80%      { opacity: 0.9; transform: scale(1.6); filter: blur(0.4px); }
   }
 
-  @keyframes shooting-star {
-    0% { transform: translateX(0) translateY(0) rotate(-35deg); opacity: 0; width: 0; }
-    5% { opacity: 1; width: 80px; }
-    15% { opacity: 1; width: 120px; }
-    30% { opacity: 0; width: 0; transform: translateX(250px) translateY(160px) rotate(-35deg); }
-    100% { opacity: 0; width: 0; transform: translateX(250px) translateY(160px) rotate(-35deg); }
+  @keyframes shooting-star-1 {
+    0%, 95%, 100% { transform: translateX(0) translateY(0) rotate(-25deg); opacity: 0; width: 0; }
+    96% { opacity: 1; width: 100px; }
+    97.5% { opacity: 0.8; width: 140px; }
+    99% { opacity: 0; width: 0; transform: translateX(300px) translateY(140px) rotate(-25deg); }
+  }
+
+  @keyframes shooting-star-2 {
+    0%, 92%, 100% { transform: translateX(0) translateY(0) rotate(-40deg); opacity: 0; width: 0; }
+    93% { opacity: 1; width: 90px; }
+    94.5% { opacity: 0.7; width: 110px; }
+    96% { opacity: 0; width: 0; transform: translateX(220px) translateY(190px) rotate(-40deg); }
+  }
+
+  @keyframes shooting-star-3 {
+    0%, 97%, 100% { transform: translateX(0) translateY(0) rotate(-15deg); opacity: 0; width: 0; }
+    97.5% { opacity: 1; width: 120px; }
+    98.5% { opacity: 0.6; width: 160px; }
+    99.5% { opacity: 0; width: 0; transform: translateX(350px) translateY(100px) rotate(-15deg); }
   }
 
   @keyframes sun-pulse {
