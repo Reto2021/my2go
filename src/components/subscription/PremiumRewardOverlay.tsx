@@ -14,13 +14,13 @@ export function PremiumRewardOverlay({ onUpgradeClick, className }: PremiumRewar
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={cn(
-        "absolute inset-0 z-10 flex flex-col items-center justify-center",
+        "absolute inset-0 z-10 flex flex-col items-center justify-center p-4",
         "bg-background/90 backdrop-blur-sm rounded-xl",
         className
       )}
     >
-      <div className="p-2.5 rounded-full bg-accent mb-2">
-        <Crown className="h-5 w-5 text-accent-foreground" />
+      <div className="p-2 rounded-full bg-accent mb-1.5 shrink-0">
+        <Crown className="h-4 w-4 text-accent-foreground" />
       </div>
       <p className="text-sm font-bold text-foreground mb-0.5">Premium Reward</p>
       <p className="text-xs text-muted-foreground mb-2 text-center px-4">
