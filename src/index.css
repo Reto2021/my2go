@@ -206,183 +206,86 @@
            shadow-xl shadow-black/5;
   }
 
-  /* Hero area with brand gradient */
+  /* Hero area with sunrise background */
   .hero-section {
     @apply relative overflow-hidden;
-    background: var(--gradient-hero);
-  }
-
-  /* City Skyline Silhouette - Premium Version */
-  .skyline-container {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 220px;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  /* Distant mountain layer - furthest back */
-  .skyline-distant {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 180px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 180' preserveAspectRatio='xMidYMax slice'%3E%3Cpath fill='%230C4A40' fill-opacity='0.2' d='M0 180V140l60-40 80 30 100-50 70 20 90-60 60 40 80-30 100 50 70-20 90 40 60-30 80 50 100-40 70 30 90-50h60V180H0z'/%3E%3C/svg%3E");
-    background-size: 1200px 180px;
-    background-repeat: repeat-x;
-    background-position: center bottom;
-  }
-
-  /* Mid mountain layer */
-  .skyline-mid {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 160px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 160' preserveAspectRatio='xMidYMax slice'%3E%3Cdefs%3E%3ClinearGradient id='mid' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%230C4A40' stop-opacity='0.35'/%3E%3Cstop offset='100%25' stop-color='%230C4A40' stop-opacity='0.5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23mid)' d='M0 160V120l40-30 60 20 80-50 50 30 70-40 40 25 60-35 80 45 50-25 70 35 40-20 60 40 80-30 50 20 70-45 40 35V160H0z'/%3E%3C/svg%3E");
-    background-size: 1000px 160px;
-    background-repeat: repeat-x;
-    background-position: center bottom;
-  }
-
-  /* Front forest/hill layer - closest */
-  .skyline-front {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 130px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 130' preserveAspectRatio='xMidYMax slice'%3E%3Cdefs%3E%3ClinearGradient id='front' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%230F5B4D' stop-opacity='0.6'/%3E%3Cstop offset='100%25' stop-color='%230F5B4D' stop-opacity='0.85'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23front)' d='M0 130V100c20-10 40-5 60-15s40-20 60-15 40 15 60 10 40-15 60-10 40 10 60 5 40-15 60-10 40 20 60 15 40-15 60-20 40 10 60 5 40-10 60-5 40 15 60 10 40-10 60-15 40 5 60 10V130H0z'/%3E%3C!-- Trees silhouette hints --%3E%3Cpath fill='%230F5B4D' fill-opacity='0.4' d='M50 95l-8 15h16l-8-15zm100 90l-6 12h12l-6-12zm200 88l-10 18h20l-10-18zm150 92l-7 14h14l-7-14zm200 90l-8 16h16l-8-16z'/%3E%3C/svg%3E");
-    background-size: 800px 130px;
-    background-repeat: repeat-x;
-    background-position: center bottom;
-  }
-
-  /* Ground fade */
-  .skyline-container::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 25px;
-    background: linear-gradient(to top, hsl(200 20% 12%) 0%, hsl(200 20% 12% / 0.85) 60%, transparent 100%);
-    z-index: 10;
-  }
-
-  /* Clouds Container */
-  .clouds-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  /* Cloud animation - left to right */
-  @keyframes floatCloud {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(calc(100vw + 100%)); }
-  }
-
-  .cloud {
-    position: absolute;
+    background-image: url("/images/hero-sunrise-clean-mobile.png");
+    background-size: cover;
+    background-position: bottom center;
     background-repeat: no-repeat;
-    background-size: contain;
+    min-height: 60vh;
+  }
+
+  @media (min-width: 768px) {
+    .hero-section {
+      background-image: url("/images/hero-sunrise-clean-desktop.png");
+    }
+  }
+
+  /* Hero Animations Container */
+  .hero-animations-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 1.5s ease-in;
+  }
+
+  /* Cirrus clouds */
+  .hero-cirrus {
+    position: absolute;
+    top: var(--cirrus-y, 10%);
+    left: -30%;
+    width: var(--cirrus-width, 300px);
+    height: auto;
+    opacity: var(--cirrus-opacity, 0.3);
+    color: white;
     will-change: transform;
+    animation: cirrus-drift var(--cirrus-duration, 60s) linear var(--cirrus-delay, 0s) infinite;
   }
 
-  /* Large fluffy cloud */
-  .cloud-1 {
-    bottom: 180px;
-    width: 220px;
-    height: 80px;
-    opacity: 0.5;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 80'%3E%3Cellipse cx='70' cy='50' rx='50' ry='28' fill='white'/%3E%3Cellipse cx='110' cy='40' rx='55' ry='32' fill='white'/%3E%3Cellipse cx='155' cy='48' rx='45' ry='26' fill='white'/%3E%3Cellipse cx='130' cy='55' rx='40' ry='22' fill='white'/%3E%3Cellipse cx='85' cy='38' rx='35' ry='22' fill='white'/%3E%3Cellipse cx='50' cy='55' rx='30' ry='18' fill='white'/%3E%3Cellipse cx='175' cy='55' rx='28' ry='16' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 75s linear infinite;
+  @keyframes cirrus-drift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(100vw + 60%)); }
   }
 
-  /* Medium wispy cloud */
-  .cloud-2 {
-    bottom: 240px;
-    width: 160px;
-    height: 55px;
-    opacity: 0.4;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 55'%3E%3Cellipse cx='50' cy='32' rx='38' ry='20' fill='white'/%3E%3Cellipse cx='85' cy='28' rx='42' ry='24' fill='white'/%3E%3Cellipse cx='120' cy='34' rx='32' ry='18' fill='white'/%3E%3Cellipse cx='70' cy='38' rx='28' ry='15' fill='white'/%3E%3Cellipse cx='105' cy='36' rx='25' ry='14' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 95s linear infinite;
-    animation-delay: -30s;
+  /* Birds */
+  .hero-bird {
+    position: absolute;
+    top: var(--bird-y, 20%);
+    left: -5%;
+    width: calc(30px * var(--bird-size, 1));
+    height: auto;
+    color: rgba(30, 60, 55, 0.5);
+    will-change: transform;
+    animation: bird-fly var(--bird-duration, 18s) ease-in-out var(--bird-delay, 0s) infinite;
   }
 
-  /* Small puff near skyline */
-  .cloud-3 {
-    bottom: 150px;
-    width: 100px;
-    height: 40px;
-    opacity: 0.35;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'%3E%3Cellipse cx='35' cy='24' rx='28' ry='15' fill='white'/%3E%3Cellipse cx='60' cy='20' rx='32' ry='18' fill='white'/%3E%3Cellipse cx='50' cy='28' rx='22' ry='12' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 55s linear infinite;
-    animation-delay: -15s;
+  @keyframes bird-fly {
+    0% { transform: translateX(0) translateY(0); opacity: 0; }
+    5% { opacity: 1; }
+    25% { transform: translateX(25vw) translateY(-8px); }
+    50% { transform: translateX(50vw) translateY(4px); }
+    75% { transform: translateX(75vw) translateY(-6px); }
+    95% { opacity: 1; }
+    100% { transform: translateX(105vw) translateY(2px); opacity: 0; }
   }
 
-  /* High thin cloud */
-  .cloud-4 {
-    bottom: 300px;
-    width: 180px;
-    height: 45px;
-    opacity: 0.3;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 45'%3E%3Cellipse cx='45' cy='25' rx='35' ry='14' fill='white'/%3E%3Cellipse cx='90' cy='22' rx='45' ry='18' fill='white'/%3E%3Cellipse cx='140' cy='26' rx='32' ry='13' fill='white'/%3E%3Cellipse cx='70' cy='28' rx='25' ry='10' fill='white'/%3E%3Cellipse cx='115' cy='27' rx='22' ry='11' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 110s linear infinite;
-    animation-delay: -60s;
+  .hero-bird-wing {
+    animation: wing-flap 0.6s ease-in-out infinite alternate;
+  }
+  .hero-bird-wing:first-child { transform-origin: 100% 100%; }
+  .hero-bird-wing:last-child { transform-origin: 0% 100%; animation-delay: 0.05s; }
+
+  @keyframes wing-flap {
+    0% { transform: scaleY(1) rotate(0deg); }
+    100% { transform: scaleY(0.7) rotate(3deg); }
   }
 
-  /* Touching rooftops */
-  .cloud-5 {
-    bottom: 130px;
-    width: 140px;
-    height: 50px;
-    opacity: 0.38;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 50'%3E%3Cellipse cx='45' cy='30' rx='35' ry='18' fill='white'/%3E%3Cellipse cx='75' cy='25' rx='40' ry='22' fill='white'/%3E%3Cellipse cx='105' cy='32' rx='30' ry='16' fill='white'/%3E%3Cellipse cx='60' cy='35' rx='25' ry='13' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 68s linear infinite;
-    animation-delay: -45s;
-  }
-
-  /* Mid-height fluffy */
-  .cloud-6 {
-    bottom: 200px;
-    width: 190px;
-    height: 70px;
-    opacity: 0.45;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 190 70'%3E%3Cellipse cx='60' cy='42' rx='45' ry='24' fill='white'/%3E%3Cellipse cx='100' cy='35' rx='50' ry='28' fill='white'/%3E%3Cellipse cx='145' cy='42' rx='38' ry='22' fill='white'/%3E%3Cellipse cx='80' cy='48' rx='32' ry='18' fill='white'/%3E%3Cellipse cx='125' cy='46' rx='28' ry='16' fill='white'/%3E%3Cellipse cx='50' cy='50' rx='25' ry='14' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 88s linear infinite;
-    animation-delay: -20s;
-  }
-
-  /* Very high wisp */
-  .cloud-7 {
-    bottom: 340px;
-    width: 130px;
-    height: 35px;
-    opacity: 0.25;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 35'%3E%3Cellipse cx='40' cy='18' rx='30' ry='12' fill='white'/%3E%3Cellipse cx='75' cy='17' rx='38' ry='15' fill='white'/%3E%3Cellipse cx='105' cy='20' rx='22' ry='10' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 125s linear infinite;
-    animation-delay: -80s;
-  }
-
-  /* Low near buildings */
-  .cloud-8 {
-    bottom: 160px;
-    width: 120px;
-    height: 45px;
-    opacity: 0.32;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 45'%3E%3Cellipse cx='40' cy='28' rx='32' ry='16' fill='white'/%3E%3Cellipse cx='70' cy='24' rx='38' ry='20' fill='white'/%3E%3Cellipse cx='95' cy='30' rx='24' ry='14' fill='white'/%3E%3C/svg%3E");
-    animation: floatCloud 62s linear infinite;
-    animation-delay: -50s;
+  @media (prefers-reduced-motion: reduce) {
+    .hero-bird, .hero-cirrus, .hero-bird-wing { animation: none !important; }
+    .hero-animations-container { opacity: 0 !important; }
   }
 
   /* Safe area padding for bottom nav */
