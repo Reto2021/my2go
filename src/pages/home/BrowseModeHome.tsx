@@ -70,7 +70,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
                   Neu: Alle 🇨🇭 Sender
                 </span>
               </span>
-              <span className="block">Hör Radio.</span>
+              <span className="block">Entdecke Partner.</span>
               <TriggerSlider />
             </h1>
             

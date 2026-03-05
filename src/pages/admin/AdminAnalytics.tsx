@@ -217,7 +217,7 @@ export default function AdminAnalytics() {
         peakHourSessions: peakHour?.[1].sessions || 0,
         // New: stream type breakdown
         streamTypeData: [
-          { name: 'Radio 2Go', sessions: radio2goSessions, durationHours: Math.round(radio2goDuration / 3600 * 10) / 10 },
+          { name: 'my2go Radio', sessions: radio2goSessions, durationHours: Math.round(radio2goDuration / 3600 * 10) / 10 },
           { name: 'Externe Sender', sessions: externalSessions, durationHours: Math.round(externalDuration / 3600 * 10) / 10 }
         ],
         topStations,

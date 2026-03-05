@@ -87,7 +87,7 @@ export function MinimizedBarState({
           type="button"
           onClick={handleQuickSwitch}
           className="h-8 w-8 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
-          title={isRadio2Go ? `Zu ${switchTarget?.station_name}` : "Zurück zu Radio 2Go"}
+          title={isRadio2Go ? `Zu ${switchTarget?.station_name}` : "Zurück zu my2go"}
         >
           {isRadio2Go && switchTarget?.station_favicon ? (
             <img 
@@ -101,7 +101,7 @@ export function MinimizedBarState({
           ) : (
             <img 
               src="/pwa-192x192.png" 
-              alt="Radio 2Go" 
+              alt="my2go" 
               className="h-5 w-5 rounded-full"
             />
           )}
@@ -113,7 +113,7 @@ export function MinimizedBarState({
 
       {/* Now Playing */}
       <p className="text-xs text-secondary-foreground font-medium truncate flex-1">
-        {nowPlaying?.title || "Radio 2Go läuft"}
+        {nowPlaying?.title || "my2go Radio läuft"}
       </p>
 
       {/* Session time */}

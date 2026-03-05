@@ -45,9 +45,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt", "sw-custom.js"],
       manifest: {
-        name: "My 2Go - Radio 2Go Bonusprogramm",
-        short_name: "My 2Go",
-        description: "Das Bonusprogramm von Radio 2Go - 2Go Taler sammeln, Gutscheine bei lokalen Partnern einlösen",
+        name: "my2go – Dein lokaler Alltags-Begleiter",
+        short_name: "my2go",
+        description: "Sammle 2go Taler bei lokalen Partnern und löse sie für Gutscheine ein. Tuet guet. Tönt guet.",
         theme_color: "#023F5A",
         background_color: "#f8fafc",
         display: "standalone",

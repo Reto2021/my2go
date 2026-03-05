@@ -137,21 +137,21 @@ export function generateMarketingFlyer(): void {
   doc.setFont(FONT_FAMILY, 'bold');
   doc.setFontSize(24);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
-  doc.text('Hör Radio.', margin, y);
+  doc.text('Lokal einkaufen.', margin, y);
   
   y += 10;
-  doc.text('Sammle Taler.', margin, y);
+  doc.text('Taler sammeln.', margin, y);
   
   y += 10;
   doc.setTextColor(COLORS.gold.r, COLORS.gold.g, COLORS.gold.b);
-  doc.text('Geniess vor Ort.', margin, y);
+  doc.text('Prämien geniessen.', margin, y);
   
   // Subheadline
   y += 10;
   doc.setFont(FONT_FAMILY, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(COLORS.white.r, COLORS.white.g, COLORS.white.b);
-  const subtext = 'Dein lokales Bonusprogramm – beim Radiohören Punkte sammeln und bei deinen Lieblings-Cafés, Restaurants & Shops einlösen.';
+  const subtext = 'Dein lokaler Alltags-Begleiter – bei Partnern Taler sammeln und für Gutscheine bei Cafés, Restaurants & Shops einlösen.';
   const subtextLines = doc.splitTextToSize(subtext, contentWidth);
   doc.text(subtextLines, margin, y);
   

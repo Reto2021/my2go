@@ -19,7 +19,7 @@ export default function FunnelImprintPage() {
           <h2 className="text-lg font-semibold text-foreground mt-6 mb-3">Betreiber</h2>
           <p>
             My2Go<br />
-            c/o Radio 2Go<br />
+            c/o my2go<br />
             Schweiz
           </p>
 

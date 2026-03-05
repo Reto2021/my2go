@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Play, Gift, Radio, CheckCircle2, Users, MapPin } from 'lucide-react';
+import { Play, Gift, Radio, CheckCircle2, Users, MapPin, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FunnelRadioPlayer } from '@/components/funnel/FunnelRadioPlayer';
 import { BonusPromptSheet } from '@/components/funnel/BonusPromptSheet';
@@ -175,9 +175,9 @@ export default function FunnelEntryPage() {
         <div className="max-w-md mx-auto">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: Radio, label: 'Hör Radio' },
-              { icon: Gift, label: 'Sammle Taler' },
-              { icon: MapPin, label: 'Geniess vor Ort' },
+              { icon: Store, label: 'Lokal einkaufen' },
+              { icon: Gift, label: 'Taler sammeln' },
+              { icon: MapPin, label: 'Prämien geniessen' },
             ].map((item, index) => (
               <motion.div
                 key={index}

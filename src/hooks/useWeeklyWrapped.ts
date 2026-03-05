@@ -58,7 +58,7 @@ export function useWeeklyWrapped() {
       // Find top station
       const stationMap: Record<string, number> = {};
       (sessions || []).forEach(s => {
-        const name = s.stream_type === 'radio2go' ? 'Radio 2Go' : (s.external_station_name || 'Externer Sender');
+        const name = s.stream_type === 'radio2go' ? 'my2go Radio' : (s.external_station_name || 'Externer Sender');
         stationMap[name] = (stationMap[name] || 0) + (s.duration_seconds || 0);
       });
 

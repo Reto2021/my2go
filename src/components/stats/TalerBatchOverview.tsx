@@ -38,7 +38,7 @@ export function TalerBatchOverview({ userId }: TalerBatchOverviewProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-4">
-            Noch keine Taler gesammelt. Hör Radio oder besuche einen Partner!
+            Noch keine Taler gesammelt. Besuche einen Partner oder hör rein!
           </p>
         </CardContent>
       </Card>

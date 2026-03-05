@@ -392,7 +392,7 @@ export default function RedemptionDetailPage() {
     if (redemption.status === 'used') {
       return `🎉 Ich habe gerade "${rewardTitle}" bei ${partnerName} eingelöst! Mit My 2Go geniesse ich lokal. 🎧`;
     }
-    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Hör Radio, sammle Taler, geniess vor Ort! 🎧`;
+    return `🎁 Ich habe mir "${rewardTitle}" bei ${partnerName} gesichert! Lokal einkaufen, Taler sammeln, Prämien geniessen! 🎉`;
   };
 
   const handleShareWhatsApp = () => {
