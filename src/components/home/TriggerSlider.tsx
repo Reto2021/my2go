@@ -85,7 +85,7 @@ export function TriggerSlider() {
   }, [nextTrigger]);
 
   return (
-    <span className="relative inline-block mt-1">
+    <span className="relative block mt-1 overflow-hidden">
       <AnimatePresence mode="wait">
         <motion.span
           key={currentIndex}
@@ -110,7 +110,7 @@ export function TriggerSlider() {
               clipPath: 'polygon(2% 15%, 0% 50%, 1% 85%, 4% 100%, 15% 98%, 30% 100%, 50% 97%, 70% 100%, 85% 99%, 96% 100%, 100% 80%, 99% 50%, 100% 20%, 97% 0%, 80% 2%, 60% 0%, 40% 3%, 20% 0%, 5% 1%)'
             }} 
           />
-          <span className="relative text-secondary font-black whitespace-nowrap">
+          <span className="relative text-secondary font-black">
             {displaySlides[currentIndex]}
           </span>
         </motion.span>
