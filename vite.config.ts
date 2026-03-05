@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: "my2go – Dein lokaler Alltags-Begleiter",
         short_name: "my2go",
-        description: "Sammle 2go Taler bei lokalen Partnern und löse sie für Gutscheine ein. Tuet guet. Tönt guet.",
+        description: "Sammle 2Go Taler bei lokalen Partnern und löse sie für Gutscheine ein. Tuet guet. Tönt guet.",
         theme_color: "#023F5A",
         background_color: "#f8fafc",
         display: "standalone",
