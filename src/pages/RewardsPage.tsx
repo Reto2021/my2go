@@ -12,6 +12,7 @@ import { OfflineDataBadge } from '@/components/ui/offline-data-badge';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
 import { useOfflineRewards } from '@/hooks/useOfflineData';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,7 +38,7 @@ import {
   Coins,
   Ticket,
   Sparkles,
-  Radio,
+  
   Navigation,
   Building2,
   Check,
@@ -140,6 +141,7 @@ export default function RewardsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isAuthenticated = !!user;
+  const { isOnline } = useOnlineStatus();
   
   const { 
     userLocation, 
@@ -499,11 +501,11 @@ export default function RewardsPage() {
                   </SheetHeader>
                   
                   <div className="space-y-6 pb-8">
-                    {/* Radio 2Go Branding Hint */}
+                    {/* my2go Branding Hint */}
                     <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
-                      <Radio className="h-4 w-4 text-secondary" />
+                      <Sparkles className="h-4 w-4 text-secondary" />
                       <p className="text-xs text-secondary font-medium">
-                        Radio 2Go hören lohnt sich! Sammle Taler & löse Gutscheine ein.
+                        Sammle Taler bei lokalen Partnern & löse Gutscheine ein.
                       </p>
                     </div>
                     
@@ -613,11 +615,11 @@ export default function RewardsPage() {
         <div className="container pt-4">
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 flex-shrink-0">
-              <Radio className="h-5 w-5 text-secondary" />
+              <Sparkles className="h-5 w-5 text-secondary" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                Radio 2Go hören & Taler sammeln
+                Taler sammeln & Gutscheine sichern
               </p>
               <p className="text-xs text-muted-foreground">
                 Melde dich an, um Gutscheine einzulösen.
@@ -638,9 +640,9 @@ export default function RewardsPage() {
       {!isAuthenticated && activeTab === 'aktiviert' && (
         <div className="container py-8">
           <EmptyState
-            icon={Radio}
-            title="Radio 2Go hören lohnt sich!"
-            description="Melde dich an, höre Radio 2Go, sammle Taler und löse exklusive Gutscheine ein."
+            icon={Sparkles}
+            title="Mitmachen lohnt sich!"
+            description="Melde dich an, sammle Taler bei lokalen Partnern und löse exklusive Gutscheine ein."
             action={{ label: 'Jetzt starten', onClick: handleLogin }}
           />
         </div>
@@ -736,7 +738,17 @@ export default function RewardsPage() {
                 } : undefined}
               />
             ) : (
-              <ul className="space-y-3 stagger-children list-none p-0 m-0">
+              <>
+                {/* Offline Banner */}
+                {!isOnline && (
+                  <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-muted border border-border">
+                    <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <p className="text-sm text-muted-foreground">
+                      Du bist offline. Zum Einlösen bitte verbinden.
+                    </p>
+                  </div>
+                )}
+                <ul className="space-y-3 stagger-children list-none p-0 m-0">
                 {filteredAndSortedRewards.map(reward => (
                   <li key={reward.id}>
                     <RewardCard 
@@ -746,6 +758,7 @@ export default function RewardsPage() {
                   </li>
                 ))}
               </ul>
+              </>
             )}
           </>
         )}
@@ -785,7 +798,7 @@ export default function RewardsPage() {
                 {/* Redemptions List */}
                 {filteredRedemptions.length === 0 ? (
                   <EmptyState
-                    icon={Radio}
+                    icon={Sparkles}
                     title={redemptionFilter === 'all' ? 'Noch keine Gutscheine aktiviert' : 'Keine Ergebnisse'}
                     description={
                       redemptionFilter === 'all'
@@ -826,12 +839,14 @@ export default function RewardsPage() {
                                   <img
                                     src={redemption.reward.image_url}
                                     alt={redemption.reward.title}
+                                    loading="lazy"
                                     className="w-full h-full object-cover"
                                   />
                                 ) : redemption.partner?.logo_url ? (
                                   <img
                                     src={redemption.partner.logo_url}
                                     alt={redemption.partner.name}
+                                    loading="lazy"
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
