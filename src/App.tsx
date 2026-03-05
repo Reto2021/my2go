@@ -23,6 +23,7 @@ import { TalerEarnAnimation } from "./components/taler/TalerEarnAnimation";
 import { useRadioStore } from "./lib/radio-store";
 
 import { OfflinePrefetchProvider } from "./hooks/useOfflinePrefetch";
+import { useThemeColor } from "./hooks/useThemeColor";
 
 // Core pages - loaded immediately
 import HomePage from "./pages/HomePage";
@@ -218,6 +219,7 @@ function AppContent() {
   useServiceWorkerMessages();
   useClearBadgeOnFocus();
   useRadioAutoResume();
+  useThemeColor();
   
   return (
     <BrowserRouter>
