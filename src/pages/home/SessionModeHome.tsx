@@ -102,8 +102,8 @@ export function SessionModeHome({
               </Link>
             </div>
             
-            <div style={{ textShadow: heroTextShadow }}>
-              <ActivityTicker className={`text-xs ${heroSubClass}`} />
+            <div className="inline-flex items-center rounded-full px-3 py-1 bg-black/25 backdrop-blur-sm">
+              <ActivityTicker className="text-xs text-white drop-shadow-sm" />
             </div>
           </div>
         </div>

@@ -37,9 +37,16 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
 
   const { results, isSearching, search, clear } = useMapboxSearch();
   const { userLocation, requestLocation } = useLocation();
-  const { isPlaying, togglePlay, volume, setVolume } = useRadioStore();
+  const { isPlaying, volume, setVolume } = useRadioStore();
   const { user } = useAuth();
   const [userQRCode, setUserQRCode] = useState<string | null>(null);
+
+  // Auto-request location when sheet opens
+  useEffect(() => {
+    if (open && !userLocation) {
+      requestLocation();
+    }
+  }, [open, userLocation, requestLocation]);
 
   // Fetch user QR code
   useEffect(() => {
@@ -145,7 +152,7 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
 
     // Start radio if not playing
     if (!isPlaying) {
-      togglePlay();
+      useRadioStore.getState().togglePlay();
     }
 
     // Award Taler if navigating to a partner
