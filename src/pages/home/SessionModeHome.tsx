@@ -69,18 +69,16 @@ export function SessionModeHome({
         
         {/* Greeting + Balance overlay */}
         <div className="container relative z-10 pt-6 pb-6 flex flex-col justify-end" style={{ minHeight: '12vh' }}>
-          <div className="animate-in space-y-3 p-4 rounded-2xl" style={{
-            background: 'rgba(0,0,0,0.25)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-          }}>
+          <div className="animate-in space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-white drop-shadow-md" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+              <p className="text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 20px rgba(0,0,0,0.3)' }}>
                 {greeting}, <span className="font-bold">{displayName || 'Entdecker'}</span> 👋
               </p>
               <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
             </div>
-            <ActivityTicker className="text-xs text-white/80" />
+            <div className="drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 20px rgba(0,0,0,0.3)' }}>
+              <ActivityTicker className="text-xs text-white/80" />
+            </div>
           </div>
         </div>
       </section>
