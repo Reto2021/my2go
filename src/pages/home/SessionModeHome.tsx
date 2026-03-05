@@ -6,6 +6,7 @@ import { CampaignBanner } from '@/components/home/CampaignBanner';
 import { useGeoProximityAlerts } from '@/hooks/useGeoProximityAlerts';
 import { RecommendedRewardsSection } from '@/components/rewards/RecommendedRewardsSection';
 import { useComebackBonus } from '@/hooks/useComebackBonus';
+import { TriggerSlider } from '@/components/home/TriggerSlider';
 import { RewardCard } from '@/components/ui/reward-card';
 import { SkeletonRewardCard } from '@/components/ui/skeleton';
 import { BalanceCard } from '@/components/ui/balance-card';
@@ -23,7 +24,7 @@ import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
 import { HeroDynamic } from '@/components/ui/HeroDynamic';
 import { HeroAnimations } from '@/components/ui/HeroAnimations';
 import { useLiveEventsStore } from '@/lib/live-events-store';
-import { ChevronRight, Navigation as NavigationIcon, X } from 'lucide-react';
+import { Gift, ChevronRight, Navigation as NavigationIcon, X, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SessionModeHomeProps } from './types';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
@@ -56,27 +57,46 @@ export function SessionModeHome({
 
   return (
     <div className="min-h-screen bg-background -mt-20">
-      {/* Compact Dynamic Hero Header */}
-      <section className="relative overflow-hidden pt-20" style={{ minHeight: '32vh' }}>
+      {/* Full Hero – identical to BrowseModeHome */}
+      <section className="relative overflow-hidden text-foreground pt-20" style={{ minHeight: '55vh' }}>
         <HeroDynamic />
         {showBirds && <HeroAnimations />}
-
-        {/* Bottom gradient fade into background */}
-        <div 
-          className="absolute bottom-0 left-0 right-0 h-24 z-[4] pointer-events-none"
-          style={{ background: 'linear-gradient(to top, hsl(var(--background)), transparent)' }}
-        />
         
-        {/* Greeting + Balance overlay */}
-        <div className="container relative z-10 pt-6 pb-6 flex flex-col justify-end" style={{ minHeight: '12vh' }}>
-          <div className="animate-in space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-white drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 20px rgba(0,0,0,0.3)' }}>
-                {greeting}, <span className="font-bold">{displayName || 'Entdecker'}</span> 👋
-              </p>
-              <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
+        <div className="container relative z-10 pt-6 pb-24">
+          <div className="flex items-center justify-between mb-6">
+            <InstallBanner />
+            <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
+          </div>
+          
+          <div className="animate-in text-center">
+            <p className="text-white/80 text-sm font-semibold mb-2 drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
+              {greeting}, <span className="font-bold text-white">{displayName || 'Entdecker'}</span> 👋
+            </p>
+            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6 text-white drop-shadow-lg">
+              <span className="block">Lebe lokal.</span>
+              <span className="block">Werde belohnt.</span>
+              <TriggerSlider />
+            </h1>
+            
+            {/* Primary CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+              <Link 
+                to="/partner" 
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-accent text-accent-foreground font-bold text-base shadow-xl shadow-accent/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <MapPin className="h-5 w-5" />
+                Partner entdecken
+              </Link>
+              <Link 
+                to="/rewards" 
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white/20 backdrop-blur-sm text-white font-bold text-base border border-white/30 hover:bg-white/30 active:scale-[0.98] transition-all"
+              >
+                <Gift className="h-5 w-5" />
+                Gutscheine ansehen
+              </Link>
             </div>
-            <div className="drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 20px rgba(0,0,0,0.3)' }}>
+            
+            <div className="drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
               <ActivityTicker className="text-xs text-white/80" />
             </div>
           </div>
@@ -85,9 +105,9 @@ export function SessionModeHome({
 
       <LiveEventsPanel isOpen={showLiveEvents} onClose={() => setShowLiveEvents(false)} />
 
-      {/* Balance Card – overlaps hero slightly */}
+      {/* Balance Card – overlaps hero */}
       {balance && (
-        <section className="container -mt-4 relative z-20 pb-4">
+        <section className="container -mt-12 relative z-20 pb-4">
           <BalanceCard balance={balance} userId={userId} />
         </section>
       )}
