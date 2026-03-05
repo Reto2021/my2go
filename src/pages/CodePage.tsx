@@ -98,7 +98,7 @@ export default function CodePage() {
             <Music className="h-8 w-8 text-accent" />
           </div>
           <p className="text-muted-foreground text-sm">
-            Hörst du Radio 2Go? Codes werden während der Sendung genannt!
+            Bonus-Codes findest du bei Partnern, Events und im Soundtrack.
           </p>
         </div>
         
@@ -112,7 +112,7 @@ export default function CodePage() {
               So funktioniert's
             </h3>
             <div className="text-sm text-muted-foreground mb-4 space-y-2">
-              <p>1️⃣ Höre Radio 2Go im Player</p>
+              <p>1️⃣ Entdecke den Soundtrack im Player</p>
               <p>2️⃣ Warte auf den Code während der Sendung</p>
               <p>3️⃣ Gib den Code hier ein und sammle Taler!</p>
             </div>

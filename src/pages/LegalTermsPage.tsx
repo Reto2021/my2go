@@ -31,19 +31,19 @@ export default function LegalTermsPage() {
             </p>
           </div>
           
-          <h2 className="text-lg font-bold">Allgemeine Nutzungsbedingungen Radio 2Go App</h2>
+          <h2 className="text-lg font-bold">Allgemeine Nutzungsbedingungen my2go App</h2>
           
           <section>
             <h3 className="text-base font-semibold">1. Geltungsbereich</h3>
             <p className="text-sm text-muted-foreground">
-              Die nachstehenden Allgemeinen Nutzungsbedingungen (auch «AGB» genannt) gelten für die Nutzung der Radio 2Go App und des damit verbundenen 2Go Taler Bonusprogramms, betrieben von der 2Go Media AG.
+              Die nachstehenden Allgemeinen Nutzungsbedingungen (auch «AGB» genannt) gelten für die Nutzung der my2go App und des damit verbundenen 2Go Taler Bonusprogramms, betrieben von der 2Go Media AG.
             </p>
           </section>
           
           <section>
             <h3 className="text-base font-semibold">2. Leistungen</h3>
             <p className="text-sm text-muted-foreground">
-              2.1 Die Radio 2Go App ermöglicht es registrierten Nutzern, 2Go Taler (Bonuspunkte) zu sammeln und diese bei teilnehmenden Partnern gegen Vergünstigungen, Rabatte oder Produkte einzulösen.
+              2.1 Die my2go App ermöglicht es registrierten Nutzern, 2Go Taler (Bonuspunkte) zu sammeln und diese bei teilnehmenden Partnern gegen Vergünstigungen, Rabatte oder Produkte einzulösen.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               2.2 2Go Taler sind Bonuspunkte ohne Geldwert und können nicht gegen Bargeld eingetauscht werden. Sie sind nicht übertragbar und verfallen bei Kontolöschung.

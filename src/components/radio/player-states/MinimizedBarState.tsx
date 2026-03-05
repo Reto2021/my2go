@@ -113,7 +113,7 @@ export function MinimizedBarState({
 
       {/* Now Playing */}
       <p className="text-xs text-secondary-foreground font-medium truncate flex-1">
-        {nowPlaying?.title || "my2go Radio läuft"}
+        {nowPlaying?.title || "my2go Soundtrack läuft"}
       </p>
 
       {/* Session time */}
