@@ -142,8 +142,9 @@ export default function PartnerPricingPage() {
                               <HelpCircle className="w-3.5 h-3.5 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                              <p>1 Air-Drop (5-8 Sek.) = 1 Credit</p>
-                              <p>1 Radio-Spot (20 Sek.) = 3 Credits</p>
+                              <p className="font-semibold mb-1">Was sind Audio-Credits?</p>
+                              <p>Mit Audio-Credits wird Ihr Geschäft im my2go-Soundtrack erwähnt. Jeder Credit entspricht einer Erwähnung oder einem kurzen Spot.</p>
+                              <p className="mt-1 text-xs opacity-80">1 Air-Drop (5-8 Sek.) = 1 Credit • 1 Spot (20 Sek.) = 3 Credits</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>

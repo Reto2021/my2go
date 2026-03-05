@@ -19,8 +19,8 @@ const faqs = [
     answer: "Nach der Zahlung der Activation Fee startet dein 30-Tage-Trial. In dieser Zeit ist die monatliche Abo-Gebühr CHF 0. Erst am Tag 31 wird die erste reguläre Abo-Zahlung fällig. Du kannst bis Tag 30 jederzeit kündigen."
   },
   {
-    question: "Was sind Audio-Credits?",
-    answer: "Audio-Credits sind dein Budget für Radio-Werbung. 1 Air-Drop (5-8 Sek. Sponsor-Tag) = 1 Credit. 1 Radio-Spot (20 Sek.) = 3 Credits. Die Aussteuerung erfolgt rotationsbasiert."
+    question: "Was sind Audio-Credits und wie funktionieren sie?",
+    answer: "Audio-Credits ermöglichen Erwähnungen Ihres Geschäfts im my2go-Soundtrack. Je nach Plan erhalten Sie 20, 60 oder 140 Credits pro Monat. Jeder Credit entspricht einer Erwähnung oder einem kurzen Audio-Spot, der an Hörer in Ihrer Region ausgespielt wird. So bleiben Sie auch zwischen den Einkäufen präsent. 1 Air-Drop (5-8 Sek.) = 1 Credit, 1 Spot (20 Sek.) = 3 Credits."
   },
   {
     question: "Wie funktioniert die Geld-zurück Garantie?",
