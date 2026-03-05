@@ -23,8 +23,13 @@ import { BrowseModeHomeProps } from './types';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
-  const { timeOfDay } = useTimeOfDay();
+  const { timeOfDay, textColor } = useTimeOfDay();
   const showBirds = timeOfDay !== 'night';
+  const isDarkText = textColor === 'dark';
+  const heroTextClass = isDarkText ? 'text-gray-900' : 'text-white';
+  const heroTextShadow = isDarkText 
+    ? '0 1px 3px rgba(255,255,255,0.4)' 
+    : '0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)';
   
   const {
     totalEarned,
@@ -62,7 +67,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </div>
           
           <div className="animate-in text-center">
-            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6 text-white drop-shadow-lg">
+            <h1 className={`text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6 ${heroTextClass}`} style={{ textShadow: heroTextShadow }}>
               <span className="block">Lebe lokal.</span>
               <span className="block">Werde belohnt.</span>
               <TriggerSlider />
@@ -79,7 +84,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
               </Link>
               <Link 
                 to="/rewards" 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white/20 backdrop-blur-sm text-white font-bold text-base border border-white/30 hover:bg-white/30 active:scale-[0.98] transition-all"
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl backdrop-blur-sm font-bold text-base active:scale-[0.98] transition-all ${isDarkText ? 'bg-gray-900/15 text-gray-900 border border-gray-900/20 hover:bg-gray-900/25' : 'bg-white/20 text-white border border-white/30 hover:bg-white/30'}`}
               >
                 <Gift className="h-5 w-5" />
                 Gutscheine ansehen
@@ -87,14 +92,14 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
             </div>
             
             {totalEarned > 0 && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white mt-2 mx-auto w-fit">
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full mt-2 mx-auto w-fit ${isDarkText ? 'bg-gray-900/15 text-gray-900' : 'bg-white/20 text-white'}`}>
                 <Coins className="h-4 w-4" />
                 <span className="font-bold">{totalEarned} Taler</span>
-                <span className="text-white/70 text-sm">gesammelt!</span>
+                <span className={`text-sm ${isDarkText ? 'text-gray-900/70' : 'text-white/70'}`}>gesammelt!</span>
               </div>
             )}
             
-            <button onClick={onLogin} className="mt-4 text-white/80 text-sm font-semibold underline underline-offset-4 decoration-white/40 hover:text-white transition-colors">
+            <button onClick={onLogin} className={`mt-4 text-sm font-semibold underline underline-offset-4 transition-colors ${isDarkText ? 'text-gray-900/70 decoration-gray-900/30 hover:text-gray-900' : 'text-white/80 decoration-white/40 hover:text-white'}`} style={{ textShadow: heroTextShadow }}>
               {totalEarned > 0 ? 'Taler sichern & anmelden' : 'Kostenlos anmelden'}
             </button>
           </div>
