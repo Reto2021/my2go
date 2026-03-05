@@ -1,269 +1,63 @@
 
-# Comprehensive Review & Plan
 
-## Part 1: Taler Persistence Bug Analysis
+# Analyse: Visuelles Erlebnis nach Login beibehalten
 
-### Root Cause Identified
+## Das Problem
 
-After deep analysis of the database and code, I found the critical issue:
+Die App hat zwei komplett getrennte Home-Ansichten:
 
-**Recent radio listening sessions show:**
-- `ended_at: NULL` (sessions never closed)
-- `taler_awarded: 0` (rewards never written)
-- `duration_seconds: NULL` (never updated)
-- Last successful radio transaction: **2026-01-22** (11+ days ago)
+- **BrowseModeHome** (nicht eingeloggt): Dynamischer Hero mit Jahreszeiten, Tageszeiten, Wetter-Effekten, Vögel-Animationen, grosser Typografie "Lebe lokal. Werde belohnt." — emotional, einladend.
+- **SessionModeHome** (eingeloggt): Sofort funktional — Greeting, Balance-Card, Gutschein-Listen, Banners. Kein visueller Hero, kein Hintergrundbild, keine Atmosphäre.
 
-The `save_session_progress` RPC function is correct in the database, but **it's never being called** because:
+Der Bruch ist abrupt: Nach dem Login verschwindet die gesamte visuelle Identität.
 
-1. **Authentication Race Condition**: The console log shows `[RadioRewards] Waiting for user authentication` - the hook waits for `userId` before starting sessions, but the global module-level state (session ID, timers) gets wiped on auth state changes.
+## Architektur-Optionen
 
-2. **Global State Reset on Page Load**: While `restoreGlobalStateFromStorage()` runs on module load, the `useEffect` that verifies the session and starts the save interval depends on `userId`. If auth is slow, the session data is restored but never verified/resumed.
+### Option A: Hero-Header in SessionModeHome integrieren (empfohlen)
 
-3. **Missing User Authentication in Background Saves**: The keepalive `fetch` on page unload uses `SUPABASE_KEY` as the Bearer token, but the RPC requires an authenticated user session to look up `user_id` from the session record.
-
-4. **Silent Failures**: The `save_session_progress` RPC checks if session is found and active, but returns `{success: false}` without the frontend reacting to failures.
-
-### Technical Fix Strategy
+Den dynamischen Hero (`HeroDynamic` + `HeroAnimations`) als kompakteren Header auch im eingeloggten Zustand zeigen. Statt 55vh nur ~30vh, mit Greeting und Balance-Card darüber gelegt.
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│ Current Flow (Broken)                                           │
-├─────────────────────────────────────────────────────────────────┤
-│ 1. User plays radio                                             │
-│ 2. Hook waits for userId (may be slow)                         │
-│ 3. Session started in DB                                        │
-│ 4. 15s interval starts                                          │
-│ 5. User refreshes page                                          │
-│ 6. Global state restored from localStorage                      │
-│ 7. Hook re-mounts, userId not yet available                    │
-│ 8. Session verification never happens                           │
-│ 9. Save interval never restarts                                 │
-│ ❌ Points lost forever                                          │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│ Fixed Flow                                                      │
-├─────────────────────────────────────────────────────────────────┤
-│ 1. On module load: restore session from localStorage            │
-│ 2. On any user auth: immediately verify session in DB           │
-│ 3. If session valid: restart 15s save interval immediately     │
-│ 4. On page unload: use proper auth token (not anon key)        │
-│ 5. Background save via service worker for reliability          │
-│ 6. Show toast on save success/failure for debugging            │
-│ ✅ Points persisted reliably                                    │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────┐
+│  HeroDynamic (kompakt, ~30vh)   │
+│  ┌───────────────────────────┐  │
+│  │ Guten Morgen, Max 👋      │  │
+│  │ ┌─────────────────────┐   │  │
+│  │ │   42 Taler  BalCard │   │  │
+│  │ └─────────────────────┘   │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+│  Campaign Banner                │
+│  Partner in der Nähe            │
+│  Gutscheine                     │
+│  ...                            │
 ```
 
-### Files to Modify
+**Vorteile:** Visuelle Kontinuität, Brand-Identität bleibt, dynamische Tageszeiten-Stimmung auch nach Login.
+**Aufwand:** Mittel — `HeroDynamic` und `HeroAnimations` in SessionModeHome einbauen, Greeting + BalanceCard als Overlay darüber positionieren.
 
-1. **`src/hooks/useRadioRewards.ts`**:
-   - Fix auth token retrieval for keepalive requests (get actual user JWT)
-   - Move session verification to run immediately when auth becomes available
-   - Add retry logic with exponential backoff for failed saves
-   - Add visible feedback (toast) on save success for debugging
-   - Ensure interval restarts even if userId arrives late
+### Option B: Geteilter Hero-Hintergrund über AppLayout
 
-2. **`src/contexts/AuthContext.tsx`**:
-   - Ensure `refreshBalance` is called immediately after detecting new radio transactions
-   - Add realtime subscription to taler_monthly_batches for faster balance updates
+Den dynamischen Hintergrund als permanentes Element im `AppLayout` rendern (z.B. hinter dem Header), sodass er auf allen Seiten subtil sichtbar ist.
 
-3. **Guest Mode (`src/lib/guest-rewards-store.ts`)**:
-   - Guest rewards are stored only in localStorage (zustand persist)
-   - On login, `syncGuestRewards` in AuthContext transfers them
-   - This flow works but could be more robust with offline support
+**Vorteile:** Konsistente Atmosphäre überall.
+**Nachteil:** Höhere Komplexität, Performance-Impact auf allen Seiten.
 
----
+### Option C: Reduzierter Ambient-Header
 
-## Part 2: Business Radio Feature Analysis
+Nur die Farbverläufe/Stimmung der Tageszeit als subtilen Gradient im Header-Bereich beibehalten — ohne die volle Hero-Section, aber mit der emotionalen Wärme.
 
-### Current Capabilities
+**Vorteile:** Leichtgewichtig, subtil.
+**Nachteil:** Weniger Impact als der volle Hero.
 
-The platform already has infrastructure for audio advertising:
+## Empfehlung
 
-1. **Audio Ads System** (`supabase/functions/generate-audio-ad/`):
-   - TTS generation via ElevenLabs (Swiss German voices)
-   - Jingle intro/outro management
-   - MP3 upload support
-   - Audio mastering via Auphonic API
-   - Targeting by location, demographics, subscription tier
+**Option A** — den kompakten dynamischen Hero in SessionModeHome einbauen. Konkret:
 
-2. **Jingle Manager** (`src/components/admin/JingleManager.tsx`):
-   - Upload custom intro/outro audio
-   - Partner-specific jingles possible (`partner_id` field)
+1. **SessionModeHome anpassen**: `HeroDynamic` + `HeroAnimations` als kompakten Hero-Header (~30vh) einbauen, mit `-mt-20` wie bei BrowseModeHome
+2. **Greeting + BalanceCard** als Overlay auf dem Hero positionieren (weisser Text mit Drop-Shadow)
+3. **ActivityTicker** und **LiveHeaderButton** in den Hero integrieren
+4. **Restlicher Content** beginnt nach dem Hero mit dem bestehenden Layout
 
-3. **Partner Dashboard** (`src/pages/partner/`):
-   - Full analytics suite
-   - Reward management
-   - QR scan tracking
+Technisch betrifft das nur eine Datei: `src/pages/home/SessionModeHome.tsx`.
 
-### Proposed "Business Radio" Feature
-
-Allow business partners to create their own branded radio landing pages with:
-
-1. **Custom Stream Configuration**:
-   - Enter external stream URL
-   - Upload pre-roll audio (MP3)
-   - Upload logo/cover image
-   - Set brand colors
-
-2. **Generated Landing Page**:
-   - Simple, mobile-optimized HTML page
-   - Partner logo prominently displayed
-   - Play button to start custom stream
-   - Pre-roll audio plays before stream starts
-   - Optionally embed Taler earning (if partner pays for premium)
-
-3. **Technical Implementation**:
-
-```text
-Database Schema Addition:
-┌─────────────────────────────────────────────────────────────────┐
-│ partner_radios                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│ id: uuid (PK)                                                   │
-│ partner_id: uuid (FK → partners)                                │
-│ name: text                                                      │
-│ stream_url: text (required)                                     │
-│ preroll_audio_url: text (optional)                             │
-│ logo_url: text (optional, defaults to partner logo)            │
-│ cover_image_url: text (optional)                               │
-│ brand_color: text (hex, optional)                              │
-│ slug: text (unique, for URL: /radio/{slug})                    │
-│ is_active: boolean                                              │
-│ play_count: integer (analytics)                                │
-│ created_at: timestamp                                           │
-│ updated_at: timestamp                                           │
-└─────────────────────────────────────────────────────────────────┘
-
-New Files:
-- src/pages/radio/[slug].tsx - Public radio landing page
-- src/pages/partner/PartnerRadio.tsx - Partner config UI
-- supabase/functions/partner-radio-stats/ - Track plays
-```
-
-4. **Partner Dashboard UI**:
-   - New tab: "Mein Radio" (My Radio)
-   - Stream URL input with validation
-   - Pre-roll MP3 upload (max 30 seconds)
-   - Logo upload
-   - Color picker for brand color
-   - Preview button
-   - Generated shareable URL: `https://my2go.lovable.app/radio/partner-slug`
-   - Embed code for partner's website
-
-5. **Public Radio Page Flow**:
-```
-User visits /radio/cafe-schoenau
-→ Page loads with Café Schönau branding
-→ User taps PLAY button
-→ Pre-roll audio plays (if configured)
-→ Stream starts automatically after pre-roll
-→ Optional: Taler earning widget shows progress
-```
-
----
-
-## Implementation Priority
-
-### Phase 1 (Critical - Taler Bug Fix)
-
-1. Fix authentication in background saves
-2. Add proper session recovery on auth state change
-3. Add save success/failure feedback
-4. Test with actual user listening sessions
-
-### Phase 2 (Business Radio MVP)
-
-1. Create `partner_radios` database table
-2. Build partner configuration UI
-3. Create public radio landing page
-4. Implement pre-roll audio playback
-5. Add play count analytics
-
-### Phase 3 (Enhancement)
-
-1. Embed code generator for partners
-2. Optional Taler earning on partner radios
-3. Custom HTML page theming
-4. Mobile PWA support for partner radios
-
----
-
-## Technical Details
-
-### Taler Bug Fix - Key Code Changes
-
-```typescript
-// In useRadioRewards.ts - Fix auth token retrieval
-async function saveWithProperAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) {
-    console.error('[RadioRewards] No auth session for save');
-    return;
-  }
-  
-  fetch(`${SUPABASE_URL}/rest/v1/rpc/save_session_progress`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${session.access_token}`, // Use actual JWT
-    },
-    body: JSON.stringify({
-      _session_id: globalSessionId,
-      _duration_seconds: durationSeconds
-    }),
-    keepalive: true,
-  });
-}
-```
-
-### Business Radio - Database Migration
-
-```sql
-CREATE TABLE public.partner_radios (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  partner_id UUID REFERENCES partners(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  stream_url TEXT NOT NULL,
-  preroll_audio_url TEXT,
-  logo_url TEXT,
-  cover_image_url TEXT,
-  brand_color TEXT DEFAULT '#C7A94E',
-  is_active BOOLEAN DEFAULT true,
-  play_count INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- RLS: Partners can manage their own radios
-ALTER TABLE partner_radios ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Partners can manage own radios"
-  ON partner_radios
-  FOR ALL
-  USING (partner_id IN (
-    SELECT partner_id FROM partner_admins WHERE user_id = auth.uid()
-  ));
-
--- Public can view active radios
-CREATE POLICY "Public can view active radios"
-  ON partner_radios
-  FOR SELECT
-  USING (is_active = true);
-```
-
----
-
-## Summary
-
-| Issue | Status | Priority |
-|-------|--------|----------|
-| Taler not persisting after refresh | Root cause identified | **Critical** |
-| Background save using wrong auth token | Fix required | **Critical** |
-| Session never verified after page reload | Fix required | **Critical** |
-| Guest rewards sync | Working, minor improvements | Low |
-| Business Radio feature | New feature, fully feasible | Medium |
-| Partner custom stream + pre-roll | Extends existing audio infrastructure | Medium |
-| Embeddable radio player | Enhancement | Low |
