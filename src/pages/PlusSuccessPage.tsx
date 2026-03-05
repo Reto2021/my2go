@@ -16,12 +16,12 @@ const benefits = [
   {
     icon: Radio,
     title: 'Werbefreies Hören',
-    description: 'Geniesse Radio 2Go ohne Unterbrechungen',
+    description: 'Geniesse den Soundtrack ohne Unterbrechungen',
   },
   {
     icon: Zap,
     title: 'Doppelte Taler',
-    description: 'Verdiene 2x so viele Taler beim Radio hören',
+    description: 'Verdiene 2x so viele Taler beim Zuhören',
   },
 ];
 

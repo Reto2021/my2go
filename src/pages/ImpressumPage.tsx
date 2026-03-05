@@ -90,7 +90,7 @@ export default function ImpressumPage() {
         <div className="card-base p-6 animate-in">
           <h3 className="font-semibold mb-3">Verantwortlich für Inhalte</h3>
           <p className="text-sm text-muted-foreground">
-            Verantwortlich für die Inhalte der Radio 2Go App und Webseite ist die 2Go Media AG gemäss den Angaben oben.
+            Verantwortlich für die Inhalte der my2go App und Webseite ist die 2Go Media AG gemäss den Angaben oben.
           </p>
         </div>
         

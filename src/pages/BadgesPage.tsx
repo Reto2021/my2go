@@ -11,7 +11,7 @@ const categoryInfo: Record<string, { title: string; displayName: string; icon: R
     title: "earning",
     displayName: "Taler sammeln",
     icon: Coins,
-    description: "Sammle Taler durch Radio hören & Aktionen",
+    description: "Sammle Taler durch Einkaufen, Aktionen & Zuhören",
   },
   redemption: {
     title: "redemption",

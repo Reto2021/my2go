@@ -107,7 +107,7 @@ export const CAMPAIGN_CONFIGS: Record<string, CampaignConfig> = {
     campaignName: 'Streak Challenge',
     hookType: 'streak',
     hookTitle: '7-Tage Streak = 100 Bonus-Taler',
-    hookDetails: 'Hör 7 Tage in Folge Radio und sichere dir den Mega-Bonus',
+    hookDetails: 'Nutze my2go 7 Tage in Folge und sichere dir den Mega-Bonus',
     validityText: 'Starte jetzt deine Streak',
     rewardCtaText: 'Challenge starten',
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now

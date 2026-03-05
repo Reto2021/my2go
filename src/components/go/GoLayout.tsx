@@ -107,7 +107,7 @@ export function GoLayout() {
                     rel="noopener noreferrer" 
                     className="text-secondary-foreground/80 hover:text-white transition-colors"
                   >
-                    Radio 2Go
+                    Radio 2Go (Sender)
                   </a>
                 </li>
                 <li>

@@ -294,7 +294,7 @@ export default function MyStatsPage() {
                 <p className="text-2xl font-bold">
                   {Math.round((listeningStats?.total_duration_seconds || 0) / 3600)}h
                 </p>
-                <p className="text-xs text-muted-foreground">Stunden Radio</p>
+                <p className="text-xs text-muted-foreground">Stunden Soundtrack</p>
               </CardContent>
             </Card>
           </motion.div>
