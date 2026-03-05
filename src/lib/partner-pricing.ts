@@ -4,7 +4,7 @@
 
 export const MWST_RATE = 0.081;
 
-export type PlanId = 'starter' | 'growth' | 'radio';
+export type PlanId = 'starter' | 'growth' | 'premium';
 export type BillingInterval = 'monthly' | 'yearly';
 export type PosKitId = 'basic' | 'pro' | 'premium';
 
@@ -77,9 +77,9 @@ export const PLANS: Record<PlanId, PlanDetails> = {
       '60 Audio-Credits/Monat'
     ]
   },
-  radio: {
-    id: 'radio',
-    name: 'My 2Go Radio Partner',
+  premium: {
+    id: 'premium',
+    name: 'My 2Go Premium',
     tagline: 'Maximale Reichweite',
     activationFee: 2990,
     activationPriceId: 'price_1So2H3DrdtIKNLRZOrON0l63',
@@ -92,7 +92,7 @@ export const PLANS: Record<PlanId, PlanDetails> = {
       'Alles aus Growth',
       'Netzwerkaktionen',
       'VIP Support',
-      'Stärkere Präsenz im Radio',
+      'Stärkere Präsenz im Soundtrack',
       'Priorisierte Kampagnen',
       '140 Audio-Credits/Monat'
     ]
