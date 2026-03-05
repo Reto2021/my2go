@@ -1,63 +1,24 @@
 
 
-# Analyse: Visuelles Erlebnis nach Login beibehalten
+# Marquee-Lauftext im Soundtrack-Slider
 
-## Das Problem
+## Idee-Bewertung
 
-Die App hat zwei komplett getrennte Home-Ansichten:
+Die Idee ist gut — der längere Text kommuniziert den Mehrwert deutlich besser ("Taler sammeln"), und ein sanfter Marquee-Lauftext gibt dem Slider eine dynamische, einladende Wirkung. Es passt zur spielerischen UX der App.
 
-- **BrowseModeHome** (nicht eingeloggt): Dynamischer Hero mit Jahreszeiten, Tageszeiten, Wetter-Effekten, Vögel-Animationen, grosser Typografie "Lebe lokal. Werde belohnt." — emotional, einladend.
-- **SessionModeHome** (eingeloggt): Sofort funktional — Greeting, Balance-Card, Gutschein-Listen, Banners. Kein visueller Hero, kein Hintergrundbild, keine Atmosphäre.
+## Umsetzung
 
-Der Bruch ist abrupt: Nach dem Login verschwindet die gesamte visuelle Identität.
+**Datei:** `src/components/radio/player-states/SliderState.tsx` (Zeilen 126–143)
 
-## Architektur-Optionen
+1. **Text ändern:**
+   - Ohne Bonus: `"Dein Soundtrack starten und 2Go-Taler sammeln >>>"` 
+   - Mit Bonus: bleibt `Slide für +${nextBonus} Taler`
 
-### Option A: Hero-Header in SessionModeHome integrieren (empfohlen)
+2. **Marquee-Animation hinzufügen:**
+   - Den Text in einen Container mit `overflow: hidden` setzen
+   - Inneres `motion.span` mit einer `x`-Animation von `100%` nach `-100%` über ~8s, `repeat: Infinity`, `linear` easing
+   - Nur für den langen Text (ohne Bonus) aktivieren — der Bonus-Text ist kurz genug
+   - Die animierten Chevron-Pfeile (`>>>`) sind bereits im Text enthalten, das separate `ChevronRight`-Icon entfällt beim langen Text
 
-Den dynamischen Hero (`HeroDynamic` + `HeroAnimations`) als kompakteren Header auch im eingeloggten Zustand zeigen. Statt 55vh nur ~30vh, mit Greeting und Balance-Card darüber gelegt.
-
-```text
-┌─────────────────────────────────┐
-│  HeroDynamic (kompakt, ~30vh)   │
-│  ┌───────────────────────────┐  │
-│  │ Guten Morgen, Max 👋      │  │
-│  │ ┌─────────────────────┐   │  │
-│  │ │   42 Taler  BalCard │   │  │
-│  │ └─────────────────────┘   │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
-│  Campaign Banner                │
-│  Partner in der Nähe            │
-│  Gutscheine                     │
-│  ...                            │
-```
-
-**Vorteile:** Visuelle Kontinuität, Brand-Identität bleibt, dynamische Tageszeiten-Stimmung auch nach Login.
-**Aufwand:** Mittel — `HeroDynamic` und `HeroAnimations` in SessionModeHome einbauen, Greeting + BalanceCard als Overlay darüber positionieren.
-
-### Option B: Geteilter Hero-Hintergrund über AppLayout
-
-Den dynamischen Hintergrund als permanentes Element im `AppLayout` rendern (z.B. hinter dem Header), sodass er auf allen Seiten subtil sichtbar ist.
-
-**Vorteile:** Konsistente Atmosphäre überall.
-**Nachteil:** Höhere Komplexität, Performance-Impact auf allen Seiten.
-
-### Option C: Reduzierter Ambient-Header
-
-Nur die Farbverläufe/Stimmung der Tageszeit als subtilen Gradient im Header-Bereich beibehalten — ohne die volle Hero-Section, aber mit der emotionalen Wärme.
-
-**Vorteile:** Leichtgewichtig, subtil.
-**Nachteil:** Weniger Impact als der volle Hero.
-
-## Empfehlung
-
-**Option A** — den kompakten dynamischen Hero in SessionModeHome einbauen. Konkret:
-
-1. **SessionModeHome anpassen**: `HeroDynamic` + `HeroAnimations` als kompakten Hero-Header (~30vh) einbauen, mit `-mt-20` wie bei BrowseModeHome
-2. **Greeting + BalanceCard** als Overlay auf dem Hero positionieren (weisser Text mit Drop-Shadow)
-3. **ActivityTicker** und **LiveHeaderButton** in den Hero integrieren
-4. **Restlicher Content** beginnt nach dem Hero mit dem bestehenden Layout
-
-Technisch betrifft das nur eine Datei: `src/pages/home/SessionModeHome.tsx`.
+3. **Technisch:** Framer Motion `animate` mit `x: ["100%", "-100%"]` — kein extra CSS nötig, da framer-motion bereits im Projekt ist.
 
