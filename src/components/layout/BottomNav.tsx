@@ -83,7 +83,7 @@ export function BottomNav() {
             if (isQR) {
               const isQRActive = location.pathname === '/my-qr';
               const QRIcon = QrCode;
-              const label = user ? 'QR-Code' : 'Konto';
+              const label = 'Mein Code';
               return (
                 <button
                   key={item.path}
