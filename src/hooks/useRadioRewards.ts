@@ -183,7 +183,7 @@ async function saveProgressGlobal(showFeedback = false): Promise<boolean> {
       }
       const result = data as { taler_awarded?: number; success?: boolean } | null;
       if (showFeedback && result?.taler_awarded && result.taler_awarded > 0) {
-        toast.success(`${result.taler_awarded} Taler gespeichert!`, {
+        toast.success(`+${result.taler_awarded} Soundtrack-Bonus!`, {
           duration: 2000,
         });
       }
@@ -381,7 +381,7 @@ export function useRadioRewards() {
             const result = data as { recovered_sessions?: number; total_reward?: number };
             if (result.recovered_sessions && result.recovered_sessions > 0) {
               console.log('[RadioRewards] ✅ Recovered orphaned sessions:', result);
-              toast.success(`${result.total_reward || 0} Taler wiederhergestellt!`, {
+              toast.success(`+${result.total_reward || 0} Soundtrack-Bonus wiederhergestellt!`, {
                 description: `${result.recovered_sessions} unterbrochene Session(s) wurden abgerechnet.`,
               });
               refreshBalance?.();
