@@ -20,6 +20,8 @@ import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { PlusBanner } from '@/components/subscription/PlusBanner';
 import { PlusExpiryBanner } from '@/components/subscription/PlusExpiryBanner';
 import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
+import { HeroDynamic } from '@/components/ui/HeroDynamic';
+import { HeroAnimations } from '@/components/ui/HeroAnimations';
 import { useLiveEventsStore } from '@/lib/live-events-store';
 import { ChevronRight, Navigation as NavigationIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,47 +42,58 @@ export function SessionModeHome({
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
   const [showLiveEvents, setShowLiveEvents] = useState(false);
   const [showDriveSearch, setShowDriveSearch] = useState(false);
-  // Activate geo proximity alerts
   useGeoProximityAlerts();
   
   const { showComebackBanner, isClaiming, claimBonus, dismissBanner } = useComebackBonus();
+  const { greeting, timeOfDay } = useTimeOfDay();
+  const showBirds = timeOfDay !== 'night';
   
   useEffect(() => {
     fetchEvents();
     const unsubscribe = subscribeToRealtime();
     return () => unsubscribe();
   }, [fetchEvents, subscribeToRealtime]);
-  
-  const { greeting } = useTimeOfDay();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Compact Header */}
-      <header className="container pt-4 pb-3">
-        <div className="animate-in space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">
-              {greeting}, <span className="font-semibold text-foreground">{displayName || 'Entdecker'}</span> 👋
-            </p>
-            <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
+    <div className="min-h-screen bg-background -mt-20">
+      {/* Compact Dynamic Hero Header */}
+      <section className="relative overflow-hidden pt-20" style={{ minHeight: '32vh' }}>
+        <HeroDynamic />
+        {showBirds && <HeroAnimations />}
+
+        {/* Bottom gradient fade into background */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-24 z-[4] pointer-events-none"
+          style={{ background: 'linear-gradient(to top, hsl(var(--background)), transparent)' }}
+        />
+        
+        {/* Greeting + Balance overlay */}
+        <div className="container relative z-10 pt-6 pb-6 flex flex-col justify-end" style={{ minHeight: '12vh' }}>
+          <div className="animate-in space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-white drop-shadow-lg">
+                {greeting}, <span className="font-bold">{displayName || 'Entdecker'}</span> 👋
+              </p>
+              <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
+            </div>
+            <ActivityTicker className="text-xs text-white/70 drop-shadow" />
           </div>
-          <ActivityTicker className="text-xs" />
         </div>
-      </header>
-      
+      </section>
+
       <LiveEventsPanel isOpen={showLiveEvents} onClose={() => setShowLiveEvents(false)} />
-      
-      {/* Balance Card */}
+
+      {/* Balance Card – overlaps hero slightly */}
       {balance && (
-        <section className="container pb-4">
+        <section className="container -mt-4 relative z-20 pb-4">
           <BalanceCard balance={balance} userId={userId} />
         </section>
       )}
 
-      {/* 1. Seasonal Campaign Banner – top priority */}
+      {/* 1. Seasonal Campaign Banner */}
       <CampaignBanner />
 
-      {/* 2. New Partners in der Nähe */}
+      {/* 2. New Partners */}
       <section className="container pb-3">
         <NewPartnerBanner />
       </section>
@@ -106,7 +119,6 @@ export function SessionModeHome({
         <InstallBanner />
       </section>
       
-      {/* Comeback Banner for returning users */}
       {showComebackBanner && (
         <section className="container pb-3">
           <ComebackBanner 
@@ -130,15 +142,12 @@ export function SessionModeHome({
         <WeeklyWrappedBanner />
       </section>
 
-      {/* 4. Referral / Gamification */}
       <section className="container pb-4">
         <ReferralGameCard />
       </section>
       
-      {/* AI Recommended Rewards */}
       <RecommendedRewardsSection />
       
-      {/* 3. Top Rewards */}
       <section className="container section" data-onboarding="rewards-section">
         <div className="section-header">
           <h2 className="section-title">{userLocation ? 'In deiner Nähe' : 'Gutscheine für dich'}</h2>
