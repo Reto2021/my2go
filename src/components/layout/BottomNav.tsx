@@ -74,7 +74,7 @@ export function BottomNav() {
                     <Navigation className="h-6 w-6" strokeWidth={2.5} />
                   </button>
                   <span className="text-xs font-semibold leading-tight text-accent-foreground opacity-70">
-                    {item.label}
+                    Los geht's
                   </span>
                 </div>
               );
