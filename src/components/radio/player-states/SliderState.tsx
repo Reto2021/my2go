@@ -141,7 +141,7 @@ export function SliderState({
                 </motion.div>
               </div>
             ) : (
-              <div className="overflow-hidden w-full px-4">
+              <div className="overflow-hidden w-full pl-16 pr-20">
                 <motion.span
                   className="inline-block text-sm font-semibold tracking-wide text-secondary-foreground/80 whitespace-nowrap"
                   animate={{ x: ["100%", "-100%"] }}
