@@ -8,6 +8,9 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { TalerIcon } from '@/components/icons/TalerIcon';
 import { PhoneInput } from '@/components/ui/phone-input';
+import { HeroDynamic } from '@/components/ui/HeroDynamic';
+import { HeroAnimations } from '@/components/ui/HeroAnimations';
+import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 
 const emailSchema = z.string().email('Ungültige E-Mail-Adresse');
 const passwordSchema = z.string().min(6, 'Mindestens 6 Zeichen');
@@ -231,16 +234,35 @@ export default function AuthPage() {
     }
   };
   
+  const { timeOfDay } = useTimeOfDay();
+  const showBirds = timeOfDay !== 'night';
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col -mt-20">
+      {/* Dynamic Hero Background */}
+      <section className="relative overflow-hidden pt-20" style={{ minHeight: '28vh' }}>
+        <HeroDynamic />
+        {showBirds && <HeroAnimations />}
+        
+        {/* Bottom gradient fade */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-24 z-[4] pointer-events-none"
+          style={{ background: 'linear-gradient(to top, hsl(var(--background)), transparent)' }}
+        />
+        
+        {/* Taler icon on hero */}
+        <div className="container relative z-10 flex flex-col items-center justify-end pb-2" style={{ minHeight: '8vh' }}>
+          <div className="drop-shadow-lg">
+            <TalerIcon size={80} />
+          </div>
+        </div>
+      </section>
+
       {/* Content */}
-      <div className="flex-1 container flex flex-col justify-center py-8">
+      <div className="flex-1 container flex flex-col py-4">
         <div className="max-w-md mx-auto w-full">
-          {/* Hero */}
-          <div className="text-center mb-8 animate-in">
-            <div className="flex justify-center mb-4">
-              <TalerIcon size={96} />
-            </div>
+          {/* Title */}
+          <div className="text-center mb-6 animate-in">
             <h1 className="text-2xl font-bold mb-2">
               {mode === 'login' ? 'Willkommen zurück!' : 'Jetzt registrieren'}
             </h1>
