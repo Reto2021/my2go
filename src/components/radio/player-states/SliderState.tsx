@@ -147,7 +147,7 @@ export function SliderState({
                   animate={{ opacity: [0.8, 1, 0.8] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <div className="text-sm font-semibold tracking-wide">Zum Start nach rechts ziehen</div>
+                  <div className="text-sm font-semibold tracking-wide">Soundtrack starten</div>
                   <div className="text-[11px] font-medium opacity-85">2Go-Taler sammeln</div>
                 </motion.div>
               </div>
