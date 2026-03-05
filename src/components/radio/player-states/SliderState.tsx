@@ -141,14 +141,15 @@ export function SliderState({
                 </motion.div>
               </div>
             ) : (
-              <div className="overflow-hidden w-full pl-16 pr-20">
-                <motion.span
-                  className="inline-block text-sm font-semibold tracking-wide text-secondary-foreground/80 whitespace-nowrap"
-                  animate={{ x: ["100%", "-100%"] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              <div className="w-full pl-16 pr-20 flex items-center justify-center">
+                <motion.div
+                  className="text-center leading-tight text-secondary-foreground/80"
+                  animate={{ opacity: [0.8, 1, 0.8] }}
+                  transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  Dein Soundtrack starten und 2Go-Taler sammeln &gt;&gt;&gt;
-                </motion.span>
+                  <div className="text-sm font-semibold tracking-wide">Zum Start nach rechts ziehen</div>
+                  <div className="text-[11px] font-medium opacity-85">2Go-Taler sammeln</div>
+                </motion.div>
               </div>
             )}
           </motion.div>
