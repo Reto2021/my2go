@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Gift, Store, Navigation, QrCode, LogIn } from 'lucide-react';
+import { Home, Gift, Store, Navigation, QrCode, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useCallback, useState } from 'react';
@@ -82,8 +82,8 @@ export function BottomNav() {
             
             if (isQR) {
               const isQRActive = location.pathname === '/my-qr';
-              const QRIcon = user ? QrCode : LogIn;
-              const label = user ? 'QR-Code' : 'Anmelden';
+              const QRIcon = user ? QrCode : UserCircle;
+              const label = user ? 'QR-Code' : 'Konto';
               return (
                 <button
                   key={item.path}
