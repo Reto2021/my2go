@@ -8,17 +8,7 @@ export interface SearchResult {
   lat: number;
   lng: number;
   category?: string;
-  partnerId?: string; // If this is a 2Go partner
-}
-
-let cachedToken: string | null = null;
-
-async function getMapboxToken(): Promise<string> {
-  if (cachedToken) return cachedToken;
-  const { data, error } = await supabase.functions.invoke('get-mapbox-token');
-  if (error || !data?.token) throw new Error('Mapbox token not available');
-  cachedToken = data.token;
-  return data.token;
+  partnerId?: string;
 }
 
 export function useMapboxSearch() {
@@ -37,23 +27,12 @@ export function useMapboxSearch() {
     debounceRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const token = await getMapboxToken();
-        const proximity = userLat && userLng ? `&proximity=${userLng},${userLat}` : '';
-        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${token}&country=ch&language=de&limit=5&types=poi,address,place,locality${proximity}`;
-        
-        const res = await fetch(url);
-        const data = await res.json();
+        const { data, error } = await supabase.functions.invoke('search-drive-places', {
+          body: { query, lat: userLat, lng: userLng },
+        });
 
-        const mapped: SearchResult[] = (data.features || []).map((f: any) => ({
-          id: f.id,
-          name: f.text || f.place_name,
-          address: f.place_name,
-          lat: f.center[1],
-          lng: f.center[0],
-          category: f.properties?.category,
-        }));
-
-        setResults(mapped);
+        if (error) throw error;
+        setResults(data?.results || []);
       } catch (err) {
         console.error('Search error:', err);
         setResults([]);
