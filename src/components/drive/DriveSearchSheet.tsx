@@ -273,49 +273,16 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
             </div>
           )}
 
-          {/* User QR Code or Login CTA - shown when no search active and no destination */}
+          {/* Empty state when no search */}
           {!selectedDestination && !query && !isSearching && (
-            <div className="flex-1 flex flex-col items-center justify-start pt-6 pb-24 px-5 gap-4">
-              {user && userQRCode ? (
-                <>
-                  <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                    <QrCode className="h-4 w-4" />
-                    Dein QR-Code
-                  </div>
-                  <div className="p-4 bg-white rounded-2xl shadow-sm">
-                    <QRCodeSVG
-                      value={userQRCode}
-                      size={180}
-                      level="M"
-                      includeMargin={false}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center max-w-[240px]">
-                    Zeige diesen Code beim Partner vor, um Taler zu sammeln
-                  </p>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-4 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center">
-                    <QrCode className="h-7 w-7 text-accent" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">QR-Code & Taler sammeln</p>
-                    <p className="text-xs text-muted-foreground mt-1 max-w-[240px]">
-                      Melde dich an, um deinen persönlichen QR-Code zu erhalten und bei Partnern Taler zu sammeln.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      onOpenChange(false);
-                      window.location.href = '/auth';
-                    }}
-                    className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
-                  >
-                    Jetzt anmelden
-                  </Button>
-                </div>
-              )}
+            <div className="flex-1 flex flex-col items-center justify-center pb-24 px-5 gap-3 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center">
+                <Navigation className="h-7 w-7 text-accent" />
+              </div>
+              <p className="font-semibold text-sm">Wohin geht's?</p>
+              <p className="text-xs text-muted-foreground max-w-[240px]">
+                Suche ein Ziel und starte die Navigation direkt aus der App.
+              </p>
             </div>
           )}
 
