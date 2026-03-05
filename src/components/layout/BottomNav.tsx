@@ -63,20 +63,18 @@ export function BottomNav() {
             
             if (isHighlight) {
               return (
-                <div key={item.path} className="flex flex-col items-center gap-1 min-w-[52px]">
-                  <button
-                    onClick={(e) => handleNavClick(e, item.path)}
-                    className={cn(
-                      'relative p-2.5 rounded-xl transition-all duration-200',
-                      'bg-accent text-accent-foreground'
-                    )}
-                  >
+                <button
+                  key={item.path}
+                  onClick={(e) => handleNavClick(e, item.path)}
+                  className="flex flex-col items-center gap-1 min-w-[52px] min-h-[52px] px-3 py-2 rounded-xl"
+                >
+                  <div className="relative p-2.5 rounded-xl bg-accent text-accent-foreground transition-all duration-200">
                     <Navigation className="h-6 w-6" strokeWidth={2.5} />
-                  </button>
-                  <span className="text-[10px] font-bold leading-tight text-accent-foreground mt-0.5">
+                  </div>
+                  <span className="text-[10px] font-bold leading-tight text-muted-foreground">
                     Los geht's
                   </span>
-                </div>
+                </button>
               );
             }
             
