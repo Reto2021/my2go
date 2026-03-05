@@ -93,9 +93,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
       if (isCurrentFavorite) {
         await removeFavorite(RADIO_2GO_UUID);
       } else {
-        await addFavorite({
+      await addFavorite({
           uuid: RADIO_2GO_UUID,
-          name: 'Radio 2Go',
+          name: 'my2go Radio',
           url: 'https://uksoutha.streaming.broadcast.radio/radio2go',
           favicon: '/pwa-192x192.png',
           country: 'CH',
@@ -357,7 +357,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     <Radio className="h-4 w-4 text-accent flex-shrink-0" />
                   )}
                   <span className="text-sm font-semibold text-white truncate">
-                    {isRadio2Go ? 'Radio 2Go' : customStation?.name || 'Radio 2Go'}
+                    {isRadio2Go ? 'my2go Radio' : customStation?.name || 'my2go Radio'}
                   </span>
                   {!isRadio2Go && (
                     <span className="text-xs bg-white/20 text-white/80 px-1.5 py-0.5 rounded flex-shrink-0">
@@ -438,8 +438,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.95 }}
                     className="group relative h-11 px-5 rounded-full bg-gradient-to-r from-accent/30 via-accent/20 to-accent/30 border border-accent/50 flex items-center gap-3 hover:border-accent/70 transition-all touch-manipulation shadow-lg shadow-accent/10 overflow-hidden"
-                    aria-label={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu Radio 2Go"}
-                    title={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu Radio 2Go"}
+                    aria-label={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu my2go Radio"}
+                    title={isRadio2Go ? `Zu ${targetStation?.name}` : "Zurück zu my2go Radio"}
                   >
                     {/* Animated background shimmer */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
@@ -463,7 +463,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     
                     {/* Station name */}
                     <span className="text-sm text-white font-semibold tracking-wide">
-                      {isRadio2Go ? (targetStation?.name?.substring(0, 15) || 'Zuletzt') : 'Radio 2Go'}
+                      {isRadio2Go ? (targetStation?.name?.substring(0, 15) || 'Zuletzt') : 'my2go Radio'}
                     </span>
                   </motion.button>
                 </div>
@@ -504,7 +504,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className="font-bold text-white mb-1 sm:mb-2 truncate text-xl sm:text-2xl"
                 >
-                  {nowPlaying?.title || 'Radio 2Go'}
+                   {nowPlaying?.title || 'my2go Radio'}
                 </motion.h2>
               </AnimatePresence>
               <AnimatePresence mode="wait">
@@ -534,9 +534,9 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     {/* Section Label */}
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <Gift className="h-4 w-4 text-accent" />
-                      <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">
-                        2Go-Taler beim Hören verdienen
-                      </span>
+                       <span className="text-xs font-semibold text-white/80 uppercase tracking-wide">
+                         Soundtrack-Bonus verdienen
+                       </span>
                     </div>
                     
                     {/* Timer Display - Countdown to next reward */}
@@ -639,7 +639,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   <div className="bg-white/10 rounded-2xl p-4 text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Coins className="h-5 w-5 text-accent" />
-                      <span className="text-base font-bold text-white">2Go Taler verdienen</span>
+                      <span className="text-base font-bold text-white">Soundtrack-Bonus verdienen</span>
                     </div>
                     
                     {/* Show earned points even when not logged in */}
@@ -674,7 +674,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                     <p className="text-sm text-white/70 mb-4">
                       {currentTier 
                         ? 'Jetzt anmelden, um deine Taler zu sichern!'
-                        : 'Melde dich an, um beim Radiohören Taler zu sammeln!'
+                        : 'Melde dich an, um beim Hören Taler zu sammeln!'
                       }
                     </p>
                     <button
@@ -832,7 +832,7 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           <LiveChatSheet
             open={showChatSheet}
             onOpenChange={setShowChatSheet}
-            songTitle={nowPlaying?.title || 'Radio 2Go'}
+            songTitle={nowPlaying?.title || 'my2go Radio'}
             songArtist={nowPlaying?.artist}
           />
           
@@ -840,8 +840,8 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
           <DancePartySheet
             open={showPartySheet}
             onOpenChange={setShowPartySheet}
-            songIdentifier={nowPlaying ? `${nowPlaying.title}-${nowPlaying.artist}` : 'radio-2go'}
-            songTitle={nowPlaying ? `${nowPlaying.title} - ${nowPlaying.artist}` : 'Radio 2Go'}
+            songIdentifier={nowPlaying ? `${nowPlaying.title}-${nowPlaying.artist}` : 'my2go-radio'}
+            songTitle={nowPlaying ? `${nowPlaying.title} - ${nowPlaying.artist}` : 'my2go Radio'}
           />
         </motion.div>
       )}
@@ -1059,7 +1059,7 @@ const ArtworkDisplay = React.memo(function ArtworkDisplay({
           <div className="absolute bottom-3 left-3 z-10">
             <img 
               src="/pwa-192x192.png" 
-              alt="Radio 2Go" 
+              alt="my2go Radio" 
               className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl shadow-lg shadow-black/30 ring-1 ring-white/20"
             />
           </div>

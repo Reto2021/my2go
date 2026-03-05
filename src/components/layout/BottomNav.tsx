@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Gift, QrCode, Store, Bell, Navigation } from 'lucide-react';
+import { Home, Gift, QrCode, Store, Music, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { prefetchRoute } from '@/lib/route-prefetch';
 import { useCallback, useState, useEffect } from 'react';
 import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
+import { useRadioStore } from '@/lib/radio-store';
 
 const QR_VISITED_KEY = 'qr_page_visited';
 
@@ -12,12 +13,13 @@ const navItems = [
   { path: '/rewards', label: 'Gutscheine', icon: Gift },
   { path: '/my-qr', label: 'Mein QR', icon: QrCode, highlight: true },
   { path: '/partner', label: 'Partner', icon: Store },
-  { path: '/code', label: 'Taler-Alarm', icon: Bell },
+  { path: '/code', label: 'Bonus-Code', icon: Music, isSoundtrack: true },
 ];
 
 export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setPlayerExpanded, isPlaying } = useRadioStore();
   const [hasVisitedQR, setHasVisitedQR] = useState(() => {
     return localStorage.getItem(QR_VISITED_KEY) === 'true';
   });
@@ -31,8 +33,13 @@ export function BottomNav() {
     }
   }, [location.pathname, hasVisitedQR]);
   
-  const handleNavClick = (e: React.MouseEvent, path: string) => {
+  const handleNavClick = (e: React.MouseEvent, path: string, isSoundtrack?: boolean) => {
     e.preventDefault();
+    if (isSoundtrack) {
+      // Open the radio player expanded view
+      setPlayerExpanded(true);
+      return;
+    }
     if (path === '/') {
       navigate('/', { replace: true });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -55,9 +62,12 @@ export function BottomNav() {
         <div className="relative container flex items-center justify-around py-3 pb-safe">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path || 
-              (item.path !== '/' && location.pathname.startsWith(item.path));
+            const isActive = item.isSoundtrack 
+              ? false 
+              : (location.pathname === item.path || 
+                (item.path !== '/' && location.pathname.startsWith(item.path)));
             const isHighlight = item.highlight;
+            const isSoundtrack = item.isSoundtrack;
             
             if (isHighlight) {
               return (
@@ -94,6 +104,41 @@ export function BottomNav() {
                     {item.label}
                   </span>
                 </div>
+              );
+            }
+            
+            // Soundtrack button - special styling
+            if (isSoundtrack) {
+              return (
+                <button
+                  key={item.path}
+                  onClick={(e) => handleNavClick(e, item.path, true)}
+                  className={cn(
+                    'flex flex-col items-center gap-1 min-w-[52px] min-h-[52px] px-3 py-2 rounded-xl transition-all duration-200',
+                    isPlaying
+                      ? 'text-accent'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <div className={cn(
+                    'relative p-2 rounded-lg transition-all duration-200',
+                    isPlaying && 'bg-primary/20',
+                  )}>
+                    <Icon className={cn(
+                      'relative h-5 w-5 transition-transform duration-200',
+                      isPlaying && 'scale-110',
+                    )} strokeWidth={isPlaying ? 2.5 : 2} />
+                    {isPlaying && (
+                      <span className="absolute top-0.5 right-0.5 h-2 w-2 bg-accent rounded-full animate-pulse" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    'text-xs font-semibold leading-tight',
+                    isPlaying ? 'opacity-100' : 'opacity-70'
+                  )}>
+                    Soundtrack
+                  </span>
+                </button>
               );
             }
             

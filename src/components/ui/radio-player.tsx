@@ -561,7 +561,7 @@ export function RadioPlayer({ className }: { className?: string }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <Radio className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-                <span className="text-xs font-semibold text-accent uppercase tracking-wide">Radio 2Go Live</span>
+                <span className="text-xs font-semibold text-accent uppercase tracking-wide">Dein Soundtrack</span>
                 {isPlaying && nextTier && (
                   <div className="flex items-center gap-1 ml-auto mr-2">
                     <TalerIcon size={10} />
@@ -577,8 +577,8 @@ export function RadioPlayer({ className }: { className?: string }) {
                 </>
               ) : (
                 <>
-                  <p className="font-bold text-sm">Hör 2Go.</p>
-                  <p className="text-xs text-secondary-foreground/70">Bei lokalen Partnern</p>
+                  <p className="font-bold text-sm">Dein Soundtrack.</p>
+                  <p className="text-xs text-secondary-foreground/70">my2go Radio & mehr</p>
                 </>
               )}
             </div>
@@ -631,7 +631,7 @@ export function RadioPlayer({ className }: { className?: string }) {
               >
                 <Gift className="h-3.5 w-3.5 text-accent" />
                 <span className="text-xs font-medium text-white/70">
-                  {showTiersOverview ? 'Tiers ausblenden' : 'Hör-Belohnungen'}
+                  {showTiersOverview ? 'Tiers ausblenden' : 'Soundtrack-Bonus'}
                 </span>
                 {showTiersOverview ? (
                   <ChevronUp className="h-3.5 w-3.5 text-white/50" />
