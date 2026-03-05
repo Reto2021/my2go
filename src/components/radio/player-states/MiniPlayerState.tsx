@@ -153,7 +153,7 @@ export function MiniPlayerState({
             type="button"
             onClick={handleQuickSwitch}
             className="h-10 w-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0 hover:bg-accent/30 active:scale-95 transition-all touch-manipulation"
-            title={isRadio2Go ? `Zu ${switchTarget?.station_name}` : "Zurück zu Radio 2Go"}
+            title={isRadio2Go ? `Zu ${switchTarget?.station_name}` : "Zurück zu my2go"}
           >
             {isRadio2Go && switchTarget?.station_favicon ? (
               <img 
@@ -167,7 +167,7 @@ export function MiniPlayerState({
             ) : (
               <img 
                 src="/pwa-192x192.png" 
-                alt="Radio 2Go" 
+                alt="my2go" 
                 className="h-6 w-6 rounded-lg"
               />
             )}
@@ -197,7 +197,7 @@ export function MiniPlayerState({
           <p className="text-sm font-semibold text-secondary-foreground truncate">
             {isLocked
               ? `Gesperrt – ${lockRemaining}s`
-              : nowPlaying?.title || "Radio 2Go"}
+              : nowPlaying?.title || "my2go Radio"}
           </p>
           <p className="text-xs text-secondary-foreground/60 truncate">
             {isMaxTier ? (

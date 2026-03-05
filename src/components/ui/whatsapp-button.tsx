@@ -9,32 +9,32 @@ const quickMessages = [
   { 
     icon: Heart, 
     label: 'Das gefällt mir!', 
-    message: 'Hey Radio 2Go! 👍 Das gefällt mir gerade richtig gut!' 
+    message: 'Hey my2go! 👍 Das gefällt mir gerade richtig gut!' 
   },
   { 
     icon: ThumbsDown, 
     label: 'Nicht so mein Ding', 
-    message: 'Hey Radio 2Go! Der Song gerade ist nicht so mein Geschmack 😅' 
+    message: 'Hey my2go! Der Song gerade ist nicht so mein Geschmack 😅' 
   },
   { 
     icon: Music, 
     label: 'Songwunsch', 
-    message: 'Hey Radio 2Go! 🎵 Ich hätte einen Songwunsch:' 
+    message: 'Hey my2go! 🎵 Ich hätte einen Songwunsch:' 
   },
   { 
     icon: Mic, 
     label: 'Audio senden', 
-    message: 'Hey Radio 2Go! 🎤 Ich schick euch gleich ein Audio!' 
+    message: 'Hey my2go! 🎤 Ich schick euch gleich ein Audio!' 
   },
   { 
     icon: Store, 
     label: 'Gutscheinpartner vorschlagen', 
-    message: 'Hey Radio 2Go! 🏪 Ich möchte euch einen Gutscheinpartner vorschlagen:' 
+    message: 'Hey my2go! 🏪 Ich möchte euch einen Gutscheinpartner vorschlagen:' 
   },
   { 
     icon: Megaphone, 
     label: 'Sponsor werden', 
-    message: 'Hallo Radio 2Go! 📢 Ich interessiere mich für eine Sponsoring-Partnerschaft. Unser Unternehmen heisst:' 
+    message: 'Hallo my2go! 📢 Ich interessiere mich für eine Sponsoring-Partnerschaft. Unser Unternehmen heisst:' 
   },
 ];
 
@@ -104,7 +104,7 @@ export function WhatsAppButton({ className }: { className?: string }) {
             ))}
             
             <button
-              onClick={() => openWhatsApp('Hallo Radio 2Go! 👋')}
+              onClick={() => openWhatsApp('Hallo my2go! 👋')}
               className={cn(
                 'flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl mt-1',
                 'bg-[#25D366] hover:bg-[#20BD5A] active:scale-[0.98]',

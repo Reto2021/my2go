@@ -13,7 +13,7 @@ const LOOP_STEPS = [
   {
     id: 'radio',
     icon: Radio,
-    title: 'Hör Radio',
+    title: 'Hör zu',
     subtitle: 'Taler verdienen',
     value: '1 Taler/Min',
     color: 'text-accent',
@@ -62,8 +62,8 @@ export function TalerLoopVisual({
             <TalerIcon className="h-4 w-4" />
             So funktioniert's
           </div>
-          <h3 className="text-lg font-bold text-foreground">
-            Hör Radio. Sammle Taler. Geniess vor Ort.
+           <h3 className="text-lg font-bold text-foreground">
+            Lokal einkaufen. Taler sammeln. Prämien geniessen.
           </h3>
         </div>
 

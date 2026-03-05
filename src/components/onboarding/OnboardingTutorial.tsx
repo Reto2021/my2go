@@ -17,8 +17,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'listen',
     icon: Radio,
-    title: 'Hör Radio',
-    description: 'Starte den Player – verdiene automatisch Taler beim Hören',
+    title: 'Hör zu & entdecke',
+    description: 'Starte den Player oder besuche Partner – verdiene überall Taler',
   },
   {
     id: 'earn',

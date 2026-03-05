@@ -19,7 +19,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My 2Go App von Radio 2Go</title>
+  <title>My 2Go App – Dein lokaler Alltags-Begleiter</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
   
@@ -31,9 +31,9 @@ const EMAIL_HTML = `<!DOCTYPE html>
           <!-- Header with Logo -->
           <tr>
             <td style="background: linear-gradient(135deg, #0C4A56 0%, #0a3d47 100%); padding: 32px 40px; text-align: center;">
-              <img src="https://my2go.lovable.app/pwa-192x192.png" alt="Radio 2Go Logo" style="width: 80px; height: 80px; margin-bottom: 16px; border-radius: 16px;">
+              <img src="https://my2go.lovable.app/pwa-192x192.png" alt="my2go Logo" style="width: 80px; height: 80px; margin-bottom: 16px; border-radius: 16px;">
               <h1 style="margin: 0; color: #F7B500; font-size: 28px; font-weight: 700;">My 2Go App</h1>
-              <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">von Radio 2Go • Hör Radio. Sammle Taler. Geniess vor Ort.</p>
+              <p style="margin: 8px 0 0; color: #ffffff; font-size: 14px; opacity: 0.9;">Lokal einkaufen. Taler sammeln. Prämien geniessen.</p>
             </td>
           </tr>
           
@@ -55,7 +55,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
               </p>
               
               <p style="margin: 0 0 24px; font-size: 16px; color: #333333; line-height: 1.6;">
-                Mit der <strong>My 2Go App von Radio 2Go</strong> ändern Sie das – ganz ohne Aufwand.
+                Mit der <strong>My 2Go App</strong> ändern Sie das – ganz ohne Aufwand.
               </p>
               
               <!-- Value Proposition Box -->
@@ -69,7 +69,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
                           <span style="display: inline-block; width: 28px; height: 28px; background-color: #F7B500; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; color: #0C4A56;">1</span>
                         </td>
                         <td style="padding: 8px 0; color: #333333; font-size: 15px;">
-                          <strong>Kunden hören Radio 2Go</strong> in der App und sammeln dabei automatisch Taler
+                          <strong>Kunden kaufen lokal ein</strong> und sammeln dabei automatisch Taler
                         </td>
                       </tr>
                       <tr>
@@ -103,7 +103,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
                   <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Bessere Google-Bewertungen</strong> – automatische Review-Anfragen nach positiven Erlebnissen</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Radio-Präsenz</strong> – Ihr Name im Radio, ohne eigenes Werbebudget</td>
+                  <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Lokale Sichtbarkeit</strong> – Ihre Marke in der App, ohne eigenes Werbebudget</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; color: #333333; font-size: 15px;">✓ <strong>Live-Dashboard</strong> – Scans, Einlösungen & Reviews auf einen Blick</td>
@@ -163,7 +163,7 @@ const EMAIL_HTML = `<!DOCTYPE html>
                       Reto Wettstein
                     </p>
                     <p style="margin: 0; font-size: 13px; color: #666666;">
-                      Ihr Radio 2Go Team
+                      Ihr my2go Team
                     </p>
                   </td>
                 </tr>

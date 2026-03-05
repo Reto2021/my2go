@@ -789,7 +789,7 @@ export default function RewardsPage() {
                     title={redemptionFilter === 'all' ? 'Noch keine Gutscheine aktiviert' : 'Keine Ergebnisse'}
                     description={
                       redemptionFilter === 'all'
-                        ? 'Hör Radio 2Go, sammle Taler und aktiviere deinen ersten Gutschein!'
+                        ? 'Sammle Taler bei lokalen Partnern und aktiviere deinen ersten Gutschein!'
                         : 'Keine Gutscheine mit diesem Status gefunden.'
                     }
                     action={

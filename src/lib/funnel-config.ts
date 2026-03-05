@@ -87,7 +87,7 @@ export const CAMPAIGN_CONFIGS: Record<string, CampaignConfig> = {
     campaignName: 'Radio Drop',
     hookType: 'raffle',
     hookTitle: 'iPhone gewinnen',
-    hookDetails: 'Hör Radio & gewinne – Teilnahme mit Registrierung',
+    hookDetails: 'Mitmachen & gewinnen – Teilnahme mit Registrierung',
     validityText: 'Endet heute 23:59',
     rewardCtaText: 'Teilnehmen',
     expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(), // End of today

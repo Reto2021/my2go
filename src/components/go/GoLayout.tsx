@@ -55,7 +55,7 @@ export function GoLayout() {
                 />
               </div>
               <p className="text-sm text-secondary-foreground/80 leading-relaxed">
-                Das Loyalitäts-Netzwerk für lokale Betriebe in der Schweiz. Powered by Radio 2Go.
+                Das Loyalitäts-Netzwerk für lokale Betriebe in der Schweiz. Powered by my2go.
               </p>
             </div>
             

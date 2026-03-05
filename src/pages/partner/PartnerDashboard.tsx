@@ -531,7 +531,7 @@ export default function PartnerDashboard() {
           </div>
           <TalerLoopVisual variant="expanded" showValues />
           <p className="text-xs text-muted-foreground text-center mt-4">
-            Hör Radio. Sammle Taler. Geniess vor Ort.
+            Lokal einkaufen. Taler sammeln. Prämien geniessen.
           </p>
         </div>
 
