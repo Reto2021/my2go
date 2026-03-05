@@ -154,19 +154,6 @@ export function HeroDynamic() {
         }}
       />
 
-      {/* Weather info badge (bottom-right, subtle) */}
-      {weather.temperature !== null && (
-        <div
-          className="absolute bottom-3 right-3 z-[10] px-2.5 py-1 rounded-full text-[10px] font-medium tracking-wide"
-          style={{
-            background: textColor === "dark" ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)",
-            backdropFilter: "blur(10px)",
-            color: textColor === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)",
-          }}
-        >
-          {weather.temperature}° · {weather.label}
-        </div>
-      )}
     </>
   );
 }
