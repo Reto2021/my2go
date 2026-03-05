@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useRegion } from '@/hooks/useRegion';
 
@@ -27,7 +27,7 @@ function shuffleArray<T>(array: T[]): T[] {
 export function TriggerSlider() {
   const { region } = useRegion();
   const [slides, setSlides] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
 
   // Load slides from DB
   useEffect(() => {
@@ -56,7 +56,6 @@ export function TriggerSlider() {
           } else {
             setSlides(shuffleArray(data.map((s) => s.text)));
           }
-          setCurrentIndex(0);
         }
       } catch {
         if (!cancelled) {
@@ -71,50 +70,52 @@ export function TriggerSlider() {
 
   // Use fallback while loading
   const displaySlides = useMemo(
-    () => (slides.length > 0 ? slides : shuffleArray(FALLBACK_TRIGGERS)),
+    () => (slides.length > 0 ? slides : FALLBACK_TRIGGERS),
     [slides]
   );
 
-  const nextTrigger = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % displaySlides.length);
-  }, [displaySlides.length]);
+  const tickerText = useMemo(
+    () => [...displaySlides, ...displaySlides].join('   •   '),
+    [displaySlides]
+  );
 
-  useEffect(() => {
-    const interval = setInterval(nextTrigger, 6000);
-    return () => clearInterval(interval);
-  }, [nextTrigger]);
+  const marqueeDuration = useMemo(
+    () => Math.max(20, tickerText.length * 0.22),
+    [tickerText]
+  );
 
   return (
     <span className="relative block mt-1 overflow-hidden">
-      <AnimatePresence mode="wait">
+      {/* Brush stroke background with rough edges */}
+      <span
+        className="absolute bg-accent -rotate-1"
+        style={{
+          left: '-0.75rem',
+          right: '-0.75rem',
+          top: '-0.15rem',
+          bottom: '-0.15rem',
+          borderRadius: '4px 8px 6px 10px',
+          clipPath: 'polygon(2% 15%, 0% 50%, 1% 85%, 4% 100%, 15% 98%, 30% 100%, 50% 97%, 70% 100%, 85% 99%, 96% 100%, 100% 80%, 99% 50%, 100% 20%, 97% 0%, 80% 2%, 60% 0%, 40% 3%, 20% 0%, 5% 1%)'
+        }}
+      />
+
+      <span className="relative block overflow-hidden px-2">
         <motion.span
-          key={currentIndex}
-          initial={{ x: '-100%', opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: '100%', opacity: 0 }}
-          transition={{ 
-            duration: 0.5, 
-            ease: [0.22, 1, 0.36, 1] 
-          }}
-          className="relative inline-flex items-center"
+          className="inline-block whitespace-nowrap text-secondary font-black"
+          animate={shouldReduceMotion ? { x: 0 } : { x: ['0%', '-50%'] }}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0 }
+              : {
+                  duration: marqueeDuration,
+                  ease: 'linear',
+                  repeat: Infinity,
+                }
+          }
         >
-          {/* Brush stroke background with rough edges */}
-          <span 
-            className="absolute bg-accent -rotate-1"
-            style={{ 
-              left: '-0.75rem', 
-              right: '-0.75rem', 
-              top: '-0.15rem', 
-              bottom: '-0.15rem',
-              borderRadius: '4px 8px 6px 10px',
-              clipPath: 'polygon(2% 15%, 0% 50%, 1% 85%, 4% 100%, 15% 98%, 30% 100%, 50% 97%, 70% 100%, 85% 99%, 96% 100%, 100% 80%, 99% 50%, 100% 20%, 97% 0%, 80% 2%, 60% 0%, 40% 3%, 20% 0%, 5% 1%)'
-            }} 
-          />
-          <span className="relative text-secondary font-black">
-            {displaySlides[currentIndex]}
-          </span>
+          {tickerText}
         </motion.span>
-      </AnimatePresence>
+      </span>
     </span>
   );
 }
