@@ -60,7 +60,7 @@ export function SessionModeHome({
         <div className="animate-in space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
-              {greeting}, <span className="font-semibold text-foreground">{displayName || 'Hörer'}</span> 👋
+              {greeting}, <span className="font-semibold text-foreground">{displayName || 'Entdecker'}</span> 👋
             </p>
             <LiveHeaderButton onClick={() => setShowLiveEvents(true)} hasLiveEvents={hasLiveEvents} />
           </div>
@@ -77,6 +77,14 @@ export function SessionModeHome({
         </section>
       )}
 
+      {/* 1. Seasonal Campaign Banner – top priority */}
+      <CampaignBanner />
+
+      {/* 2. New Partners in der Nähe */}
+      <section className="container pb-3">
+        <NewPartnerBanner />
+      </section>
+
       {/* Drive Mode Quick Action */}
       <section className="container pb-3">
         <button
@@ -88,7 +96,7 @@ export function SessionModeHome({
           </div>
           <div className="text-left flex-1 min-w-0">
             <p className="font-semibold text-sm">Wohin geht's?</p>
-            <p className="text-xs text-muted-foreground">Navigation starten mit Radio 🎵</p>
+            <p className="text-xs text-muted-foreground">Partner in der Nähe finden 📍</p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
         </button>
@@ -119,16 +127,10 @@ export function SessionModeHome({
       </section>
       
       <section className="container pb-3">
-        <NewPartnerBanner />
-      </section>
-      
-      <section className="container pb-3">
         <WeeklyWrappedBanner />
       </section>
-      
-      {/* Seasonal Campaign Banner */}
-      <CampaignBanner />
 
+      {/* 4. Referral / Gamification */}
       <section className="container pb-4">
         <ReferralGameCard />
       </section>
@@ -136,7 +138,7 @@ export function SessionModeHome({
       {/* AI Recommended Rewards */}
       <RecommendedRewardsSection />
       
-      {/* Rewards */}
+      {/* 3. Top Rewards */}
       <section className="container section" data-onboarding="rewards-section">
         <div className="section-header">
           <h2 className="section-title">{userLocation ? 'In deiner Nähe' : 'Gutscheine für dich'}</h2>
