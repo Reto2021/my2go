@@ -128,19 +128,29 @@ export function SliderState({
             className="absolute inset-0 flex items-center justify-center pointer-events-none"
             style={{ opacity: 1 - sliderProgress * 1.5 }}
           >
-            <div className="flex items-center gap-2 text-secondary-foreground/80">
-              <span className="text-sm font-semibold tracking-wide">
-                {hasBonusAvailable
-                  ? `Slide für +${nextBonus} Taler`
-                  : "Soundtrack starten"}
-              </span>
-              <motion.div
-                animate={{ x: [0, 6, 0] }}
-                transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </motion.div>
-            </div>
+            {hasBonusAvailable ? (
+              <div className="flex items-center gap-2 text-secondary-foreground/80">
+                <span className="text-sm font-semibold tracking-wide">
+                  Slide für +{nextBonus} Taler
+                </span>
+                <motion.div
+                  animate={{ x: [0, 6, 0] }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </motion.div>
+              </div>
+            ) : (
+              <div className="overflow-hidden w-full px-4">
+                <motion.span
+                  className="inline-block text-sm font-semibold tracking-wide text-secondary-foreground/80 whitespace-nowrap"
+                  animate={{ x: ["100%", "-100%"] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                >
+                  Dein Soundtrack starten und 2Go-Taler sammeln &gt;&gt;&gt;
+                </motion.span>
+              </div>
+            )}
           </motion.div>
 
           {/* Right side badge */}
