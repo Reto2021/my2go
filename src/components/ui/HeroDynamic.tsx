@@ -44,7 +44,8 @@ export function HeroDynamic() {
             src={prevImageRef.current}
             alt=""
             aria-hidden="true"
-            className="w-full h-full object-cover object-bottom"
+           className="w-full h-full object-cover"
+             style={{ objectPosition: 'center 65%' }}
           />
         </div>
       )}
@@ -64,7 +65,8 @@ export function HeroDynamic() {
           // @ts-ignore - fetchpriority is valid HTML but not yet in React types
           fetchpriority="high"
           decoding="sync"
-          className="w-full h-full object-cover object-bottom"
+          className="w-full h-full object-cover"
+          style={{ objectPosition: 'center 65%' }}
           onLoad={() => setLoaded(true)}
         />
       </div>
