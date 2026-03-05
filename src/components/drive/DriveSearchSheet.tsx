@@ -203,7 +203,7 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
           <SheetHeader className="px-5 pt-5 pb-3">
             <SheetTitle className="text-lg font-bold flex items-center gap-2">
               <Navigation className="h-5 w-5 text-accent" />
-              Wohin geht's?
+              Wo sammelst du als nächstes?
             </SheetTitle>
           </SheetHeader>
 
@@ -233,6 +233,9 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
                 </button>
               )}
             </div>
+            <p className="text-xs text-muted-foreground/60 mt-1 ml-1">
+              Finde Partner in deiner Nähe und sammle 2Go Taler
+            </p>
 
             {/* Request location if not available */}
             {!userLocation && (
@@ -257,10 +260,14 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
                     className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors text-left"
                   >
                     <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium text-sm truncate">{result.name}</p>
                       <p className="text-xs text-muted-foreground truncate">{result.address}</p>
                     </div>
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-accent shrink-0 mt-1">
+                      <Coins className="h-3 w-3" />
+                      Taler
+                    </span>
                   </button>
                 ))}
               </div>
@@ -279,9 +286,9 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
               <div className="w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center">
                 <Navigation className="h-7 w-7 text-accent" />
               </div>
-              <p className="font-semibold text-sm">Wohin geht's?</p>
+              <p className="font-semibold text-sm">Wo sammelst du als nächstes?</p>
               <p className="text-xs text-muted-foreground max-w-[240px]">
-                Suche ein Ziel und starte die Navigation direkt aus der App.
+                Finde lokale Partner, navigiere hin und sammle 2Go Taler bei deinem Einkauf.
               </p>
             </div>
           )}
@@ -393,7 +400,7 @@ export function DriveSearchSheet({ open, onOpenChange }: DriveSearchSheetProps) 
               </Button>
               
               <p className="text-center text-[10px] text-muted-foreground pb-4">
-                Radio 2Go spielt im Hintergrund weiter 🎵
+                Dein Soundtrack spielt im Hintergrund weiter 🎵
               </p>
             </div>
           )}
