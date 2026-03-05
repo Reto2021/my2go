@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { RewardCard } from '@/components/ui/reward-card';
 import { PartnerCard } from '@/components/ui/partner-card';
@@ -11,21 +11,20 @@ import { FirstTalerCelebration } from '@/components/taler/FirstTalerCelebration'
 import { TriggerSlider } from '@/components/home/TriggerSlider';
 import { HeroAnimations } from '@/components/ui/HeroAnimations';
 import { HeroDynamic } from '@/components/ui/HeroDynamic';
+import { CampaignBanner } from '@/components/home/CampaignBanner';
+import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
+import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 
 import { useLiveEventsStore } from '@/lib/live-events-store';
-import { useRadioStore } from '@/lib/radio-store';
 import { useGuestRadioRewards } from '@/hooks/useGuestRadioRewards';
-import { Gift, ChevronRight, Play, Pause, ArrowRight, Loader2, Coins, Radio } from 'lucide-react';
+import { Gift, ChevronRight, ArrowRight, Coins, MapPin, Store } from 'lucide-react';
 import { BrowseModeHomeProps } from './types';
-import { cn } from '@/lib/utils';
 
 export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: BrowseModeHomeProps) {
   const { hasLiveEvents, fetchEvents, subscribeToRealtime } = useLiveEventsStore();
-  const { isPlaying, isLoading: isRadioLoading, togglePlay, nowPlaying, setPlayerExpanded } = useRadioStore();
   const { timeOfDay } = useTimeOfDay();
   const showBirds = timeOfDay !== 'night';
-  
   
   const {
     totalEarned,
@@ -52,79 +51,51 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   return (
     <div className="min-h-screen bg-background -mt-20">
       {/* Hero Section – Dynamic: 4 Jahreszeiten × 4 Tageszeiten + Wetter */}
-      <section className="relative overflow-hidden text-foreground pt-20" style={{ minHeight: '60vh' }}>
+      <section className="relative overflow-hidden text-foreground pt-20" style={{ minHeight: '55vh' }}>
         <HeroDynamic />
         {showBirds && <HeroAnimations />}
         
-        <div className="container relative z-10 pt-6 pb-28">
+        <div className="container relative z-10 pt-6 pb-24">
           <div className="flex items-center justify-between mb-6">
             <InstallBanner />
             <LiveHeaderButton onClick={handleLiveClick} hasLiveEvents={hasLiveEvents} />
           </div>
           
           <div className="animate-in text-center">
-            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6">
-              <span className="block relative">
-                Sammle Taler.
-                <span className="absolute -top-1 -right-2 sm:-right-4 px-1.5 py-0.5 text-[10px] sm:text-xs font-bold bg-accent text-accent-foreground rounded-full whitespace-nowrap rotate-3 shadow-lg">
-                  Neu: Alle 🇨🇭 Sender
-                </span>
-              </span>
-              <span className="block">Entdecke Partner.</span>
+            <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-tight mb-6 text-white drop-shadow-lg">
+              <span className="block">Lebe lokal.</span>
+              <span className="block">Werde belohnt.</span>
               <TriggerSlider />
             </h1>
             
-            {/* Play Button */}
-            <div className="flex flex-col items-center gap-4 mb-8">
-              <button 
-                onClick={() => {
-                  togglePlay();
-                  if (!isPlaying) setPlayerExpanded(true);
-                }}
-                disabled={isRadioLoading}
-                className={cn(
-                  "relative w-20 h-20 rounded-full flex items-center justify-center",
-                  "bg-accent shadow-2xl shadow-accent/40",
-                  "hover:scale-105 active:scale-95 transition-all duration-200",
-                  "ring-4 ring-accent/30 ring-offset-2 ring-offset-primary/20",
-                  isPlaying && "animate-pulse"
-                )}
+            {/* Primary CTAs – Partner & Gutscheine */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+              <Link 
+                to="/partner" 
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-accent text-accent-foreground font-bold text-base shadow-xl shadow-accent/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                {isRadioLoading ? (
-                  <Loader2 className="h-8 w-8 text-accent-foreground animate-spin" />
-                ) : isPlaying ? (
-                  <Pause className="h-8 w-8 text-accent-foreground" />
-                ) : (
-                  <Play className="h-8 w-8 text-accent-foreground ml-1" />
-                )}
-                <span className="absolute -bottom-5 text-[10px] font-bold text-white/70 uppercase tracking-wider">Play</span>
-              </button>
-              
-              <div className="text-center mt-4">
-                {isPlaying && nowPlaying ? (
-                  <p className="text-white/80 text-sm font-medium">
-                    <span className="inline-block w-2 h-2 bg-accent rounded-full mr-2 animate-pulse" />
-                    {nowPlaying.artist} – {nowPlaying.title}
-                  </p>
-                ) : (
-                  <p className="text-white/80 text-lg font-semibold">
-                    Radio hören &amp; Taler sammeln
-                  </p>
-                )}
-                
-                {totalEarned > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white mt-2 mx-auto w-fit">
-                    <Coins className="h-4 w-4" />
-                    <span className="font-bold">{totalEarned} Taler</span>
-                    <span className="text-white/70 text-sm">gesammelt!</span>
-                  </div>
-                )}
-              </div>
+                <MapPin className="h-5 w-5" />
+                Partner entdecken
+              </Link>
+              <Link 
+                to="/rewards" 
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white/20 backdrop-blur-sm text-white font-bold text-base border border-white/30 hover:bg-white/30 active:scale-[0.98] transition-all"
+              >
+                <Gift className="h-5 w-5" />
+                Gutscheine ansehen
+              </Link>
             </div>
             
-            <button onClick={onLogin} className="btn-primary group">
-              {totalEarned > 0 ? 'Taler sichern & anmelden' : 'Kostenlos anmelden & Taler sammeln'}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {totalEarned > 0 && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white mt-2 mx-auto w-fit">
+                <Coins className="h-4 w-4" />
+                <span className="font-bold">{totalEarned} Taler</span>
+                <span className="text-white/70 text-sm">gesammelt!</span>
+              </div>
+            )}
+            
+            <button onClick={onLogin} className="mt-4 text-white/80 text-sm font-semibold underline underline-offset-4 decoration-white/40 hover:text-white transition-colors">
+              {totalEarned > 0 ? 'Taler sichern & anmelden' : 'Kostenlos anmelden'}
             </button>
           </div>
         </div>
@@ -135,9 +106,9 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="card-glass p-4 flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <Radio className="h-5 w-5 text-amber-600" />
+              <Store className="h-5 w-5 text-amber-600" />
             </div>
-            <span className="text-xs sm:text-sm font-semibold text-gray-800">Hören</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-800">Einkaufen</span>
           </div>
           <div className="card-glass p-4 flex flex-col items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
@@ -153,8 +124,18 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
           </div>
         </div>
       </section>
+
+      {/* 1. Campaign Banner */}
+      <div className="mt-6">
+        <CampaignBanner />
+      </div>
       
-      {/* Rewards Preview */}
+      {/* 2. New Partners */}
+      <section className="container pb-3">
+        <NewPartnerBanner />
+      </section>
+
+      {/* 3. Top Rewards Preview */}
       <section className="container section">
         <div className="section-header">
           <h2 className="section-title">Beliebte Gutscheine</h2>
@@ -173,7 +154,7 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
         </div>
       </section>
       
-      {/* Partners Preview */}
+      {/* 4. Partners Preview */}
       <section className="container section">
         <div className="section-header">
           <h2 className="section-title">Lokale Partner entdecken</h2>
