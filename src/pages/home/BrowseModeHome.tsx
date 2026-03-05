@@ -28,8 +28,8 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
   const isDarkText = textColor === 'dark';
   const heroTextClass = isDarkText ? 'text-gray-900' : 'text-white';
   const heroTextShadow = isDarkText 
-    ? '0 1px 3px rgba(255,255,255,0.4)' 
-    : '0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)';
+    ? 'none' 
+    : '0 1px 2px rgba(0,0,0,0.5)';
   
   const {
     totalEarned,
