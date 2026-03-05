@@ -1,16 +1,7 @@
 /**
  * HeroDynamic – Dynamischer Hero-Hintergrund
  * Kombiniert: 16 Jahreszeit/Tageszeit-Bilder + Wetter-Effekte + Vögel/Wolken-Animationen
- * Wird als Replacement für die statische .hero-section CSS-Klasse verwendet.
- *
- * Usage in BrowseModeHome.tsx:
- *   <section className="relative overflow-hidden text-foreground pt-20" style={{ minHeight: '60vh' }}>
- *     <HeroDynamic />
- *     <HeroAnimations />  // Vögel & Wolken (nur bei Tag)
- *     <div className="container relative z-10 ...">
- *       ... existing content ...
- *     </div>
- *   </section>
+ * Uses <img> with fetchpriority="high" for fast LCP instead of CSS background-image.
  */
 import { useEffect, useRef, useState } from "react";
 import { useTimeOfDay } from "@/hooks/useTimeOfDay";
@@ -23,13 +14,6 @@ export function HeroDynamic() {
   const [loaded, setLoaded] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const prevImageRef = useRef<string>("");
-
-  // Preload current image
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => setLoaded(true);
-    img.src = imageDesktop;
-  }, []);
 
   // Crossfade on image change
   useEffect(() => {
@@ -53,27 +37,37 @@ export function HeroDynamic() {
         <div
           className="absolute inset-0 z-[0]"
           style={{
-            backgroundImage: `url(${prevImageRef.current})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center bottom",
-            backgroundRepeat: "no-repeat",
             animation: "hero-fadeOut 1.2s ease-in-out forwards",
           }}
-        />
+        >
+          <img
+            src={prevImageRef.current}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover object-bottom"
+          />
+        </div>
       )}
 
-      {/* Active background */}
+      {/* Active background – uses <img> with fetchpriority for fast LCP */}
       <div
         className="absolute inset-0 z-[0]"
         style={{
           opacity: loaded ? 1 : 0,
           transition: "opacity 1.2s ease-in-out",
-          backgroundImage: `url(${imageDesktop})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center bottom",
-          backgroundRepeat: "no-repeat",
         }}
-      />
+      >
+        <img
+          src={imageDesktop}
+          alt=""
+          aria-hidden="true"
+          // @ts-ignore - fetchpriority is valid HTML but not yet in React types
+          fetchpriority="high"
+          decoding="sync"
+          className="w-full h-full object-cover object-bottom"
+          onLoad={() => setLoaded(true)}
+        />
+      </div>
 
       {/* Sonnenglow for sunrise/goldenhour */}
       {(timeOfDay === "sunrise" || timeOfDay === "goldenhour") && (
