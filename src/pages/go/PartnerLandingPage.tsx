@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -37,39 +36,17 @@ import logo2goWhite from "@/assets/logo-2go-white.png";
 import { PartnerFitQuiz } from "@/components/go/quiz";
 import { TierComparison } from "@/components/partner/TierComparison";
 
-// Testimonials with realistic personas across industries
-const TESTIMONIALS = [
-  {
-    name: "Lena Kaufmann",
-    role: "Inhaberin, Café Rosengarten",
-    location: "Bern",
-    photo: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=200&h=200&fit=crop&crop=face",
-    quote: "Früher hatte ich 12 Google-Bewertungen. Jetzt sind es über 80 – und meine Kunden kommen wirklich öfter.",
-    metric: "+68 Reviews",
-  },
-  {
-    name: "Thomas Müller",
-    role: "Leiter, EnergyFit Studio",
-    location: "Zürich",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    quote: "Das Loyalty-System funktioniert, weil es einfach ist – für mich und meine Mitglieder. Die Kündigungsrate ist messbar gesunken.",
-    metric: "-24% Kündigungen",
-  },
-  {
-    name: "Sandra Brunner",
-    role: "Geschäftsführerin, Tankstelle Brunner",
-    location: "Luzern",
-    photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face",
-    quote: "Die Radio-Spots waren der Gamechanger. Wir werden regelmässig erwähnt – ganz ohne Werbebudget.",
-    metric: "1'200+ Kontakte",
-  }
-];
+// Real reference case study
+const REFERENCE_CASE = {
+  title: "Bereits im Einsatz",
+  description: "Der Neumarkt Brugg setzt auf my2go mit der «Neumärtli Taler» Sammelkarte – die erste Kampagne auf der Plattform. 6×6 Sammelkarte mit Doppel-Anreiz: Treue belohnen und gleichzeitig neue Shops entdecken.",
+};
 
 const SOCIAL_PROOF = [
-  { value: "12'400+", label: "Aktive Nutzer" },
-  { value: "47", label: "Partner schweizweit" },
-  { value: "4.8", label: "Ø Bewertung", suffix: "★" },
-  { value: "3'200+", label: "Einlösungen/Monat" },
+  { value: "Wachsende", label: "Community" },
+  { value: "Lokal", label: "verankert" },
+  { value: "Erste", label: "Kampagne live" },
+  { value: "Swiss", label: "Made" },
 ];
 
 const BENEFITS = [
@@ -135,30 +112,8 @@ const FAQ_ITEMS = [
   },
 ];
 
-// Testimonials Section Component with Auto-Slider
-function TestimonialsSection() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  
-  // Auto-slide every 4 seconds on mobile
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % TESTIMONIALS.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Scroll to active card when index changes
-  useEffect(() => {
-    if (carouselRef.current) {
-      const cardWidth = carouselRef.current.scrollWidth / TESTIMONIALS.length;
-      carouselRef.current.scrollTo({
-        left: cardWidth * activeIndex,
-        behavior: 'smooth'
-      });
-    }
-  }, [activeIndex]);
-
+// Reference Case Section
+function ReferenceSection() {
   return (
     <section className="py-16 md:py-24">
       <div className="container max-w-5xl mx-auto px-4">
@@ -166,128 +121,22 @@ function TestimonialsSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10 md:mb-14"
+          className="text-center"
         >
-          <h2 className="text-2xl md:text-4xl font-bold text-foreground">
-            Das sagen unsere Partner
+          <h2 className="text-2xl md:text-4xl font-bold text-foreground mb-6">
+            {REFERENCE_CASE.title}
           </h2>
-        </motion.div>
-        
-        {/* Mobile: Auto-sliding carousel */}
-        <div className="md:hidden">
-          <div 
-            ref={carouselRef}
-            className="-mx-4 px-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
-            onScroll={(e) => {
-              const container = e.currentTarget;
-              const cardWidth = container.scrollWidth / TESTIMONIALS.length;
-              const newIndex = Math.round(container.scrollLeft / cardWidth);
-              if (newIndex !== activeIndex) {
-                setActiveIndex(newIndex);
-              }
-            }}
-          >
-            <div className="flex gap-4 pb-4" style={{ width: 'max-content' }}>
-              {TESTIMONIALS.map((testimonial, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="w-[85vw] max-w-[320px] flex-shrink-0 snap-center"
-                >
-                  <Card className="p-5 h-full bg-white border-0 shadow-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, j) => (
-                          <Star key={j} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        ))}
-                      </div>
-                      <Badge className="bg-green-100 text-green-700 font-semibold text-xs">
-                        {testimonial.metric}
-                      </Badge>
-                    </div>
-                    
-                    <blockquote className="text-sm text-foreground mb-5 leading-relaxed">
-                      "{testimonial.quote}"
-                    </blockquote>
-                    
-                    <div className="flex items-center gap-3 pt-4 border-t">
-                      <img 
-                        src={testimonial.photo} 
-                        alt={testimonial.name}
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm text-foreground truncate">{testimonial.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">{testimonial.role}</div>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))}
+          <Card className="max-w-2xl mx-auto p-8 border-0 shadow-lg bg-white">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <MapPin className="w-8 h-8 text-primary" />
+              </div>
             </div>
-          </div>
-          {/* Dot indicators */}
-          <div className="flex justify-center gap-2 mt-4">
-            {TESTIMONIALS.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveIndex(i)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  i === activeIndex 
-                    ? 'w-6 bg-primary' 
-                    : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                }`}
-                aria-label={`Go to testimonial ${i + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Desktop: Grid layout */}
-        <div className="hidden md:grid md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((testimonial, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Card className="p-6 h-full bg-white border-0 shadow-lg">
-                <div className="flex items-center gap-1 mb-5">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                
-                <blockquote className="text-foreground mb-6 leading-relaxed">
-                  "{testimonial.quote}"
-                </blockquote>
-                
-                <div className="flex items-center gap-3">
-                  <img 
-                    src={testimonial.photo} 
-                    alt={testimonial.name}
-                    className="w-11 h-11 rounded-full object-cover"
-                  />
-                  <div>
-                    <div className="font-bold text-foreground">{testimonial.name}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                  </div>
-                </div>
-                
-                <div className="mt-5 pt-5 border-t">
-                  <Badge className="bg-green-100 text-green-700 font-semibold">
-                    {testimonial.metric}
-                  </Badge>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+            <p className="text-foreground leading-relaxed text-lg">
+              {REFERENCE_CASE.description}
+            </p>
+          </Card>
+        </motion.div>
       </div>
     </section>
   );
@@ -378,7 +227,7 @@ export default function PartnerLandingPage() {
               {SOCIAL_PROOF.map((stat, i) => (
                 <div key={i} className="text-center">
                   <div className="text-xl sm:text-2xl font-bold text-secondary">
-                    {stat.value}{stat.suffix}
+                    {stat.value}
                   </div>
                   <div className="text-xs text-secondary/60">{stat.label}</div>
                 </div>
@@ -504,8 +353,8 @@ export default function PartnerLandingPage() {
         </div>
       </section>
 
-      {/* ===== TESTIMONIALS ===== */}
-      <TestimonialsSection />
+      {/* ===== REFERENCE CASE ===== */}
+      <ReferenceSection />
 
       {/* ===== FEATURES GRID ===== */}
       <section className="py-20 md:py-28 bg-muted/40">

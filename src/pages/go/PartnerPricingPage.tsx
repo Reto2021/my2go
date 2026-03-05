@@ -10,7 +10,7 @@ import { PLANS, POS_KITS, GUARANTEE_CONDITIONS, formatCHF, type PlanId } from "@
 
 export default function PartnerPricingPage() {
   const [isYearly, setIsYearly] = useState(false);
-  const planOrder: PlanId[] = ['starter', 'growth', 'radio'];
+  const planOrder: PlanId[] = ['starter', 'growth', 'premium'];
 
   return (
     <div className="overflow-hidden bg-background">

@@ -119,8 +119,8 @@ export default function PartnerDashboard() {
         }
 
         // Auto-create GHL sub-account if not exists and plan tier supports it
-        // GHL is only available for 'plus' (Growth) and 'radio' (Radio) plans
-        const ghlEnabledTiers = ['plus', 'radio'];
+        // GHL is only available for 'plus' (Growth) and 'premium' (Premium) plans
+        const ghlEnabledTiers = ['plus', 'premium'];
         const hasGhlAccess = partnerData?.plan_tier && ghlEnabledTiers.includes(partnerData.plan_tier);
         
         if (partnerData && !partnerData.ghl_location_id && partnerData.contact_email && hasGhlAccess) {
@@ -141,7 +141,7 @@ export default function PartnerDashboard() {
             }
           });
         } else if (partnerData && !partnerData.ghl_location_id && !hasGhlAccess) {
-          console.log('GHL not available for plan tier:', partnerData.plan_tier, '- requires Growth or Radio plan');
+          console.log('GHL not available for plan tier:', partnerData.plan_tier, '- requires Growth or Premium plan');
         }
       } catch (error) {
         console.error('Error loading partner data:', error);

@@ -98,7 +98,7 @@ export default function FunnelEntryPage() {
             transition={{ delay: 0.1 }}
             className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4"
           >
-            {SIGNUP_BONUS_TALER} 2Go Taler holen & Radio starten
+            {SIGNUP_BONUS_TALER} 2Go Taler holen & loslegen
           </motion.h1>
 
           {/* Subline */}
@@ -134,7 +134,7 @@ export default function FunnelEntryPage() {
               className="w-full h-14 text-base font-bold rounded-2xl bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl shadow-accent/30 transition-all hover:scale-[1.02]"
             >
               <Play className="h-5 w-5 mr-2" />
-              Jetzt starten (Radio + Bonus)
+              Jetzt starten & Bonus sichern
             </Button>
 
             <button

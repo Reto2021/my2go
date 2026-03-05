@@ -209,17 +209,8 @@
   /* Hero area with sunrise background */
   .hero-section {
     @apply relative overflow-hidden;
-    background-image: url("/images/hero-sunrise-clean-mobile.png");
-    background-size: cover;
-    background-position: bottom center;
-    background-repeat: no-repeat;
+    background: linear-gradient(to bottom, hsl(var(--primary) / 0.15), hsl(var(--background)));
     min-height: 60vh;
-  }
-
-  @media (min-width: 768px) {
-    .hero-section {
-      background-image: url("/images/hero-sunrise-clean-desktop.png");
-    }
   }
 
   /* Hero Animations Container */
