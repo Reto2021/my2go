@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { 
   QrCode, 
   ShoppingCart, 
@@ -16,20 +17,44 @@ import {
   ArrowRight,
   RotateCcw,
   Camera,
-  X
+  X,
+  Grid3X3,
+  Stamp
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Html5Qrcode } from 'html5-qrcode';
+import { useQuery } from '@tanstack/react-query';
+import { Progress } from '@/components/ui/progress';
+import { TalerIcon } from '@/components/icons/TalerIcon';
 
-type TransactionType = 'visit' | 'purchase';
+type TransactionType = 'visit' | 'purchase' | 'stamp';
 
 interface TransactionResult {
   success: boolean;
   taler_awarded?: number;
   user_name?: string;
   new_balance?: number;
+  error?: string;
+}
+
+interface StampResult {
+  success: boolean;
+  card?: {
+    current_position: number;
+    total_purchases: number;
+    is_completed: boolean;
+  };
+  move_type?: string;
+  is_new_shop?: boolean;
+  partner_name?: string;
+  sponsored_bonus?: { type: string; value: number; text: string } | null;
+  milestone_reward?: { at_purchase: number; type: string; value: number; label?: string } | null;
+  completion_reward?: { taler: number; description: string } | null;
+  completion_blocked?: string | null;
+  unique_shops?: number;
+  required_purchases?: number;
   error?: string;
 }
 
@@ -40,6 +65,8 @@ export default function PartnerScanPage() {
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<TransactionResult | null>(null);
+  const [stampResult, setStampResult] = useState<StampResult | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerError, setScannerError] = useState<string | null>(null);
   
@@ -47,12 +74,36 @@ export default function PartnerScanPage() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
+  // Fetch active collecting campaigns for this partner
+  const { data: partnerCampaigns = [] } = useQuery({
+    queryKey: ['partner-collecting-campaigns', partnerInfo?.partnerId],
+    queryFn: async () => {
+      if (!partnerInfo?.partnerId) return [];
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('collecting_campaigns' as any)
+        .select('id, slug, title, subtitle, required_purchases, prize_description, prize_taler, grid_size')
+        .eq('is_active', true)
+        .or(`ends_at.is.null,ends_at.gte.${now}`);
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+    enabled: !!partnerInfo?.partnerId,
+  });
+
+  // Auto-select first campaign
+  useEffect(() => {
+    if (partnerCampaigns.length > 0 && !selectedCampaign) {
+      setSelectedCampaign(partnerCampaigns[0].slug);
+    }
+  }, [partnerCampaigns, selectedCampaign]);
+
   // Stop scanner when component unmounts or scanner closes
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
       try {
         const state = scannerRef.current.getState();
-        if (state === 2) { // SCANNING state
+        if (state === 2) {
           await scannerRef.current.stop();
         }
       } catch (err) {
@@ -70,7 +121,6 @@ export default function PartnerScanPage() {
     };
   }, [stopScanner]);
 
-  // Start camera scanner
   const startScanner = useCallback(async () => {
     if (!scannerContainerRef.current) return;
     
@@ -78,7 +128,6 @@ export default function PartnerScanPage() {
     setScannerError(null);
 
     try {
-      // Small delay to ensure DOM is ready
       await new Promise(resolve => setTimeout(resolve, 100));
       
       scannerRef.current = new Html5Qrcode('qr-scanner-container');
@@ -91,14 +140,11 @@ export default function PartnerScanPage() {
           aspectRatio: 1,
         },
         (decodedText) => {
-          // Successfully scanned
           setUserCode(decodedText.toUpperCase());
           toast.success('QR-Code erkannt!');
           stopScanner();
         },
-        (errorMessage) => {
-          // Ignore continuous scan errors
-        }
+        () => {}
       );
     } catch (err: any) {
       console.error('Scanner error:', err);
@@ -112,27 +158,87 @@ export default function PartnerScanPage() {
     }
   }, [stopScanner]);
 
-  // Auto-start camera scanner on mount
   useEffect(() => {
-    // Small delay to ensure component is fully mounted
     const timer = setTimeout(() => {
-      if (!isScannerOpen && !result) {
+      if (!isScannerOpen && !result && !stampResult) {
         startScanner();
       }
     }, 300);
-    
     return () => clearTimeout(timer);
-  }, []); // Only on mount
+  }, []);
 
-  // Focus input when scanner is closed
   useEffect(() => {
-    if (!isScannerOpen && !result) {
+    if (!isScannerOpen && !result && !stampResult) {
       inputRef.current?.focus();
     }
-  }, [isScannerOpen, result]);
+  }, [isScannerOpen, result, stampResult]);
+
+  const handleStampSubmit = async () => {
+    const trimmedCode = userCode.trim().toUpperCase();
+    if (!trimmedCode || !partnerInfo?.partnerId || !selectedCampaign) return;
+
+    setIsSubmitting(true);
+    setStampResult(null);
+
+    try {
+      // The userCode could be the user's UUID or their permanent code
+      // We need to resolve the user_id from the code
+      // The collecting-card-scan expects partner_id and campaign_slug + auth token
+      // But here the PARTNER is scanning the USER's code
+      // So we need to look up the user from the code first
+      
+      const { data: userCodeData } = await supabase
+        .from('user_codes' as any)
+        .select('user_id')
+        .eq('permanent_code', trimmedCode)
+        .eq('is_active', true)
+        .single() as any;
+
+      const userId = (userCodeData as any)?.user_id || trimmedCode;
+
+      // Call collecting-card-scan as service (partner acting on behalf of user)
+      const response = await supabase.functions.invoke('collecting-card-scan', {
+        body: {
+          partner_id: partnerInfo.partnerId,
+          campaign_slug: selectedCampaign,
+          on_behalf_of_user: userId,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const data = response.data as StampResult;
+      setStampResult(data);
+
+      if (data.success) {
+        const msgs: string[] = [`Stempel gesetzt! (${data.card?.total_purchases}/${data.required_purchases})`];
+        if (data.milestone_reward) msgs.push(`🎉 Meilenstein: +${data.milestone_reward.value} Taler`);
+        if (data.sponsored_bonus) msgs.push(`⭐ Bonus: +${data.sponsored_bonus.value} Taler`);
+        if (data.completion_reward) msgs.push(`🏆 Karte voll! ${data.completion_reward.description}`);
+        toast.success(msgs.join('\n'));
+      } else {
+        toast.error(data.error || 'Stempel fehlgeschlagen');
+      }
+    } catch (error: any) {
+      console.error('Stamp error:', error);
+      setStampResult({
+        success: false,
+        error: error.message || 'Verbindungsfehler. Bitte versuche es erneut.',
+      });
+      toast.error('Fehler beim Stempeln');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (transactionType === 'stamp') {
+      return handleStampSubmit();
+    }
     
     const trimmedCode = userCode.trim().toUpperCase();
     if (!trimmedCode || !partnerInfo?.partnerId) return;
@@ -146,8 +252,6 @@ export default function PartnerScanPage() {
     setResult(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const response = await supabase.functions.invoke('partner-transaction', {
         body: {
           user_code: trimmedCode,
@@ -183,13 +287,14 @@ export default function PartnerScanPage() {
 
   const handleReset = () => {
     setResult(null);
+    setStampResult(null);
     setUserCode('');
     setPurchaseAmount('');
-    setTransactionType('visit');
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const isSuccess = result?.success;
+  const hasActiveResult = result || stampResult;
+  const isSuccess = result?.success || stampResult?.success;
 
   return (
     <div className="space-y-6">
@@ -242,66 +347,156 @@ export default function PartnerScanPage() {
         </div>
       )}
 
-      {result ? (
+      {hasActiveResult ? (
         // Result State
-        <Card className={cn(
-          'overflow-hidden',
-          isSuccess ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'
-        )}>
-          <CardContent className="p-6 text-center">
-            {isSuccess ? (
-              <>
-                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="h-8 w-8 text-success" />
-                </div>
-                
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  Erfolgreich!
-                </h2>
-                
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-lg font-semibold">{result.user_name}</span>
-                </div>
+        stampResult ? (
+          // Stamp Result
+          <Card className={cn(
+            'overflow-hidden',
+            stampResult.success ? 'border-accent/50 bg-accent/5' : 'border-destructive/50 bg-destructive/5'
+          )}>
+            <CardContent className="p-6 text-center">
+              {stampResult.success ? (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                    {stampResult.card?.is_completed ? (
+                      <CheckCircle className="h-8 w-8 text-accent" />
+                    ) : (
+                      <Grid3X3 className="h-8 w-8 text-accent" />
+                    )}
+                  </div>
+                  
+                  <h2 className="text-xl font-bold text-foreground mb-2">
+                    {stampResult.card?.is_completed ? '🏆 Karte voll!' : 'Stempel gesetzt!'}
+                  </h2>
 
-                <div className="flex items-center justify-center gap-2 p-4 rounded-xl bg-accent/10 mb-4">
-                  <Coins className="h-6 w-6 text-accent" />
-                  <span className="text-2xl font-bold text-accent">
-                    +{result.taler_awarded} Taler
-                  </span>
-                </div>
+                  {/* Progress */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-2xl font-bold text-accent">
+                        {stampResult.card?.total_purchases}
+                      </span>
+                      <span className="text-muted-foreground">/ {stampResult.required_purchases}</span>
+                    </div>
+                    <Progress 
+                      value={(stampResult.card?.total_purchases ?? 0) / (stampResult.required_purchases ?? 1) * 100} 
+                      className="h-3 mb-1" 
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {stampResult.is_new_shop ? '🆕 Neuer Shop!' : '🔄 Erneuter Besuch'}
+                    </p>
+                  </div>
 
-                <p className="text-sm text-muted-foreground mb-6">
-                  Neues Guthaben: {result.new_balance?.toLocaleString('de-CH')} Taler
-                </p>
+                  {/* Milestone */}
+                  {stampResult.milestone_reward && (
+                    <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-accent/10 mb-3">
+                      <TalerIcon className="h-5 w-5" />
+                      <span className="font-bold text-accent">
+                        +{stampResult.milestone_reward.value} Bonus-Taler
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({stampResult.milestone_reward.label})
+                      </span>
+                    </div>
+                  )}
 
-                <Button onClick={handleReset} className="w-full">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Nächster Kunde
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-                  <QrCode className="h-8 w-8 text-destructive" />
-                </div>
-                
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  Fehler
-                </h2>
-                
-                <p className="text-muted-foreground mb-6">
-                  {result.error}
-                </p>
+                  {/* Sponsored bonus */}
+                  {stampResult.sponsored_bonus && (
+                    <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-primary/10 mb-3">
+                      <TalerIcon className="h-5 w-5" />
+                      <span className="font-bold text-primary">
+                        +{stampResult.sponsored_bonus.value} Taler
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({stampResult.sponsored_bonus.text})
+                      </span>
+                    </div>
+                  )}
 
-                <Button onClick={handleReset} variant="outline" className="w-full">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Erneut versuchen
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                  {/* Completion reward */}
+                  {stampResult.completion_reward && (
+                    <div className="p-4 rounded-xl bg-accent/15 border border-accent/30 mb-4">
+                      <p className="font-bold text-accent mb-1">🎉 Preis freigeschaltet!</p>
+                      <p className="text-sm text-muted-foreground">{stampResult.completion_reward.description}</p>
+                      {stampResult.completion_reward.taler > 0 && (
+                        <div className="flex items-center justify-center gap-1 mt-2">
+                          <TalerIcon className="h-4 w-4" />
+                          <span className="font-bold text-accent">+{stampResult.completion_reward.taler} Taler</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Completion blocked */}
+                  {stampResult.completion_blocked && (
+                    <p className="text-sm text-amber-600 mb-3">⚠️ {stampResult.completion_blocked}</p>
+                  )}
+
+                  <Button onClick={handleReset} className="w-full">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Nächster Kunde
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                    <QrCode className="h-8 w-8 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground mb-2">Fehler</h2>
+                  <p className="text-muted-foreground mb-6">{stampResult.error}</p>
+                  <Button onClick={handleReset} variant="outline" className="w-full">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Erneut versuchen
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          // Regular Transaction Result
+          <Card className={cn(
+            'overflow-hidden',
+            isSuccess ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'
+          )}>
+            <CardContent className="p-6 text-center">
+              {isSuccess ? (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="h-8 w-8 text-success" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground mb-2">Erfolgreich!</h2>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-lg font-semibold">{result?.user_name}</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 p-4 rounded-xl bg-accent/10 mb-4">
+                    <Coins className="h-6 w-6 text-accent" />
+                    <span className="text-2xl font-bold text-accent">+{result?.taler_awarded} Taler</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Neues Guthaben: {result?.new_balance?.toLocaleString('de-CH')} Taler
+                  </p>
+                  <Button onClick={handleReset} className="w-full">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Nächster Kunde
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+                    <QrCode className="h-8 w-8 text-destructive" />
+                  </div>
+                  <h2 className="text-xl font-bold text-foreground mb-2">Fehler</h2>
+                  <p className="text-muted-foreground mb-6">{result?.error}</p>
+                  <Button onClick={handleReset} variant="outline" className="w-full">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Erneut versuchen
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )
       ) : (
         // Input Form
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -365,7 +560,10 @@ export default function PartnerScanPage() {
               <RadioGroup
                 value={transactionType}
                 onValueChange={(v) => setTransactionType(v as TransactionType)}
-                className="grid grid-cols-2 gap-3"
+                className={cn(
+                  "grid gap-3",
+                  partnerCampaigns.length > 0 ? "grid-cols-3" : "grid-cols-2"
+                )}
               >
                 <Label
                   htmlFor="visit"
@@ -378,7 +576,7 @@ export default function PartnerScanPage() {
                 >
                   <RadioGroupItem value="visit" id="visit" className="sr-only" />
                   <Store className="h-6 w-6" />
-                  <span className="font-semibold">Besuch</span>
+                  <span className="font-semibold text-sm">Besuch</span>
                   <span className="text-xs text-muted-foreground">+5 Taler</span>
                 </Label>
                 
@@ -393,9 +591,29 @@ export default function PartnerScanPage() {
                 >
                   <RadioGroupItem value="purchase" id="purchase" className="sr-only" />
                   <ShoppingCart className="h-6 w-6" />
-                  <span className="font-semibold">Einkauf</span>
+                  <span className="font-semibold text-sm">Einkauf</span>
                   <span className="text-xs text-muted-foreground">1 Taler/CHF</span>
                 </Label>
+
+                {partnerCampaigns.length > 0 && (
+                  <Label
+                    htmlFor="stamp"
+                    className={cn(
+                      'flex flex-col items-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all relative',
+                      transactionType === 'stamp'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    )}
+                  >
+                    <RadioGroupItem value="stamp" id="stamp" className="sr-only" />
+                    <Grid3X3 className="h-6 w-6" />
+                    <span className="font-semibold text-sm">Stempel</span>
+                    <span className="text-xs text-muted-foreground">Sammelkarte</span>
+                    <Badge className="absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 bg-primary text-primary-foreground">
+                      NEU
+                    </Badge>
+                  </Label>
+                )}
               </RadioGroup>
             </CardContent>
           </Card>
@@ -430,17 +648,66 @@ export default function PartnerScanPage() {
             </Card>
           )}
 
+          {/* Campaign Selector (for stamp mode) */}
+          {transactionType === 'stamp' && partnerCampaigns.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Grid3X3 className="h-5 w-5" />
+                  Sammelkarte wählen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {partnerCampaigns.map((campaign: any) => (
+                  <button
+                    key={campaign.id}
+                    type="button"
+                    onClick={() => setSelectedCampaign(campaign.slug)}
+                    className={cn(
+                      'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all',
+                      selectedCampaign === campaign.slug
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/30'
+                    )}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Grid3X3 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{campaign.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{campaign.subtitle}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {campaign.required_purchases} Stempel
+                    </span>
+                  </button>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Submit Button */}
           <Button
             type="submit"
             size="lg"
             className="w-full h-14 text-lg"
-            disabled={!userCode.trim() || isSubmitting || (transactionType === 'purchase' && (!purchaseAmount || parseFloat(purchaseAmount) <= 0))}
+            disabled={
+              !userCode.trim() || 
+              isSubmitting || 
+              (transactionType === 'purchase' && (!purchaseAmount || parseFloat(purchaseAmount) <= 0)) ||
+              (transactionType === 'stamp' && !selectedCampaign)
+            }
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                 Verarbeite...
+              </>
+            ) : transactionType === 'stamp' ? (
+              <>
+                <Grid3X3 className="h-5 w-5 mr-2" />
+                Stempel setzen
+                <ArrowRight className="h-5 w-5 ml-2" />
               </>
             ) : (
               <>
