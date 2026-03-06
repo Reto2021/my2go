@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, SparklesIcon } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAISoundEnabled, setAISoundEnabled, getCurrentPreset } from '@/lib/audio-processor';
 import { useRadioStore } from '@/lib/radio-store';

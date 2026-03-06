@@ -142,7 +142,14 @@ export function connectProcessor(audio: HTMLAudioElement) {
     return;
   }
 
-  _attachGraph(audio);
+  const connected = _attachGraph(audio);
+  if (!connected) {
+    state.isEnabled = false;
+    try {
+      localStorage.setItem(STORAGE_KEY, 'false');
+    } catch {}
+    notifyListeners();
+  }
 }
 
 function _ensureContextResumed() {
@@ -251,6 +258,7 @@ export function disconnectProcessor() {
   state.isConnected = false;
   state.currentPreset = null;
   state.audioElement = null;
+  state.requiresElementReset = false;
   currentClassifyAbort = null;
   lastClassifiedSong = '';
 }
