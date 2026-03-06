@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, SparklesIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isAISoundEnabled, setAISoundEnabled, getCurrentPreset } from '@/lib/audio-processor';
+import { useRadioStore } from '@/lib/radio-store';
 import { hapticToggle } from '@/lib/haptics';
 
 interface AISoundToggleProps {
@@ -28,6 +29,12 @@ export function AISoundToggle({ className, size = 'md' }: AISoundToggleProps) {
     const next = !enabled;
     setEnabled(next);
     setAISoundEnabled(next);
+
+    // If WebAudio captured the element, force a clean audio element on disable
+    // so mobile output returns reliably.
+    if (!next) {
+      useRadioStore.getState().rebuildAudioAfterAISoundToggle();
+    }
   };
 
   const isSmall = size === 'sm';
