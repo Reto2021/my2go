@@ -113,21 +113,19 @@ export const RewardCard = memo(function RewardCard({ reward, className, distance
         
         {/* Content */}
         <div className={cn("flex-1 min-w-0", showPremiumOverlay && 'blur-[2px]')}>
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-accent transition-colors">
-              {reward.title}
-            </h3>
-            {distance !== undefined && (
-              <span className="flex items-center gap-0.5 text-sm text-foreground/70 whitespace-nowrap">
-                <MapPin className="h-3.5 w-3.5" />
-                {formatDistance(distance)}
-              </span>
-            )}
-          </div>
+          <h3 className="font-bold text-foreground line-clamp-1 group-hover:text-accent transition-colors pr-1">
+            {reward.title}
+          </h3>
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className="text-sm text-foreground/70 line-clamp-1">
               {partnerName}
             </p>
+            {distance !== undefined && (
+              <span className="flex items-center gap-0.5 text-xs text-foreground/50 whitespace-nowrap">
+                <MapPin className="h-3 w-3" />
+                {formatDistance(distance)}
+              </span>
+            )}
             {(reward as any).max_per_user === 1 && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-accent/15 text-accent border-0">
                 Einmalig
