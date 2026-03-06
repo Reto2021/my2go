@@ -471,65 +471,53 @@ export function useRadioRewards() {
       console.log('[RadioRewards] endSession skipped: no session');
       return;
     }
-    
+
     if (globalIsEnding) {
       console.log('[RadioRewards] endSession skipped: already ending');
       return;
     }
-    
-    // Set guard IMMEDIATELY
+
     globalIsEnding = true;
-    console.log('[RadioRewards] 🛑 Ending session:', globalSessionId);
-    
-    // Stop the save interval immediately
-    stopGlobalSaveInterval();
-    
-    // Save final progress before ending
-    if (globalSessionId && globalStartTimeMs) {
-      console.log('[RadioRewards] 💾 Final save before ending session...');
-      await saveProgressGlobal();
-    }
-    
-    // Clear global state immediately to prevent double-calls
     const endingSessionId = globalSessionId;
-    globalSessionId = null;
-    globalStartTimeMs = null;
-    
-    if (!endingSessionId) {
-      globalIsEnding = false;
-      return;
-    }
-    
+    console.log('[RadioRewards] 🛑 Ending session:', endingSessionId);
+
+    // Stop interval first to avoid concurrent writes while ending
+    stopGlobalSaveInterval();
+
     try {
+      // Best effort: persist latest duration before finalizing
+      await saveProgressGlobal();
+
       const { data, error } = await supabase.rpc('end_listening_session', {
         _session_id: endingSessionId
       });
-      
-      // Clear from localStorage since we're properly ending it
-      clearPendingSession();
-      
+
       if (error) {
         console.error('[RadioRewards] Error ending listening session:', error);
-        await refreshBalance?.();
+
+        // IMPORTANT: Keep pending session state for retry/recovery (prevents point loss)
+        // We intentionally do NOT clear localStorage/global session here.
         return;
       }
-      
+
+      // Clear pending state ONLY after successful server finalization
+      clearPendingSession();
+      globalSessionId = null;
+      globalStartTimeMs = null;
+
       const result = data as unknown as ListeningReward;
       console.log('[RadioRewards] ✅ Session ended with result:', result);
-      
+
       if (result?.success && result.reward > 0) {
-        // Trigger visual Taler animation
         triggerTalerAnimation(result.reward, 'radio');
-        
-        // Check if this is the user's first Taler
+
         const hasSeenFirstTaler = localStorage.getItem(`${FIRST_TALER_KEY}_${userId}`);
         if (!hasSeenFirstTaler && userId) {
           localStorage.setItem(`${FIRST_TALER_KEY}_${userId}`, 'true');
           setFirstTalerAmount(result.reward);
           setShowFirstTalerCelebration(true);
         }
-        
-        // Show session summary modal
+
         setSessionSummary({
           duration: result.duration,
           reward: result.reward,
@@ -537,15 +525,14 @@ export function useRadioRewards() {
         });
         setShowSummary(true);
       }
-      
-      // ALWAYS refresh balance after session ends
+
       console.log('[RadioRewards] 🔄 Refreshing balance after session end');
       await refreshBalance?.();
       clearPendingTaler?.();
-      
+
     } catch (error) {
       console.error('[RadioRewards] Error ending listening session:', error);
-      await refreshBalance?.();
+      // Keep pending session for recovery on next online/refresh
     } finally {
       globalIsEnding = false;
     }
@@ -606,34 +593,50 @@ export function useRadioRewards() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && globalSessionId && globalStartTimeMs) {
         console.log('[RadioRewards] 📱 App hidden, saving progress (NOT ending session)');
-        // Just save progress - don't end the session, user might come back
         saveProgressGlobal();
       } else if (document.visibilityState === 'visible' && globalSessionId) {
         console.log('[RadioRewards] 📱 App visible again, session still active:', globalSessionId);
-        // Refresh auth token when coming back
         getFreshAuthToken();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
-  
+
+  // Retry pending save/end once network is back
+  useEffect(() => {
+    const handleOnline = () => {
+      if (!globalSessionId) return;
+
+      console.log('[RadioRewards] 🌐 Network back, retrying pending radio sync');
+      saveProgressGlobal();
+
+      // If playback is currently stopped but a session is still pending, finalize it now
+      if (!isPlaying) {
+        endSession();
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [isPlaying, endSession]);
+
   // Handle page unload - save progress using fetch with keepalive for reliability
   useEffect(() => {
     const handleBeforeUnload = () => {
       console.log('[RadioRewards] 🚨 beforeunload event triggered');
       saveWithKeepalive();
     };
-    
+
     const handlePageHide = (event: PageTransitionEvent) => {
       console.log('[RadioRewards] 🚨 pagehide event, persisted:', event.persisted);
       saveWithKeepalive();
     };
-    
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('pagehide', handlePageHide);
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('pagehide', handlePageHide);
