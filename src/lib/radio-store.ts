@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { connectProcessor, classifySong, isAISoundEnabled } from '@/lib/audio-processor';
 
 // Default Radio 2Go stream
 const DEFAULT_STREAM_URL = 'https://uksoutha.streaming.broadcast.radio/radio2go';
@@ -502,6 +503,11 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         
         set({ nowPlaying });
         updateMediaSession(nowPlaying, get().isPlaying, get().getStationName());
+        
+        // Trigger AI Sound classification when song changes
+        if (isAISoundEnabled() && hasRealMetadata) {
+          classifySong(title, artist);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch now playing:', error);
@@ -731,6 +737,9 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       });
       
       set({ audio: currentAudio });
+      
+      // Connect AI Sound Processor (Web Audio API chain)
+      connectProcessor(currentAudio);
       
       // Setup media session handlers once
       setupMediaSessionHandlers(() => get().togglePlay());

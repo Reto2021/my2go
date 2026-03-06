@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'; // v2
+import { AISoundToggle } from '@/components/radio/AISoundToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -699,12 +700,12 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
               </motion.div>
             )}
 
-            {/* Volume Slider */}
+            {/* Volume + AI Sound */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="w-full max-w-xs mb-4 sm:mb-8"
+              className="w-full max-w-xs mb-4 sm:mb-8 space-y-3"
             >
               <div className="flex items-center gap-4 touch-none">
                 <button 
@@ -725,6 +726,10 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   step={1}
                   className="flex-1 touch-none"
                 />
+              </div>
+              {/* AI Sound Processing Toggle */}
+              <div className="flex justify-center">
+                <AISoundToggle size="md" />
               </div>
             </motion.div>
 
