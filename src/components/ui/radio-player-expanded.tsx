@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'; // v2
-import { AISoundToggle } from '@/components/radio/AISoundToggle';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -726,10 +726,6 @@ export function ExpandedRadioPlayer({ isOpen, onClose }: ExpandedRadioPlayerProp
                   step={1}
                   className="flex-1 touch-none"
                 />
-              </div>
-              {/* AI Sound Processing Toggle */}
-              <div className="flex justify-center">
-                <AISoundToggle size="md" />
               </div>
             </motion.div>
 
