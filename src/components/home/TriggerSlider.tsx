@@ -104,11 +104,11 @@ export function TriggerSlider() {
             style={{ 
               left: '-0.75rem', 
               right: '-0.75rem', 
-              top: '-0.15rem', 
-              bottom: '-0.15rem',
-              borderRadius: '4px 8px 6px 10px',
-              clipPath: 'polygon(2% 15%, 0% 50%, 1% 85%, 4% 100%, 15% 98%, 30% 100%, 50% 97%, 70% 100%, 85% 99%, 96% 100%, 100% 80%, 99% 50%, 100% 20%, 97% 0%, 80% 2%, 60% 0%, 40% 3%, 20% 0%, 5% 1%)'
-            }} 
+              top: '-0.25rem', 
+              bottom: '-0.25rem',
+              borderRadius: '6px 12px 8px 14px',
+              clipPath: 'polygon(3% 8%, 0% 35%, 1.5% 65%, 0.5% 88%, 5% 100%, 12% 96%, 22% 100%, 35% 97%, 48% 100%, 62% 96%, 75% 100%, 88% 97%, 95% 100%, 100% 90%, 98.5% 60%, 100% 30%, 99% 10%, 95% 0%, 82% 4%, 68% 0%, 55% 5%, 42% 1%, 28% 4%, 15% 0%, 6% 3%)'
+            }}
           />
           <span className="relative text-secondary font-black">
             {displaySlides[currentIndex]}
