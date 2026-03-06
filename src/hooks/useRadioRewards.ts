@@ -593,34 +593,50 @@ export function useRadioRewards() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && globalSessionId && globalStartTimeMs) {
         console.log('[RadioRewards] 📱 App hidden, saving progress (NOT ending session)');
-        // Just save progress - don't end the session, user might come back
         saveProgressGlobal();
       } else if (document.visibilityState === 'visible' && globalSessionId) {
         console.log('[RadioRewards] 📱 App visible again, session still active:', globalSessionId);
-        // Refresh auth token when coming back
         getFreshAuthToken();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
-  
+
+  // Retry pending save/end once network is back
+  useEffect(() => {
+    const handleOnline = () => {
+      if (!globalSessionId) return;
+
+      console.log('[RadioRewards] 🌐 Network back, retrying pending radio sync');
+      saveProgressGlobal();
+
+      // If playback is currently stopped but a session is still pending, finalize it now
+      if (!isPlaying) {
+        endSession();
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [isPlaying, endSession]);
+
   // Handle page unload - save progress using fetch with keepalive for reliability
   useEffect(() => {
     const handleBeforeUnload = () => {
       console.log('[RadioRewards] 🚨 beforeunload event triggered');
       saveWithKeepalive();
     };
-    
+
     const handlePageHide = (event: PageTransitionEvent) => {
       console.log('[RadioRewards] 🚨 pagehide event, persisted:', event.persisted);
       saveWithKeepalive();
     };
-    
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('pagehide', handlePageHide);
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('pagehide', handlePageHide);
