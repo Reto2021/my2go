@@ -192,9 +192,9 @@ export default function PartnerScanPage() {
         .select('user_id')
         .eq('permanent_code', trimmedCode)
         .eq('is_active', true)
-        .single();
+        .single() as any;
 
-      const userId = userCodeData?.user_id || trimmedCode; // fallback to raw UUID
+      const userId = (userCodeData as any)?.user_id || trimmedCode;
 
       // Call collecting-card-scan as service (partner acting on behalf of user)
       const response = await supabase.functions.invoke('collecting-card-scan', {
