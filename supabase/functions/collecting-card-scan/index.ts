@@ -24,25 +24,45 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify user
+    // Verify caller
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-    const { data: { user }, error: authError } = await anonClient.auth.getUser(
+    const { data: { user: callerUser }, error: authError } = await anonClient.auth.getUser(
       authHeader.replace("Bearer ", "")
     );
-    if (authError || !user) {
+    if (authError || !callerUser) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { partner_id, campaign_slug } = await req.json();
+    const { partner_id, campaign_slug, on_behalf_of_user } = await req.json();
 
     if (!partner_id || !campaign_slug) {
       return new Response(JSON.stringify({ error: "Missing partner_id or campaign_slug" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Determine the target user: either the caller themselves or a user the partner is scanning for
+    let userId = callerUser.id;
+    
+    if (on_behalf_of_user) {
+      // Verify caller is a partner admin for this partner
+      const { data: isAdmin } = await supabase.rpc("is_partner_admin", {
+        _user_id: callerUser.id,
+        _partner_id: partner_id,
+      });
+      
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: "Nicht berechtigt" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      
+      userId = on_behalf_of_user;
     }
 
     // 1. Get campaign
