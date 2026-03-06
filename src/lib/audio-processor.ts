@@ -2,6 +2,10 @@
  * AI Sound Processing Engine
  * Uses Web Audio API to apply per-song EQ, compression, and loudness normalization.
  * Controlled via a manual toggle so the user can A/B compare.
+ *
+ * CRITICAL: createMediaElementSource() can only be called ONCE per HTMLAudioElement.
+ * Therefore, the Web Audio graph is attached once and never torn down.
+ * Toggling AI Sound simply crossfades between the processed and bypass gain nodes.
  */
 
 const STORAGE_KEY = 'radio2go_ai_sound';
@@ -80,12 +84,11 @@ export function setAISoundEnabled(enabled: boolean) {
   } catch {}
 
   if (enabled && !state.isConnected && state.audioElement) {
-    // Lazy-connect: attach the Web Audio graph now that the user wants it
+    // Lazy-connect: attach the Web Audio graph now
     _attachGraph(state.audioElement);
-  } else if (!enabled && state.isConnected) {
-    // Disconnect entirely so audio goes back to native output (safest on mobile)
-    disconnectProcessor();
   } else if (state.isConnected) {
+    // Graph exists — just crossfade between bypass and processed
+    _ensureContextResumed();
     crossfade(enabled);
   }
   notifyListeners();
@@ -102,27 +105,28 @@ export function subscribeProcessor(listener: Listener) {
 
 /**
  * Connect the audio processor to an HTMLAudioElement.
- * Must be called ONCE per audio element. Safe to call multiple times.
+ * If AI Sound is off, we still store the ref for lazy-connect later.
+ * If AI Sound is on, we attach immediately.
  */
 export function connectProcessor(audio: HTMLAudioElement) {
-  // Only intercept the audio graph when AI Sound is actually enabled
-  // createMediaElementSource re-routes audio exclusively through Web Audio API,
-  // so if the AudioContext is suspended (common on mobile), you hear NOTHING.
+  // Already connected to this element — nothing to do
+  if (state.isConnected && state.audioElement === audio) return;
+
+  // Store reference for lazy-connect
+  state.audioElement = audio;
+
   if (!state.isEnabled) {
-    // Store reference so we can connect later if user enables AI Sound
-    state.audioElement = audio;
+    // Don't attach graph yet — audio plays natively
     return;
   }
 
-  // Don't reconnect to same element
-  if (state.isConnected && state.audioElement === audio) return;
-
-  // Disconnect previous if exists
-  if (state.isConnected) {
-    disconnectProcessor();
-  }
-
   _attachGraph(audio);
+}
+
+function _ensureContextResumed() {
+  if (state.context && state.context.state === 'suspended') {
+    state.context.resume().catch(() => {});
+  }
 }
 
 function _attachGraph(audio: HTMLAudioElement) {
@@ -177,9 +181,14 @@ function _attachGraph(audio: HTMLAudioElement) {
     makeupGain.connect(processedGain);
     processedGain.connect(ctx.destination);
 
-    // When AI is enabled, send audio through processed path
-    bypassGain.gain.value = 0;
-    processedGain.gain.value = 1;
+    // Set initial gain levels based on current enabled state
+    if (state.isEnabled) {
+      bypassGain.gain.value = 0;
+      processedGain.gain.value = 1;
+    } else {
+      bypassGain.gain.value = 1;
+      processedGain.gain.value = 0;
+    }
 
     state.context = ctx;
     state.source = source;
@@ -197,8 +206,11 @@ function _attachGraph(audio: HTMLAudioElement) {
   }
 }
 
+/**
+ * Full cleanup — only call when the audio element itself is being destroyed
+ * (e.g. switching streams). Never call just to toggle AI Sound off.
+ */
 export function disconnectProcessor() {
-  const audioEl = state.audioElement;
   if (state.source) {
     try { state.source.disconnect(); } catch {}
   }
@@ -214,8 +226,7 @@ export function disconnectProcessor() {
   state.processedGain = null;
   state.isConnected = false;
   state.currentPreset = null;
-  // Keep audioElement reference so we can re-attach later
-  state.audioElement = audioEl;
+  state.audioElement = null;
   currentClassifyAbort = null;
   lastClassifiedSong = '';
 }
