@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { connectProcessor, classifySong, isAISoundEnabled, consumeAudioElementResetRequired } from '@/lib/audio-processor';
+
 
 // Default Radio 2Go stream
 const DEFAULT_STREAM_URL = 'https://uksoutha.streaming.broadcast.radio/radio2go';
@@ -226,7 +226,7 @@ interface RadioStore {
   getStreamUrl: () => string;
   getStationName: () => string;
   getLastExternalStation: () => ExternalStation | null;
-  rebuildAudioAfterAISoundToggle: () => void;
+  
 }
 
 interface iTunesMediaResult {
@@ -437,20 +437,6 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
     return get().lastExternalStation || loadLastExternalStation();
   },
 
-  rebuildAudioAfterAISoundToggle: () => {
-    const { audio, isPlaying } = get();
-    if (!audio || !consumeAudioElementResetRequired()) return;
-
-    audio.pause();
-    audio.src = '';
-    set({ audio: null, isPlaying: false, isLoading: false, isSwitching: false });
-
-    if (isPlaying) {
-      setTimeout(() => {
-        get().togglePlay();
-      }, 0);
-    }
-  },
 
   updateSessionDuration: () => {
     const { sessionStartTime, isPlaying } = get();
@@ -520,10 +506,6 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
         set({ nowPlaying });
         updateMediaSession(nowPlaying, get().isPlaying, get().getStationName());
         
-        // Trigger AI Sound classification when song changes
-        if (isAISoundEnabled() && hasRealMetadata) {
-          classifySong(title, artist);
-        }
       }
     } catch (error) {
       console.error('Failed to fetch now playing:', error);
@@ -754,8 +736,6 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
       
       set({ audio: currentAudio });
       
-      // Connect AI Sound Processor (Web Audio API chain)
-      connectProcessor(currentAudio);
       
       // Setup media session handlers once
       setupMediaSessionHandlers(() => get().togglePlay());

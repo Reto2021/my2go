@@ -4,7 +4,7 @@ import { TalerIcon } from "@/components/icons/TalerIcon";
 import { cn } from "@/lib/utils";
 import { hapticToggle } from "@/lib/haptics";
 import { Equalizer } from "../Equalizer";
-import { AISoundToggle } from "../AISoundToggle";
+
 import { formatTimeToTier } from "../utils";
 import { useRadioStore, ExternalStation } from "@/lib/radio-store";
 import { useRadioFavorites } from "@/hooks/useRadioFavorites";
@@ -215,8 +215,6 @@ export function MiniPlayerState({
           </p>
         </div>
 
-        {/* AI Sound Toggle */}
-        <AISoundToggle size="sm" />
 
         {/* Mute Button */}
         <button
