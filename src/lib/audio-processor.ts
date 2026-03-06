@@ -80,6 +80,7 @@ export function isAISoundEnabled(): boolean {
 }
 
 export function setAISoundEnabled(enabled: boolean) {
+  const wasEnabled = state.isEnabled;
   state.isEnabled = enabled;
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
@@ -87,12 +88,25 @@ export function setAISoundEnabled(enabled: boolean) {
 
   if (enabled && !state.isConnected && state.audioElement) {
     // Lazy-connect: attach the Web Audio graph now
-    _attachGraph(state.audioElement);
+    const connected = _attachGraph(state.audioElement);
+    if (!connected) {
+      state.isEnabled = false;
+      try {
+        localStorage.setItem(STORAGE_KEY, 'false');
+      } catch {}
+    }
   } else if (state.isConnected) {
     // Graph exists — just crossfade between bypass and processed
     _ensureContextResumed();
     crossfade(enabled);
   }
+
+  // If AI was switched off after the graph captured this element, we need
+  // a fresh HTMLAudioElement to guarantee native output recovery on mobile.
+  if (wasEnabled && !enabled && state.isConnected) {
+    state.requiresElementReset = true;
+  }
+
   notifyListeners();
 }
 
