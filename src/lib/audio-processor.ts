@@ -114,6 +114,12 @@ export function getCurrentPreset(): EQPreset | null {
   return state.currentPreset;
 }
 
+export function consumeAudioElementResetRequired(): boolean {
+  const required = state.requiresElementReset;
+  state.requiresElementReset = false;
+  return required;
+}
+
 export function subscribeProcessor(listener: Listener) {
   listeners.add(listener);
   return () => { listeners.delete(listener); };
@@ -145,7 +151,7 @@ function _ensureContextResumed() {
   }
 }
 
-function _attachGraph(audio: HTMLAudioElement) {
+function _attachGraph(audio: HTMLAudioElement): boolean {
   try {
     const ctx = new AudioContext();
 
@@ -217,8 +223,10 @@ function _attachGraph(audio: HTMLAudioElement) {
     state.audioElement = audio;
 
     console.log('[AI Sound] Processor connected');
+    return true;
   } catch (e) {
     console.error('[AI Sound] Failed to connect:', e);
+    return false;
   }
 }
 
