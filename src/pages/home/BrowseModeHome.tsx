@@ -12,6 +12,7 @@ import { TriggerSlider } from '@/components/home/TriggerSlider';
 import { HeroAnimations } from '@/components/ui/HeroAnimations';
 import { HeroDynamic } from '@/components/ui/HeroDynamic';
 import { CampaignBanner } from '@/components/home/CampaignBanner';
+import { CollectingCardBanner } from '@/components/home/CollectingCardBanner';
 import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
 import { ReferralPromoBanner } from '@/components/home/ReferralPromoBanner';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
@@ -134,6 +135,9 @@ export function BrowseModeHome({ rewards, partners, isLoading, onLogin }: Browse
       <div className="mt-6">
         <CampaignBanner />
       </div>
+
+      {/* Collecting Card Banner */}
+      <CollectingCardBanner />
       
       {/* 2. New Partners */}
       <section className="container pb-3">

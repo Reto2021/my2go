@@ -19,6 +19,7 @@ import { NewPartnerBanner } from '@/components/home/NewPartnerBanner';
 import { LiveHeaderButton, LiveEventsPanel } from '@/components/radio/LiveEventsPanel';
 import { FeaturedSponsorsBar } from '@/components/sponsors/FeaturedSponsorsBar';
 import { PlusBanner } from '@/components/subscription/PlusBanner';
+import { CollectingCardBanner } from '@/components/home/CollectingCardBanner';
 import { PlusExpiryBanner } from '@/components/subscription/PlusExpiryBanner';
 import { DriveSearchSheet } from '@/components/drive/DriveSearchSheet';
 import { HeroDynamic } from '@/components/ui/HeroDynamic';
@@ -120,6 +121,9 @@ export function SessionModeHome({
 
       {/* 1. Seasonal Campaign Banner */}
       <CampaignBanner />
+
+      {/* Collecting Card Banner */}
+      <CollectingCardBanner />
 
       {/* 2. New Partners */}
       <section className="container pb-3">
