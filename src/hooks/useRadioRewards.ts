@@ -471,65 +471,53 @@ export function useRadioRewards() {
       console.log('[RadioRewards] endSession skipped: no session');
       return;
     }
-    
+
     if (globalIsEnding) {
       console.log('[RadioRewards] endSession skipped: already ending');
       return;
     }
-    
-    // Set guard IMMEDIATELY
+
     globalIsEnding = true;
-    console.log('[RadioRewards] 🛑 Ending session:', globalSessionId);
-    
-    // Stop the save interval immediately
-    stopGlobalSaveInterval();
-    
-    // Save final progress before ending
-    if (globalSessionId && globalStartTimeMs) {
-      console.log('[RadioRewards] 💾 Final save before ending session...');
-      await saveProgressGlobal();
-    }
-    
-    // Clear global state immediately to prevent double-calls
     const endingSessionId = globalSessionId;
-    globalSessionId = null;
-    globalStartTimeMs = null;
-    
-    if (!endingSessionId) {
-      globalIsEnding = false;
-      return;
-    }
-    
+    console.log('[RadioRewards] 🛑 Ending session:', endingSessionId);
+
+    // Stop interval first to avoid concurrent writes while ending
+    stopGlobalSaveInterval();
+
     try {
+      // Best effort: persist latest duration before finalizing
+      await saveProgressGlobal();
+
       const { data, error } = await supabase.rpc('end_listening_session', {
         _session_id: endingSessionId
       });
-      
-      // Clear from localStorage since we're properly ending it
-      clearPendingSession();
-      
+
       if (error) {
         console.error('[RadioRewards] Error ending listening session:', error);
-        await refreshBalance?.();
+
+        // IMPORTANT: Keep pending session state for retry/recovery (prevents point loss)
+        // We intentionally do NOT clear localStorage/global session here.
         return;
       }
-      
+
+      // Clear pending state ONLY after successful server finalization
+      clearPendingSession();
+      globalSessionId = null;
+      globalStartTimeMs = null;
+
       const result = data as unknown as ListeningReward;
       console.log('[RadioRewards] ✅ Session ended with result:', result);
-      
+
       if (result?.success && result.reward > 0) {
-        // Trigger visual Taler animation
         triggerTalerAnimation(result.reward, 'radio');
-        
-        // Check if this is the user's first Taler
+
         const hasSeenFirstTaler = localStorage.getItem(`${FIRST_TALER_KEY}_${userId}`);
         if (!hasSeenFirstTaler && userId) {
           localStorage.setItem(`${FIRST_TALER_KEY}_${userId}`, 'true');
           setFirstTalerAmount(result.reward);
           setShowFirstTalerCelebration(true);
         }
-        
-        // Show session summary modal
+
         setSessionSummary({
           duration: result.duration,
           reward: result.reward,
@@ -537,15 +525,14 @@ export function useRadioRewards() {
         });
         setShowSummary(true);
       }
-      
-      // ALWAYS refresh balance after session ends
+
       console.log('[RadioRewards] 🔄 Refreshing balance after session end');
       await refreshBalance?.();
       clearPendingTaler?.();
-      
+
     } catch (error) {
       console.error('[RadioRewards] Error ending listening session:', error);
-      await refreshBalance?.();
+      // Keep pending session for recovery on next online/refresh
     } finally {
       globalIsEnding = false;
     }
