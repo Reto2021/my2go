@@ -129,7 +129,7 @@ export default function MyQRPage() {
                     'bg-muted hover:bg-muted/80'
                   )}
                 >
-                  <code className="font-mono font-bold text-lg tracking-wider text-secondary">
+                  <code className="font-mono font-bold text-lg tracking-wider text-foreground/70">
                     {userCode.permanent_code}
                   </code>
                   {copied ? (
