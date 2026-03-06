@@ -122,6 +122,9 @@ export function SessionModeHome({
       {/* 1. Seasonal Campaign Banner */}
       <CampaignBanner />
 
+      {/* Collecting Card Banner */}
+      <CollectingCardBanner />
+
       {/* 2. New Partners */}
       <section className="container pb-3">
         <NewPartnerBanner />
