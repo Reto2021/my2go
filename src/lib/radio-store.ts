@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { connectProcessor, classifySong, isAISoundEnabled } from '@/lib/audio-processor';
+import { connectProcessor, classifySong, isAISoundEnabled, consumeAudioElementResetRequired } from '@/lib/audio-processor';
 
 // Default Radio 2Go stream
 const DEFAULT_STREAM_URL = 'https://uksoutha.streaming.broadcast.radio/radio2go';
@@ -226,6 +226,7 @@ interface RadioStore {
   getStreamUrl: () => string;
   getStationName: () => string;
   getLastExternalStation: () => ExternalStation | null;
+  rebuildAudioAfterAISoundToggle: () => void;
 }
 
 interface iTunesMediaResult {
@@ -434,6 +435,21 @@ export const useRadioStore = create<RadioStore>((set, get) => ({
   
   getLastExternalStation: () => {
     return get().lastExternalStation || loadLastExternalStation();
+  },
+
+  rebuildAudioAfterAISoundToggle: () => {
+    const { audio, isPlaying } = get();
+    if (!audio || !consumeAudioElementResetRequired()) return;
+
+    audio.pause();
+    audio.src = '';
+    set({ audio: null, isPlaying: false, isLoading: false, isSwitching: false });
+
+    if (isPlaying) {
+      setTimeout(() => {
+        get().togglePlay();
+      }, 0);
+    }
   },
 
   updateSessionDuration: () => {

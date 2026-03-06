@@ -37,6 +37,7 @@ interface ProcessorState {
   isEnabled: boolean;
   currentPreset: EQPreset | null;
   audioElement: HTMLAudioElement | null;
+  requiresElementReset: boolean;
 }
 
 const state: ProcessorState = {
@@ -51,6 +52,7 @@ const state: ProcessorState = {
   isEnabled: loadEnabledState(),
   currentPreset: null,
   audioElement: null,
+  requiresElementReset: false,
 };
 
 // In-flight request tracking
@@ -78,6 +80,7 @@ export function isAISoundEnabled(): boolean {
 }
 
 export function setAISoundEnabled(enabled: boolean) {
+  const wasEnabled = state.isEnabled;
   state.isEnabled = enabled;
   try {
     localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
@@ -85,17 +88,36 @@ export function setAISoundEnabled(enabled: boolean) {
 
   if (enabled && !state.isConnected && state.audioElement) {
     // Lazy-connect: attach the Web Audio graph now
-    _attachGraph(state.audioElement);
+    const connected = _attachGraph(state.audioElement);
+    if (!connected) {
+      state.isEnabled = false;
+      try {
+        localStorage.setItem(STORAGE_KEY, 'false');
+      } catch {}
+    }
   } else if (state.isConnected) {
     // Graph exists — just crossfade between bypass and processed
     _ensureContextResumed();
     crossfade(enabled);
   }
+
+  // If AI was switched off after the graph captured this element, we need
+  // a fresh HTMLAudioElement to guarantee native output recovery on mobile.
+  if (wasEnabled && !enabled && state.isConnected) {
+    state.requiresElementReset = true;
+  }
+
   notifyListeners();
 }
 
 export function getCurrentPreset(): EQPreset | null {
   return state.currentPreset;
+}
+
+export function consumeAudioElementResetRequired(): boolean {
+  const required = state.requiresElementReset;
+  state.requiresElementReset = false;
+  return required;
 }
 
 export function subscribeProcessor(listener: Listener) {
@@ -120,7 +142,14 @@ export function connectProcessor(audio: HTMLAudioElement) {
     return;
   }
 
-  _attachGraph(audio);
+  const connected = _attachGraph(audio);
+  if (!connected) {
+    state.isEnabled = false;
+    try {
+      localStorage.setItem(STORAGE_KEY, 'false');
+    } catch {}
+    notifyListeners();
+  }
 }
 
 function _ensureContextResumed() {
@@ -129,7 +158,7 @@ function _ensureContextResumed() {
   }
 }
 
-function _attachGraph(audio: HTMLAudioElement) {
+function _attachGraph(audio: HTMLAudioElement): boolean {
   try {
     const ctx = new AudioContext();
 
@@ -201,8 +230,10 @@ function _attachGraph(audio: HTMLAudioElement) {
     state.audioElement = audio;
 
     console.log('[AI Sound] Processor connected');
+    return true;
   } catch (e) {
     console.error('[AI Sound] Failed to connect:', e);
+    return false;
   }
 }
 
@@ -227,6 +258,7 @@ export function disconnectProcessor() {
   state.isConnected = false;
   state.currentPreset = null;
   state.audioElement = null;
+  state.requiresElementReset = false;
   currentClassifyAbort = null;
   lastClassifiedSong = '';
 }
