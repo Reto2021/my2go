@@ -27,11 +27,12 @@ interface ProcessorState {
   bands: BiquadFilterNode[];
   compressor: DynamicsCompressorNode | null;
   makeupGain: GainNode | null;
-  bypassGain: GainNode | null;  // direct connection (bypass)
-  processedGain: GainNode | null; // processed chain
+  bypassGain: GainNode | null;
+  processedGain: GainNode | null;
   isConnected: boolean;
   isEnabled: boolean;
   currentPreset: EQPreset | null;
+  audioElement: HTMLAudioElement | null;
 }
 
 const state: ProcessorState = {
@@ -45,11 +46,20 @@ const state: ProcessorState = {
   isConnected: false,
   isEnabled: loadEnabledState(),
   currentPreset: null,
+  audioElement: null,
 };
 
-// In-flight request tracking to avoid duplicate API calls for same song
+// In-flight request tracking
 let currentClassifyAbort: AbortController | null = null;
 let lastClassifiedSong = '';
+
+// Listeners
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function notifyListeners() {
+  listeners.forEach(l => l());
+}
 
 function loadEnabledState(): boolean {
   try {
@@ -72,19 +82,30 @@ export function setAISoundEnabled(enabled: boolean) {
   if (state.isConnected) {
     crossfade(enabled);
   }
+  notifyListeners();
 }
 
 export function getCurrentPreset(): EQPreset | null {
   return state.currentPreset;
 }
 
+export function subscribeProcessor(listener: Listener) {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+
 /**
  * Connect the audio processor to an HTMLAudioElement.
- * Must be called ONCE when the audio element is created.
+ * Must be called ONCE per audio element. Safe to call multiple times.
  */
 export function connectProcessor(audio: HTMLAudioElement) {
-  // Don't reconnect if already connected to same element
-  if (state.isConnected && state.source) return;
+  // Don't reconnect to same element
+  if (state.isConnected && state.audioElement === audio) return;
+
+  // Disconnect previous if exists
+  if (state.isConnected) {
+    disconnectProcessor();
+  }
 
   try {
     const ctx = new AudioContext();
@@ -100,7 +121,7 @@ export function connectProcessor(audio: HTMLAudioElement) {
       return filter;
     });
 
-    // Compressor for loudness normalization
+    // Compressor
     const compressor = ctx.createDynamicsCompressor();
     compressor.threshold.value = -24;
     compressor.ratio.value = 2;
@@ -108,20 +129,19 @@ export function connectProcessor(audio: HTMLAudioElement) {
     compressor.release.value = 0.25;
     compressor.knee.value = 6;
 
-    // Makeup gain to compensate for compression
+    // Makeup gain
     const makeupGain = ctx.createGain();
     makeupGain.gain.value = 1.0;
 
-    // Two parallel paths: bypass and processed
+    // Two parallel paths
     const bypassGain = ctx.createGain();
     const processedGain = ctx.createGain();
 
-    // Chain: source → [bands] → compressor → makeupGain → processedGain → destination
-    // Also: source → bypassGain → destination
+    // Bypass path: source → bypassGain → destination
     source.connect(bypassGain);
     bypassGain.connect(ctx.destination);
 
-    // EQ chain
+    // Processed path: source → EQ bands → compressor → makeupGain → processedGain → destination
     let lastNode: AudioNode = source;
     for (const band of bands) {
       lastNode.connect(band);
@@ -132,7 +152,7 @@ export function connectProcessor(audio: HTMLAudioElement) {
     makeupGain.connect(processedGain);
     processedGain.connect(ctx.destination);
 
-    // Set initial crossfade state
+    // Set initial gain state
     if (state.isEnabled) {
       bypassGain.gain.value = 0;
       processedGain.gain.value = 1;
@@ -149,26 +169,20 @@ export function connectProcessor(audio: HTMLAudioElement) {
     state.bypassGain = bypassGain;
     state.processedGain = processedGain;
     state.isConnected = true;
+    state.audioElement = audio;
 
-    console.log('[AudioProcessor] Connected');
+    console.log('[AI Sound] Processor connected');
   } catch (e) {
-    console.error('[AudioProcessor] Failed to connect:', e);
+    console.error('[AI Sound] Failed to connect:', e);
   }
 }
 
-/**
- * Disconnect and clean up
- */
 export function disconnectProcessor() {
   if (state.source) {
-    try {
-      state.source.disconnect();
-    } catch {}
+    try { state.source.disconnect(); } catch {}
   }
   if (state.context) {
-    try {
-      state.context.close();
-    } catch {}
+    try { state.context.close(); } catch {}
   }
   state.source = null;
   state.context = null;
@@ -179,84 +193,72 @@ export function disconnectProcessor() {
   state.processedGain = null;
   state.isConnected = false;
   state.currentPreset = null;
+  state.audioElement = null;
   currentClassifyAbort = null;
   lastClassifiedSong = '';
 }
 
-/**
- * Crossfade between bypass and processed signal
- */
 function crossfade(toProcessed: boolean) {
   if (!state.context || !state.bypassGain || !state.processedGain) return;
 
   const now = state.context.currentTime;
-  const duration = CROSSFADE_DURATION;
 
   if (toProcessed) {
-    state.bypassGain.gain.linearRampToValueAtTime(0, now + duration);
-    state.processedGain.gain.linearRampToValueAtTime(1, now + duration);
+    state.bypassGain.gain.linearRampToValueAtTime(0, now + CROSSFADE_DURATION);
+    state.processedGain.gain.linearRampToValueAtTime(1, now + CROSSFADE_DURATION);
   } else {
-    state.bypassGain.gain.linearRampToValueAtTime(1, now + duration);
-    state.processedGain.gain.linearRampToValueAtTime(0, now + duration);
+    state.bypassGain.gain.linearRampToValueAtTime(1, now + CROSSFADE_DURATION);
+    state.processedGain.gain.linearRampToValueAtTime(0, now + CROSSFADE_DURATION);
   }
 }
 
-/**
- * Apply an EQ preset with smooth transitions
- */
 export function applyPreset(preset: EQPreset) {
   if (!state.isConnected || !state.context) return;
 
   state.currentPreset = preset;
   const now = state.context.currentTime;
-  const rampTime = CROSSFADE_DURATION;
 
-  // Smoothly transition each EQ band
   state.bands.forEach((band, i) => {
-    const targetGain = preset.bands[i] || 0;
+    const gain = preset.bands[i] || 0;
     band.gain.cancelScheduledValues(now);
-    band.gain.linearRampToValueAtTime(targetGain, now + rampTime);
+    band.gain.linearRampToValueAtTime(gain, now + CROSSFADE_DURATION);
   });
 
-  // Update compressor
   if (state.compressor) {
     const c = preset.compressor;
-    state.compressor.threshold.linearRampToValueAtTime(c.threshold, now + rampTime);
-    state.compressor.ratio.linearRampToValueAtTime(c.ratio, now + rampTime);
-    state.compressor.attack.linearRampToValueAtTime(c.attack, now + rampTime);
-    state.compressor.release.linearRampToValueAtTime(c.release, now + rampTime);
+    state.compressor.threshold.linearRampToValueAtTime(c.threshold, now + CROSSFADE_DURATION);
+    state.compressor.ratio.linearRampToValueAtTime(c.ratio, now + CROSSFADE_DURATION);
+    state.compressor.attack.linearRampToValueAtTime(c.attack, now + CROSSFADE_DURATION);
+    state.compressor.release.linearRampToValueAtTime(c.release, now + CROSSFADE_DURATION);
   }
 
-  // Adjust makeup gain based on compression (louder compression = more makeup)
   if (state.makeupGain) {
-    const avgBandGain = preset.bands.reduce((a, b) => a + b, 0) / preset.bands.length;
-    // Compensate: more compression → more makeup, more EQ boost → slightly less makeup
-    const makeup = 1.0 + (Math.abs(preset.compressor.threshold + 24) / 40) - (avgBandGain / 20);
-    state.makeupGain.gain.linearRampToValueAtTime(Math.max(0.7, Math.min(1.4, makeup)), now + rampTime);
+    const avgGain = preset.bands.reduce((a, b) => a + b, 0) / preset.bands.length;
+    const makeup = 1.0 + (Math.abs(preset.compressor.threshold + 24) / 40) - (avgGain / 20);
+    state.makeupGain.gain.linearRampToValueAtTime(
+      Math.max(0.7, Math.min(1.4, makeup)),
+      now + CROSSFADE_DURATION
+    );
   }
 
-  console.log(`[AudioProcessor] Applied preset: ${preset.label} (${preset.description})`);
+  notifyListeners();
+  console.log(`[AI Sound] ${preset.label}: ${preset.description}`);
 }
 
 /**
- * Classify a song and apply the optimal EQ.
- * Called whenever the now-playing metadata changes.
+ * Classify a song via AI and apply optimal EQ.
  */
 export async function classifySong(title: string, artist: string) {
   if (!state.isEnabled || !state.isConnected) return;
   if (!title || !artist || title === 'Unknown' || artist === 'Unknown Artist') return;
 
-  const songKey = `${artist}::${title}`;
-  if (songKey === lastClassifiedSong) return;
+  const key = `${artist}::${title}`;
+  if (key === lastClassifiedSong) return;
 
-  // Abort any in-flight classification
-  if (currentClassifyAbort) {
-    currentClassifyAbort.abort();
-  }
-
+  if (currentClassifyAbort) currentClassifyAbort.abort();
   const controller = new AbortController();
   currentClassifyAbort = controller;
-  lastClassifiedSong = songKey;
+  lastClassifiedSong = key;
 
   try {
     const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/classify-song`;
@@ -270,40 +272,14 @@ export async function classifySong(title: string, artist: string) {
       signal: controller.signal,
     });
 
-    if (!res.ok) {
-      console.warn('[AudioProcessor] Classification failed:', res.status);
-      return;
-    }
-
+    if (!res.ok) return;
     const preset: EQPreset = await res.json();
-    
-    // Only apply if this is still the current song (not aborted)
     if (!controller.signal.aborted) {
       applyPreset(preset);
     }
   } catch (e: any) {
     if (e.name !== 'AbortError') {
-      console.error('[AudioProcessor] Classification error:', e);
+      console.error('[AI Sound] Classify error:', e);
     }
   }
 }
-
-// Listeners for state changes
-type Listener = () => void;
-const listeners = new Set<Listener>();
-
-export function subscribeProcessor(listener: Listener) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function notifyListeners() {
-  listeners.forEach(l => l());
-}
-
-// Wrap setAISoundEnabled to notify
-const _origSet = setAISoundEnabled;
-(setAISoundEnabled as any) = (enabled: boolean) => {
-  _origSet(enabled);
-  notifyListeners();
-};
