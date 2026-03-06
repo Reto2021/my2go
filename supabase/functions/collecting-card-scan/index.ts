@@ -114,14 +114,14 @@ Deno.serve(async (req) => {
     let { data: card } = await supabase
       .from("collecting_cards")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("campaign_id", campaign.id)
       .single();
 
     if (!card) {
       const { data: newCard, error: createErr } = await supabase
         .from("collecting_cards")
-        .insert({ user_id: user.id, campaign_id: campaign.id })
+        .insert({ user_id: userId, campaign_id: campaign.id })
         .select()
         .single();
       if (createErr) {
@@ -269,11 +269,11 @@ Deno.serve(async (req) => {
     if (sponsoredCell && sponsoredCell.bonus_type === "extra_taler" && sponsoredCell.bonus_value) {
       // Award taler
       await supabase.rpc("add_taler_to_batch", {
-        p_user_id: user.id,
+        p_user_id: userId,
         p_amount: sponsoredCell.bonus_value,
       });
       await supabase.from("transactions").insert({
-        user_id: user.id,
+        user_id: userId,
         amount: sponsoredCell.bonus_value,
         type: "earn",
         source: "collecting_card",
@@ -298,11 +298,11 @@ Deno.serve(async (req) => {
     const hitMilestone = milestones.find((m) => m.at_purchase === newTotalPurchases);
     if (hitMilestone && hitMilestone.type === "bonus_taler") {
       await supabase.rpc("add_taler_to_batch", {
-        p_user_id: user.id,
+        p_user_id: userId,
         p_amount: hitMilestone.value,
       });
       await supabase.from("transactions").insert({
-        user_id: user.id,
+        user_id: userId,
         amount: hitMilestone.value,
         type: "earn",
         source: "collecting_card",
@@ -315,11 +315,11 @@ Deno.serve(async (req) => {
     let completionReward = null;
     if (isCompleted && campaign.prize_taler && campaign.prize_taler > 0) {
       await supabase.rpc("add_taler_to_batch", {
-        p_user_id: user.id,
+        p_user_id: userId,
         p_amount: campaign.prize_taler,
       });
       await supabase.from("transactions").insert({
-        user_id: user.id,
+        user_id: userId,
         amount: campaign.prize_taler,
         type: "earn",
         source: "collecting_card",
