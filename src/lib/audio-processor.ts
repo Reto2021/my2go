@@ -198,6 +198,7 @@ function _attachGraph(audio: HTMLAudioElement) {
 }
 
 export function disconnectProcessor() {
+  const audioEl = state.audioElement;
   if (state.source) {
     try { state.source.disconnect(); } catch {}
   }
@@ -213,7 +214,8 @@ export function disconnectProcessor() {
   state.processedGain = null;
   state.isConnected = false;
   state.currentPreset = null;
-  state.audioElement = null;
+  // Keep audioElement reference so we can re-attach later
+  state.audioElement = audioEl;
   currentClassifyAbort = null;
   lastClassifiedSong = '';
 }
