@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthSafe } from '@/contexts/AuthContext';
+import { useRegion } from '@/hooks/useRegion';
 import { Grid3X3, ChevronRight, Trophy } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { TalerIcon } from '@/components/icons/TalerIcon';
@@ -9,19 +10,29 @@ import { TalerIcon } from '@/components/icons/TalerIcon';
 export function CollectingCardBanner() {
   const auth = useAuthSafe();
   const userId = auth?.user?.id;
+  const { region } = useRegion();
 
-  // Fetch active campaigns
+  // Fetch active campaigns filtered by user's region
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['active-collecting-campaigns'],
+    queryKey: ['active-collecting-campaigns', region?.id],
     queryFn: async () => {
       const now = new Date().toISOString();
-      const { data, error } = await supabase
+      let query = supabase
         .from('collecting_campaigns' as any)
-        .select('id, slug, title, subtitle, logo_url, required_purchases, prize_taler, prize_description, ends_at')
+        .select('id, slug, title, subtitle, logo_url, required_purchases, prize_taler, prize_description, ends_at, region_id')
         .eq('is_active', true)
         .or(`ends_at.is.null,ends_at.gte.${now}`)
         .order('created_at', { ascending: false })
         .limit(3);
+
+      // Only show campaigns that have no region (global) or match the user's region
+      if (region?.id) {
+        query = query.or(`region_id.is.null,region_id.eq.${region.id}`);
+      } else {
+        query = query.is('region_id', null);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data as any[]) || [];
     },
