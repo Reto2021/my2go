@@ -79,7 +79,13 @@ export function setAISoundEnabled(enabled: boolean) {
     localStorage.setItem(STORAGE_KEY, enabled ? 'true' : 'false');
   } catch {}
 
-  if (state.isConnected) {
+  if (enabled && !state.isConnected && state.audioElement) {
+    // Lazy-connect: attach the Web Audio graph now that the user wants it
+    _attachGraph(state.audioElement);
+  } else if (!enabled && state.isConnected) {
+    // Disconnect entirely so audio goes back to native output (safest on mobile)
+    disconnectProcessor();
+  } else if (state.isConnected) {
     crossfade(enabled);
   }
   notifyListeners();
@@ -99,6 +105,15 @@ export function subscribeProcessor(listener: Listener) {
  * Must be called ONCE per audio element. Safe to call multiple times.
  */
 export function connectProcessor(audio: HTMLAudioElement) {
+  // Only intercept the audio graph when AI Sound is actually enabled
+  // createMediaElementSource re-routes audio exclusively through Web Audio API,
+  // so if the AudioContext is suspended (common on mobile), you hear NOTHING.
+  if (!state.isEnabled) {
+    // Store reference so we can connect later if user enables AI Sound
+    state.audioElement = audio;
+    return;
+  }
+
   // Don't reconnect to same element
   if (state.isConnected && state.audioElement === audio) return;
 
@@ -107,8 +122,18 @@ export function connectProcessor(audio: HTMLAudioElement) {
     disconnectProcessor();
   }
 
+  _attachGraph(audio);
+}
+
+function _attachGraph(audio: HTMLAudioElement) {
   try {
     const ctx = new AudioContext();
+
+    // Resume context immediately (required on mobile after user gesture)
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
     const source = ctx.createMediaElementSource(audio);
 
     // Create 5-band parametric EQ
@@ -152,14 +177,9 @@ export function connectProcessor(audio: HTMLAudioElement) {
     makeupGain.connect(processedGain);
     processedGain.connect(ctx.destination);
 
-    // Set initial gain state
-    if (state.isEnabled) {
-      bypassGain.gain.value = 0;
-      processedGain.gain.value = 1;
-    } else {
-      bypassGain.gain.value = 1;
-      processedGain.gain.value = 0;
-    }
+    // When AI is enabled, send audio through processed path
+    bypassGain.gain.value = 0;
+    processedGain.gain.value = 1;
 
     state.context = ctx;
     state.source = source;
