@@ -37,6 +37,7 @@ interface ProcessorState {
   isEnabled: boolean;
   currentPreset: EQPreset | null;
   audioElement: HTMLAudioElement | null;
+  requiresElementReset: boolean;
 }
 
 const state: ProcessorState = {
@@ -51,6 +52,7 @@ const state: ProcessorState = {
   isEnabled: loadEnabledState(),
   currentPreset: null,
   audioElement: null,
+  requiresElementReset: false,
 };
 
 // In-flight request tracking
