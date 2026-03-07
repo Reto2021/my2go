@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthSafe } from '@/contexts/AuthContext';
-import { useRegion } from '@/hooks/useRegion';
+
 import { Grid3X3, ChevronRight, Trophy } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { TalerIcon } from '@/components/icons/TalerIcon';
