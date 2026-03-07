@@ -10,29 +10,18 @@ import { TalerIcon } from '@/components/icons/TalerIcon';
 export function CollectingCardBanner() {
   const auth = useAuthSafe();
   const userId = auth?.user?.id;
-  const { region } = useRegion();
-
-  // Fetch active campaigns filtered by user's region
+  // Fetch all active campaigns globally (no region filter)
   const { data: campaigns = [] } = useQuery({
-    queryKey: ['active-collecting-campaigns', region?.id],
+    queryKey: ['active-collecting-campaigns'],
     queryFn: async () => {
       const now = new Date().toISOString();
-      let query = supabase
+      const { data, error } = await supabase
         .from('collecting_campaigns' as any)
         .select('id, slug, title, subtitle, logo_url, required_purchases, prize_taler, prize_description, ends_at, region_id')
         .eq('is_active', true)
         .or(`ends_at.is.null,ends_at.gte.${now}`)
         .order('created_at', { ascending: false })
         .limit(3);
-
-      // Only show campaigns that have no region (global) or match the user's region
-      if (region?.id) {
-        query = query.or(`region_id.is.null,region_id.eq.${region.id}`);
-      } else {
-        query = query.is('region_id', null);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return (data as any[]) || [];
     },
